@@ -138,7 +138,7 @@ api:
 	        -o api \
 		-n Ldaptor \
 		--check \
-	        -u http://tv.debian.net/software/ldaptor/ \
+		-u http://www.inoi.fi/open/trac/ldaptor/ \
 		$$(find ../ldaptor \( -name SCCS -prune \) -o -name '*.py' -print)
 
 .PHONY: api
