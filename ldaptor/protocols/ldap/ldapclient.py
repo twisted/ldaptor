@@ -102,18 +102,18 @@ class LDAPClient(protocol.Protocol):
 		LDAPClientConnectionLostException()))
 	else:
 	    r=pureldap.LDAPBindRequest(dn=dn, auth=auth)
-	    self.queue(r, d.callback) #TODO queue needs info back from callback!!!
-	    d.addCallback(self._handle_bind_msg)
+	    self.queue(r, self._handle_bind_msg, d)
 	return d
 
-    def _handle_bind_msg(self, resp):
+    def _handle_bind_msg(self, resp, d):
 	assert isinstance(resp, pureldap.LDAPBindResponse)
 	assert resp.referral is None #TODO
 	if resp.resultCode==0:
-	    return (resp.matchedDN, resp.serverSaslCreds)
+	    d.callback((resp.matchedDN, resp.serverSaslCreds))
 	else:
-	    raise Failure(
-		ldaperrors.get(resp.resultCode, resp.errorMessage))
+	    d.errback(Failure(
+		ldaperrors.get(resp.resultCode, resp.errorMessage)))
+        return True
 
     ##Unbind
     def unbind(self):
