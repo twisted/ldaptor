@@ -89,13 +89,9 @@ class LDAPAttributeTypeAndValue:
 	else:
 	    assert attributeType is None
 	    assert value is None
-            try:
-                self.attributeType, self.value = stringValue.split('=', 1)
-            except ValueError, e:
-                if str(e) == 'unpack list of wrong size':
-                    raise InvalidRelativeDistinguishedName, stringValue
-                else:
-                    raise
+            if '=' not in stringValue:
+                raise InvalidRelativeDistinguishedName, stringValue
+            self.attributeType, self.value = stringValue.split('=', 1)
 
     def __str__(self):
 	return '='.join((escape(self.attributeType), escape(self.value)))
