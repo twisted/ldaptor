@@ -144,6 +144,9 @@ def zebra(colors=['zebra-even', 'zebra-odd']):
         <tr nevow:render="zebra"><td>baz</td></tr>
       </table>
     """
+    # TODO with a list of odd length, every reload
+    # reverses colors, because state is remembered
+    # in the render_zebra attribute.
     colors = list(colors)
     def f(self, ctx, data):
         colors[:] = colors[1:]+colors[:1]
