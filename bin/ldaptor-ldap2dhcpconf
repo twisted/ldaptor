@@ -17,7 +17,7 @@
 
 from ldaptor.protocols.ldap import ldapclient, distinguishedname, ldapconnector
 from ldaptor.protocols import pureber, pureldap
-from ldaptor import usage, ldapfilter
+from ldaptor import usage, ldapfilter, config
 from twisted.internet import protocol, reactor, defer
 from socket import inet_aton, inet_ntoa
 
@@ -340,7 +340,13 @@ def error(fail):
     global exitStatus
     exitStatus=1
 
-def main(base, serviceLocationOverride, filter_text, dnsDomain):
+def main(cfg, filter_text, dnsDomain):
+    try:
+        baseDN = cfg.getBaseDN()
+    except config.MissingBaseDNError, e:
+        print >>sys.stderr, "%s: %s." % (sys.argv[0], e)
+        sys.exit(1)
+
     from twisted.python import log
     log.startLogging(sys.stderr, setStdout=0)
 
@@ -350,16 +356,18 @@ def main(base, serviceLocationOverride, filter_text, dnsDomain):
 	filt = None
 
     d=defer.Deferred()
-    s=SearchFactory(d, base, filt, dnsDomain)
+    s=SearchFactory(d, baseDN, filt, dnsDomain)
     d.addErrback(error)
     d.addBoth(lambda x: reactor.stop())
-    dn = distinguishedname.DistinguishedName(stringValue=base)
-    c=ldapconnector.LDAPConnector(reactor, dn, s, overrides=serviceLocationOverride)
+    c=ldapconnector.LDAPConnector(reactor, baseDN, s,
+                                  overrides=cfg.getServiceLocationOverrides())
     c.connect()
     reactor.run()
     sys.exit(exitStatus)
 
-class MyOptions(usage.Options, usage.Options_service_location, usage.Options_base):
+class MyOptions(usage.Options,
+                usage.Options_service_location,
+                usage.Options_base_optional):
     """LDAPtor dhcpd config file exporter"""
 
     optParameters = (
@@ -373,14 +381,15 @@ class MyOptions(usage.Options, usage.Options_service_location, usage.Options_bas
 if __name__ == "__main__":
     import sys
     try:
-	config = MyOptions()
-	config.parseOptions()
+	opts = MyOptions()
+	opts.parseOptions()
     except usage.UsageError, ue:
 	sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
 	sys.exit(1)
 
-    main(config.opts['base'],
-	 config.opts['service-location'],
-	 config.opts['filter'],
-	 config.opts['dns-domain'],
+    cfg = config.LDAPConfig(baseDN=opts['base'],
+                            serviceLocationOverrides=opts['service-location'])
+    main(cfg,
+	 opts['filter'],
+	 opts['dns-domain'],
 	 )
