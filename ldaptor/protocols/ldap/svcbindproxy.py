@@ -10,12 +10,15 @@ class ServiceBindingProxy(proxy.Proxy):
 
     BindRequests are intercepted and authentication is attempted
     against each configured service. This authentication is performed
-    against the LDAP attribute 'servicePassword', which has the format
+    against a separate LDAP entry, found by searching for entries with
 
-    <servicename> <passphrase-digest>
+    - objectClass: serviceSecurityObject
 
-    where <passphrase-digest> looks like the contens of the normal
-    'userPassword' attribute.
+    - owner: the DN of the original bind attempt
+
+    - cn: the service name.
+
+    starting at the identity-base as configured in the config file.
 
     Finally, if the authentication does not succeed against any of the
     configured services, the proxy can fallback to passing the bind
@@ -27,12 +30,16 @@ class ServiceBindingProxy(proxy.Proxy):
     fallback = False
 
     def __init__(self,
+                 config,
                  services=None,
                  fallback=None,
                  *a,
                  **kw):
         """
         Initialize the object.
+
+        @param config: The configuration.
+        @type config: ldaptor.interfaces.ILDAPConfig
 
         @param services: List of service names to try to bind against.
 
@@ -42,21 +49,76 @@ class ServiceBindingProxy(proxy.Proxy):
         """
 
         proxy.Proxy.__init__(self, *a, **kw)
+        self.config = config
         if services is not None:
             self.services = list(services)
         if fallback is not None:
             self.fallback = fallback
 
-    def _doFetch(self, request, controls, reply):
+    def _startSearch(self, request, controls, reply):
+        services = list(self.services)
+        baseDN = self.config.getIdentityBaseDN()
         e = ldapsyntax.LDAPEntryWithClient(client=self.client,
-                                           dn=request.dn)
-        d = e.fetch('servicePassword')
+                                           dn=baseDN)
+        d = self._tryService(services, e, request, controls, reply)
+        d.addCallback(self._maybeFallback, request, controls, reply)
+        return d
 
-        def _noEntry(fail):
-            fail.trap(ldaperrors.LDAPNoSuchObject)
+    def _maybeFallback(self, entry, request, controls, reply):
+        if entry is not None:
+            msg = pureldap.LDAPBindResponse(
+                resultCode=ldaperrors.Success.resultCode,
+                matchedDN=request.dn)
+            return msg
+        elif self.fallback:
+            self.handleUnknown(request, controls, reply)
+        else:
+            msg = pureldap.LDAPBindResponse(
+                resultCode=ldaperrors.LDAPInvalidCredentials.resultCode)
+            return msg
+
+    def _tryService(self, services, baseEntry, request, controls, reply):
+        try:
+            serviceName = services.pop(0)
+        except IndexError:
             return None
-        d.addErrback(_noEntry)
-        d.addCallback(self._gotEntry, request, controls, reply)
+        d = baseEntry.search(filterObject=pureldap.LDAPFilter_and([
+            pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('objectClass'),
+                                              assertionValue=pureldap.LDAPAssertionValue('serviceSecurityObject')),
+            pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('owner'),
+                                              assertionValue=pureldap.LDAPAssertionValue(request.dn)),
+            pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('cn'),
+                                              assertionValue=pureldap.LDAPAssertionValue(serviceName)),
+            ]),
+                             attributes=('1.1',))
+
+        def _gotEntries(entries):
+            if not entries:
+                return None
+            assert len(entries)==1 #TODO
+            e = entries[0]
+            d = e.bind(request.auth)
+            return d
+        d.addCallback(_gotEntries)
+        d.addCallbacks(
+            callback=self._loopIfNone,
+            callbackArgs=(services, baseEntry,
+                         request, controls, reply),
+            errback=self._loopIfBindError,
+            errbackArgs=(services, baseEntry,
+                         request, controls, reply))
+        return d
+
+    def _loopIfNone(self, r, *a, **kw):
+        if r is None:
+            d = self._tryService(*a, **kw)
+            return d
+        else:
+            return r
+
+    def _loopIfBindError(self, fail, *a, **kw):
+        fail.trap(ldaperrors.LDAPInvalidCredentials)
+        d = self._tryService(*a, **kw)
         return d
 
     fail_LDAPBindRequest = pureldap.LDAPBindResponse
@@ -72,37 +134,10 @@ class ServiceBindingProxy(proxy.Proxy):
             # anonymous bind
             return self.handleUnknown(request, controls, reply)
         else:
-            d = self._whenConnected(self._doFetch,
+            d = self._whenConnected(self._startSearch,
                                     request, controls, reply)
             return d
 
-    def _gotEntry(self, e, request, controls, reply):
-        if e is not None:
-            for service in self.services:
-                for svcPasswd in e.get('servicePassword', []):
-                    if ' ' not in svcPasswd:
-                        # invalid entry that would raise at the split
-                        # below if we tried to process it
-                        continue
-                    name, digest = svcPasswd.split(None, 1)
-                    if name == service:
-                        # TODO refactor to share the code below
-                        if digest.startswith('{SSHA}'):
-                            raw = base64.decodestring(digest[len('{SSHA}'):])
-                            salt = raw[20:]
-                            got = sshaDigest(request.auth, salt)
-                            if got == digest:
-                                msg = pureldap.LDAPBindResponse(
-                                    resultCode=ldaperrors.Success.resultCode,
-                                    matchedDN=str(e.dn))
-                                return msg
-
-        if self.fallback:
-            self.handleUnknown(request, controls, reply)
-        else:
-            msg = pureldap.LDAPBindResponse(
-                resultCode=ldaperrors.LDAPInvalidCredentials.resultCode)
-            return msg
 
 if __name__ == '__main__':
     """

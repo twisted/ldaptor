@@ -6,7 +6,7 @@ from twisted.trial import unittest
 from twisted.internet import reactor
 from ldaptor.protocols.ldap import svcbindproxy, ldaperrors
 from ldaptor.protocols import pureldap, pureber
-from ldaptor import testutil
+from ldaptor import config, ldapfilter, testutil
 
 class ServiceBindingProxy(unittest.TestCase):
     berdecoder = pureldap.LDAPBERDecoderContext_TopLevel(
@@ -14,8 +14,15 @@ class ServiceBindingProxy(unittest.TestCase):
         fallback=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext()),
         inherit=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext())))
 
+    def setUp(self):
+        self.cfg = config.loadConfig(
+            configFiles=[],
+            reload=True)
+        self.config = config.LDAPConfig(baseDN='dc=example,dc=com')
+
     def createServer(self, services, fallback=None, responses=[]):
         return testutil.createServer(lambda overrides: svcbindproxy.ServiceBindingProxy(
+            config=self.config,
             services=services,
             fallback=fallback,
             overrides=overrides,
@@ -30,23 +37,37 @@ class ServiceBindingProxy(unittest.TestCase):
                       ],
             fallback=False,
             responses=[
-            [ pureldap.LDAPSearchResultEntry('cn=jack,dc=example,dc=com',
-                                             attributes=[('servicePassword', ['wrong', 'bad', 'not-matching'])]),
-              pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode),
-              ],
+            [ pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode) ],
+            [ pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode) ],
+            [ pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode) ],
             ])
         server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='s3krit'), id=4)))
         reactor.iterate() #TODO
         client = server.client
 
-        client.assertSent(pureldap.LDAPSearchRequest(baseObject='cn=jack,dc=example,dc=com',
-                                                     scope=0,
-                                                     derefAliases=0,
-                                                     sizeLimit=0,
-                                                     timeLimit=0,
-                                                     typesOnly=0,
-                                                     filter=pureldap.LDAPFilter_present(value='objectClass'),
-                                                     attributes=('servicePassword',)))
+        client.assertSent(
+            pureldap.LDAPSearchRequest(baseObject='dc=example,dc=com',
+                                       derefAliases=0,
+                                       sizeLimit=0,
+                                       timeLimit=0,
+                                       typesOnly=0,
+                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc1))'),
+                                       attributes=('1.1',)),
+            pureldap.LDAPSearchRequest(baseObject='dc=example,dc=com',
+                                       derefAliases=0,
+                                       sizeLimit=0,
+                                       timeLimit=0,
+                                       typesOnly=0,
+                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc2))'),
+                                       attributes=('1.1',)),
+            pureldap.LDAPSearchRequest(baseObject='dc=example,dc=com',
+                                       derefAliases=0,
+                                       sizeLimit=0,
+                                       timeLimit=0,
+                                       typesOnly=0,
+                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc3))'),
+                                       attributes=('1.1',)),
+            )
         self.assertEquals(server.transport.value(),
                           str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=ldaperrors.LDAPInvalidCredentials.resultCode), id=4)))
 
@@ -58,26 +79,38 @@ class ServiceBindingProxy(unittest.TestCase):
                       ],
             fallback=True,
             responses=[
-            [ pureldap.LDAPSearchResultEntry('cn=jack,dc=example,dc=com',
-                                             attributes=[('servicePassword', ['wrong', 'bad', 'not-matching'])]),
-              pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode),
-              ],
-            [ pureldap.LDAPBindResponse(resultCode=ldaperrors.Success.resultCode),
-              ],
+            [ pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode) ],
+            [ pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode) ],
+            [ pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode) ],
+            [ pureldap.LDAPBindResponse(resultCode=ldaperrors.Success.resultCode) ],
             ])
         server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='s3krit'), id=4)))
         reactor.iterate() #TODO
         client = server.client
 
-        client.assertSent(pureldap.LDAPSearchRequest(baseObject='cn=jack,dc=example,dc=com',
-                                                     scope=0,
-                                                     derefAliases=0,
-                                                     sizeLimit=0,
-                                                     timeLimit=0,
-                                                     typesOnly=0,
-                                                     filter=pureldap.LDAPFilter_present(value='objectClass'),
-                                                     attributes=('servicePassword',)),
-                          pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='s3krit'))
+        client.assertSent(
+            pureldap.LDAPSearchRequest(baseObject='dc=example,dc=com',
+                                       derefAliases=0,
+                                       sizeLimit=0,
+                                       timeLimit=0,
+                                       typesOnly=0,
+                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc1))'),
+                                       attributes=('1.1',)),
+            pureldap.LDAPSearchRequest(baseObject='dc=example,dc=com',
+                                       derefAliases=0,
+                                       sizeLimit=0,
+                                       timeLimit=0,
+                                       typesOnly=0,
+                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc2))'),
+                                       attributes=('1.1',)),
+            pureldap.LDAPSearchRequest(baseObject='dc=example,dc=com',
+                                       derefAliases=0,
+                                       sizeLimit=0,
+                                       timeLimit=0,
+                                       typesOnly=0,
+                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc3))'),
+                                       attributes=('1.1',)),
+            pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='s3krit'))
         self.assertEquals(server.transport.value(),
                           str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=ldaperrors.Success.resultCode), id=4)))
 
@@ -89,10 +122,9 @@ class ServiceBindingProxy(unittest.TestCase):
                       ],
             fallback=True,
             responses=[
-            [ pureldap.LDAPSearchResultEntry('cn=jack,dc=example,dc=com',
-                                             attributes=[('servicePassword', ['wrong foo', 'illegal', 'not-matching quux'])]),
-              pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode),
-              ],
+            [ pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode) ],
+            [ pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode) ],
+            [ pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode) ],
             [ pureldap.LDAPBindResponse(resultCode=ldaperrors.LDAPInvalidCredentials.resultCode),
               ],
             ])
@@ -100,15 +132,29 @@ class ServiceBindingProxy(unittest.TestCase):
         reactor.iterate() #TODO
         client = server.client
 
-        client.assertSent(pureldap.LDAPSearchRequest(baseObject='cn=jack,dc=example,dc=com',
-                                                     scope=0,
-                                                     derefAliases=0,
-                                                     sizeLimit=0,
-                                                     timeLimit=0,
-                                                     typesOnly=0,
-                                                     filter=pureldap.LDAPFilter_present(value='objectClass'),
-                                                     attributes=('servicePassword',)),
-                          pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='wrong-s3krit'))
+        client.assertSent(
+            pureldap.LDAPSearchRequest(baseObject='dc=example,dc=com',
+                                       derefAliases=0,
+                                       sizeLimit=0,
+                                       timeLimit=0,
+                                       typesOnly=0,
+                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc1))'),
+                                       attributes=('1.1',)),
+            pureldap.LDAPSearchRequest(baseObject='dc=example,dc=com',
+                                       derefAliases=0,
+                                       sizeLimit=0,
+                                       timeLimit=0,
+                                       typesOnly=0,
+                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc2))'),
+                                       attributes=('1.1',)),
+            pureldap.LDAPSearchRequest(baseObject='dc=example,dc=com',
+                                       derefAliases=0,
+                                       sizeLimit=0,
+                                       timeLimit=0,
+                                       typesOnly=0,
+                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc3))'),
+                                       attributes=('1.1',)),
+            pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='wrong-s3krit'))
         self.assertEquals(server.transport.value(),
                           str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=ldaperrors.LDAPInvalidCredentials.resultCode), id=4)))
 
@@ -121,28 +167,28 @@ class ServiceBindingProxy(unittest.TestCase):
                       ],
             fallback=True,
             responses=[
-            [ pureldap.LDAPSearchResultEntry('cn=jack,dc=example,dc=com',
-                                             attributes=[('servicePassword', ['wrong foo',
-                                                                              'illegal',
-                                                                              'svc1 {SSHA}yVLLj62rFf3kDAbzwEU0zYAVvbWrze8=', #foo
-                                                                              'svc3 {SSHA}1feEJLgP7OB5mUKU/fYJzBoAGlOrze8=', #secret
-                                                                              'not-matching'])]),
-              pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode),
-              ],
+
+            # svc1
+            [ pureldap.LDAPSearchResultEntry(r'cn=svc1+owner=cn\=jack\,dc\=example\,dc\=com,dc=example,dc=com',
+                                             attributes=[]),
+              pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode) ],
+            [ pureldap.LDAPBindResponse(resultCode=ldaperrors.Success.resultCode) ],
             ])
+            
         server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='secret'), id=4)))
         reactor.iterate() #TODO
         client = server.client
 
-        client.assertSent(pureldap.LDAPSearchRequest(baseObject='cn=jack,dc=example,dc=com',
-                                                     scope=0,
-                                                     derefAliases=0,
-                                                     sizeLimit=0,
-                                                     timeLimit=0,
-                                                     typesOnly=0,
-                                                     filter=pureldap.LDAPFilter_present(value='objectClass'),
-                                                     attributes=('servicePassword',)),
-                          )
+        client.assertSent(
+            pureldap.LDAPSearchRequest(baseObject='dc=example,dc=com',
+                                       derefAliases=0,
+                                       sizeLimit=0,
+                                       timeLimit=0,
+                                       typesOnly=0,
+                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc1))'),
+                                       attributes=('1.1',)),
+            pureldap.LDAPBindRequest(dn=r'cn=svc1+owner=cn\=jack\,dc\=example\,dc\=com,dc=example,dc=com', auth='secret'),
+            )
         self.assertEquals(server.transport.value(),
                           str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=ldaperrors.Success.resultCode,
                                                                              matchedDN='cn=jack,dc=example,dc=com'), id=4)))
@@ -155,28 +201,52 @@ class ServiceBindingProxy(unittest.TestCase):
                       ],
             fallback=True,
             responses=[
-            [ pureldap.LDAPSearchResultEntry('cn=jack,dc=example,dc=com',
-                                             attributes=[('servicePassword', ['wrong foo',
-                                                                              'illegal',
-                                                                              'svc1 {SSHA}yVLLj62rFf3kDAbzwEU0zYAVvbWrze8=', #foo
-                                                                              'svc3 {SSHA}1feEJLgP7OB5mUKU/fYJzBoAGlOrze8=', #secret
-                                                                              'not-matching'])]),
-              pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode),
-              ],
+
+            # svc1
+            [ pureldap.LDAPSearchResultEntry(r'cn=svc1+owner=cn\=jack\,dc\=example\,dc\=com,dc=example,dc=com',
+                                             attributes=[]),
+              pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode) ],
+            [ pureldap.LDAPBindResponse(resultCode=ldaperrors.LDAPInvalidCredentials.resultCode) ],
+
+            # svc2
+            [ pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode) ],
+
+            # svc3
+            [ pureldap.LDAPSearchResultEntry(r'cn=svc3+owner=cn\=jack\,dc\=example\,dc\=com,dc=example,dc=com',
+                                             attributes=[]),
+              pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode) ],
+            [ pureldap.LDAPBindResponse(resultCode=ldaperrors.Success.resultCode) ],
             ])
-        server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='foo'), id=4)))
+            
+        server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='secret'), id=4)))
         reactor.iterate() #TODO
         client = server.client
 
-        client.assertSent(pureldap.LDAPSearchRequest(baseObject='cn=jack,dc=example,dc=com',
-                                                     scope=0,
-                                                     derefAliases=0,
-                                                     sizeLimit=0,
-                                                     timeLimit=0,
-                                                     typesOnly=0,
-                                                     filter=pureldap.LDAPFilter_present(value='objectClass'),
-                                                     attributes=('servicePassword',)),
-                          )
+        client.assertSent(
+            pureldap.LDAPSearchRequest(baseObject='dc=example,dc=com',
+                                       derefAliases=0,
+                                       sizeLimit=0,
+                                       timeLimit=0,
+                                       typesOnly=0,
+                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc1))'),
+                                       attributes=('1.1',)),
+            pureldap.LDAPBindRequest(dn=r'cn=svc1+owner=cn\=jack\,dc\=example\,dc\=com,dc=example,dc=com', auth='secret'),
+            pureldap.LDAPSearchRequest(baseObject='dc=example,dc=com',
+                                       derefAliases=0,
+                                       sizeLimit=0,
+                                       timeLimit=0,
+                                       typesOnly=0,
+                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc2))'),
+                                       attributes=('1.1',)),
+            pureldap.LDAPSearchRequest(baseObject='dc=example,dc=com',
+                                       derefAliases=0,
+                                       sizeLimit=0,
+                                       timeLimit=0,
+                                       typesOnly=0,
+                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc3))'),
+                                       attributes=('1.1',)),
+            pureldap.LDAPBindRequest(dn='cn=svc3+owner=cn\=jack\,dc\=example\,dc\=com,dc=example,dc=com', auth='secret'),
+            )
         self.assertEquals(server.transport.value(),
                           str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=ldaperrors.Success.resultCode,
                                                                              matchedDN='cn=jack,dc=example,dc=com'), id=4)))
@@ -189,29 +259,53 @@ class ServiceBindingProxy(unittest.TestCase):
                       ],
             fallback=True,
             responses=[
-            [ pureldap.LDAPSearchResultEntry('cn=jack,dc=example,dc=com',
-                                             attributes=[('servicePassword', ['wrong foo',
-                                                                              'illegal',
-                                                                              'svc1 {SSHA}yVLLj62rFf3kDAbzwEU0zYAVvbWrze8=', #foo
-                                                                              'svc3 {SSHA}1feEJLgP7OB5mUKU/fYJzBoAGlOrze8=', #secret
-                                                                              'not-matching'])]),
-              pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode),
-              ],
-            [ pureldap.LDAPBindResponse(resultCode=ldaperrors.LDAPInvalidCredentials.resultCode),
-              ],
+
+            # svc1
+            [ pureldap.LDAPSearchResultEntry(r'cn=svc1+owner=cn\=jack\,dc\=example\,dc\=com,dc=example,dc=com',
+                                             attributes=[]),
+              pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode) ],
+            [ pureldap.LDAPBindResponse(resultCode=ldaperrors.LDAPInvalidCredentials.resultCode) ],
+
+            # svc2
+            [ pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode) ],
+
+            # svc3
+            [ pureldap.LDAPSearchResultEntry(r'cn=svc3+owner=cn\=jack\,dc\=example\,dc\=com,dc=example,dc=com',
+                                             attributes=[]),
+              pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode) ],
+            [ pureldap.LDAPBindResponse(resultCode=ldaperrors.LDAPInvalidCredentials.resultCode) ],
+            [ pureldap.LDAPBindResponse(resultCode=ldaperrors.LDAPInvalidCredentials.resultCode) ],
             ])
+            
         server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='wrong-s3krit'), id=4)))
         reactor.iterate() #TODO
         client = server.client
 
-        client.assertSent(pureldap.LDAPSearchRequest(baseObject='cn=jack,dc=example,dc=com',
-                                                     scope=0,
-                                                     derefAliases=0,
-                                                     sizeLimit=0,
-                                                     timeLimit=0,
-                                                     typesOnly=0,
-                                                     filter=pureldap.LDAPFilter_present(value='objectClass'),
-                                                     attributes=('servicePassword',)),
-                          pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='wrong-s3krit'))
+        client.assertSent(
+            pureldap.LDAPSearchRequest(baseObject='dc=example,dc=com',
+                                       derefAliases=0,
+                                       sizeLimit=0,
+                                       timeLimit=0,
+                                       typesOnly=0,
+                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc1))'),
+                                       attributes=('1.1',)),
+            pureldap.LDAPBindRequest(dn=r'cn=svc1+owner=cn\=jack\,dc\=example\,dc\=com,dc=example,dc=com', auth='wrong-s3krit'),
+            pureldap.LDAPSearchRequest(baseObject='dc=example,dc=com',
+                                       derefAliases=0,
+                                       sizeLimit=0,
+                                       timeLimit=0,
+                                       typesOnly=0,
+                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc2))'),
+                                       attributes=('1.1',)),
+            pureldap.LDAPSearchRequest(baseObject='dc=example,dc=com',
+                                       derefAliases=0,
+                                       sizeLimit=0,
+                                       timeLimit=0,
+                                       typesOnly=0,
+                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc3))'),
+                                       attributes=('1.1',)),
+            pureldap.LDAPBindRequest(dn='cn=svc3+owner=cn\=jack\,dc\=example\,dc\=com,dc=example,dc=com', auth='wrong-s3krit'),
+            pureldap.LDAPBindRequest(version=3, dn='cn=jack,dc=example,dc=com', auth='wrong-s3krit'),
+            )
         self.assertEquals(server.transport.value(),
                           str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=ldaperrors.LDAPInvalidCredentials.resultCode), id=4)))
