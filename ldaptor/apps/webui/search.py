@@ -257,7 +257,8 @@ class SearchPage(rend.Page):
         methodDefaults = formDefaults.getAllDefaults('search')
         conf = self.locateConfigurable(context, '')
         for k,v in conf.data.items():
-            methodDefaults[k] = v
+            if v is not None:
+                methodDefaults[k] = str(v)
         return webform.renderForms()
 
     def render_keyvalue(self, context, data):
