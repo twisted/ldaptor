@@ -5,9 +5,10 @@ from ldaptor.protocols.ldap import ldapserver, ldapconnector, ldapclient
 from ldaptor.protocols import pureldap
 
 class Proxy(ldapserver.BaseLDAPServer):
+    protocol = ldapclient.LDAPClient
+
     client = None
     waitingConnect = []
-    protocol = ldapclient.LDAPClient
 
     def __init__(self, overrides):
         ldapserver.BaseLDAPServer.__init__(self)
