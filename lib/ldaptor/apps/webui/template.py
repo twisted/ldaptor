@@ -3,7 +3,7 @@ from twisted.web import widgets
 class BasicPage(widgets.Page):
     template = '''\
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html 
+<!DOCTYPE html
      PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
     "DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
@@ -21,5 +21,4 @@ class BasicPage(widgets.Page):
     title = 'No Title'
 
     def getContent(self, request):
-        return self.content
-
+	return self.content

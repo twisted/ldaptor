@@ -8,107 +8,107 @@ from twisted.internet import defer, reactor, protocol
 
 class PasswdClient(ldapclient.LDAPClient):
     def connectionMade(self):
-        if self.factory.binddn:
-            pwd = self.factory.bindPassword
-            if pwd is None:
-                pwd = getpass.getpass('Password for %s: ' \
-                                      % self.factory.binddn)
-            d=self.bind(self.factory.binddn, pwd)
-        else:
-            d=self.bind()
-        d.addCallbacks(self._handle_bind_success,
-                       self._handle_bind_fail)
+	if self.factory.binddn:
+	    pwd = self.factory.bindPassword
+	    if pwd is None:
+		pwd = getpass.getpass('Password for %s: ' \
+				      % self.factory.binddn)
+	    d=self.bind(self.factory.binddn, pwd)
+	else:
+	    d=self.bind()
+	d.addCallbacks(self._handle_bind_success,
+		       self._handle_bind_fail)
 
     def _report_ldap_error(self, fail):
-        print >>sys.stderr, "fail:", fail.getErrorMessage()
-        global exitStatus
-        exitStatus=1
+	print >>sys.stderr, "fail:", fail.getErrorMessage()
+	global exitStatus
+	exitStatus=1
 
 
     def getPassword(self, dn):
-        if not self.factory.generatePasswords:
-            pwd=getpass.getpass('NEW Password for %s: ' % dn)
-            return defer.succeed(pwd)
-        else:
-            return generate_password.generate(reactor)
+	if not self.factory.generatePasswords:
+	    pwd=getpass.getpass('NEW Password for %s: ' % dn)
+	    return defer.succeed(pwd)
+	else:
+	    return generate_password.generate(reactor)
 
     def _handle_bind_success(self, x):
-        l=[]
-        for dn in self.factory.dnlist:
-            d=self.getPassword(dn)
-            d.addCallbacks(callback=self._got_password,
-                           callbackArgs=(dn,),
-                           errback=self._report_pwgen_error)
-            l.append(d)
-        dl=defer.DeferredList(l)
-        dl.addBoth(lambda x, f=self.transport.loseConnection: f())
-        dl.addErrback(defer.logError)
-        dl.addBoth(lambda x, f=reactor.stop: f())
-        return x
+	l=[]
+	for dn in self.factory.dnlist:
+	    d=self.getPassword(dn)
+	    d.addCallbacks(callback=self._got_password,
+			   callbackArgs=(dn,),
+			   errback=self._report_pwgen_error)
+	    l.append(d)
+	dl=defer.DeferredList(l)
+	dl.addBoth(lambda x, f=self.transport.loseConnection: f())
+	dl.addErrback(defer.logError)
+	dl.addBoth(lambda x, f=reactor.stop: f())
+	return x
 
     def _handle_bind_fail(self, fail):
-        self._report_ldap_error(fail)
-        self.transport.loseConnection()
-        reactor.stop()
+	self._report_ldap_error(fail)
+	self.transport.loseConnection()
+	reactor.stop()
 
     def _report_new_password(self, dummy, dn, password):
-        if self.factory.generatePasswords:
-            print dn, password
+	if self.factory.generatePasswords:
+	    print dn, password
 
     def _change_samba_password(self, dummy, dn, password):
-        d=defer.Deferred()
-        ldapclient.LDAPModifySambaPassword(d, self,
-                                           object=dn,
-                                           newPassword=password)
-        return d
+	d=defer.Deferred()
+	ldapclient.LDAPModifySambaPassword(d, self,
+					   object=dn,
+					   newPassword=password)
+	return d
 
     def _got_password(self, password, dn):
-        assert len(password)==1
-        password=password[0]
-        d=defer.Deferred()
-        ldapclient.LDAPModifyPassword(d, self,
-                                      userIdentity=dn,
-                                      newPasswd=password)
-        if self.factory.sambaAlso:
-            d.addCallbacks(callback=self._change_samba_password,
-                           callbackArgs=(dn, password),
-                           errback=lambda x:x)
-        d.addCallbacks(callback=self._report_new_password,
-                       callbackArgs=(dn, password),
-                       errback=self._report_ldap_error)
-        return d
+	assert len(password)==1
+	password=password[0]
+	d=defer.Deferred()
+	ldapclient.LDAPModifyPassword(d, self,
+				      userIdentity=dn,
+				      newPasswd=password)
+	if self.factory.sambaAlso:
+	    d.addCallbacks(callback=self._change_samba_password,
+			   callbackArgs=(dn, password),
+			   errback=lambda x:x)
+	d.addCallbacks(callback=self._report_new_password,
+		       callbackArgs=(dn, password),
+		       errback=self._report_ldap_error)
+	return d
 
     def _report_pwgen_error(self, fail):
-        fail.trap(PwgenException)
-        print >>sys.stderr, 'pwgen:', fail.getErrorMessage()
-        return fail
+	fail.trap(PwgenException)
+	print >>sys.stderr, 'pwgen:', fail.getErrorMessage()
+	return fail
 
 class PasswdClientFactory(protocol.ClientFactory):
     protocol = PasswdClient
     def __init__(self, binddn, bindPassword=None,
-                 dnlist=(), generatePasswords=0,
-                 sambaAlso=0):
-        self.binddn = binddn
-        self.bindPassword = bindPassword
-        self.dnlist=dnlist
-        self.generatePasswords=generatePasswords
-        self.sambaAlso=sambaAlso
+		 dnlist=(), generatePasswords=0,
+		 sambaAlso=0):
+	self.binddn = binddn
+	self.bindPassword = bindPassword
+	self.dnlist=dnlist
+	self.generatePasswords=generatePasswords
+	self.sambaAlso=sambaAlso
 
 exitStatus=0
 
 class MyOptions(usage.Options,
-                usage.Options_service_location,
-                usage.Options_bind_mandatory):
+		usage.Options_service_location,
+		usage.Options_bind_mandatory):
     """LDAPtor command line password change utility"""
     synopsis = "Usage: %s --binddn=DN [OPTION..] [DN..]"
     optFlags = [
-        ('generate', None, 'Generate random passwords'),
-        ('samba', None, 'Change Samba password also'),
-        ]
+	('generate', None, 'Generate random passwords'),
+	('samba', None, 'Change Samba password also'),
+	]
 
     def parseArgs(self, dn, *dnlist):
-        dnlist = (dn,)+dnlist
-        self.opts['dnlist'] = dnlist
+	dnlist = (dn,)+dnlist
+	self.opts['dnlist'] = dnlist
 
 if __name__ == "__main__":
     import sys, os
@@ -116,26 +116,26 @@ if __name__ == "__main__":
     log.startLogging(sys.stderr, setStdout=0)
 
     try:
-        config = MyOptions()
-        config.parseOptions()
+	config = MyOptions()
+	config.parseOptions()
     except usage.UsageError, ue:
-        print >>sys.stderr, '%s:'%sys.argv[0], ue
-        sys.exit(1)
+	print >>sys.stderr, '%s:'%sys.argv[0], ue
+	sys.exit(1)
 
     bindPassword=None
     if config.opts['bind-auth-fd']:
-        f=os.fdopen(config.opts['bind-auth-fd'])
-        bindPassword=f.readline()
-        assert bindPassword[-1]=='\n'
-        bindPassword=bindPassword[:-1]
-        f.close()
+	f=os.fdopen(config.opts['bind-auth-fd'])
+	bindPassword=f.readline()
+	assert bindPassword[-1]=='\n'
+	bindPassword=bindPassword[:-1]
+	f.close()
 
     s=PasswdClientFactory(dnlist=config.opts['dnlist'],
-                          binddn=config.opts['binddn'],
-                          bindPassword=bindPassword,
-                          generatePasswords=config.opts['generate'],
-                          sambaAlso=config.opts['samba'],
-                          )
+			  binddn=config.opts['binddn'],
+			  bindPassword=bindPassword,
+			  generatePasswords=config.opts['generate'],
+			  sambaAlso=config.opts['samba'],
+			  )
     dn = distinguishedname.DistinguishedName(stringValue=config.opts['binddn'])
     c=ldapconnector.LDAPConnector(reactor, dn, s, overrides=config.opts['service-location'])
     c.connect()

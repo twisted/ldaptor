@@ -9,11 +9,11 @@ def getTestDir():
 def getTestSuites():
     dir=getTestDir()
     modules_to_test = [x[:-len(".py")] for x in os.listdir(dir)
-                       if (x.startswith("test_")
-                           and x.endswith(".py"))]
+		       if (x.startswith("test_")
+			   and x.endswith(".py"))]
     alltests = unittest.TestSuite()
     for module in map(__import__, modules_to_test):
-        alltests.addTest(unittest.findTestCases(module))
+	alltests.addTest(unittest.findTestCases(module))
     return alltests
 
 if __name__ == '__main__':

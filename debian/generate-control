@@ -10,66 +10,66 @@ def reflow(s):
     out=StringIO.StringIO()
     w=formatter.DumbWriter(out)
     for para in s.split('\n\n'):
-        if para[:1]==' ':
-            w.send_literal_data(para)
-        else:
-            w.send_flowing_data(para)
-            w.send_literal_data('\n')
-        w.send_paragraph(1)
+	if para[:1]==' ':
+	    w.send_literal_data(para)
+	else:
+	    w.send_flowing_data(para)
+	    w.send_literal_data('\n')
+	w.send_paragraph(1)
 
     l=[]
     for line in out.getvalue().split('\n'):
-        if line=='':
-            l.append(' .')
-        else:
-            l.append(' '+line)
+	if line=='':
+	    l.append(' .')
+	else:
+	    l.append(' '+line)
     while l and l[-1]==' .':
-        del l[-1]
+	del l[-1]
     return '\n'.join(l)
-            
+
 
 class CmdDict:
     def __init__(self, setup=None, **kwargs):
-        self.setup=setup
-        self.vars=kwargs
+	self.setup=setup
+	self.vars=kwargs
 
     def handle_var(self, var):
-        return self.vars[var]
-        
+	return self.vars[var]
+
     def handle_setup(self, cmd):
-        assert self.setup
-        return self.handle_shell('python %s %s'%(self.setup, cmd))
+	assert self.setup
+	return self.handle_shell('python %s %s'%(self.setup, cmd))
 
     def handle_extract_setup_var(self, var):
-        """Extract a variable from a comment inside the setup file."""
-        assert self.setup
-        f=open(self.setup)
-        start="#%s:" % var
-        for line in f.xreadlines():
-            line=line.strip()
-            if line.startswith(start):
-                line=line[len(start):].strip()
-                return line
-        raise 'No special variable %s in setup file %s' \
-              % (repr(var), self.setup)
+	"""Extract a variable from a comment inside the setup file."""
+	assert self.setup
+	f=open(self.setup)
+	start="#%s:" % var
+	for line in f.xreadlines():
+	    line=line.strip()
+	    if line.startswith(start):
+		line=line[len(start):].strip()
+		return line
+	raise 'No special variable %s in setup file %s' \
+	      % (repr(var), self.setup)
 
     def handle_shell(self, cmd):
-        status, output = commands.getstatusoutput(cmd)
-        if status:
-            raise 'Command %s failed with exit status %d.' \
-                  % (repr(cmd), status)
-        return output
-    
+	status, output = commands.getstatusoutput(cmd)
+	if status:
+	    raise 'Command %s failed with exit status %d.' \
+		  % (repr(cmd), status)
+	return output
+
     def handle_forpython(self, s):
-        l=[]
-        for pyver in PYTHON_VERSIONS:
-            l.append(s % pyver)
-        return ', '.join(l)
+	l=[]
+	for pyver in PYTHON_VERSIONS:
+	    l.append(s % pyver)
+	return ', '.join(l)
 
     def __getitem__(self, s):
-        first, rest = s.split(None, 1)
-        f=getattr(self, 'handle_'+first.replace('-', '_'))
-        return f(rest)
+	first, rest = s.split(None, 1)
+	f=getattr(self, 'handle_'+first.replace('-', '_'))
+	return f(rest)
 
 otherpackage = """
 Package: %(var package)s
@@ -90,10 +90,10 @@ printed_source=0
 for filename in os.listdir('.'):
     if not filename.startswith('setup-') \
        or not filename.endswith('.py'):
-        continue
+	continue
     if not printed_source:
-        printed_source=1
-        print """\
+	printed_source=1
+	print """\
 Source: %(shell dpkg-parsechangelog|sed -n 's/^Source: //p')s
 Section: %(extract-setup-var debian-section)s
 Priority: optional
@@ -104,39 +104,39 @@ Build-Depends-Indep: %(forpython python%s-dev)s
     package=filename[len('setup-'):-len('.py')]
 
     if package.startswith('python-'):
-        c = CmdDict(filename,
-                    python_version='',
-                    package=package,
-                    extra_depends=', python'+PYTHON_VERSION_DEFAULT+'-'+package[len('python-'):],
-                    )
-        print pypackage.strip() % c
-        print reflow('%(setup --long-description)s' % c)
-        print ' .'
-        print '''\
+	c = CmdDict(filename,
+		    python_version='',
+		    package=package,
+		    extra_depends=', python'+PYTHON_VERSION_DEFAULT+'-'+package[len('python-'):],
+		    )
+	print pypackage.strip() % c
+	print reflow('%(setup --long-description)s' % c)
+	print ' .'
+	print '''\
  This is a dummy package that depends on the correct version of
  %s for the default version of Python.
 '''.rstrip() % package
-        print
+	print
 
-        for pyver in PYTHON_VERSIONS:
-            pkgname='python'+pyver+'-'+package[len('python-'):]
-            c=CmdDict(
-                filename,
-                package=pkgname,
-                python_version=pyver,
-                extra_depends='',
-                )
-            print pypackage.strip() % c
-            print reflow('%(setup --long-description)s' % c)
-            print ' .'
-            print ' This version is usable with python%s' % pyver
-            print
+	for pyver in PYTHON_VERSIONS:
+	    pkgname='python'+pyver+'-'+package[len('python-'):]
+	    c=CmdDict(
+		filename,
+		package=pkgname,
+		python_version=pyver,
+		extra_depends='',
+		)
+	    print pypackage.strip() % c
+	    print reflow('%(setup --long-description)s' % c)
+	    print ' .'
+	    print ' This version is usable with python%s' % pyver
+	    print
 
     else:
-        c=CmdDict(filename, package=package,
-                  PYTHON_VERSION_DEFAULT=PYTHON_VERSION_DEFAULT,
-                  PYTHON_VERSION_TOOBIG=PYTHON_VERSION_TOOBIG,
-                  )
-        print otherpackage.strip() % c
-        print reflow('%(setup --long-description)s' % c)
-        print
+	c=CmdDict(filename, package=package,
+		  PYTHON_VERSION_DEFAULT=PYTHON_VERSION_DEFAULT,
+		  PYTHON_VERSION_TOOBIG=PYTHON_VERSION_TOOBIG,
+		  )
+	print otherpackage.strip() % c
+	print reflow('%(setup --long-description)s' % c)
+	print

@@ -8,26 +8,26 @@ from twisted.internet import protocol, reactor, defer
 
 class Search(ldapclient.LDAPClient):
     def connectionMade(self):
-        d=self.bind()
-        d.addCallback(self._handle_bind_success)
-        d.chainDeferred(self.factory.deferred)
+	d=self.bind()
+	d.addCallback(self._handle_bind_success)
+	d.chainDeferred(self.factory.deferred)
 
     def _handle_bind_success(self, x):
-        matchedDN, serverSaslCreds = x
-        o=ldapsyntax.LDAPObject(client=self,
-                                dn=self.factory.base)
-        return numberalloc.getFreeNumber(o,
-                                         'uidNumber',
-                                         min=1000)
+	matchedDN, serverSaslCreds = x
+	o=ldapsyntax.LDAPObject(client=self,
+				dn=self.factory.base)
+	return numberalloc.getFreeNumber(o,
+					 'uidNumber',
+					 min=1000)
 
 class SearchFactory(protocol.ClientFactory):
     protocol = Search
     def __init__(self, deferred, base):
-        self.deferred=deferred
-        self.base=base
+	self.deferred=deferred
+	self.base=base
 
     def clientConnectionFailed(self, connector, reason):
-        self.deferred.errback(reason)
+	self.deferred.errback(reason)
 
 exitStatus=0
 
@@ -56,10 +56,10 @@ class MyOptions(usage.Options, usage.Options_service_location, usage.Options_bas
 
 if __name__ == "__main__":
     try:
-        config = MyOptions()
-        config.parseOptions()
+	config = MyOptions()
+	config.parseOptions()
     except usage.UsageError, ue:
-        sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
-        sys.exit(1)
+	sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
+	sys.exit(1)
 
     main(config.opts['base'], config.opts['service-location'])

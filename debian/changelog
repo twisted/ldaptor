@@ -1,3 +1,11 @@
+ldaptor (0.0.14) unstable; urgency=low
+
+  * Refactor ldaptor-webui add to use new-style getFreeNumber --
+    missed this the first time around.
+  * Python 2.1 namespace handling compatibility.
+
+ -- Tommi Virtanen <tv@debian.org>  Sat, 25 Jan 2003 18:05:11 +0200
+
 ldaptor (0.0.13) unstable; urgency=low
 
   * Bring test suite up to date.

@@ -10,11 +10,11 @@ class DpkgParseChangelogBadOutputError(Exception):
 def getVersion():
     status, output = commands.getstatusoutput('dpkg-parsechangelog')
     if status!=0:
-        raise DpkgParseChangelogFailedError(status)
+	raise DpkgParseChangelogFailedError(status)
     for line in output.split('\n'):
-        if line.startswith('Version: '):
-            version = line[len('Version: '):]
-            return version
+	if line.startswith('Version: '):
+	    version = line[len('Version: '):]
+	    return version
     raise DpkgParseChangelogBadOutputError(output)
 
 
@@ -25,14 +25,14 @@ class BkChangesBadOutputError(Exception):
 def getBkChanges(tag):
     status, output = commands.getstatusoutput('bk changes -fm -r%s..'%tag)
     if status!=0:
-        raise BkChangesFailedError(status)
+	raise BkChangesFailedError(status)
     lines=[l for l in output.split('\n') if l]
 
     # strip first changeset as it always the tagged one, and thus old
     assert lines[0].startswith('ChangeSet@')
     del lines[0]
     while lines and not lines[0].startswith('ChangeSet@'):
-        del lines[0]
+	del lines[0]
 
     lines=[l for l in lines if not l.startswith('ChangeSet@')]
     assert [l.startswith('  ') for l in lines]
@@ -42,21 +42,21 @@ def getBkChanges(tag):
 
 def formatBkChanges(lines):
     for line in lines:
-        out=StringIO.StringIO()
-        w=formatter.DumbWriter(out, maxcol=62)
-        w.send_flowing_data(line)
-        w.send_paragraph(1)
-        formattedLines = out.getvalue().split('\n')
-        formattedLines = [l for l in formattedLines if l]
-        if formattedLines:
-            print '  * '+'\n    '.join(formattedLines)
+	out=StringIO.StringIO()
+	w=formatter.DumbWriter(out, maxcol=62)
+	w.send_flowing_data(line)
+	w.send_paragraph(1)
+	formattedLines = out.getvalue().split('\n')
+	formattedLines = [l for l in formattedLines if l]
+	if formattedLines:
+	    print '  * '+'\n    '.join(formattedLines)
 
 if __name__=='__main__':
     ver=getVersion()
     if ver.endswith('.snapshot'):
-        ver=ver[:-len('.snapshot')]
+	ver=ver[:-len('.snapshot')]
     tag='version-'+ver
     changes = getBkChanges(tag)
     if not changes:
-        sys.exit(1)
+	sys.exit(1)
     formatBkChanges(changes)

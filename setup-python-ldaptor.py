@@ -6,8 +6,8 @@ from distutils.core import setup, Extension
 
 if __name__=='__main__':
     setup(name="python-ldaptor",
-          description="Pure-Python library for LDAP",
-          long_description="""
+	  description="Pure-Python library for LDAP",
+	  long_description="""
 Ldaptor is a pure-Python library that implements
 
 - LDAP client logic.
@@ -23,18 +23,18 @@ generation/parsing.
 
 
 """.strip(),
-          author="Tommi Virtanen",
-          author_email="tv@debian.org",
-          #url="TODO",
-          licence="GNU LGPL",
-          
-          package_dir={"": "lib"},
-          packages=[
-        "ldaptor",
-        
-        "ldaptor.protocols", "ldaptor.protocols.ldap",
+	  author="Tommi Virtanen",
+	  author_email="tv@debian.org",
+	  #url="TODO",
+	  licence="GNU LGPL",
+
+	  package_dir={"": "lib"},
+	  packages=[
+	"ldaptor",
+
+	"ldaptor.protocols", "ldaptor.protocols.ldap",
 	"ldaptor.samba",
-        
-        "ldaptor.apps",
-        ],
-          )
+
+	"ldaptor.apps",
+	],
+	  )
