@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from ldaptor.protocols.ldap import ldapclient, distinguishedname, ldapconnector
+from ldaptor.protocols.ldap import distinguishedname, ldapconnector, ldapsyntax, ldapclient
 from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage, ldapfilter, config
 from socket import inet_aton, inet_ntoa
@@ -128,136 +128,94 @@ class Net:
 		+'mask=%s' % repr(self.mask)
 		+')')
 
-class SearchHosts(ldapclient.LDAPSearch):
-    def __init__(self, deferred, client, base, filter):
-	self.entries = []
-	filt=pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('objectClass'),
-					       assertionValue=pureber.BEROctetString('ipHost'))
-	if filter:
-	    filt = pureldap.LDAPFilter_and(value=(filter, filt))
-	ldapclient.LDAPSearch.__init__(self, deferred, client,
-				       baseObject=base,
-				       filter=filt,
-				       attributes=['ipHostNumber',
-						   'cn'])
-	deferred.addCallbacks(
-	    callback=lambda searchHosts: searchHosts.entries,
-	    errback=lambda x: x,
-	    )
 
-    def handle_entry(self, objectName, attributes):
-	args = {}
-	for k,vs in attributes:
-	    k=str(k)
-	    args[k]=vs
-
-	assert len(args['cn'])==1, \
-	       "object %s attribute 'cn' has multiple values: %s" \
-	       % (objectName, args['cn'])
-
-	self.entries.append(Host(str(objectName),
-				 str(args['cn'][0]),
-				 map(str, args['ipHostNumber'])))
-
-class SearchNets(ldapclient.LDAPSearch):
-    def __init__(self, deferred, client, base, filter):
-	self.entries = []
-	filt=pureldap.LDAPFilter_and(value=(
-	    pureldap.LDAPFilter_present('cn'),
-	    pureldap.LDAPFilter_present('ipNetworkNumber'),
-	    pureldap.LDAPFilter_present('ipNetmaskNumber'),
-	    ))
-	if filter:
-	    filt = pureldap.LDAPFilter_and(value=(filter, filt))
-	ldapclient.LDAPSearch.__init__(self, deferred, client,
-				       baseObject=base,
-				       filter=filt,
-				       attributes=['cn',
-						   'ipNetworkNumber',
-						   'ipNetmaskNumber',
-						   ])
-	deferred.addCallbacks(
-	    callback=lambda searchNets: searchNets.entries,
-	    errback=lambda x: x,
-	    )
-
-    def handle_entry(self, objectName, attributes):
-	args = {}
-	for k,vs in attributes:
-	    k=str(k)
-	    args[k]=map(str, vs)
-
-	assert len(args['cn'])==1, \
-	       "object %s attribute 'cn' has multiple values: %s" \
-	       % (objectName, args['cn'])
-	assert len(args['ipNetworkNumber'])==1, \
-	       "object %s attribute 'ipNetworkNumber' has multiple values: %s" \
-	       % (objectName, args['ipNetworkNumber'])
-	assert len(args['ipNetmaskNumber'])==1, \
-	       "object %s attribute 'ipNetmaskNumber' has multiple values: %s" \
-	       % (objectName, args['ipNetmaskNumber'])
-
-	self.entries.append(Net(str(objectName),
-				str(args['cn'][0]),
-				str(args['ipNetworkNumber'][0]),
-				str(args['ipNetmaskNumber'][0])))
-
-class Search(ldapclient.LDAPClient):
-    def connectionMade(self):
-	d=self.bind()
-	d.addCallback(self._handle_bind_success)
-	d.addErrback(defer.logError)
-	d.chainDeferred(self.factory.deferred)
-
-    def _handle_bind_success(self, x):
-	d1=defer.Deferred()
-	SearchNets(d1, self, self.factory.base, self.factory.filt)
-	d1.addCallbacks(callback=self.haveNets,
-			errback=defer.logError)
-	return d1
-
-    def haveNets(self, nets):
-	self.nets = nets
-	d=defer.Deferred()
-	SearchHosts(d, self, self.factory.base, self.factory.filt)
-	d.addCallbacks(callback=self.haveHosts,
-		       errback=defer.logError)
-	return d
-
-    def haveHosts(self, hosts):
-	for host in hosts:
-	    for hostIP in host.ipAddresses:
-		parent=None
-		for net in self.nets:
-		    if net.isInNet(hostIP.ipAddress):
-			parent=net
-			break
-
-		if parent:
-		    parent.addHost(hostIP)
-		else:
-		    sys.stderr.write("IP address %s is in no net, discarding.\n" % hostIP)
-
-	for net in self.nets:
-	    net.printZone()
-
-class SearchFactory(protocol.ClientFactory):
-    protocol = Search
-
-    def __init__(self, base, filt, deferred):
-	self.base=base
-	self.filt=filt
-	self.deferred=deferred
-
-    def clientConnectionFailed(self, connector, reason):
-	self.deferred.errback(reason)
 
 exitStatus=0
 
 def error(fail):
-    print >>sys.stderr, 'fail:', fail.getErrorMessage()
+    print >>sys.stderr, 'fail:', str(fail) #.getErrorMessage()
     global exitStatus
     exitStatus=1
+
+def only(e, attrName):
+    assert len(e[attrName])==1, \
+           "object %s attribute %r has multiple values: %s" \
+           % (e.dn, attrName, e[attrName])
+    for val in e[attrName]:
+        return val
+
+def getNets(e, filter):
+    filt=pureldap.LDAPFilter_and(value=(
+        pureldap.LDAPFilter_present('cn'),
+        pureldap.LDAPFilter_present('ipNetworkNumber'),
+        pureldap.LDAPFilter_present('ipNetmaskNumber'),
+        ))
+    if filter:
+        filt = pureldap.LDAPFilter_and(value=(filter, filt))
+    d = e.search(filterObject=filt,
+                 attributes=['cn',
+                             'ipNetworkNumber',
+                             'ipNetmaskNumber',
+                             ])
+    def _cbGotNets(nets):
+        r = []
+        for e in nets:
+            net = Net(str(e.dn),
+                      str(only(e, 'cn')),
+                      str(only(e, 'ipNetworkNumber')),
+                      str(only(e, 'ipNetmaskNumber')))
+            r.append(net)
+        return r
+    d.addCallback(_cbGotNets)
+    return d
+
+def getHosts(nets, e, filter):
+    filt=pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('objectClass'),
+                                           assertionValue=pureber.BEROctetString('ipHost'))
+    if filter:
+        filt = pureldap.LDAPFilter_and(value=(filter, filt))
+    d = e.search(filterObject=filt,
+                 attributes=['ipHostNumber',
+                             'cn'])
+    def _cbGotHosts(hosts):
+        r = []
+        for e in hosts:
+            host = Host(str(e.dn),
+                        str(only(e, 'cn')),
+                        map(str, e['ipHostNumber']))
+            r.append(host)
+        return r
+    d.addCallback(_cbGotHosts)
+    d.addCallback(lambda hosts: (nets, hosts))
+    return d
+
+def show((nets, hosts)):
+    for host in hosts:
+        for hostIP in host.ipAddresses:
+            parent=None
+            for net in nets:
+                if net.isInNet(hostIP.ipAddress):
+                    parent=net
+                    break
+
+            if parent:
+                parent.addHost(hostIP)
+            else:
+                sys.stderr.write("IP address %s is in no net, discarding.\n" % hostIP)
+
+    for net in nets:
+        net.printZone()
+
+def cbConnected(client, cfg, filter):
+    e = ldapsyntax.LDAPEntryWithClient(client, cfg.getBaseDN())
+    d = getNets(e, filter)
+    d.addCallback(getHosts, e, filter)
+    def unbind(r, e):
+        e.client.unbind()
+        return r
+    d.addCallback(unbind, e)
+    d.addCallback(show)
+    return d
 
 def main(cfg, filter_text):
     from twisted.python import log
@@ -274,14 +232,14 @@ def main(cfg, filter_text):
     else:
 	filt = None
 
-    d=defer.Deferred()
-    s=SearchFactory(baseDN, filt, d)
+    c=ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
+    d = c.connectAnonymously(
+        baseDN,
+        overrides=cfg.getServiceLocationOverrides())
+    d.addCallback(cbConnected, cfg, filt)
     d.addErrback(error)
     d.addBoth(lambda x: reactor.stop())
-    dn = distinguishedname.DistinguishedName(baseDN)
-    c=ldapconnector.LDAPConnector(reactor, dn, s,
-                                  overrides=cfg.getServiceLocationOverrides())
-    c.connect()
+
     reactor.run()
     sys.exit(exitStatus)
 
