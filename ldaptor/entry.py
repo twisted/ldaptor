@@ -1,10 +1,24 @@
-import sets
+import sets, random, sha, base64
 from twisted.python.util import InsensitiveDict
 from ldaptor import interfaces, attributeset, delta
 from ldaptor.protocols.ldap import distinguishedname, ldif
 
+def sshaDigest(passphrase, salt=None):
+    if salt is None:
+        salt = ''
+        for i in range(8):
+            salt += ord(random.randint(0, 255))
+
+    s = sha.sha()
+    s.update(passphrase)
+    s.update(salt)
+    encoded = base64.encodestring(s.digest()+salt).rstrip()
+    crypt = '{SSHA}' + encoded
+    return crypt
+
 class BaseLDAPEntry(object):
     __implements__ = (interfaces.ILDAPEntry,)
+    dn = None
 
     def __init__(self, dn, attributes={}):
 	"""
@@ -17,11 +31,9 @@ class BaseLDAPEntry(object):
 	attribute types to list of attribute values.
 
 	"""
-        if not isinstance(dn, distinguishedname.DistinguishedName):
-            dn=distinguishedname.DistinguishedName(stringValue=dn)
-	self.dn=dn
-
 	self._attributes=InsensitiveDict()
+	self.dn = distinguishedname.DistinguishedName(dn)
+
 	for k,vs in attributes.items():
             if k not in self._attributes:
                 self._attributes[k] = []
@@ -153,6 +165,16 @@ class BaseLDAPEntry(object):
                 r.append(delta.Delete(shared, deletedValues))
 
         return delta.ModifyOp(dn=self.dn, modifications=r)
+
+    def bind(self, password):
+        for digest in self.get('userPassword', ()):
+            if digest.startswith('{SSHA}'):
+                raw = base64.decodestring(digest[len('{SSHA}'):])
+                salt = raw[20:]
+                got = sshaDigest(password, salt)
+                if got == digest:
+                    return True
+        return False
         
 
 class EditableLDAPEntry(BaseLDAPEntry):
@@ -177,5 +199,6 @@ class EditableLDAPEntry(BaseLDAPEntry):
     def delete(self):
         raise NotImplementedError
 
-    def setPassword(self, newPasswd):
-        raise NotImplementedError
+    def setPassword(self, newPasswd, salt=None):
+        crypt = sshaDigest(newPasswd, salt)
+        self['userPassword'] = [crypt]

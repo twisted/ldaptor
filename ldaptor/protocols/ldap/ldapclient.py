@@ -30,15 +30,17 @@ class LDAPClientConnectionLostException(ldaperrors.LDAPException):
 
 class LDAPClient(protocol.Protocol):
     """An LDAP client"""
+    debug = False
 
     def __init__(self):
 	self.onwire = {}
 	self.buffer = MutableString()
 	self.connected = None
 
-    berdecoder = pureldap.LDAPBERDecoderContext_LDAPMessage(
-	inherit=pureldap.LDAPBERDecoderContext(
-	fallback=pureber.BERDecoderContext()))
+    berdecoder = pureldap.LDAPBERDecoderContext_TopLevel(
+        inherit=pureldap.LDAPBERDecoderContext_LDAPMessage(
+        fallback=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext()),
+        inherit=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext())))
 
     def dataReceived(self, recd):
 	self.buffer.append(recd)
@@ -59,15 +61,19 @@ class LDAPClient(protocol.Protocol):
 	"""Called when TCP connection has been lost"""
 	self.connected = 0
 
-    def queue(self, op, handler=None):
+    def queue(self, op, handler=None, *args, **kwargs):
 	if not self.connected:
 	    raise LDAPClientConnectionLostException()
 	msg=pureldap.LDAPMessage(op)
-	#log.msg('-> %s' % repr(msg))
+        if self.debug:
+            log.debug('C->S %s' % repr(msg))
 	assert not self.onwire.has_key(msg.id)
-	assert op.needs_answer or not handler
+	assert op.needs_answer or handler is None
+        assert ((args==()
+                 and kwargs=={})
+                or handler is not None)
 	if op.needs_answer:
-	    self.onwire[msg.id]=handler
+	    self.onwire[msg.id]=(handler, args, kwargs)
 	self.transport.write(str(msg))
 
     def unsolicitedNotification(self, msg):
@@ -75,15 +81,16 @@ class LDAPClient(protocol.Protocol):
 
     def handle(self, msg):
 	assert isinstance(msg.value, pureldap.LDAPProtocolResponse)
-	#log.msg('<- %s' % repr(msg))
+        if self.debug:
+            log.debug('C<-S %s' % repr(msg))
 
 	if msg.id==0:
 	    self.unsolicitedNotification(msg.value)
 	else:
-	    handler = self.onwire[msg.id]
+	    handler, args, kwargs = self.onwire[msg.id]
 
 	    # Return true to mark request as fully handled
-	    if handler is None or handler(msg.value):
+	    if handler is None or handler(msg.value, *args, **kwargs):
 		del self.onwire[msg.id]
 
 
@@ -163,42 +170,4 @@ class LDAPSearch(LDAPOperation):
 	    return 0
 
     def handle_entry(self, objectName, attributes):
-	pass
-
-class LDAPAddEntry(LDAPOperation):
-    def __init__(self,
-		 client,
-		 object,
-		 attributes):
-	"""
-	Request addition of LDAP entry.
-
-	object is a string representation of the object DN.
-
-	attributes is a list of LDAPAttributeDescription,
-	BERSet(LDAPAttributeValue, ..) pairs.
-
-	"""
-
-	LDAPOperation.__init__(self, client)
-	r=pureldap.LDAPAddRequest(entry=object,
-				  attributes=attributes)
-	self.client.queue(r, self.handle_msg)
-
-    def handle_msg(self, msg):
-	assert isinstance(msg, pureldap.LDAPAddResponse)
-	assert msg.referral is None #TODO
-	if msg.resultCode==0: #TODO ldap.errors.success
-	    assert msg.matchedDN==''
-	    self.handle_success()
-	    return 1
-	else:
-	    self.handle_fail(Failure(
-		ldaperrors.get(msg.resultCode, msg.errorMessage)))
-	    return 1
-
-    def handle_success(self):
-	pass
-
-    def handle_fail(self, fail):
 	pass

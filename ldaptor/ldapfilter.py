@@ -48,20 +48,25 @@ def parseExtensible(attr, s):
 from pyparsing import Word, Literal, Optional, ZeroOrMore, Suppress, \
                        Group, Forward, OneOrMore, ParseException, \
                        CharsNotIn, Combine, empty, StringStart, \
-                       StringEnd
+                       StringEnd, delimitedList
 
 import copy, string
 
 filter_ = Forward()
-attr = Word('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
-            'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789;-',)
+attr = Word(string.ascii_letters,
+            string.ascii_letters + string.digits + ';-',)
 attr.leaveWhitespace()
-escaped = Suppress(Literal('\\'))+Word(string.hexdigits, exact=2)
+attr.setName('attr')
+hexdigits = Word(string.hexdigits, exact=2)
+hexdigits.setName('hexdigits')
+escaped = Suppress(Literal('\\'))+hexdigits
+escaped.setName('escaped')
 def _p_escaped(s,l,t):
     text=t[0]
     return chr(int(text, 16))
 escaped.setParseAction(_p_escaped)
 value = Combine(OneOrMore(CharsNotIn('*()\\\0') | escaped))
+value.setName('value')
 equal = Literal("=")
 equal.setParseAction(lambda s,l,t: pureldap.LDAPFilter_equalityMatch)
 approx = Literal("~=")
@@ -71,8 +76,10 @@ greater.setParseAction(lambda s,l,t: pureldap.LDAPFilter_greaterOrEqual)
 less = Literal("<=")
 less.setParseAction(lambda s,l,t: pureldap.LDAPFilter_lessOrEqual)
 filtertype = equal | approx | greater | less
+filtertype.setName('filtertype')
 simple = attr + filtertype + value
 simple.leaveWhitespace()
+simple.setName('simple')
 def _p_simple(s,l,t):
     attr, filtertype, value = t
     return filtertype(attributeDesc=pureldap.LDAPAttributeDescription(attr),
@@ -82,12 +89,16 @@ present = attr + "=*"
 present.setParseAction(lambda s,l,t: pureldap.LDAPFilter_present(t[0]))
 initial = copy.copy(value)
 initial.setParseAction(lambda s,l,t: pureldap.LDAPFilter_substrings_initial(t[0]))
+initial.setName('initial')
 any_value = value + Suppress(Literal("*"))
 any_value.setParseAction(lambda s,l,t: pureldap.LDAPFilter_substrings_any(t[0]))
 any = Suppress(Literal("*")) + ZeroOrMore(any_value)
+any.setName('any')
 final = copy.copy(value)
+final.setName('final')
 final.setParseAction(lambda s,l,t: pureldap.LDAPFilter_substrings_final(t[0]))
 substring = attr + Suppress(Literal("=")) + Group(Optional(initial) + any + Optional(final))
+substring.setName('substring')
 def _p_substring(s,l,t):
     attrtype, substrings = t
     return pureldap.LDAPFilter_substrings(
@@ -95,15 +106,19 @@ def _p_substring(s,l,t):
         substrings=substrings)
 substring.setParseAction(_p_substring)
 
-keystring = Word('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
-                 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789;-')
-numericoid = Combine(Word('0123456789') + ZeroOrMore(Literal('.') + Word('0123456789')))
+keystring = Word(string.ascii_letters,
+                 string.ascii_letters + string.digits + ';-')
+keystring.setName('keystring')
+numericoid = delimitedList(Word(string.digits), delim='.', combine=True)
+numericoid.setName('numericoid')
 oid = numericoid | keystring
+oid.setName('oid')
 matchingrule = copy.copy(oid)
+matchingrule.setName('matchingrule')
 
 extensible_dn = Optional(":dn")
 def _p_extensible_dn(s,l,t):
-    return not not t
+    return bool(t)
 extensible_dn.setParseAction(_p_extensible_dn)
 
 matchingrule_or_none = Optional(Suppress(":") + matchingrule)
@@ -115,17 +130,20 @@ def _p_matchingrule_or_none(s,l,t):
 matchingrule_or_none.setParseAction(_p_matchingrule_or_none)
 
 extensible_attr = attr + extensible_dn + matchingrule_or_none + Suppress(":=") + value
+extensible_attr.setName('extensible_attr')
 def _p_extensible_attr(s,l,t):
     return list(t)
 extensible_attr.setParseAction(_p_extensible_attr)
 
 
 extensible_noattr = extensible_dn + Suppress(":") + matchingrule + Suppress(":=") + value
+extensible_noattr.setName('extensible_noattr')
 def _p_extensible_noattr(s,l,t):
     return [None]+list(t)
 extensible_noattr.setParseAction(_p_extensible_noattr)
 
 extensible = extensible_attr | extensible_noattr
+extensible.setName('extensible')
 def _p_extensible(s,l,t):
     attr, dn, matchingRule, value = t
     return pureldap.LDAPFilter_extensibleMatch(
@@ -135,18 +153,24 @@ def _p_extensible(s,l,t):
         dnAttributes=dn)
 extensible.setParseAction(_p_extensible)
 item = simple ^ present ^ substring ^ extensible
+item.setName('item')
 item.leaveWhitespace()
 not_ = Suppress(Literal('!')) + filter_
 not_.setParseAction(lambda s,l,t: pureldap.LDAPFilter_not(t[0]))
+not_.setName('not')
 filterlist = OneOrMore(filter_)
 or_ = Suppress(Literal('|')) + filterlist
 or_.setParseAction(lambda s,l,t: pureldap.LDAPFilter_or(t))
+or_.setName('or')
 and_ = Suppress(Literal('&')) + filterlist
 and_.setParseAction(lambda s,l,t: pureldap.LDAPFilter_and(t))
+and_.setName('and')
 filtercomp = and_ | or_ | not_ | item
+filtercomp.setName('filtercomp')
 filter_ << (Suppress(Literal('(').leaveWhitespace())
             + filtercomp
             + Suppress(Literal(')').leaveWhitespace()))
+filter_.setName('filter')
 filtercomp.leaveWhitespace()
 filter_.leaveWhitespace()
 
@@ -154,6 +178,7 @@ toplevel = (StringStart().leaveWhitespace()
             + filter_
             + StringEnd().leaveWhitespace())
 toplevel.leaveWhitespace()
+toplevel.setName('toplevel')
 
 def parseFilter(s):
     try:
@@ -164,6 +189,47 @@ def parseFilter(s):
                                   e.line)
     assert len(x)==1
     return x[0]
+
+
+maybeSubString_value = Combine(OneOrMore(CharsNotIn('*\\\0') | escaped))
+
+maybeSubString_simple = copy.copy(maybeSubString_value)
+def _p_maybeSubString_simple(s,l,t):
+    return (lambda attr:
+            pureldap.LDAPFilter_equalityMatch(
+        attributeDesc=pureldap.LDAPAttributeDescription(attr),
+        assertionValue=pureldap.LDAPAssertionValue(t[0])))
+maybeSubString_simple.setParseAction(_p_maybeSubString_simple)
+
+maybeSubString_present = Literal("*")
+def _p_maybeSubString_present(s,l,t):
+    return (lambda attr:
+            pureldap.LDAPFilter_present(attr))
+maybeSubString_present.setParseAction(_p_maybeSubString_present)
+
+maybeSubString_substring = Optional(initial) + any + Optional(final)
+def _p_maybeSubString_substring(s,l,t):
+    return (lambda attr:
+            pureldap.LDAPFilter_substrings(
+        type=attr,
+        substrings=t))
+maybeSubString_substring.setParseAction(_p_maybeSubString_substring)
+
+maybeSubString = (maybeSubString_simple
+                  ^ maybeSubString_present
+                  ^ maybeSubString_substring
+                  )
+
+def parseMaybeSubstring(attrType, s):
+    try:
+        x=maybeSubString.parseString(s)
+    except ParseException, e:
+        raise InvalidLDAPFilter, (e.msg,
+                                  e.loc,
+                                  e.line)
+    assert len(x)==1
+    fn = x[0]
+    return fn(attrType)
 
 if __name__=='__main__':
     import sys

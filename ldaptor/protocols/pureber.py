@@ -61,6 +61,16 @@ TAG_MASK		= 0x1f
 # 1xxxxxxx = len is stored in the next 0xxxxxxx octets
 # indefinite form not supported
 
+class UnknownBERTag(Exception):
+    def __init__(self, tag, context):
+        Exception.__init__(self)
+        self.tag = tag
+        self.context = context
+
+    def __str__(self):
+        return "BERDecoderContext has no tag 0x%02x: %s" \
+               % (self.tag, self.context)
+
 import UserList
 
 def berlen2int(m):
@@ -400,8 +410,11 @@ class BERDecoderContext:
 	return self.inherit_context or self
 
     def __repr__(self):
+        identities = []
+        for tag, class_ in self.Identities.items():
+            identities.append('0x%02x: %s' % (tag, class_.__name__))
 	return "<"+self.__class__.__name__ \
-	       +" identities="+repr(self.Identities) \
+	       +" identities={%s}" % ', '.join(identities) \
 	       +" fallback="+repr(self.fallback) \
 	       +" inherit="+repr(self.inherit_context) \
 	       +">"
@@ -420,7 +433,7 @@ def ber2object(context, m):
 	    assert inh
 	    return berclass(encoded=m, berdecoder=inh)
 	else:
-	    raise "BERDecoderContext %s has no tag 0x%02x"%(context, i)
+	    raise UnknownBERTag, (i, context)
 	    tag=ber2int(m[0], signed=0)
 	    del m[0]
 	    l=berlen2int(m)

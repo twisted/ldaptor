@@ -1,19 +1,7 @@
 from twisted.internet import defer
 from twisted.python import failure
 from ldaptor import numberalloc
-from ldaptor.protocols.ldap import ldapsyntax
-
-class AutofillException(Exception):
-    pass
-
-class ObjectMissingObjectClassException(AutofillException):
-    """
-
-    The LDAPEntry is missing an objectClass this autofiller needs to
-    operate.
-
-    """
-    pass
+from ldaptor.protocols.ldap import ldapsyntax, autofill
 
 class Autofill_posix: #TODO baseclass
     def __init__(self,
@@ -38,7 +26,7 @@ class Autofill_posix: #TODO baseclass
     def start(self, ldapObject):
         assert 'objectClass' in ldapObject
         if 'posixAccount' not in ldapObject['objectClass']:
-            raise ObjectMissingObjectClassException, ldapObject
+            raise autofill.ObjectMissingObjectClassException, ldapObject
 
         assert 'loginShell' not in ldapObject
         ldapObject['loginShell'] = ['/bin/sh']

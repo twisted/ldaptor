@@ -1,4 +1,4 @@
-#!/usr/bin/python2.2
+#!/usr/bin/python
 # -*- python -*-
 
 import commands, formatter, StringIO, sys

@@ -20,6 +20,10 @@ class Options_service_location:
 	    self.opts['service-location']={}
 
 	base, location = value.split(':', 1)
+        try:
+            dn = distinguishedname.DistinguishedName(base)
+        except distinguishedname.InvalidRelativeDistinguishedName, e:
+            raise usage.UsageError, str(e)
 
 	if not location:
 	    raise usage.UsageError, "service-location must specify host"
@@ -35,7 +39,6 @@ class Options_service_location:
 	if not port:
 	    port = None
 
-	dn = distinguishedname.DistinguishedName(base)
 	self.opts['service-location'][dn] = (host, port)
 
     def postOptions_service_location(self):

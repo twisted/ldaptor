@@ -24,7 +24,7 @@ class MutableString:
 	return cmp(str(self), other)
 
     def __nonzero__(self):
-	return not not (self.data and filter(lambda x: x, self.data))
+	return bool((self.data and filter(lambda x: x, self.data)))
 
     def __repr__(self):
 	return self.__class__.__name__+'('+repr(str(self))+')'

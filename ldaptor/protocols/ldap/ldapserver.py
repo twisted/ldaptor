@@ -29,6 +29,7 @@ class LDAPServerConnectionLostException(ldaperrors.LDAPException):
 
 class LDAPServer(protocol.Protocol):
     """An LDAP server"""
+    debug = False
 
     boundUser = None
 
@@ -36,9 +37,10 @@ class LDAPServer(protocol.Protocol):
 	self.buffer = MutableString()
 	self.connected = None
 
-    berdecoder = pureldap.LDAPBERDecoderContext_LDAPMessage(
-	inherit=pureldap.LDAPBERDecoderContext(
-	fallback=pureber.BERDecoderContext()))
+    berdecoder = pureldap.LDAPBERDecoderContext_TopLevel(
+        inherit=pureldap.LDAPBERDecoderContext_LDAPMessage(
+        fallback=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext()),
+        inherit=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext())))
 
     def dataReceived(self, recd):
 	self.buffer.append(recd)
@@ -63,70 +65,124 @@ class LDAPServer(protocol.Protocol):
 	if not self.connected:
 	    raise LDAPServerConnectionLostException()
 	msg=pureldap.LDAPMessage(op, id=id)
-	log.msg('-> %s' % repr(msg))
+        if self.debug:
+            log.debug('S->C %s' % repr(msg))
 	self.transport.write(str(msg))
 
     def unsolicitedNotification(self, msg):
 	log.msg("Got unsolicited notification: %s" % repr(msg))
 
-    def handle_LDAPBindRequest(self, request, reply):
+    def checkControls(self, controls):
+        if controls is not None:
+            for controlType, criticality, controlValue in controls:
+                if criticality:
+                    raise ldaperrors.LDAPUnavailableCriticalExtension, \
+                          'Unknown control %s' % controlType
+
+    fail_LDAPBindRequest = pureldap.LDAPBindResponse
+
+    def handle_LDAPBindRequest(self, request, controls, reply):
         if request.version != 3:
-            msg = pureldap.LDAPBindResponse(resultCode=ldaperrors.LDAPProtocolError.resultCode,
-                                            errorMessage='Version %u not supported' % request.version)
-        elif request.dn == '':
+            raise ldaperrors.LDAPProtocolError, \
+                  'Version %u not supported' % request.version
+
+        self.checkControls(controls)
+
+        if request.dn == '':
             # anonymous bind
             self.boundUser=None
-            msg = pureldap.LDAPBindResponse(resultCode=0)
+            return pureldap.LDAPBindResponse(resultCode=0)
         else:
-            msg = pureldap.LDAPBindResponse(resultCode=ldaperrors.LDAPInvalidCredentials.resultCode,
-                                            errorMessage='Authentication not yet supported (TODO)')
-        return defer.succeed(msg)
+            dn = distinguishedname.DistinguishedName(request.dn)
+            root = interfaces.IConnectedLDAPEntry(self.factory)
+            d = root.lookup(dn)
 
-    def handle_LDAPUnbindRequest(self, request, reply):
+            def _noEntry(fail):
+                fail.trap(ldaperrors.LDAPNoSuchObject)
+                return None
+            d.addErrback(_noEntry)
+
+            def _gotEntry(entry, auth):
+                if entry is not None and entry.bind(auth):
+                    msg = pureldap.LDAPBindResponse(
+                        resultCode=ldaperrors.Success.resultCode,
+                        matchedDN=str(entry.dn))
+                else:
+                    msg = pureldap.LDAPBindResponse(
+                        resultCode=ldaperrors.LDAPInvalidCredentials.resultCode)
+                return msg
+            d.addCallback(_gotEntry, request.auth)
+
+            return d
+
+    def handle_LDAPUnbindRequest(self, request, controls, reply):
+        # explicitly do not check unsupported critical controls -- we
+        # have no way to return an error, anyway.
         self.transport.loseConnection()
 
-    def handleUnknown(self, request):
+    def handleUnknown(self, request, controls, id):
         log.msg('Unknown request: %r' % request)
 	msg = pureldap.LDAPExtendedResponse(resultCode=ldaperrors.LDAPProtocolError.resultCode,
-                                                 responseName='1.3.6.1.4.1.1466.20036',
-                                                 errorMessage='Unknown request.')
+                                            responseName='1.3.6.1.4.1.1466.20036',
+                                            errorMessage='Unknown request')
 	return defer.succeed(msg)
 
     def _cbHandle(self, response, id):
-        self.queue(id, response)
+        if response is not None:
+            self.queue(id, response)
 
-    def _cbLDAPError(self, reason, id):
+    def failDefault(self, resultCode, errorMessage):
+        return pureldap.LDAPExtendedResponse(resultCode=resultCode,
+                                             responseName='1.3.6.1.4.1.1466.20036',
+                                             errorMessage=errorMessage)
+
+    def _callErrorHandler(self, name, resultCode, errorMessage):
+        errh = getattr(self, 'fail_'+name, self.failDefault)
+        return errh(resultCode=resultCode, errorMessage=errorMessage)
+
+    def _cbLDAPError(self, reason, name):
         reason.trap(ldaperrors.LDAPException)
-        self._cbHandle(
-            pureldap.LDAPExtendedResponse(resultCode=reason.value.resultCode,
-                                          responseName='1.3.6.1.4.1.1466.20036',
-                                          errorMessage=reason.value.message),
-            id=id)
+        return self._callErrorHandler(name=name,
+                                      resultCode=reason.value.resultCode,
+                                      errorMessage=reason.value.message)
 
-    def _cbOtherError(self, reason, id):
-        self._cbHandle(
-            pureldap.LDAPExtendedResponse(resultCode=ldaperrors.LDAPProtocolError.resultCode,
-                                          responseName='1.3.6.1.4.1.1466.20036',
-                                          errorMessage=reason.getErrorMessage()),
-            id=id)
+    def _cbOtherError(self, reason, name):
+        return self._callErrorHandler(name=name,
+                                      resultCode=ldaperrors.LDAPProtocolError.resultCode,
+                                      errorMessage=reason.getErrorMessage())
 
     def handle(self, msg):
 	assert isinstance(msg.value, pureldap.LDAPProtocolRequest)
-	log.msg('<- %s' % repr(msg))
+        if self.debug:
+            log.debug('S<-C %s' % repr(msg))
 
 	if msg.id==0:
 	    self.unsolicitedNotification(msg.value)
 	else:
             name = msg.value.__class__.__name__
             handler = getattr(self, 'handle_'+name, self.handleUnknown)
-            d = handler(msg.value,
-                        lambda response: self._cbHandle(response, msg.id))
-            if d:
-                assert isinstance(d, defer.Deferred)
-                d.addCallback(self._cbHandle, msg.id)
-                d.addErrback(self._cbLDAPError, msg.id)
-                d.addErrback(defer.logError)
-                d.addErrback(self._cbOtherError, msg.id)
+            d = defer.maybeDeferred(handler,
+                                    msg.value,
+                                    msg.controls,
+                                    lambda response: self._cbHandle(response, msg.id))
+            assert isinstance(d, defer.Deferred)
+            d.addErrback(self._cbLDAPError, name)
+            d.addErrback(defer.logError)
+            d.addErrback(self._cbOtherError, name)
+            d.addCallback(self._cbHandle, msg.id)
+
+    def getRootDSE(self, request, reply):
+        root = interfaces.IConnectedLDAPEntry(self.factory)
+        reply(pureldap.LDAPSearchResultEntry(
+            objectName='',
+            attributes=[ ('supportedLDAPVersion', ['3']),
+                         ('namingContexts', [str(root.dn)]),
+                         ('supportedExtension', [
+            pureldap.LDAPPasswordModifyRequest.oid.value,
+            ]),
+                         ],
+            ))
+        return pureldap.LDAPSearchResultDone(resultCode=ldaperrors.Success.resultCode)
 
     def _cbSearchGotBase(self, base, dn, request, reply):
         def _sendEntryToClient(entry):
@@ -153,9 +209,18 @@ class LDAPServer(protocol.Protocol):
         return pureldap.LDAPSearchResultDone(resultCode=reason.value.resultCode)
 
     def _cbSearchOtherError(self, reason):
-        return pureldap.LDAPSearchResultDone(resultCode=ldaperrors.other)
+        return pureldap.LDAPSearchResultDone(resultCode=ldaperrors.other,
+                                             errorMessage=reason.getErrorMessage())
 
-    def handle_LDAPSearchRequest(self, request, reply):
+    fail_LDAPSearchRequest = pureldap.LDAPSearchResultDone
+
+    def handle_LDAPSearchRequest(self, request, controls, reply):
+        self.checkControls(controls)
+
+        if (request.baseObject == ''
+            and request.scope == pureldap.LDAP_SCOPE_baseObject
+            and request.filter == pureldap.LDAPFilter_present('objectClass')):
+            return self.getRootDSE(request, reply)
         dn = distinguishedname.DistinguishedName(request.baseObject)
         root = interfaces.IConnectedLDAPEntry(self.factory)
         d = root.lookup(dn)
@@ -163,6 +228,23 @@ class LDAPServer(protocol.Protocol):
         d.addErrback(self._cbSearchLDAPError)
         d.addErrback(defer.logError)
         d.addErrback(self._cbSearchOtherError)
+        return d
+
+    fail_LDAPDelRequest = pureldap.LDAPDelResponse
+
+    def handle_LDAPDelRequest(self, request, controls, reply):
+        self.checkControls(controls)
+
+        dn = distinguishedname.DistinguishedName(request.value)
+        root = interfaces.IConnectedLDAPEntry(self.factory)
+        d = root.lookup(dn)
+        def _gotEntry(entry):
+            d = entry.delete()
+            return d
+        d.addCallback(_gotEntry)
+        def _report(entry):
+            return pureldap.LDAPDelResponse(resultCode=0)
+        d.addCallback(_report)
         return d
 
 if __name__ == '__main__':

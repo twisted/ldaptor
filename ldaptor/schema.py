@@ -270,6 +270,42 @@ class ObjectClassDescription(ASN1ParserThingie):
                 + '\n        '.join(r)
                 + ' )')
 
+    def __lt__(self, other):
+        if not isinstance(other, ObjectClassDescription):
+            return NotImplemented
+        if self.name is not None and other.name is not None:
+            return self.name[0].upper() < other.name[0].upper()
+        else:
+            return self.oid < other.oid
+
+    def __gt__(self, other):
+        if not isinstance(other, ObjectClassDescription):
+            return NotImplemented
+        if self.name is not None and other.name is not None:
+            return self.name[0].upper() > other.name[0].upper()
+        else:
+            return self.oid > other.oid
+
+    def __le__(self, other):
+        return self == other or self < other
+
+    def __ge__(self, other):
+        return self == other or self > other
+
+    def __eq__(self, other):
+        if not isinstance(other, ObjectClassDescription):
+            return NotImplemented
+        return (self.oid == other.oid
+                and self.name == other.name
+                and self.desc == other.desc
+                and self.obsolete == other.obsolete
+                and self.sup == other.sup
+                and self.type == other.type
+                and self.must == other.must
+                and self.may == other.may)
+
+    def __ne__(self, other):
+        return not (self == other)
 
 class AttributeTypeDescription(ASN1ParserThingie):
     """

@@ -135,7 +135,17 @@ class LDAPAttributeTypeAndValue:
 class RelativeDistinguishedName:
     """LDAP Relative Distinguished Name."""
 
-    def __init__(self, stringValue=None, attributeTypesAndValues=None):
+    def __init__(self, magic=None, stringValue=None, attributeTypesAndValues=None):
+        if magic is not None:
+            assert stringValue is None
+            assert attributeTypesAndValues is None
+            if isinstance(magic, RelativeDistinguishedName):
+                attributeTypesAndValues = magic.split()
+            elif isinstance(magic, basestring):
+                stringValue = magic
+            else:
+                attributeTypesAndValues = magic
+
 	if stringValue is None:
 	    assert attributeTypesAndValues is not None
             import types
@@ -190,8 +200,21 @@ class RelativeDistinguishedName:
 
 class DistinguishedName:
     """LDAP Distinguished Name."""
+    listOfRDNs = None
+    def __init__(self, magic=None, stringValue=None, listOfRDNs=None):
+        assert (magic is not None
+                or stringValue is not None
+                or listOfRDNs is not None)
+        if magic is not None:
+            assert stringValue is None
+            assert listOfRDNs is None
+            if isinstance(magic, DistinguishedName):
+                listOfRDNs = magic.split()
+            elif isinstance(magic, basestring):
+                stringValue = magic
+            else:
+                listOfRDNs = magic
 
-    def __init__(self, stringValue=None, listOfRDNs=None):
 	if stringValue is None:
 	    assert listOfRDNs is not None
 	    for x in listOfRDNs:
@@ -218,9 +241,11 @@ class DistinguishedName:
 		+ ')')
 
     def __hash__(self):
-	return hash(self.listOfRDNs)
+	return hash(str(self))
 
     def __eq__(self, other):
+        if isinstance(other, basestring):
+            return str(self) == other
 	if not isinstance(other, DistinguishedName):
 	    return NotImplemented
 	return self.split() == other.split()

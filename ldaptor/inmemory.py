@@ -8,7 +8,7 @@ from ldaptor.protocols.ldap import distinguishedname, ldaperrors, ldifprotocol
 class LDAPCannotRemoveRootError(ldaperrors.LDAPNamingViolation):
     """Cannot remove root of LDAP tree"""
 
-class ReadOnlyInMemoryLDAPEntry(entry.BaseLDAPEntry):
+class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry):
     __implements__ = (interfaces.IConnectedLDAPEntry,
                       )
 
@@ -195,9 +195,9 @@ class ReadOnlyInMemoryLDAPEntry(entry.BaseLDAPEntry):
         else:
             raise MatchNotImplemented, filter
 
-    def putChild(self, rdn, attributes):
+    def addChild(self, rdn, attributes):
         """TODO ugly API. Returns the created entry."""
-        assert isinstance(rdn, distinguishedname.RelativeDistinguishedName)
+        rdn = distinguishedname.RelativeDistinguishedName(rdn)
         for c in self._children:
             if c.dn.split()[0] == rdn:
                 raise ldaperrors.LDAPEntryAlreadyExists, c.dn
@@ -363,7 +363,7 @@ class InMemoryLDIFProtocol(ldifprotocol.LDIF):
 
         def _add(parent, entry):
             if parent is not None:
-                parent.putChild(rdn=entry.dn.split()[0],
+                parent.addChild(rdn=entry.dn.split()[0],
                                 attributes=entry)
         d.addCallback(_add, entry)
         d.addErrback(self.addFailed, entry)

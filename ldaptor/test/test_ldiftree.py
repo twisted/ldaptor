@@ -199,7 +199,7 @@ cn: create-me
     def testAddTopLevel(self):
 	e = BaseLDAPEntry(dn='dc=org',
                           attributes={
-	    'objectClass': ['domainComponent'],
+	    'objectClass': ['dcObject'],
 	    'dc': ['org'],
 	    })
         d = ldiftree.put(self.tree, e)
@@ -213,7 +213,7 @@ cn: create-me
         self.failUnlessEqual(file(path).read(),
                              """\
 dn: dc=org
-objectClass: domainComponent
+objectClass: dcObject
 dc: org
 
 """)

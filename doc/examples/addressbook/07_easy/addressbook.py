@@ -1,8 +1,8 @@
 import os
 from twisted.internet import reactor
-from twisted.cred import portal, checkers
-from nevow import rend, appserver, formless, freeform, inevow, compy, \
-     stan, guard
+from nevow import rend, appserver, inevow, compy, \
+     stan, loaders
+from formless import annotate, webform, iformless
 
 from ldaptor.protocols.ldap import ldapclient, ldapsyntax, ldapconnector, \
      distinguishedname
@@ -40,51 +40,53 @@ class LDAPConfig(object):
     def getServiceLocationOverrides(self):
         return self.serviceLocationOverrides
 
-class IAddressBookSearch(formless.TypedInterface):
-    class Search(formless.TypedInterface):
-        sn = formless.String()
-        sn.allowNone = True
-        sn.label = "Last name"
-
-        givenName = formless.String()
-        givenName.allowNone = True
-        givenName.label = "First name"
-
-        telephoneNumber = formless.String()
-        telephoneNumber.allowNone = True
-
-        description = formless.String()
-        description.allowNone = True
+class IAddressBookSearch(annotate.TypedInterface):
+    def search(self,
+               sn = annotate.String(label="Last name"),
+               givenName = annotate.String(label="First name"),
+               telephoneNumber = annotate.String(),
+               description = annotate.String()):
+        pass
+    search = annotate.autocallable(search)
 
 class CurrentSearch(object):
     __implements__ = IAddressBookSearch, inevow.IContainer
+    data = {}
 
     def _getSearchFilter(self):
         filters = []
-
-        for attr in [x for x in dir(IAddressBookSearch.Search)
-                     if not x.startswith('_')]:
-            value = getattr(self, attr, None)
+        for attr,value in self.data.items():
             if value is not None:
                 f = ldapfilter.parseMaybeSubstring(attr, value)
                 filters.append(f)
-
         if not filters:
             return None
-            
         searchFilter = pureldap.LDAPFilter_and(
             [pureldap.LDAPFilter_equalityMatch(
             attributeDesc=pureldap.LDAPAttributeDescription('objectClass'),
             assertionValue=pureldap.LDAPAssertionValue('addressbookPerson'))]
             + filters)
         return searchFilter
-    search = property(
-        fget = _getSearchFilter,
-        fset = None)
+
+    def search(self, **kw):
+        for k,v in kw.items():
+            if v is None:
+                del kw[k]
+        self.data = kw
+        return self
+
+    def __nonzero__(self):
+        return bool(self.data)
+
+    def __iter__(self):
+        if self.data is None:
+            return
+        for k,v in self.data.items():
+            yield (k,v)
 
     def child(self, context, name):
         if name == 'searchFilter':
-            return self.search
+            return self._getSearchFilter()
         if name != 'results':
             return None
         config = context.locate(ILDAPConfig)
@@ -98,7 +100,7 @@ class CurrentSearch(object):
             d=baseEntry.search(filterObject=searchFilter)
             return d
 
-        d.addCallback(_search, config.getBaseDN(), self.search)
+        d.addCallback(_search, config.getBaseDN(), self._getSearchFilter())
         return d
 
 def LDAPFilterSerializer(original, context):
@@ -122,16 +124,15 @@ for c in [
                           inevow.ISerializable)
 
 class AddressBookResource(rend.Page):
-    docFactory = rend.htmlfile(
+    docFactory = loaders.xmlfile(
         'searchform.xhtml',
         templateDir=os.path.split(os.path.abspath(__file__))[0])
 
     def configurable_(self, context):
-        request = context.locate(inevow.IRequest)
-        i = request.session.getComponent(IAddressBookSearch)
-        if i is None:
+        try:
+            i = context.locate(inevow.IHand)
+        except KeyError:
             i = CurrentSearch()
-            request.session.setComponent(IAddressBookSearch, i)
         return i
 
     def data_search(self, context, data):
@@ -139,17 +140,19 @@ class AddressBookResource(rend.Page):
         cur = configurable.original
         return cur
 
-    def child_freeform_css(self, request):
-        from twisted.python import util
-        from twisted.web import static
-        from nevow import __file__ as nevow_file
-        return static.File(util.sibpath(nevow_file, 'freeform-default.css'))
+    def child_form_css(self, request):
+        return webform.defaultCSS
 
     def render_input(self, context, data):
-        return freeform.renderForms()
+        formDefaults = context.locate(iformless.IFormDefaults)
+        methodDefaults = formDefaults.getAllDefaults('search')
+        conf = self.configurable_(context)
+        for k,v in conf:
+            methodDefaults[k] = v
+        return webform.renderForms()
 
     def render_haveSearch(self, context, data):
-        r=context.allPatterns(str(data.search is not None))
+        r=context.allPatterns(str(bool(data)))
         return context.tag.clear()[r]
 
     def render_searchFilter(self, context, data):
@@ -173,24 +176,8 @@ class AddressBookResource(rend.Page):
     
         return context.tag.clear()[ headers, content, footers ]
 
-class AddressBookRealm:
-    __implements__ = portal.IRealm,
-
-    def __init__(self, resource):
-        self.resource = resource
-
-    def requestAvatar(self, avatarId, mind, *interfaces):
-        if inevow.IResource not in interfaces:
-            raise NotImplementedError, "no interface"
-        return (inevow.IResource,
-                self.resource,
-                lambda: None)
-
 def getSite(config):
     form = AddressBookResource()
     form.remember(config, ILDAPConfig)
-    realm = AddressBookRealm(form)
-    site = appserver.NevowSite(
-        guard.SessionWrapper(
-        portal.Portal(realm, [checkers.AllowAnonymousAccess()])))
+    site = appserver.NevowSite(form)
     return site

@@ -1,53 +1,200 @@
 from twisted.internet import defer, protocol
-from twisted.python import reflect, formmethod
+from twisted.python import components
 from ldaptor.protocols.ldap import ldapclient, ldapsyntax
 from ldaptor.protocols.ldap import distinguishedname, ldapconnector
 from ldaptor.protocols import pureber, pureldap
-from ldaptor import ldapfilter
+from ldaptor import ldapfilter, interfaces
 from twisted.internet import reactor
-from ldaptor.apps.webui.htmlify import htmlify_attributes
-from ldaptor.apps.webui.uriquote import uriQuote, uriUnquote
-from twisted.web.woven import page, view, form
-from twisted.web.microdom import lmx
+from ldaptor.apps.webui import config
+from ldaptor.apps.webui.uriquote import uriQuote
 from ldaptor import weave
 
-class EntryLinks:
-    def __init__(self, objectName, request):
-        self.objectName = objectName
-        self.request = request
+import os
+from nevow import rend, inevow, loaders, url, tags, compy
+from formless import annotate, webform, iformless, configurable
 
-    def entryLink_001_edit(self, objectName):
-	return ['<a href="%s">edit</a>\n'
-		% self.request.sibLink('edit/'+uriQuote(objectName))]
+class IMove(components.Interface):
+    """Entries being moved in the tree."""
+    pass
 
-    def entryLink_002_move(self, objectName):
-	return ['<a href="%s">move</a>\n'
-		% self.request.sibLink('move/'+uriQuote(objectName))]
+class IMoveItem(annotate.TypedInterface):
+    def move(self,
+             context=annotate.Context()):
+        pass
+    move = annotate.autocallable(move)
 
-    def entryLink_003_delete(self, objectName):
-	return ['<a href="%s">delete</a>\n'
-		% self.request.sibLink('delete/'+uriQuote(objectName))]
+    def cancel(self,
+               context=annotate.Context()):
+        pass
+    cancel = annotate.autocallable(cancel)
 
-    def entryLink_004_change_password(self, objectName):
-	return ['<a href="%s">change password</a>\n'
-		% self.request.sibLink('change_password/'+uriQuote(objectName))]
+class MoveItem(object):
+    __implements__ = IMoveItem
 
-    def __str__(self):
-	l=[]
+    def __init__(self, entry):
+        super(MoveItem, self).__init__()
+        self.entry = entry
 
-	entryLinks = {}
-	reflect.addMethodNamesToDict(self.__class__,
-				     entryLinks, 'entryLink_')
-	names = entryLinks.keys()
-	names.sort()
-	for name in names:
-	    method = getattr(self, 'entryLink_'+name)
-	    l.extend(method(self.objectName))
+    def _remove(self, context):
+        session = context.locate(inevow.ISession)
+        move = session.getComponent(IMove)
+        if move is None:
+            return
+        try:
+            move.remove(self.entry)
+        except ValueError:
+            pass
 
-	entryLinks=''
-	if l:
-	    entryLinks='[' + '|'.join(l) + ']'
-        return entryLinks
+    def move(self, context):
+        cfg = context.locate(interfaces.ILDAPConfig)
+        newDN = distinguishedname.DistinguishedName(
+            self.entry.dn.split()[:1]
+            + cfg.getBaseDN().split())
+        d = self.entry.move(newDN)
+        d.addCallback(lambda _: 'Moved %s to %s.' % (self.entry.dn, newDN))
+        def _cb(r, context):
+            self._remove(context)
+            return r
+        d.addCallback(_cb, context)
+        return d
+
+    def cancel(self, context):
+        self._remove(context)
+        return 'Cancelled move of %s' % self.entry.dn
+
+def strScope(scope):
+    if scope is pureldap.LDAP_SCOPE_wholeSubtree:
+        return 'whole subtree'
+    elif scope is pureldap.LDAP_SCOPE_singleLevel:
+        return 'single level'
+    elif scope is pureldap.LDAP_SCOPE_baseObject:
+        return 'baseobject'
+    else:
+        raise RuntimeError, 'scope is not known: %r' % scope
+
+class SearchForm(configurable.Configurable):
+    __implements__ = configurable.Configurable.__implements__, inevow.IContainer
+
+    filter = None
+    scope = None
+
+    def __init__(self):
+        super(SearchForm, self).__init__(None)
+        self.data = {}
+
+    def getBindingNames(self, ctx):
+        return ['search']
+
+    def bind_search(self, ctx):
+        l = []
+        for field in config.getSearchFieldNames():
+            l.append(annotate.Argument('search_%s' % field,
+                                       annotate.String(label=field)))
+        l.append(annotate.Argument('searchfilter',
+                                   annotate.String(label="Advanced")))
+        l.append(annotate.Argument(
+            'scope',
+            annotate.Choice(label="Search depth",
+                            choices=[ pureldap.LDAP_SCOPE_wholeSubtree,
+                                      pureldap.LDAP_SCOPE_singleLevel,
+                                      pureldap.LDAP_SCOPE_baseObject,
+                                      ],
+                            stringify=strScope,
+                            default=pureldap.LDAP_SCOPE_wholeSubtree)))
+
+        return annotate.MethodBinding(
+            'search',
+            annotate.Method(arguments=l))
+
+    def search(self, scope, searchfilter, **kw):
+	filt=[]
+	for k,v in kw.items():
+            assert k.startswith('search_')
+            if not k.startswith("search_"):
+                continue
+            k=k[len("search_"):]
+            if v is None:
+                continue
+            v=v.strip()
+            if v=='':
+                continue
+
+            # TODO escape ) in v
+            # TODO handle unknown filter name right (old form open in browser etc)
+            filter_ = config.getSearchFieldByName(k, vars={'input': v})
+            filt.append(ldapfilter.parseFilter(filter_))
+        if searchfilter:
+            filt.append(ldapfilter.parseFilter(searchfilter))
+
+	if filt:
+	    if len(filt)==1:
+		query=filt[0]
+	    else:
+		query=pureldap.LDAPFilter_and(filt)
+	else:
+	    query=pureldap.LDAPFilterMatchAll
+
+        self.data.update(kw)
+        self.data['scope'] = scope
+        self.data['searchfilter'] = searchfilter
+        self.filter = query
+        return self
+
+    def child(self, context, name):
+        fn = getattr(self, 'child_%s' % name, None)
+        if fn is None:
+            return None
+        else:
+            return fn(context)
+
+    def child_filter(self, context):
+        return self.filter.asText()
+
+    def child_results(self, context):
+        assert self.filter is not None
+        cfg = context.locate(interfaces.ILDAPConfig)
+
+        c=ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
+        d=c.connectAnonymously(cfg.getBaseDN(),
+                               cfg.getServiceLocationOverrides())
+
+        def _search(proto, base, searchFilter, scope):
+            baseEntry = ldapsyntax.LDAPEntry(client=proto, dn=base)
+            d=baseEntry.search(filterObject=searchFilter,
+                               scope=scope,
+                               sizeLimit=20,
+                               sizeLimitIsNonFatal=True)
+            return d
+        d.addCallback(_search, cfg.getBaseDN(), self.filter, self.data['scope'])
+        return d
+
+    def child_base(self, context):
+        cfg = context.locate(interfaces.ILDAPConfig)
+
+        c=ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
+        d=c.connectAnonymously(cfg.getBaseDN(),
+                               cfg.getServiceLocationOverrides())
+
+        def _search(proto, base):
+            baseEntry = ldapsyntax.LDAPEntry(client=proto,
+                                             dn=base)
+            d=baseEntry.search(scope=pureldap.LDAP_SCOPE_baseObject,
+                               sizeLimit=1)
+            return d
+        d.addCallback(_search, cfg.getBaseDN())
+
+        def _first(results, dn):
+            assert len(results)==1, \
+                   "Expected one result, not %r" % results
+            return {'dn': dn,
+                    'attributes': results[0],
+                    }
+        d.addCallback(_first, cfg.getBaseDN())
+
+        return d
+
+    def __nonzero__(self):
+        return self.filter is not None
 
 def _upLink(request, name):
     if request.postpath:
@@ -61,210 +208,174 @@ def prettyLinkedDN(dn, baseObject, request):
            and dn!=distinguishedname.DistinguishedName(stringValue='')):
         firstPart=dn.split()[0]
 
-        me=request.path.split('/', 3)[2]
-        r.append('<a href="../%s">%s</a>'
-                 % (_upLink(request,
-                            '/'.join([uriQuote(str(dn)), me]
-                                     + request.postpath)),
-                    str(firstPart)))
+        me=request.path.split('/', 4)[3]
+        r.append(tags.a(href="../../%s" \
+                        % _upLink(request,
+                                  '/'.join([uriQuote(str(dn)), me]
+                                           + request.postpath)))[
+            str(firstPart)])
+        r.append(',')
         dn=dn.up()
 
     r.append('%s\n' % str(dn))
-    return ','.join(r)
+    return r
 
-class Searcher:
-    def __init__(self, **config):
-        self.config = config
+class SearchPage(rend.Page):
+    addSlash = True
 
-    def search(self, submit, searchfilter, scope, **kw):
-        if not submit:
-            return {}
+    docFactory = loaders.xmlfile(
+        'search.xhtml',
+        templateDir=os.path.split(os.path.abspath(__file__))[0])
 
-	filt=[]
-	for k,v in kw.items():
-	    if k[:len("search_")]=="search_":
-		k=k[len("search_"):]
-		v=v.strip()
-		if v=='':
-		    continue
+    def __init__(self):
+        super(SearchPage, self).__init__()
 
-		filter = None
-		for (displayName, searchFilter) in self.config['searchFields']:
-		    if k == displayName:
-			filter = searchFilter
-		# TODO handle not filter right (old form open in browser etc)
-		assert filter
-		# TODO escape ) in v
-		filt.append(ldapfilter.parseFilter(filter % {'input': v}))
-        if searchfilter:
-            filt.append(ldapfilter.parseFilter(searchfilter))
-
-	if filt:
-	    if len(filt)==1:
-		query=filt[0]
-	    else:
-		query=pureldap.LDAPFilter_and(filt)
-	else:
-	    query=pureldap.LDAPFilterMatchAll
-
-        c=ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
-        d=c.connectAnonymously(self.config['base'], self.config['serviceLocationOverrides'])
-
-        def _search(proto, base, query):
-            baseEntry = ldapsyntax.LDAPEntry(client=proto, dn=base)
-            d=baseEntry.search(filterObject=query,
-                               scope=scope,
-                               sizeLimit=20,
-                               sizeLimitIsNonFatal=True)
-            return d
-
-        d.addCallback(_search, self.config['base'], query)
-        d.addCallback(lambda results: {'query': query.asText(), 'results': results})
-        return d
-
-class SearchPage(page.Page):
-    templateFile = 'search.xhtml'
-    isLeaf = 1
-
-    def wmfactory_title(self, request):
-        return "Ldaptor Search Page"
-
-    def __init__(self, formModel, baseObject, serviceLocationOverride, formSignature):
-	page.Page.__init__(self)
-        self.formModel = formModel
-	self.baseObject = baseObject
-	self.serviceLocationOverride = serviceLocationOverride
-        self.formSignature = formSignature
-
-    def wmfactory_header(self, request):
-	return [
-            '<a href="%s">add new entry</a>'%request.sibLink("add"),
+    def data_css(self, context, data):
+        request = context.locate(inevow.IRequest)
+        root = url.URL.fromRequest(request).clear().parent().parent()
+        return [
+            root.child('form.css'),
+            root.child('ldaptor.css'),
             ]
 
-    def wmfactory_form(self, request):
-        return self.formModel
+    def render_css_item(self, context, data):
+        context.fillSlots('url', data)
+        return context.tag
 
-    def _navilink(self, request):
-	dn=self.baseObject
+    def render_form(self, context, data):
+        formDefaults = context.locate(iformless.IFormDefaults)
+        methodDefaults = formDefaults.getAllDefaults('search')
+        conf = self.locateConfigurable(context, '')
+        for k,v in conf.data.items():
+            methodDefaults[k] = v
+        return webform.renderForms()
+
+    def render_keyvalue(self, context, data):
+        return weave.keyvalue(context, data)
+
+    def render_keyvalue_item(self, context, data):
+        return weave.keyvalue_item(context, data)
+
+    def render_passthrough(self, context, data):
+        return context.tag.clear()[data]
+
+    def data_status(self, context, data):
+        try:
+            obj = context.locate(inevow.IStatusMessage)
+        except KeyError:
+            return ''
+
+        if isinstance(obj, SearchForm):
+            return ''
+        else:
+            return obj
+
+    def render_if(self, context, data):
+        r=context.allPatterns(str(bool(data)))
+        return context.tag.clear()[r]
+
+    def configurable_(self, context):
+        try:
+            hand = context.locate(inevow.IHand)
+        except KeyError:
+            pass
+        else:
+            if isinstance(hand, SearchForm):
+                return hand
+        return SearchForm()
+
+    def data_search(self, context, data):
+        configurable = self.locateConfigurable(context, '')
+        return configurable
+
+    def data_header(self, context, data):
+        request = context.locate(inevow.IRequest)
+        u=url.URL.fromRequest(request)
+        u=u.parent()
+        l=[]
+	l.append(tags.a(href=u.sibling("add"))["add new entry"])
+	return l
+
+    def data_navilink(self, context, data):
+        cfg = context.locate(interfaces.ILDAPConfig)
+        dn = cfg.getBaseDN()
 
 	r=[]
 	while dn!=distinguishedname.DistinguishedName(stringValue=''):
 	    firstPart=dn.split()[0]
-	    r.append('<a href="../../%s">%s</a>' % (uriQuote(str(dn)), str(firstPart)))
+	    r.append(('../../%s' % uriQuote(str(dn)),
+                      str(firstPart)))
 	    dn=dn.up()
+        return r
 
-	return ','.join(r)
+    def render_link(self, context, (url, desc)):
+        context.fillSlots('url', url)
+        context.fillSlots('description', desc)
+        return context.tag
 
-    def wmfactory_base(self, request):
-        c=ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
-        d=c.connectAnonymously(self.baseObject, self.serviceLocationOverride)
+    def render_linkedDN(self, context, data):
+        cfg = context.locate(interfaces.ILDAPConfig)
+        request = context.locate(inevow.IRequest)
+        return context.tag.clear()[prettyLinkedDN(data, cfg.getBaseDN(), request)]
 
-        def _search(proto, base):
-            baseEntry = ldapsyntax.LDAPEntry(client=proto,
-                                             dn=base)
-            d=baseEntry.search(scope=pureldap.LDAP_SCOPE_baseObject,
-                               sizeLimit=1)
-            return d
-        d.addCallback(_search, self.baseObject)
+    def render_entryLinks(self, context, data):
+        request = context.locate(inevow.IRequest)
+        u = url.URL.fromRequest(request)
+        l = [ (u.parent().sibling('edit').child(uriQuote(data)), 'edit'),
+              (u.parent().sibling('move').child(uriQuote(data)), 'move'),
+              (u.parent().sibling('delete').child(uriQuote(data)), 'delete'),
+              (u.parent().sibling('change_password').child(uriQuote(data)), 'change password'),
+              ]
+        return self.render_sequence(context, l)
 
-        def _first(results):
-            assert len(results)==1
-            return results[0]
-        d.addCallback(_first)
-
-        return d
-
-    def wvupdate_navilink(self, request, widget, model):
-        node = lmx(widget.node)
-        node.text(self._navilink(request), raw=1)
-
-    def wvupdate_if(self, request, widget, model):
-        if not model:
-            while 1:
-                c=widget.node.firstChild()
-                if c is None:
-                    break
-                widget.node.removeChild(c)
-
-    def wvupdate_ifNot(self, request, widget, model):
-        return self.wvupdate_if(request, widget, not model)
-
-    def wvupdate_searchform(self, request, widget, model):
-        lmx(widget.node).form(model="formsignature")
-
-    def wmfactory_formsignature(self, request):
-        return self.formSignature.method(None)
-
-    def wvupdate_linkedDN(self, request, widget, model):
-        node = lmx(widget.node)
-        e = prettyLinkedDN(model, self.baseObject, request)
-        node.text(e, raw=1)
-
-    def wvupdate_entryLinks(self, request, widget, model):
-        node = lmx(widget.node)
-        e = str(EntryLinks(model, request))
-        node.text(e, raw=1)
-
-    def wvupdate_listLen(self, request, widget, model):
-        node = lmx(widget.node)
-        if model is None:
+    def render_listLen(self, context, data):
+        if data is None:
             length = 0
         else:
-            length = len(model)
-        node.text('%d' % length)
+            length = len(data)
+            return context.tag.clear()[length]
 
-    def wvfactory_ldapEntry(self, request, node, model):
-        return weave.LDAPEntryWidget(model)
+    def render_mass_change_password(self, context, data):
+        request = context.locate(inevow.IRequest)
+        u = url.URL.fromRequest(request)
+        u = u.parent().sibling("mass_change_password")
+        u = u.child(uriQuote(data))
+        return context.tag(href=u)
 
-    def wvfactory_dictWidget(self, request, node, model):
-        return weave.DictWidget(model)
+    def data_move(self, context, data):
+        session = context.locate(inevow.ISession)
+        if not session.getLoggedInRoot().loggedIn:
+            return []
+        move = session.getComponent(IMove)
+        if move is None:
+            return []
+        return move
 
-    def wvfactory_separatedList(self, request, node, model):
-        return weave.SeparatedList(model)
-
-    def wmfactory_mass_change_password(self, request):
-        form = self.getSubmodel(request, 'form')
-        query = form.getSubmodel(request, 'query')
-        filtText = query.original
-        url = request.sibLink("mass_change_password/%s" % uriQuote(filtText))
-        return url
-
-# This has to be named Choice or
-# twisted.web.woven.form.FormFillerWidget.createInput tries to access
-# something other than self.input_choice
-class Choice(formmethod.Choice):
-    def coerce(self, inIdent):
+    def locateConfigurable(self, context, name):
         try:
-            r=formmethod.Choice.coerce(self, inIdent)
-        except formmethod.InputError, e:
-            if str(e) != 'Invalid Choice: ': #TODO ugly
+            return super(SearchPage, self).locateConfigurable(context, name)
+        except AttributeError:
+            if name.startswith('move_'):
+                pass
+            else:
                 raise
-            r=formmethod.Choice.coerce(self, self.default[0])
-        else:
-            return r
 
-def getSearchPage(baseObject,
-                  serviceLocationOverride,
-                  searchFields):
-    sig = []
-    for field, filter in searchFields:
-        sig.append(formmethod.String(name='search_'+field, shortDesc=field))
-    formSignature = formmethod.MethodSignature(
-        *(sig
-          + [ formmethod.String('searchfilter', allowNone=1, shortDesc="Advanced"),
-              Choice('scope',
-                       choices=[ ('wholeSubtree', pureldap.LDAP_SCOPE_wholeSubtree, 'whole subtree'),
-                                 ('singleLevel', pureldap.LDAP_SCOPE_singleLevel, 'single level'),
-                                 ('baseObject', pureldap.LDAP_SCOPE_baseObject, 'baseobject'),
-                                 ],
-                       default=['wholeSubtree'],
-                       shortDesc='Search depth'),
-              formmethod.Submit('submit', shortDesc='Search', allowNone=1),
-              ]))
-    class _P(form.FormProcessor):
-        isLeaf=1
-    return _P(formSignature.method(
-        Searcher(base=baseObject,
-                 searchFields=searchFields,
-                 serviceLocationOverrides=serviceLocationOverride).search),
-                              callback=lambda model: SearchPage(model, baseObject, serviceLocationOverride, formSignature))
+        dn = name[len('move_'):]
+
+        session = context.locate(inevow.ISession)
+        move = session.getComponent(IMove)
+        if move is None:
+            raise KeyError, name
+
+        for entry in move:
+            if entry.dn == dn:
+                return iformless.IConfigurable(MoveItem(entry))
+
+        raise KeyError, name
+
+    def render_move(self, context, data):
+        return webform.renderForms('move_%s' % data.dn)[context.tag]
+        
+def getSearchPage():
+    r = SearchPage()
+    return r

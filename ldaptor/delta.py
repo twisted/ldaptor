@@ -156,7 +156,7 @@ class AddOp(Operation):
     def patch(self, root):
         d = root.lookup(self.entry.dn.up())
         def gotParent(parent, entry):
-            parent.putChild(entry.dn.split()[0], entry)
+            parent.addChild(entry.dn.split()[0], entry)
         d.addCallback(gotParent, self.entry)
         return d
 

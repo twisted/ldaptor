@@ -1,46 +1,16 @@
-from twisted.web import widgets
-from twisted.web.woven import simpleguard
-from twisted.internet import defer
-from twisted.python import failure
-
-from ldaptor.protocols import pureldap
-from ldaptor.protocols.ldap import ldapclient, ldaperrors, ldapsyntax
+from ldaptor.protocols.ldap import ldapsyntax
 from ldaptor.protocols.ldap import fetchschema
 from ldaptor.apps.webui.uriquote import uriQuote, uriUnquote
 
-from cStringIO import StringIO
+import os
+from nevow import rend, loaders, inevow, url, tags
+from formless import configurable, annotate, webform
 
-import template
-
-class LDAPSearch_FetchByDN(ldapclient.LDAPSearch):
-    def __init__(self, deferred, client, dn):
-	ldapclient.LDAPSearch.__init__(self, deferred, client,
-				       baseObject=dn,
-				       scope=pureldap.LDAP_SCOPE_baseObject,
-				       sizeLimit=1,
-				       )
-	self.dn=dn
-
-	self.found=0
-	self.dn=None
-	self.attributes=None
-	deferred.addCallbacks(callback=self._ok,
-			      errback=lambda x: x)
-
-
-    def _ok(self, dummy):
-	if self.found==0:
-	    raise ldaperrors.LDAPUnknownError(ldaperrors.other, "No such DN")
-	elif self.found==1:
-	    return self.attributes
-	else:
-	    raise ldaperrors.LDAPUnknownError(ldaperrors.other,
-					      "DN matched multiple entries")
-
-    def handle_entry(self, objectName, attributes):
-	self.found=self.found+1
-	self.dn=objectName
-	self.attributes=attributes
+class EditStatus(object):
+    def __init__(self, entry, changes):
+        super(EditStatus, self).__init__()
+        self.entry = entry
+        self.changes = changes
 
 multiLineAttributeTypes = {
     'description': 1,
@@ -52,71 +22,118 @@ def isAttributeTypeMultiLine(attributeType):
 	    return multiLineAttributeTypes[name]
     return 0
 
-class EditForm(widgets.Form):
+class EditForm(configurable.Configurable):
     nonEditableAttributes = {
 	'objectClass': 1,
 	}
 
-    def __init__(self, dn, attributes, attributeTypes, objectClasses):
-	attr={}
-	for k,vs in attributes:
-	    k=str(k)
-	    vs=map(str, vs)
-	    assert not attr.has_key(k)
-	    attr[k]=vs
-
-        self.object = ldapsyntax.LDAPEntry(client=None,
-                                           dn=dn,
-                                           attributes=attr)
-
+    def __init__(self, entry, attributeTypes, objectClasses):
+        super(EditForm, self).__init__(None)
+        self.entry=entry
 	self.attributeTypes=attributeTypes
 	self.objectClasses=objectClasses
 
-    def _get_attrtype(self, name):
-	for a in self.attributeTypes:
-	    if name in a.name:
-		a.uiHint_multiline=isAttributeTypeMultiLine(a)
-		return a
-	print "attribute type %s not known"%name
-	return None
+        self.formFields=self._getFormFields()
 
-    def _one_formfield(self, attr, values, result):
+    def getBindingNames(self, ctx):
+        return ['edit']
+
+    def bind_edit(self, ctx):
+        return annotate.MethodBinding(
+            'edit',
+            annotate.Method(arguments=self.formFields))
+
+    def _one_formfield(self, attr, values, required, result):
 	if not self.nonEditableAttributes.get(attr):
 	    attrtype = self._get_attrtype(attr)
 	    if attrtype.uiHint_multiline:
 		if attrtype.single_value:
 		    assert len(values)==1
                     for val in values:
-                        result.append(('text', attr, 'edit_'+attr, val, attrtype.desc or ''))
-                        result.append(('hidden', '', 'old_'+attr, val))
+                        result.append(annotate.Argument(
+                            'edit_'+attr,
+                            annotate.Text(label=attr,
+                                          description=attrtype.desc or '',
+                                          default=val,
+                                          required=required,
+                                          )))
+                        result.append(annotate.Argument(
+                            'old_'+attr,
+                            annotate.String(label=attr,
+                                            description=attrtype.desc or '',
+                                            default=val,
+                                            required=required,
+                                            hidden=True,
+                                            )))
 		else:
 		    assert len(values)==1 # TODO handle multivalued multiline attributetypes
                     for val in values:
-                        result.append(('text', attr, 'edit_'+attr, val, attrtype.desc or ''))
-                        result.append(('hidden', '', 'old_'+attr, val))
+                        result.append(annotate.Argument(
+                            'edit_'+attr,
+                            annotate.Text(label=attr,
+                                          description=attrtype.desc or '',
+                                          default=val,
+                                          required=required,
+                                          )))
+                        result.append(annotate.Argument(
+                            'old_'+attr,
+                            annotate.String(label=attr,
+                                            description=attrtype.desc or '',
+                                            default=val,
+                                            required=required,
+                                            hidden=True,
+                                            )))
 	    else:
 		if attrtype.single_value:
 		    assert len(values)==1
                     for val in values:
-                        result.append(('string', attr, 'edit_'+attr, val, attrtype.desc or ''))
-                        result.append(('hidden', '', 'old_'+attr, val))
+                        result.append(annotate.Argument(
+                            'edit_'+attr,
+                            annotate.String(label=attr,
+                                            description=attrtype.desc or '',
+                                            default=val,
+                                            required=required,
+                                            )))
+                        result.append(annotate.Argument(
+                            'old_'+attr,
+                            annotate.String(label=attr,
+                                            description=attrtype.desc or '',
+                                            default=val,
+                                            required=required,
+                                            hidden=True,
+                                            )))
 		else:
 		    # TODO maybe use a string field+button to add entries,
 		    # multiselection list+button to remove entries?
 		    values=map(str, values)
-		    result.append(('text', attr, 'edit_'+attr, "\n".join(values), attrtype.desc or ''))
-		    result.append(('hidden', '', 'old_'+attr, "\n".join(values)))
+                    result.append(annotate.Argument(
+                        'edit_'+attr,
+                        annotate.Text(label=attr,
+                                      description=attrtype.desc or '',
+                                      default="\n".join(values),
+                                      required=required,
+                                      )))
+                    result.append(annotate.Argument(
+                        'old_'+attr,
+                        annotate.String(label=attr,
+                                        description=attrtype.desc or '',
+                                        default="\n".join(values),
+                                        required=required,
+                                        hidden=True,
+                                        )))
 
-    def getFormFields(self, request, kws={}):
+    def _getFormFields(self):
 	r=[]
-	assert self.object
+        r.append(annotate.Argument('context',
+                                   annotate.Context()))
+	assert self.entry
 
 	process = {}
-	for k in self.object.keys():
+	for k in self.entry.keys():
 	    process[k.upper()]=k
 
 	# TODO sort objectclasses somehow?
-	objectClasses = list(self.object[process["OBJECTCLASS"]])
+	objectClasses = list(self.entry[process["OBJECTCLASS"]])
 	objectClassesSeen = {}
 	while objectClasses:
 	    objclassName = objectClasses.pop()
@@ -141,13 +158,14 @@ class EditForm(widgets.Form):
 			found_one=1
 			if process[attr.upper()] is not None:
 			    self._one_formfield(attr,
-						self.object[process[attr.upper()]],
-						result=r)
+						self.entry[process[attr.upper()]],
+						required=True,
+                                                result=r)
 			    for name in real_attr.name:
 				process[name.upper()]=None
 
 		if not found_one:
-		    raise "Object doesn't have required attribute %s: %s"%(attr, self.object)
+		    raise "Object doesn't have required attribute %s: %s"%(attr, self.entry)
 
 	    for attr_alias in objclass.may:
 		found_one=0
@@ -157,8 +175,9 @@ class EditForm(widgets.Form):
 			found_one=1
 			if process[attr.upper()] is not None:
 			    self._one_formfield(attr,
-						self.object[process[attr.upper()]],
-						result=r)
+						self.entry[process[attr.upper()]],
+						required=False,
+                                                result=r)
 
 		if not found_one:
 		    # a MAY attributetype not currently present in
@@ -166,13 +185,21 @@ class EditForm(widgets.Form):
 		    attr=str(real_attr.name[0])
 		    self._one_formfield(attr,
 					('',),
-					result=r)
+					required=False,
+                                        result=r)
 
 		for name in real_attr.name:
 		    process[name.upper()]=None
 
 	assert [v is None for k,v in process.items()], "All attributes must be in objectClasses MUST or MAY: %s"%process
 	return r
+
+    def _get_attrtype(self, name):
+	for a in self.attributeTypes:
+	    if name in a.name:
+		a.uiHint_multiline=isAttributeTypeMultiLine(a)
+		return a
+        raise RuntimeError, "attribute type %s not known"%name
 
     def _textarea_to_list(self, t):
 	return filter(lambda x: x, [x.strip() for x in t.split("\n")])
@@ -204,31 +231,28 @@ class EditForm(widgets.Form):
 
 	return old, new
 
-    def _output_status_and_form(self, request, kw, *status):
-	io=StringIO()
-	self.format(self.getFormFields(request, kw), io.write, request)
-	return list(status)+["<P>", io.getvalue()]
-
-    def process(self, write, request, submit, **kw):
-        entry = request.getComponent(simpleguard.Authenticated).name
+    def edit(self, context, **kw):
+        entry = context.locate(inevow.ISession).getLoggedInRoot().loggedIn
         user = entry.dn
-        client = entry.client
-
-	if not client:
-	    return self._output_status_and_form(
-		request, kw,
-		"<P>Edit failed: connection lost.")
 
 	changes = []
 	for k,v in kw.items():
+            if v is None:
+                v = ''
 	    if k[:len("edit_")]=="edit_":
 		old=kw["old_"+k[len("edit_"):]]
+                if old is None:
+                    old = ''
 
 		attrtype = self._get_attrtype(k[len("edit_"):])
 		assert attrtype
 
 		if attrtype.single_value or attrtype.uiHint_multiline:
+                    v=v.replace('\r\n', '\n')
+                    v=v.strip()
 		    v=[v]
+                    old=old.replace('\r\n', '\n')
+                    old=old.strip()
 		    old=[old]
 		else:
 		    v=self._textarea_to_list(v)
@@ -238,123 +262,145 @@ class EditForm(widgets.Form):
 
 		if old or v:
 		    attr=k[len("edit_"):]
-		    changes.append((attr, old, v))
+                    changes.append((attr, old, v))
 		    #TODO
-	if not changes:
-            changes_desc=" no changes!"
-	    defe=""
-	else:
-            self.object.client=client
-            changes_desc=""
-            for attr,old,new in changes:
-                if new:
-                    if self.object.has_key(attr):
-                        self.object[attr].update(new)
-                    else:
-                        self.object[attr]=new
+
+        if not changes:
+            return EditStatus(self.entry, 'No changes!')
+
+        changes_desc=tags.ul()
+        for attr,old,new in changes:
+            if new:
+                if self.entry.has_key(attr):
+                    self.entry[attr].update(new)
+                else:
+                    self.entry[attr]=new
+            if old:
+                for x in old:
+                    if x=='':
+                        continue
+                    try:
+                        self.entry[attr].remove(x)
+                    except ldapsyntax.CannotRemoveRDNError, e:
+                        changes_desc[tags.li(
+                            "changing %s: cannot remove old value %s: %s" \
+                            %(repr(attr), x, e))]
+                        old.remove(x)
+            if old or new:
+                l=tags.ul()
+                changes_desc[tags.li["changing %s" % attr], l]
                 if old:
-                    for x in old:
-                        if x=='':
-                            continue
-                        try:
-                            self.object[attr].remove(x)
-                        except ldapsyntax.CannotRemoveRDNError, e:
-                            changes_desc=changes_desc+"<br>changing %s: cannot remove old value %s: %s"%(repr(attr), x, e)
-                            old.remove(x)
-                if old:
-                    changes_desc=changes_desc+"<br>changing %s: remove %s"%(repr(attr), old)
+                    l[tags.li["remove ", ', '.join(map(repr, old))]]
                 if new:
-                    changes_desc=changes_desc+"<br>changing %s: add %s"%(repr(attr), new)
+                    l[tags.li["add ", ', '.join(map(repr, new))]]
 
-            defe=self.object.commit()
-            defe.addCallbacks(
-                callback=lambda dummy: "<p>Success.",
-                errback=(lambda fail:
-                         "<p><strong>Failed</strong>: %s" \
-                         %fail.getErrorMessage()))
+        defe=self.entry.commit()
+        defe.addCallback(lambda e: EditStatus(e, changes_desc))
+	return defe
 
-	return self._output_status_and_form(
-	    request, kw,
-	    "<P>Submitting edit as user %s.."%user,
-            changes_desc,
-	    defe)
+class ReallyEditPage(rend.Page):
+    addSlash = True
+    docFactory = loaders.xmlfile(
+        'edit-really.xhtml',
+        templateDir=os.path.split(os.path.abspath(__file__))[0])
 
-class CreateEditForm:
-    def __init__(self, defe, dn, request,
-		 attributeTypes, objectClasses):
-	self.deferred=defe
-	self.dn=dn
-	self.request=request
-	self.attributeTypes=attributeTypes
-	self.objectClasses=objectClasses
+    def __init__(self,
+                 entry,
+                 attributeTypes,
+                 objectClasses):
+        super(ReallyEditPage, self).__init__()
+        self.entry = entry
+        self.attributeTypes = attributeTypes
+        self.objectClasses = objectClasses
 
-    def __call__(self, attributes):
-	self.deferred.callback(
-	    EditForm(self.dn, attributes,
+    def data_css(self, context, data):
+        request = context.locate(inevow.IRequest)
+        u = (url.URL.fromRequest(request).clear().parent().parent().parent()
+             .child('form.css'))
+        return [ u ]
+
+    def render_css_item(self, context, data):
+        context.fillSlots('url', data)
+        return context.tag
+
+    def data_header(self, context, data):
+        request = context.locate(inevow.IRequest)
+        u=url.URL.fromRequest(request)
+        u=u.parent().parent()
+        l=[]
+	l.append(tags.a(href=u.sibling("search"))["Search"])
+	l.append(tags.a(href=u.sibling("add"))["add new entry"])
+	return l
+
+    def configurable_(self, context):
+        a = EditForm(self.entry,
 		     self.attributeTypes,
-		     self.objectClasses).display(self.request))
-	return attributes
+		     self.objectClasses)
+        return a
+    
+    def render_form(self, context, data):
+        return webform.renderForms()
 
-class CreateError:
-    def __init__(self, defe, what, dn, request):
-	self.deferred=defe
-	self.what=what
-	self.dn=dn
-	self.request=request
+    def render_passthrough(self, context, data):
+        return context.tag.clear()[data]
 
-    def __call__(self, fail):
-	self.request.args['incomplete']=['true']
-	self.deferred.callback(["Trouble while fetching %s for %s: %s.\n<HR>"%(self.what, repr(self.dn), fail.getErrorMessage())])
+    def render_status(self, context, data):
+        try:
+            obj = context.locate(inevow.IHand)
+        except KeyError:
+            return context.tag.clear()
 
-class NeedDNError(widgets.Widget):
-    def display(self, request):
-	return ['No DN specified. You need to use the <a href="%s">search page</a>.'%request.sibLink("search")]
+        if not isinstance(obj, EditStatus):
+            return context.tag.clear()[obj]
 
-class EditPage(template.BasicPage):
-    title = "Ldaptor Edit Page"
-    isLeaf = 1
+        request = context.locate(inevow.IRequest)
+        u=url.URL.fromRequest(request)
+        u=u.parent().parent()
 
-    def _header(self, request):
-	l=[]
-	l.append('<a href="%s">Search</a>'%request.sibLink("search"))
-	l.append('<a href="%s">add new entry</a>'%request.sibLink("add"))
+        return context.tag.clear()[
+            "Edited ",
+            tags.a(href=u.parent().child(obj.entry.dn).child("search"))[obj.entry.dn],
+            " successfully. ",
 
-	if request.postpath and request.postpath!=['']:
-	    l.append('<a href="%s">delete</a>' \
-		     % request.sibLink("delete/" + uriUnquote(request.postpath[0])))
-	    l.append('<a href="%s">change password</a>' \
-		     % request.sibLink("change_password/" + '/'.join(request.postpath)))
+            # TODO share implementation with entryLinks
+            '[',
+            tags.a(href=u.sibling('move').child(uriQuote(obj.entry.dn)))['move'],
+            '|',
+            tags.a(href=u.sibling('delete').child(uriQuote(obj.entry.dn)))['delete'],
+            '|',
+            tags.a(href=u.sibling('change_password').child(uriQuote(obj.entry.dn)))['change_password'],
+            ']',
 
-	return '[' + '|'.join(l) + ']'
+            tags.p[obj.changes],
 
-    def getContent(self, request):
-	if not request.postpath or request.postpath==['']:
-	    return NeedDNError()
-	else:
-	    dn=uriUnquote(request.postpath[0])
+            ]
 
-	    d=defer.Deferred()
+class EditPage(rend.Page):
+    addSlash = True
+    docFactory = loaders.xmlfile(
+        'edit.xhtml',
+        templateDir=os.path.split(os.path.abspath(__file__))[0])
 
-            entry = request.getComponent(simpleguard.Authenticated).name
-            client = entry.client
-	    if client:
-                deferred = fetchschema.fetch(client, dn)
-                deferred.addCallback(self._getContent_3,
-                                     dn, request, client, d)
-                deferred.addErrback(CreateError(d, 'schema', dn, request))
-	    else:
-		CreateError(d, 'session client', dn, request)(
-		    failure.Failure(
-		    ldaperrors.LDAPUnknownError(ldaperrors.other,
-						"connection lost")))
+    def render_url(self, context, data):
+        request = context.locate(inevow.IRequest)
+        u = url.URL.fromRequest(request)
+        return context.tag(href=u.parent().child('search'))
 
-	    return [self._header(request), d]
+    def getDynamicChild(self, name, request):
+        dn = uriUnquote(name)
+        userEntry = request.getSession().getLoggedInRoot().loggedIn
 
-    def _getContent_3(self, x, dn, request, client, d):
-	attributeTypes, objectClasses = x
-	deferred=defer.Deferred()
-	LDAPSearch_FetchByDN(deferred, client, dn)
-	deferred.addCallbacks(
-	    callback=CreateEditForm(d, dn, request,
-				    attributeTypes, objectClasses),
-	    errback=CreateError(d, 'attributes', dn, request))
+        e = ldapsyntax.LDAPEntryWithClient(dn=dn,
+                                           client=userEntry.client)
+        d = e.fetch()
+        def _getSchema(entry):
+            d = fetchschema.fetch(entry.client, entry.dn)
+            def cb((attributeTypes, objectClasses), entry):
+                return (entry, attributeTypes, objectClasses)
+            d.addCallback(cb, entry)
+            return d
+        d.addCallback(_getSchema)
+        def _createEditPage((entry, attributeTypes, objectClasses)):
+            return ReallyEditPage(entry, attributeTypes, objectClasses)
+        d.addCallback(_createEditPage)
+        return d

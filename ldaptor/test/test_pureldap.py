@@ -43,6 +43,7 @@ class KnownValues(unittest.TestCase):
 	 [],
          { "attributeType": 'bar',
 	   },
+         None,
 	 [0x30, 0x0c]
 	 + [0x0a, 0x01, 0x01]
          + [0x30, 0x07]
@@ -54,6 +55,7 @@ class KnownValues(unittest.TestCase):
 	 { "object": 'cn=foo, dc=example, dc=com',
 	   "modification": [pureldap.LDAPModification_delete('bar')]
 	   },
+         None,
 	 [0x66, 0x2c]
 	 + [0x04, 0x1a]
 	 + l("cn=foo, dc=example, dc=com")
@@ -68,10 +70,51 @@ class KnownValues(unittest.TestCase):
 	 [],
 	 { "value": pureldap.LDAPFilter_present("foo"),
 	   },
+         pureldap.LDAPBERDecoderContext_Filter(fallback=pureber.BERDecoderContext()),
 	 [0xa2, 0x05]
 	 + [0x87]
 	 + [len("foo")]
 	 + l("foo")),
+
+	(pureldap.LDAPFilter_or,
+	 [],
+	 { "value": [pureldap.LDAPFilter_equalityMatch(
+        attributeDesc=pureldap.LDAPAttributeDescription(value='cn'),
+        assertionValue=pureldap.LDAPAssertionValue(value='foo')),
+                     pureldap.LDAPFilter_equalityMatch(
+        attributeDesc=pureldap.LDAPAttributeDescription(value='uid'),
+        assertionValue=pureldap.LDAPAssertionValue(value='foo')),
+                     ]
+	   },
+         pureldap.LDAPBERDecoderContext_Filter(fallback=pureber.BERDecoderContext()),
+	 [0xa1, 23]
+	 + [0xa3, 9]
+	 + [0x04] + [len("cn")] + l("cn")
+	 + [0x04] + [len("foo")] + l("foo")
+	 + [0xa3, 10]
+	 + [0x04] + [len("uid")] + l("uid")
+	 + [0x04] + [len("foo")] + l("foo"),
+         ),
+
+	(pureldap.LDAPFilter_and,
+	 [],
+	 { "value": [pureldap.LDAPFilter_equalityMatch(
+        attributeDesc=pureldap.LDAPAttributeDescription(value='cn'),
+        assertionValue=pureldap.LDAPAssertionValue(value='foo')),
+                     pureldap.LDAPFilter_equalityMatch(
+        attributeDesc=pureldap.LDAPAttributeDescription(value='uid'),
+        assertionValue=pureldap.LDAPAssertionValue(value='foo')),
+                     ]
+	   },
+         pureldap.LDAPBERDecoderContext_Filter(fallback=pureber.BERDecoderContext()),
+	 [0xa0, 23]
+	 + [0xa3, 9]
+	 + [0x04] + [len("cn")] + l("cn")
+	 + [0x04] + [len("foo")] + l("foo")
+	 + [0xa3, 10]
+	 + [0x04] + [len("uid")] + l("uid")
+	 + [0x04] + [len("foo")] + l("foo"),
+         ),
 
 	(pureldap.LDAPModifyDNRequest,
 	 [],
@@ -79,6 +122,7 @@ class KnownValues(unittest.TestCase):
 	  'newrdn': 'uid=bar',
 	  'deleteoldrdn': 0,
 	  },
+         None,
 	 [0x6c, 0x26]
 	 + [0x04]
 	 + [len("cn=foo,dc=example,dc=com")]
@@ -95,6 +139,7 @@ class KnownValues(unittest.TestCase):
 	  'deleteoldrdn': 0,
 	  'newSuperior': 'ou=People,dc=example,dc=com',
 	  },
+         None,
 	 [0x6c, 0x4b]
 	 + [0x04]
 	 + [len("cn=aoue,dc=example,dc=com")]
@@ -111,6 +156,7 @@ class KnownValues(unittest.TestCase):
          [],
          {'baseObject': 'dc=yoja,dc=example,dc=com',
           },
+         None,
          [0x63, 57]
          + [0x04]
          + [len('dc=yoja,dc=example,dc=com')]
@@ -134,6 +180,7 @@ class KnownValues(unittest.TestCase):
         (pureldap.LDAPUnbindRequest,
          [],
          {},
+         None,
          [0x42, 0x00]
 	),
 
@@ -141,6 +188,7 @@ class KnownValues(unittest.TestCase):
          [],
          {'resultCode': 0,
           },
+         None,
          [0x65, 0x07]
          # resultCode
          + [0x0a, 0x01, 0x00]
@@ -161,6 +209,7 @@ class KnownValues(unittest.TestCase):
          {'resultCode': 0,
           'matchedDN': 'dc=foo,dc=example,dc=com',
           },
+         None,
          [0x65, 31]
          # resultCode
          + [0x0a, 0x01, 0x00]
@@ -182,6 +231,7 @@ class KnownValues(unittest.TestCase):
           'matchedDN': 'dc=foo,dc=example,dc=com',
           'errorMessage': 'the foobar was fubar',
           },
+         None,
          [0x65, 51]
          # resultCode
          + [0x0a, 0x01, 0x00]
@@ -202,6 +252,7 @@ class KnownValues(unittest.TestCase):
          {'resultCode': 0,
           'errorMessage': 'the foobar was fubar',
           },
+         None,
          [0x65, 27]
          # resultCode
          + [0x0a, 0x01, 0x00]
@@ -217,11 +268,99 @@ class KnownValues(unittest.TestCase):
          + []
 	),
 
+        (pureldap.LDAPMessage,
+         [],
+         {'id': 42,
+          'value': pureldap.LDAPBindRequest(),
+          },
+         pureldap.LDAPBERDecoderContext_TopLevel(
+        inherit=pureldap.LDAPBERDecoderContext_LDAPMessage(
+        fallback=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext()),
+        inherit=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext()))),
+         [0x30, 12]
+         # id
+         + [0x02, 0x01, 42]
+         # value
+         + l(str(pureldap.LDAPBindRequest()))
+         ),
+
+        (pureldap.LDAPControl,
+         [],
+         {'controlType': '1.2.3.4',
+          },
+         None,
+         [0x30, 9]
+         # controlType
+         + [0x04, 7]
+         + l("1.2.3.4")
+         ),
+
+        (pureldap.LDAPControl,
+         [],
+         {'controlType': '1.2.3.4',
+          'criticality': True,
+          },
+         None,
+         [0x30, 12]
+         # controlType
+         + [0x04, 7]
+         + l("1.2.3.4")
+         # criticality
+         + [0x01, 1, 0xFF]
+         ),
+
+        (pureldap.LDAPControl,
+         [],
+         {'controlType': '1.2.3.4',
+          'criticality': True,
+          'controlValue': 'silly',
+          },
+         None,
+         [0x30, 19]
+         # controlType
+         + [0x04, 7]
+         + l("1.2.3.4")
+         # criticality
+         + [0x01, 1, 0xFF]
+         # controlValue
+         + [0x04, len("silly")]
+         + l("silly")
+         ),
+
+        (pureldap.LDAPMessage,
+         [],
+         {'id': 42,
+          'value': pureldap.LDAPBindRequest(),
+          'controls': [ ('1.2.3.4', None, None),
+                        ('2.3.4.5', False),
+                        ('3.4.5.6', True, '\x00\x01\x02\xFF'),
+                        ],
+          },
+         pureldap.LDAPBERDecoderContext_TopLevel(
+        inherit=pureldap.LDAPBERDecoderContext_LDAPMessage(
+        fallback=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext()),
+        inherit=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext()))),
+         [0x30, 59]
+         # id
+         + [0x02, 0x01, 42]
+         # value
+         + l(str(pureldap.LDAPBindRequest()))
+         # controls
+         + l(str(pureldap.LDAPControls(value=[
+        pureldap.LDAPControl(controlType='1.2.3.4'),
+        pureldap.LDAPControl(controlType='2.3.4.5',
+                             criticality=False),
+        pureldap.LDAPControl(controlType='3.4.5.6',
+                             criticality=True,
+                             controlValue='\x00\x01\x02\xFF'),
+        ]))),
+         ),
+
         )
 
     def testToLDAP(self):
 	"""str(LDAPClass(...)) should give known result with known input"""
-	for klass, args, kwargs, encoded in self.knownValues:
+	for klass, args, kwargs, decoder, encoded in self.knownValues:
 	    result = klass(*args, **kwargs)
 	    result = str(result)
 	    result = map(ord, result)
@@ -234,10 +373,13 @@ class KnownValues(unittest.TestCase):
 
     def testFromLDAP(self):
 	"""LDAPClass(encoded="...") should give known result with known input"""
-	for klass, args, kwargs, encoded in self.knownValues:
+	for klass, args, kwargs, decoder, encoded in self.knownValues:
+            if decoder is None:
+                decoder = pureldap.LDAPBERDecoderContext(
+                    fallback=pureber.BERDecoderContext())
 	    m=MutableString(s(*encoded))
 	    m.append('foo')
-	    result = klass(encoded=m, berdecoder=pureber.BERDecoderContext())
+            result = pureber.ber2object(decoder, m)
 	    assert m=='foo'
 
 	    shouldBe = klass(*args, **kwargs)
@@ -250,13 +392,15 @@ class KnownValues(unittest.TestCase):
 
     def testPartial(self):
 	"""LDAPClass(encoded="...") with too short input should throw BERExceptionInsufficientData"""
-	for klass, args, kwargs, encoded in self.knownValues:
+	for klass, args, kwargs, decoder, encoded in self.knownValues:
+            decoder = pureldap.LDAPBERDecoderContext(
+                fallback=pureber.BERDecoderContext())
 	    for i in xrange(len(encoded)):
 		m=MutableString(s(*encoded))[:i]
 		self.assertRaises(pureber.BERExceptionInsufficientData,
 				  klass,
 				  encoded=m,
-				  berdecoder=pureber.BERDecoderContext())
+				  berdecoder=decoder)
 
     def testPartialLDAPModifyRequestEncodings_old(self):
 	"""LDAPModifyRequest(encoded="...") with too short input should throw BERExceptionInsufficientData"""

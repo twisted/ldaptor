@@ -1,7 +1,5 @@
 TODO file for the Ldaptor project.
 
-* ldaptor-webui: twisted.web.widgets.Form.tryAgain()
-
 * ldaptor-webui: edit: adding attributes in schema MAY that didn't
    exist earlier
 
@@ -20,16 +18,6 @@ TODO file for the Ldaptor project.
 * suggest mails/uids/uidNumbers/gidNumbers/homes
 
 * study array.array as a replacement for MutableString
-
-* SSHA password verify:
-   pwd='dYH8JoKo5t1kG4Szd7SJhXoGqySj3k1r'
-   p=base64.decodestring(pwd)
-   s=sha.sha()
-   s.update('foo')
-   s.update(p[20:])
-   assert pwd==base64.encodestring(s.digest())
-
-* rewrite Deferred handling, use Failures, etc.
 
 * SSL
 
@@ -81,11 +69,6 @@ TODO file for the Ldaptor project.
 
 * write a getting started doc with steps #2 and #3 from openldap.org quickstart.html
 
-* if user presses enter when focus is on a checkbox, atleast Galeon
-   submits the form _without_ the submit button info -> atleast
-   apps.webui.change_password.ConfirmChange.wmfactory_submit fails to
-   understand that as submit.
-
 * use twisted-web.deb for ldaptor-webui; steps needed:
    1. exarkun/moshez twisted.web improvement that returns 403 for
    non-localhost requests must be integrated to twisted (jml promised
@@ -101,13 +84,7 @@ TODO file for the Ldaptor project.
 
 * ldaptor-ldap2maradns: generate gw.X automatically
 
-* ldaptor: study WebUnit unit testing.
-
-* http://www.sitepoint.com/print/1273
-
-  - add <label for="id-of-input-field">foo:</label> <input id="id-of-input-field" ... />
-
-* At same stage, ldaptor needs better user interface than what can be
+* At some stage, ldaptor needs better user interface than what can be
    reasonably built with HTML. Windows compatibility will sadly be of
    utmost importance. Look at
 
@@ -124,3 +101,24 @@ TODO file for the Ldaptor project.
 * self-change password webui
 
 * ldaptor-getfreenumber take minimum as command line option
+
+* ldapserver handler functions can return only one message, and have
+   the awkwark "reply" callback parameter for more. Cannot nicely
+   implement as generators, because they can be Deferred. Use a
+   Stream, from moshez's callchain.py
+
+* move servicelocationoverride search logic from connector to
+   ldap.config
+
+* use ldaptor.config.ILDAPConfig everywhere for
+   serviceLocationOverrides etc. by passing around a componentized
+   "context" that can be used to access ILDAPConfig. ILDAPConfig
+   should only contain parts used by the ldaptor library; webui should
+   use its own IWebUIConfig.
+
+* add entry.namingContexts(), that returns all of the naming contexts
+   and not just the one that is parent for entry.dn
+
+* better API to handle controls
+
+* use interfaces and adapters for serializing BER objects

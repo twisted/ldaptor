@@ -25,9 +25,9 @@
       <surname>Virtanen &lt;tv@debian.org&gt;</surname>
     </author>
 
-    <date>2003-09-19</date>
+    <date>2004-06-09</date>
     <copyright>
-      <year>2003</year>
+      <year>2003&ndash;2004</year>
       <holder>Tommi Virtanen</holder>
     </copyright>
   </slidesinfo>
@@ -81,6 +81,15 @@
   </foil>
 
   <foil>
+    <title>Overview of Ldaptor</title>
+    <mediaobject>
+      <imageobject>
+	<imagedata format="PNG" align="center" fileref="overview.dia.png"/>
+      </imageobject>
+    </mediaobject>
+  </foil>
+
+  <foil>
     <title>Preparing to connect</title>
     <literallayout>&session_02;</literallayout>
   </foil>
@@ -95,7 +104,7 @@
     a large number of protocols (including HTTP, NNTP, SSH, IRC, FTP,
     and others), and much more.</para>
 
-    <para>Twisted includes many fullblown application, such as web,
+    <para>Twisted includes many fullblown applications, such as web,
     SSH, FTP, DNS and news servers.</para>
   </foil>
 
@@ -177,7 +186,7 @@
   <foil>
     <title>Our first Python program</title>
     <para>
-      <ulink url="addressbookpy-02_script.html">Click me!</ulink>
+      <ulink url="02_script/addressbook-py.html">Click me!</ulink>
     </para>
   </foil>
 
@@ -233,27 +242,6 @@
   </foil>
 
   <foil>
-    <title>A web application</title>
-    <para role="speaker-instructions">
-      <ulink url="../diff/02_script/03_webapp">Please examine the differences between 02_script and 03_webapp.</ulink>
-    </para>
-  </foil>
-
-  <foil>
-    <title>Taking input from the URL</title>
-    <para role="speaker-instructions">
-      <ulink url="../diff/03_webapp/04_dynamic">Please examine the differences between 03_webapp and 04_dynamic.</ulink>
-    </para>
-  </foil>
-
-  <foil>
-    <title>Using HTML forms</title>
-    <para role="speaker-instructions">
-      <ulink url="../diff/04_dynamic/05_form">Please examine the differences between 04_dynamic and 05_form.</ulink>
-    </para>
-  </foil>
-
-  <foil>
     <title><ulink url="http://www.divmod.org/Home/Projects/Nevow/">Nevow</ulink></title>
     <itemizedlist>
       <listitem>
@@ -272,26 +260,34 @@
   </foil>
 
   <foil>
-    <title>Prettifying the output</title>
-    <para role="speaker-instructions">
-      <ulink url="../diff/05_form/06_pretty">Please examine the differences between 05_form and 06_pretty.</ulink>
+    <title>A Web App: Code</title>
+    <para>
+      <ulink url="07_easy/addressbook-py.html">Click me!</ulink>
     </para>
   </foil>
 
   <foil>
-    <title>Easier user input</title>
-    <para role="speaker-instructions">
-      <ulink url="../diff/06_pretty/07_easy">Please examine the differences between 06_pretty and 07_easy.</ulink>
+    <title>A Web App: Template</title>
+    <para>
+      <ulink url="07_easy/searchform-xhtml.html">Click me!</ulink>
+    </para>
+  </foil>
+
+  <foil>
+    <title>A Web App: Startup</title>
+    <para>
+      <ulink url="07_easy/addressbook-tac.html">Click me!</ulink>
     </para>
   </foil>
 
   <foil>
     <title>A complex search filter</title>
 
-    <informalexample>
-      <para><literal>(&amp;(objectClass=person)(!(telephoneNumber=*))
-	  (|(cn=*a*b*)(cn=*b*a*)))</literal></para>
-    </informalexample>
+    <literallayout>
+      (&amp;(objectClass=person)
+          (!(telephoneNumber=*))
+          (|(cn=*a*b*)(cn=*b*a*)))
+    </literallayout>
 
     <mediaobject>
       <imageobject>
@@ -401,6 +397,11 @@ objectclass ( 2.5.6.6 NAME 'person'
   </foil>
 
   <foil>
+    <title>Demo of ldaptor-webui</title>
+    <para>...</para>
+  </foil>
+
+  <foil>
     <title>Where to go from here?</title>
 
     <para>Install <ulink 
@@ -421,7 +422,7 @@ objectclass ( 2.5.6.6 NAME 'person'
 
   <foil>
     <title>Thank You</title>
-    <para></para>
+    <para>Questions?</para>
   </foil>
 
 <!--

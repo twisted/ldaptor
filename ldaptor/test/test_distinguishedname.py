@@ -10,15 +10,15 @@ class TestCaseWithKnownValues(unittest.TestCase):
 
     def testKnownValues(self):
 	for s, l in self.knownValues:
-	    fromString = dn.DistinguishedName(stringValue=s)
+	    fromString = dn.DistinguishedName(s)
             listOfRDNs = []
             for av in l:
                 listOfAttributeTypesAndValues = []
                 for a,v in av:
                     listOfAttributeTypesAndValues.append(dn.LDAPAttributeTypeAndValue(attributeType=a, value=v))
-                r=dn.RelativeDistinguishedName(attributeTypesAndValues=listOfAttributeTypesAndValues)
+                r=dn.RelativeDistinguishedName(listOfAttributeTypesAndValues)
                 listOfRDNs.append(r)
-	    fromList = dn.DistinguishedName(listOfRDNs=listOfRDNs)
+	    fromList = dn.DistinguishedName(listOfRDNs)
 
 	    self.assertEquals(fromString, fromList)
 
@@ -26,6 +26,22 @@ class TestCaseWithKnownValues(unittest.TestCase):
 	    fromListToString = str(fromList)
 
 	    assert fromStringToString == fromListToString
+
+            canon = fromStringToString
+            # DNs equal their string representation. Note this does
+            # not mean they equal all the possible string
+            # representations -- just the canonical one.
+	    self.assertEquals(fromString, canon)
+	    self.assertEquals(fromList, canon)
+	    self.assertEquals(canon, fromString)
+	    self.assertEquals(canon, fromList)
+            
+            # DNs can be used interchangeably with their canonical
+            # string representation as hash keys.
+	    self.assertEquals(hash(fromString), hash(canon))
+	    self.assertEquals(hash(fromList), hash(canon))
+	    self.assertEquals(hash(canon), hash(fromString))
+	    self.assertEquals(hash(canon), hash(fromList))
 
 
 class LDAPDistinguishedName_Escaping(TestCaseWithKnownValues):
@@ -129,42 +145,42 @@ class LDAPDistinguishedName_InitialSpaces(TestCaseWithKnownValues):
 
 class LDAPDistinguishedName_DomainName(unittest.TestCase):
     def testNonDc(self):
-	d=dn.DistinguishedName(stringValue='cn=foo,o=bar,c=us')
+	d=dn.DistinguishedName('cn=foo,o=bar,c=us')
 	assert d.getDomainName() is None
 
     def testNonTrailingDc(self):
-	d=dn.DistinguishedName(stringValue='cn=foo,o=bar,dc=foo,c=us')
+	d=dn.DistinguishedName('cn=foo,o=bar,dc=foo,c=us')
 	assert d.getDomainName() is None
 
     def testSimple_ExampleCom(self):
-	d=dn.DistinguishedName(stringValue='dc=example,dc=com')
+	d=dn.DistinguishedName('dc=example,dc=com')
 	assert d.getDomainName() == 'example.com'
 
     def testSimple_SubExampleCom(self):
-	d=dn.DistinguishedName(stringValue='dc=sub,dc=example,dc=com')
+	d=dn.DistinguishedName('dc=sub,dc=example,dc=com')
 	assert d.getDomainName() == 'sub.example.com'
 
     def testSimple_HostSubExampleCom(self):
-	d=dn.DistinguishedName(stringValue='cn=host,dc=sub,dc=example,dc=com')
+	d=dn.DistinguishedName('cn=host,dc=sub,dc=example,dc=com')
 	assert d.getDomainName() == 'sub.example.com'
 
     def testInterleaved_SubHostSubExampleCom(self):
-	d=dn.DistinguishedName(stringValue='dc=sub2,cn=host,dc=sub,dc=example,dc=com')
+	d=dn.DistinguishedName('dc=sub2,cn=host,dc=sub,dc=example,dc=com')
 	assert d.getDomainName() == 'sub.example.com'
 
 class LDAPDistinguishedName_contains(unittest.TestCase):
-    shsec=dn.DistinguishedName(stringValue='dc=sub2,cn=host,dc=sub,dc=example,dc=com')
-    hsec=dn.DistinguishedName(stringValue='cn=host,dc=sub,dc=example,dc=com')
-    sec=dn.DistinguishedName(stringValue='dc=sub,dc=example,dc=com')
-    ec=dn.DistinguishedName(stringValue='dc=example,dc=com')
-    c=dn.DistinguishedName(stringValue='dc=com')
+    shsec=dn.DistinguishedName('dc=sub2,cn=host,dc=sub,dc=example,dc=com')
+    hsec=dn.DistinguishedName('cn=host,dc=sub,dc=example,dc=com')
+    sec=dn.DistinguishedName('dc=sub,dc=example,dc=com')
+    ec=dn.DistinguishedName('dc=example,dc=com')
+    c=dn.DistinguishedName('dc=com')
 
-    soc=dn.DistinguishedName(stringValue='dc=sub,dc=other,dc=com')
-    oc=dn.DistinguishedName(stringValue='dc=other,dc=com')
+    soc=dn.DistinguishedName('dc=sub,dc=other,dc=com')
+    oc=dn.DistinguishedName('dc=other,dc=com')
 
-    other=dn.DistinguishedName(stringValue='o=foo,c=US')
+    other=dn.DistinguishedName('o=foo,c=US')
 
-    root=dn.DistinguishedName(stringValue='')
+    root=dn.DistinguishedName('')
 
     def test_selfContainment(self):
 	assert self.c.contains(self.c)
@@ -240,19 +256,39 @@ class LDAPDistinguishedName_Malformed(unittest.TestCase):
     def testMalformed(self):
         self.assertRaises(dn.InvalidRelativeDistinguishedName,
                           dn.DistinguishedName,
-                          stringValue='foo')
+                          'foo')
         self.assertRaises(dn.InvalidRelativeDistinguishedName,
                           dn.DistinguishedName,
-                          stringValue='foo,dc=com')
+                          'foo,dc=com')
         self.assertRaises(dn.InvalidRelativeDistinguishedName,
                           dn.DistinguishedName,
-                          stringValue='ou=something,foo')
+                          'ou=something,foo')
         self.assertRaises(dn.InvalidRelativeDistinguishedName,
                           dn.DistinguishedName,
-                          stringValue='foo,foo')
+                          'foo,foo')
 
 class LDAPDistinguishedName_Prettify(unittest.TestCase):
     def testPrettifySpaces(self):
         """str(DistinguishedName(...)) prettifies the DN by removing extra whitespace."""
-	d=dn.DistinguishedName(stringValue='cn=foo, o=bar,  c=us')
+	d=dn.DistinguishedName('cn=foo, o=bar,  c=us')
 	assert str(d) == 'cn=foo,o=bar,c=us'
+
+class DistinguishedName_Init(unittest.TestCase):
+    def testString(self):
+	d=dn.DistinguishedName('dc=example,dc=com')
+	self.assertEquals(str(d), 'dc=example,dc=com')
+
+    def testDN(self):
+	proto=dn.DistinguishedName('dc=example,dc=com')
+	d=dn.DistinguishedName(proto)
+	self.assertEquals(str(d), 'dc=example,dc=com')
+
+class RelativeDistinguishedName_Init(unittest.TestCase):
+    def testString(self):
+	rdn=dn.RelativeDistinguishedName('dc=example')
+	self.assertEquals(str(rdn), 'dc=example')
+
+    def testRDN(self):
+	proto=dn.RelativeDistinguishedName('dc=example')
+	rdn=dn.RelativeDistinguishedName(proto)
+	self.assertEquals(str(rdn), 'dc=example')

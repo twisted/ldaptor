@@ -27,13 +27,13 @@ class LDAPClientTestDriver:
     def __init__(self, *responses):
         self.sent=[]
         self.responses=list(responses)
-    def queue(self, x, callback):
+    def queue(self, x, callback, *args, **kwargs):
         self.sent.append(x)
         assert self.responses, 'Ran out of responses at %r' % x
         responses = self.responses.pop(0)
         while responses:
             r = responses.pop(0)
-            ret = callback(r)
+            ret = callback(r, *args, **kwargs)
             if responses:
                 assert ret==0
             else:

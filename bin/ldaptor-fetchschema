@@ -1,46 +1,23 @@
 #!/usr/bin/python
 
 import sys
-from ldaptor.protocols.ldap import ldapclient, ldif, ldapsyntax, distinguishedname, ldapconnector, fetchschema
-from ldaptor.protocols import pureber, pureldap
-from ldaptor import usage, ldapfilter
-from twisted.internet import protocol, reactor, defer
+from ldaptor.protocols.ldap import ldapclient, ldapconnector, fetchschema
+from ldaptor import usage, config
+from twisted.internet import reactor
 
-class Search(ldapclient.LDAPClient):
-    def connectionMade(self):
-	d=self.bind()
-	d.addCallback(self._handle_bind_success)
-	d.addErrback(self.factory.deferred.errback)
+def _printResults(x):
+    attributeTypes, objectClasses = x
 
-    def _printResults(self, x):
-        attributeTypes, objectClasses = x
+    something = False
+    for at in attributeTypes:
+        print 'attributetype', at
+        something = True
 
-        something = False
-        for at in attributeTypes:
-            print 'attributetype', at
-            something = True
+    if something:
+        print
 
-        if something:
-            print
-
-        for oc in objectClasses:
-            print 'objectclass', oc
-
-    def _handle_bind_success(self, x):
-	matchedDN, serverSaslCreds = x
-        d=fetchschema.fetch(self, self.factory.base)
-        d.addCallback(self._printResults)
-	d.chainDeferred(self.factory.deferred)
-
-class SearchFactory(protocol.ClientFactory):
-    protocol = Search
-
-    def __init__(self, deferred, base):
-	self.deferred=deferred
-	self.base=base
-
-    def clientConnectionFailed(self, connector, reason):
-	self.deferred.errback(reason)
+    for oc in objectClasses:
+        print 'objectclass', oc
 
 exitStatus=0
 
@@ -49,15 +26,23 @@ def error(fail):
     global exitStatus
     exitStatus=1
 
-def main(base, serviceLocationOverride):
-    d=defer.Deferred()
-    s=SearchFactory(d, base)
+def main(cfg):
+    baseDN = cfg.getBaseDN()
+    if baseDN is None:
+        print >>sys.stderr, "%s: you need to give base DN." % sys.argv[0]
+        sys.exit(1)
+
+    c = ldapconnector.LDAPClientCreator(reactor,
+                                        ldapclient.LDAPClient)
+    d= c.connectAnonymously(dn=baseDN,
+                            overrides=cfg.getServiceLocationOverrides())
+    def _cbBound(client, baseDN):
+        d=fetchschema.fetch(client, baseDN)
+        return d
+    d.addCallback(_cbBound, baseDN)
+    d.addCallback(_printResults)
     d.addErrback(error)
     d.addBoth(lambda x: reactor.stop())
-
-    dn = distinguishedname.DistinguishedName(stringValue=base)
-    c = ldapconnector.LDAPConnector(reactor, dn, s, overrides=serviceLocationOverride)
-    c.connect()
 
     reactor.run()
     sys.exit(exitStatus)
@@ -66,16 +51,16 @@ class MyOptions(usage.Options, usage.Options_service_location, usage.Options_bas
     """LDAPtor command line schema fetching utility"""
 
 if __name__ == "__main__":
-    import sys
     from twisted.python import log
     log.startLogging(sys.stderr, setStdout=0)
 
     try:
-	config = MyOptions()
-	config.parseOptions()
+	opts = MyOptions()
+	opts.parseOptions()
     except usage.UsageError, ue:
 	sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
 	sys.exit(1)
 
-    main(config.opts['base'],
-	 config.opts['service-location'])
+    cfg = config.LDAPConfig(baseDN=opts['base'],
+                            serviceLocationOverrides=opts['service-location'])
+    main(cfg)

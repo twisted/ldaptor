@@ -13,40 +13,40 @@ class TestInMemoryDatabase(unittest.TestCase):
     def setUp(self):
         self.root = inmemory.ReadOnlyInMemoryLDAPEntry(
             dn=distinguishedname.DistinguishedName('dc=example,dc=com'))
-        self.meta=self.root.putChild(
-            rdn=distinguishedname.RelativeDistinguishedName('ou=metasyntactic'),
+        self.meta=self.root.addChild(
+            rdn='ou=metasyntactic',
             attributes={
             'objectClass': ['a', 'b'],
             'ou': ['metasyntactic'],
             })
-        self.foo=self.meta.putChild(
-            rdn=distinguishedname.RelativeDistinguishedName('cn=foo'),
+        self.foo=self.meta.addChild(
+            rdn='cn=foo',
             attributes={
             'objectClass': ['a', 'b'],
             'cn': ['foo'],
             })
-        self.bar=self.meta.putChild(
-            rdn=distinguishedname.RelativeDistinguishedName('cn=bar'),
+        self.bar=self.meta.addChild(
+            rdn='cn=bar',
             attributes={
             'objectClass': ['a', 'b'],
             'cn': ['bar'],
             })
 
-        self.empty=self.root.putChild(
-            rdn=distinguishedname.RelativeDistinguishedName('ou=empty'),
+        self.empty=self.root.addChild(
+            rdn='ou=empty',
             attributes={
             'objectClass': ['a', 'b'],
             'ou': ['empty'],
             })
 
-        self.oneChild=self.root.putChild(
-            rdn=distinguishedname.RelativeDistinguishedName('ou=oneChild'),
+        self.oneChild=self.root.addChild(
+            rdn='ou=oneChild',
             attributes={
             'objectClass': ['a', 'b'],
             'ou': ['oneChild'],
             })
-        self.theChild=self.oneChild.putChild(
-            rdn=distinguishedname.RelativeDistinguishedName('cn=theChild'),
+        self.theChild=self.oneChild.addChild(
+            rdn='cn=theChild',
             attributes={
             'objectClass': ['a', 'b'],
             'cn': ['theChild'],
@@ -90,9 +90,9 @@ class TestInMemoryDatabase(unittest.TestCase):
         got = [e.dn for e in children]
         self.assertEquals(got, want)
 
-    def test_putChild(self):
-        self.empty.putChild(
-            rdn=distinguishedname.RelativeDistinguishedName('a=b'),
+    def test_addChild(self):
+        self.empty.addChild(
+            rdn='a=b',
             attributes={
             'objectClass': ['a', 'b'],
             'a': 'b',
@@ -108,10 +108,10 @@ class TestInMemoryDatabase(unittest.TestCase):
         want.sort()
         self.assertEquals(got, want)
 
-    def test_putChild_Exists(self):
+    def test_addChild_Exists(self):
         self.assertRaises(ldaperrors.LDAPEntryAlreadyExists,
-                          self.meta.putChild,
-                          rdn=distinguishedname.RelativeDistinguishedName('cn=foo'),
+                          self.meta.addChild,
+                          rdn='cn=foo',
                           attributes={
             'objectClass': ['a'],
             'cn': 'foo',
@@ -235,6 +235,11 @@ class TestInMemoryDatabase(unittest.TestCase):
         self.assertRaises(ldaperrors.LDAPNoSuchObject,
                           util.wait, d)
         
+    def test_setPassword(self):
+        self.foo.setPassword('s3krit', salt='\xf2\x4a')
+        self.failUnless('userPassword' in self.foo)
+        self.assertEquals(self.foo['userPassword'],
+                          ['{SSHA}0n/Iw1NhUOKyaI9gm9v5YsO3ZInySg=='])
 
 class FromLDIF(unittest.TestCase):
     def test_single(self):
@@ -260,7 +265,7 @@ bValue: c
     def test_two(self):
         ldif = StringIO('''\
 dn: dc=example,dc=com
-objectClass: domainComponent
+objectClass: dcObject
 dc: example
 
 dn: cn=foo,dc=example,dc=com
@@ -287,7 +292,7 @@ cn: foo
     def test_missingNode(self):
         ldif = StringIO('''\
 dn: dc=example,dc=com
-objectClass: domainComponent
+objectClass: dcObject
 dc: example
 
 dn: cn=foo,ou=nonexisting,dc=example,dc=com
@@ -339,14 +344,14 @@ class TestDiff(unittest.TestCase):
                                                {
             'dc': ['example'],
             })
-        a.putChild(distinguishedname.RelativeDistinguishedName('cn=foo'),
+        a.addChild('cn=foo',
                    { 'cn': ['foo'],
                      })
         b = inmemory.ReadOnlyInMemoryLDAPEntry('dc=example,dc=com',
                                                {
             'dc': ['example'],
             })
-        b.putChild(distinguishedname.RelativeDistinguishedName('cn=foo'),
+        b.addChild('cn=foo',
                    { 'cn': ['foo'],
                      'foo': ['bar'],
                      })
@@ -365,14 +370,14 @@ class TestDiff(unittest.TestCase):
         b = inmemory.ReadOnlyInMemoryLDAPEntry(
             dn=distinguishedname.DistinguishedName('dc=example,dc=com'))
 
-        foo=b.putChild(
-            rdn=distinguishedname.RelativeDistinguishedName('cn=foo'),
+        foo=b.addChild(
+            rdn='cn=foo',
             attributes={
             'objectClass': ['a', 'b'],
             'cn': ['foo'],
             })
-        bar=b.putChild(
-            rdn=distinguishedname.RelativeDistinguishedName('cn=bar'),
+        bar=b.addChild(
+            rdn='cn=bar',
             attributes={
             'objectClass': ['a', 'b'],
             'cn': ['bar'],
@@ -391,20 +396,20 @@ class TestDiff(unittest.TestCase):
         b = inmemory.ReadOnlyInMemoryLDAPEntry(
             dn=distinguishedname.DistinguishedName('dc=example,dc=com'))
 
-        foo=b.putChild(
-            rdn=distinguishedname.RelativeDistinguishedName('ou=foo'),
+        foo=b.addChild(
+            rdn='ou=foo',
             attributes={
             'objectClass': ['a', 'b'],
             'ou': ['foo'],
             })
-        baz=foo.putChild(
-            rdn=distinguishedname.RelativeDistinguishedName('cn=baz'),
+        baz=foo.addChild(
+            rdn='cn=baz',
             attributes={
             'objectClass': ['a', 'b'],
             'cn': ['baz'],
             })
-        bar=b.putChild(
-            rdn=distinguishedname.RelativeDistinguishedName('cn=bar'),
+        bar=b.addChild(
+            rdn='cn=bar',
             attributes={
             'objectClass': ['a', 'b'],
             'cn': ['bar'],
@@ -424,14 +429,14 @@ class TestDiff(unittest.TestCase):
         b = inmemory.ReadOnlyInMemoryLDAPEntry(
             dn=distinguishedname.DistinguishedName('dc=example,dc=com'))
 
-        foo=a.putChild(
-            rdn=distinguishedname.RelativeDistinguishedName('cn=foo'),
+        foo=a.addChild(
+            rdn='cn=foo',
             attributes={
             'objectClass': ['a', 'b'],
             'cn': ['foo'],
             })
-        bar=a.putChild(
-            rdn=distinguishedname.RelativeDistinguishedName('cn=bar'),
+        bar=a.addChild(
+            rdn='cn=bar',
             attributes={
             'objectClass': ['a', 'b'],
             'cn': ['bar'],
@@ -450,20 +455,20 @@ class TestDiff(unittest.TestCase):
         b = inmemory.ReadOnlyInMemoryLDAPEntry(
             dn=distinguishedname.DistinguishedName('dc=example,dc=com'))
 
-        foo=a.putChild(
-            rdn=distinguishedname.RelativeDistinguishedName('ou=foo'),
+        foo=a.addChild(
+            rdn='ou=foo',
             attributes={
             'objectClass': ['a', 'b'],
             'ou': ['foo'],
             })
-        baz=foo.putChild(
-            rdn=distinguishedname.RelativeDistinguishedName('cn=baz'),
+        baz=foo.addChild(
+            rdn='cn=baz',
             attributes={
             'objectClass': ['a', 'b'],
             'cn': ['baz'],
             })
-        bar=a.putChild(
-            rdn=distinguishedname.RelativeDistinguishedName('cn=bar'),
+        bar=a.addChild(
+            rdn='cn=bar',
             attributes={
             'objectClass': ['a', 'b'],
             'cn': ['bar'],

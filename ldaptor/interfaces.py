@@ -1,4 +1,5 @@
 from twisted.python import components
+from nevow import compy
 
 class ILDAPEntry(components.Interface):
     """
@@ -324,3 +325,29 @@ class IConnectedLDAPEntry(components.Interface):
         @return: Boolean.
 
         """
+
+class ILDAPConfig(compy.Interface):
+    """Generic LDAP configuration retrieval."""
+
+    def getBaseDN(self):
+        """Get the LDAP base DN, as a DistinguishedName, or None."""
+
+    def getServiceLocationOverrides(self):
+        """
+        Get the LDAP service location overrides, as a mapping of
+        DistinguishedName to (host, port) tuples.
+        """
+
+    def copy(self,
+             baseDN=None,
+             serviceLocationOverrides=None):
+        """
+        Make a copy of this configuration, overriding certain aspects
+        of it.
+        """
+
+    def getIdentityBaseDN(self):
+        """TODO"""
+
+    def getIdentitySearch(self, name):
+        """TODO"""

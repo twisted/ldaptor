@@ -228,40 +228,40 @@ class TestOperations(unittest.TestCase):
     def setUp(self):
         self.root = inmemory.ReadOnlyInMemoryLDAPEntry(
             dn=distinguishedname.DistinguishedName('dc=example,dc=com'))
-        self.meta=self.root.putChild(
-            rdn=distinguishedname.RelativeDistinguishedName('ou=metasyntactic'),
+        self.meta=self.root.addChild(
+            rdn='ou=metasyntactic',
             attributes={
             'objectClass': ['a', 'b'],
             'ou': ['metasyntactic'],
             })
-        self.foo=self.meta.putChild(
-            rdn=distinguishedname.RelativeDistinguishedName('cn=foo'),
+        self.foo=self.meta.addChild(
+            rdn='cn=foo',
             attributes={
             'objectClass': ['a', 'b'],
             'cn': ['foo'],
             })
-        self.bar=self.meta.putChild(
-            rdn=distinguishedname.RelativeDistinguishedName('cn=bar'),
+        self.bar=self.meta.addChild(
+            rdn='cn=bar',
             attributes={
             'objectClass': ['a', 'b'],
             'cn': ['bar'],
             })
 
-        self.empty=self.root.putChild(
-            rdn=distinguishedname.RelativeDistinguishedName('ou=empty'),
+        self.empty=self.root.addChild(
+            rdn='ou=empty',
             attributes={
             'objectClass': ['a', 'b'],
             'ou': ['empty'],
             })
 
-        self.oneChild=self.root.putChild(
-            rdn=distinguishedname.RelativeDistinguishedName('ou=oneChild'),
+        self.oneChild=self.root.addChild(
+            rdn='ou=oneChild',
             attributes={
             'objectClass': ['a', 'b'],
             'ou': ['oneChild'],
             })
-        self.theChild=self.oneChild.putChild(
-            rdn=distinguishedname.RelativeDistinguishedName('cn=theChild'),
+        self.theChild=self.oneChild.addChild(
+            rdn='cn=theChild',
             attributes={
             'objectClass': ['a', 'b'],
             'cn': ['theChild'],

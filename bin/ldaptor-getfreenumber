@@ -1,33 +1,9 @@
 #!/usr/bin/python
 
 import sys
-from ldaptor.protocols.ldap import ldapclient, ldapsyntax, distinguishedname, ldapconnector
-from ldaptor.protocols import pureber, pureldap
-from ldaptor import usage, numberalloc
-from twisted.internet import protocol, reactor, defer
-
-class Search(ldapclient.LDAPClient):
-    def connectionMade(self):
-	d=self.bind()
-	d.addCallback(self._handle_bind_success)
-	d.chainDeferred(self.factory.deferred)
-
-    def _handle_bind_success(self, x):
-	matchedDN, serverSaslCreds = x
-	o=ldapsyntax.LDAPEntry(client=self,
-                               dn=self.factory.base)
-	return numberalloc.getFreeNumber(o,
-					 'uidNumber',
-					 min=1000)
-
-class SearchFactory(protocol.ClientFactory):
-    protocol = Search
-    def __init__(self, deferred, base):
-	self.deferred=deferred
-	self.base=base
-
-    def clientConnectionFailed(self, connector, reason):
-	self.deferred.errback(reason)
+from ldaptor.protocols.ldap import ldapclient, ldapsyntax, ldapconnector
+from ldaptor import usage, numberalloc, config
+from twisted.internet import reactor
 
 exitStatus=0
 
@@ -37,16 +13,25 @@ def error(fail):
     global exitStatus
     exitStatus=1
 
-def main(base, serviceLocationOverride):
-    d=defer.Deferred()
-    s=SearchFactory(d, base)
+def main(cfg):
+    baseDN = cfg.getBaseDN()
+    if baseDN is None:
+        print >>sys.stderr, "%s: you need to give base DN." % sys.argv[0]
+        sys.exit(1)
+
+    c = ldapconnector.LDAPClientCreator(reactor,
+                                        ldapclient.LDAPClient)
+    d= c.connectAnonymously(dn=baseDN,
+                            overrides=cfg.getServiceLocationOverrides())
+    def _cbBound(client, baseDN):
+	o=ldapsyntax.LDAPEntry(client=client, dn=baseDN)
+	return numberalloc.getFreeNumber(o,
+					 'uidNumber',
+					 min=1000)
+    d.addCallback(_cbBound, baseDN)
     d.addCallback(lambda num: sys.stdout.write('%s\n' % repr(num)))
     d.addErrback(error)
     d.addBoth(lambda x: reactor.stop())
-
-    dn = distinguishedname.DistinguishedName(stringValue=base)
-    c = ldapconnector.LDAPConnector(reactor, dn, s, overrides=serviceLocationOverride)
-    c.connect()
 
     reactor.run()
     sys.exit(exitStatus)
@@ -55,11 +40,17 @@ class MyOptions(usage.Options, usage.Options_service_location, usage.Options_bas
     """LDAPtor command line search utility"""
 
 if __name__ == "__main__":
+    from twisted.python import log
+    log.startLogging(sys.stderr, setStdout=0)
+
     try:
-	config = MyOptions()
-	config.parseOptions()
+	opts = MyOptions()
+	opts.parseOptions()
     except usage.UsageError, ue:
 	sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
 	sys.exit(1)
 
-    main(config.opts['base'], config.opts['service-location'])
+    cfg = config.LDAPConfig(
+        baseDN=opts['base'],
+        serviceLocationOverrides=opts['service-location'])
+    main(cfg)

@@ -53,7 +53,8 @@ class LDAPUnknownError(LDAPException):
     resultCode=None
 
     def __init__(self, resultCode, message=None):
-        assert resultCode not in reverse
+        assert resultCode not in reverse, \
+               "resultCode %r must be unknown" % resultCode
         self.code=resultCode
         LDAPException.__init__(self, message)
 

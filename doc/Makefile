@@ -4,7 +4,8 @@ DIAS:= \
 	chat-search-pipeline.dia \
 	chat-unbind.dia \
 	ldapfilter-as-tree.dia \
-	ldap-is-a-tree.dia
+	ldap-is-a-tree.dia \
+	overview.dia
 
 DIAPNG:=$(DIAS:%.dia=%.dia.png)
 
@@ -63,10 +64,22 @@ addressbook-session/session-%.xml: examples/addressbook/01_repl/session-%
 	$(XMLIFY) <$< >$@.tmp
 	mv $@.tmp $@
 
-addressbook-slides/addressbookpy-02_script.html: \
-	examples/addressbook/02_script/addressbook.py tags.j2h
+addressbook-slides/%/addressbook-py.html: \
+	examples/addressbook/%/addressbook.py tags.j2h
 	install -d -m0755 '$(@D)'
 	( echo '<font size="+1">' && source-highlight --out-format=xhtml --src-lang=python && echo '</font>' ) <$< >$@.tmp
+	mv $@.tmp $@
+
+addressbook-slides/%/addressbook-tac.html: \
+	examples/addressbook/%/addressbook.tac tags.j2h
+	install -d -m0755 '$(@D)'
+	( echo '<font size="+1">' && source-highlight --out-format=xhtml --src-lang=python && echo '</font>' ) <$< >$@.tmp
+	mv $@.tmp $@
+
+addressbook-slides/%/searchform-xhtml.html: \
+	examples/addressbook/%/searchform.xhtml
+	install -d -m0755 '$(@D)'
+	( echo '<pre>' && sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g;' && echo '</pre>' ) <$< >$@.tmp
 	mv $@.tmp $@
 
 addressbook-slides/index.html: \
@@ -90,7 +103,10 @@ $(SLIDES:%.xml=%/index.html): %/index.html: %.xml \
 	addressbook-session/session-08.xml \
 	addressbook-session/session-09.xml \
 	slide-style.css \
-	addressbook-slides/addressbookpy-02_script.html
+	addressbook-slides/02_script/addressbook-py.html \
+	addressbook-slides/07_easy/addressbook-py.html \
+	addressbook-slides/07_easy/searchform-xhtml.html \
+	addressbook-slides/07_easy/addressbook-tac.html
 	install -d -m0755 '$(@D)'
 	cp -ar /usr/share/sgml/docbook/custom/slides/3.2.0/graphics '$(@D)'
 	cp -ar /usr/share/sgml/docbook/custom/slides/3.2.0/browser '$(@D)'
@@ -108,8 +124,6 @@ $(SLIDES:%.xml=%/index.html): %/index.html: %.xml \
 		'$(addprefix ../,$<)'
 	perl -pi -e '\
 		s{<a href="(.*?)" target="_top">Click me!</a>}{<iframe width=900 height=600 src="$$1" />}g; \
-		s{(Please examine the differences between (.*?) and (.*?)\.)}{<object type="text/plain" data="/diff/$$2/$$3">$$1</object>}g; \
-		s{class="speaker-instructions"}{class="speaker-instructions-done"}; \
 		' \
 		'$(@D)'/foil*.html
 

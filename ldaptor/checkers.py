@@ -29,14 +29,8 @@ class LDAPBindingChecker:
     __implements__ = checkers.ICredentialsChecker
     credentialInterfaces = (credentials.IUsernamePassword,)
 
-    def __init__(self,
-                 ldapbase,
-                 serviceLocationOverride=None,
-		 ldapFilterTemplate='(|(cn=%(name)s)(uid=%(name)s))',
-		 ):
-	self.ldapbase = ldapbase
-	self.serviceLocationOverride = serviceLocationOverride
-	self.ldapFilterTemplate = ldapFilterTemplate
+    def __init__(self, cfg):
+        self.config = cfg
 
     def _valid(self, result, entry):
         matchedDN, serverSaslCreds = result
@@ -52,7 +46,7 @@ class LDAPBindingChecker:
         return d
 
     def _connected(self, client, filt, credentials):
-        base = ldapsyntax.LDAPEntry(client, self.ldapbase)
+        base = ldapsyntax.LDAPEntry(client, self.config.getIdentityBaseDN())
         d = base.search(filterObject=filt,
                         sizeLimit=1,
                         attributes=[''], # TODO no attributes
@@ -61,13 +55,18 @@ class LDAPBindingChecker:
         return d
 
     def requestAvatarId(self, credentials):
+        baseDN = self.config.getIdentityBaseDN()
+        if baseDN is None:
+            return failure.Failure(error.UnauthorizedLogin("Disabled due to missing LDAP base DN."))
         if not credentials.username:
             return failure.Failure(error.UnauthorizedLogin("I don't support anonymous"))
-        filt = makeFilter(credentials.username, self.ldapFilterTemplate)
-        if filt is None:
+        filtText = self.config.getIdentitySearch(credentials.username)
+        try:
+            filt = ldapfilter.parseFilter(filtText)
+        except ldapfilter.InvalidLDAPFilter:
             return failure.Failure(error.UnauthorizedLogin("Couldn't create filter"))
 
 	c = ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
-	d = c.connect(self.ldapbase, self.serviceLocationOverride)
+	d = c.connect(baseDN, self.config.getServiceLocationOverrides())
         d.addCallback(self._connected, filt, credentials)
         return d

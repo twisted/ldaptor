@@ -14,20 +14,7 @@ localhost, and serves the DN dc=example,dc=com), and browsing
 """
 
 from ldaptor.apps.webui import main
-from ldaptor.protocols.ldap import distinguishedname
 
-exampleCom = distinguishedname.DistinguishedName('dc=example,dc=com')
-
-resource = main.getResource(
-    identityBaseDN=exampleCom,
-
-    serviceLocationOverride={ exampleCom: ('localhost', None),
-                              },
-
-    searchFields=[
-    ('Name', '(|(cn=%(input)s)(uid=%(input)s)(mail=%(input)s))'),
-    ('Phone', '(telephoneNumber=%(input)s)'),
-    ],
-    )
+resource = main.getResource()
 
 default.putChild('ldap', resource)

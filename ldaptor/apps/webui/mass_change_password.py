@@ -1,117 +1,161 @@
-from twisted.web import widgets
-from twisted.web.woven import simpleguard
-from twisted.internet import defer, protocol
-from twisted.python.failure import Failure
-from ldaptor.protocols.ldap import ldaperrors, ldapsyntax
-from ldaptor.protocols import pureber, pureldap
-from ldaptor.apps.webui.htmlify import htmlify_object
-from ldaptor import generate_password, ldapfilter
-from ldaptor.apps.webui.uriquote import uriQuote, uriUnquote
+from twisted.internet import defer
+from ldaptor.protocols.ldap import ldapsyntax
+from ldaptor import generate_password
+from ldaptor.apps.webui.uriquote import uriUnquote
 from twisted.internet import reactor
 
-import template
+import os
+from nevow import rend, inevow, loaders, url, tags
+from formless import annotate, webform, iformless, configurable
 
-class MassPasswordChangeForm(widgets.Form):
+class MassPasswordChangeStatus(object):
+    def __init__(self, deferlist):
+        super(MassPasswordChangeStatus, self).__init__()
+        self.deferlist = deferlist
+
+class MassPasswordChangeForm(configurable.Configurable):
     def __init__(self, ldapObjects):
-	self.ldapObjects = ldapObjects
+        super(MassPasswordChangeForm, self).__init__(None)
+	self.ldapObjects = {}
+        for o in ldapObjects:
+            assert o.dn not in self.ldapObjects
+            self.ldapObjects[o.dn] = o
 
-    def getFormFields(self, request, kws=None):
+        self.formFields=self._getFormFields()
+
+    def _getFormFields(self):
 	r=[]
-	for o in self.ldapObjects:
-	    safedn=o.dn #TODO
-	    r.append((safedn, htmlify_object(o), 0)) #TODO
-	return (
-	    ('checkgroup', '',
-	     'masspass', r),
-	    )
-    #TODO "<P>Generate new password for entries:",
+        r.append(annotate.Argument('request',
+                                   annotate.Request()))
+	for dn, e in self.ldapObjects.items():
+            r.append(annotate.Argument('dn_%s' % dn,
+                                       annotate.Boolean(label=dn,
+                                                        description=e)))
+	return r
 
-    def process(self, write, request, submit, **kw):
-	dnlist=kw.get('masspass', ())
+    def getBindingNames(self, ctx):
+        return ['generate']
 
-	if not dnlist:
-	    return ['<p>No passwords to change.']
-	deferred=generate_password.generate(reactor, len(dnlist))
-	deferred.addCallbacks(
-	    callback=self._got_passwords,
-	    callbackArgs=(dnlist, request),
-	    errback=lambda x: x,
-	    )
-	return [deferred]
+    def bind_generate(self, ctx):
+        return annotate.MethodBinding(
+            'generatePasswords',
+            annotate.Method(arguments=self.formFields))
 
-    def _got_passwords(self, passwords, dnlist, request):
-	assert len(passwords)==len(dnlist)
-	l=[]
-        entry = request.getComponent(simpleguard.Authenticated).name
-        client = entry.client
-	if not client:
-	    return ['<P>Password change failed: connection lost.']
-	for dn, pwd in zip(dnlist, passwords):
-            o=ldapsyntax.LDAPEntry(client=client, dn=dn)
-            d=o.setPassword(newPasswd=pwd)
-	    d.addCallbacks(
-		callback=(lambda dummy, dn, pwd:
-			  "<p>%s&nbsp;%s</p>"%(dn, pwd)),
-		callbackArgs=(dn, pwd),
-		errback=lambda x: x,
-		)
-	    l.append(d)
+    def generatePasswords(self, request, **kw):
+        entries = []
+        for k,v in kw.items():
+            if not k.startswith('dn_'):
+                continue
+            k = k[len('dn_'):]
+            if not v:
+                continue
+            assert k in self.ldapObjects
+            entries.append(self.ldapObjects[k])
+
+	if not entries:
+	    return 'No passwords to change.'
+	d=generate_password.generate(reactor, len(entries))
+
+        def _gotPasswords(passwords, entries):
+            assert len(passwords)==len(entries)
+            l=[]
+            for entry, pwd in zip(entries, passwords):
+                d=entry.setPassword(newPasswd=pwd)
+                def _cb(entry, pwd):
+                    return (entry, pwd)
+                d.addCallback(_cb, pwd)
+                l.append(d)
+            return defer.DeferredList(l,
+                                      consumeErrors=True)
+        d.addCallback(_gotPasswords, entries)
+        d.addCallback(MassPasswordChangeStatus)
+        return d
+
+
+class ReallyMassPasswordChangePage(rend.Page):
+    addSlash = True
+    docFactory = loaders.xmlfile(
+        'mass_change_password-really.xhtml',
+        templateDir=os.path.split(os.path.abspath(__file__))[0])
+
+    def __init__(self, entries):
+	super(ReallyMassPasswordChangePage, self).__init__()
+	self.entries = entries
+
+    def data_css(self, context, data):
+        request = context.locate(inevow.IRequest)
+        u = url.URL.fromRequest(request).clear().parent().parent().parent()
+        return [
+            u.child('form.css'),
+            u.child('ldaptor.css'),
+            ]
+
+    def render_css_item(self, context, data):
+        context.fillSlots('url', data)
+        return context.tag
+
+    def data_header(self, context, data):
+        request = context.locate(inevow.IRequest)
+        u=url.URL.fromRequest(request)
+        u=u.parent().parent()
+        l=[]
+	l.append(tags.a(href=u.sibling("search"))["Search"])
+	l.append(tags.a(href=u.sibling("add"))["add new entry"])
 	return l
 
-class NeedFilterError(widgets.Widget):
-    def display(self, request):
-	return ['No filter specified. You need to use the <a href="%s">search page</a>.'%request.sibLink("search")]
+    def configurable_(self, context):
+        request = context.locate(inevow.IRequest)
+        return MassPasswordChangeForm(self.entries)
+    
+    def render_form(self, context, data):
+        return webform.renderForms()[context.tag]
 
-class CreateError:
-    def __init__(self, defe, request):
-	self.deferred=defe
-	self.request=request
+    def render_passthrough(self, context, data):
+        return context.tag.clear()[data]
 
-    def __call__(self, fail):
-	self.request.args['incomplete']=['true']
-	self.deferred.callback(["Trouble while fetching objects from LDAP: %s.\n<HR>"%fail.getErrorMessage()])
+    def render_status(self, context, data):
+        try:
+            obj = context.locate(inevow.IHand)
+        except KeyError:
+            return context.tag.clear()
 
-class MassPasswordChangePage(template.BasicPage):
-    title = "Ldaptor Mass Password Change Page"
-    isLeaf = 1
+        if not isinstance(obj, MassPasswordChangeStatus):
+            return context.tag.clear()[obj]
+
+        dl = tags.dl(compact="compact")
+        context.tag.clear()[dl]
+        for success, x in obj.deferlist:
+            if success:
+                entry, pwd = x
+                dl[tags.dt[entry.dn],
+                   tags.dd[pwd]]
+            else:
+                context.tag['Failed: ', x.getErrorMessage()]
+
+        return context.tag
+
+class MassPasswordChangePage(rend.Page):
+    addSlash = True
+    docFactory = loaders.xmlfile(
+        'mass_change_password.xhtml',
+        templateDir=os.path.split(os.path.abspath(__file__))[0])
 
     def __init__(self, baseObject):
-	template.BasicPage.__init__(self)
-	self.baseObject = baseObject
+        super(MassPasswordChangePage, self).__init__()
+        self.baseObject = baseObject
 
-    def _header(self, request):
-	l=[]
-	l.append('<a href="%s">Search</a>'%request.sibLink("search"))
-	l.append('<a href="%s">add new entry</a>'%request.sibLink("add"))
+    def render_url(self, context, data):
+        request = context.locate(inevow.IRequest)
+        u = url.URL.fromRequest(request)
+        return context.tag(href=u.parent().child('search'))
 
-	return '[' + '|'.join(l) + ']'
+    def getDynamicChild(self, name, request):
+        entry = request.getSession().getLoggedInRoot().loggedIn
 
-    def getContent(self, request):
-	if not request.postpath or request.postpath==['']:
-	    return NeedFilterError()
-	else:
-	    filtText=uriUnquote(request.postpath[0])
+        filt = uriUnquote(name)
 
-	    d=defer.Deferred()
-            entry = request.getComponent(simpleguard.Authenticated).name
-            client = entry.client
-	    if client:
-                o=ldapsyntax.LDAPEntry(client=client,
-                                       dn=self.baseObject)
-		deferred=o.search(filterText=filtText, sizeLimit=20)
-		deferred.addCallbacks(
-		    callback=self._getContent_2,
-		    callbackArgs=(d, request),
-		    errback=CreateError(d, request),
-		    )
-		deferred.addErrback(defer.logError)
-	    else:
-		CreateError(d, request)(
-		    Failure(ldaperrors.LDAPUnknownError(
-		    ldaperrors.other, "connection lost")))
-	    return [self._header(request), d]
-
-    def _getContent_2(self, ldapObjects, deferred, request):
-	m=MassPasswordChangeForm(ldapObjects)
-	x=m.display(request)
-	deferred.callback(x)
+        e=ldapsyntax.LDAPEntry(client=entry.client,
+                               dn=self.baseObject)
+        d=e.search(filterText=filt, sizeLimit=20)
+        d.addCallback(ReallyMassPasswordChangePage)
+        return d

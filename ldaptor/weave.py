@@ -1,99 +1,119 @@
-from twisted.web.woven import view, model, widgets
-from twisted.web.microdom import lmx
+from nevow import tags, compy, inevow, flat
 from ldaptor.protocols.ldap import ldapsyntax, distinguishedname
-from ldaptor.apps.webui import htmlify
-from twisted.python import components
-from twisted.web.woven import interfaces
+from ldaptor import interfaces
 
-view.registerViewForModel(widgets.Text, distinguishedname.DistinguishedName)
+def keyvalue(context, data):
+    """
+    Render items in a mapping using patterns found in the children
+    of the element.
+    
+    Keyvalue recognizes the following patterns:
 
-class LDAPEntryWidget(widgets.Widget):
-    def setUp(self, request, node, data):
-        l = lmx(node)
-        l.text(htmlify.htmlify_object(data), raw=1)
+    header: Rendered at the start, before the first item. If multiple
+        header patterns are provided they are rendered together in the
+        order they were defined.
+            
+    footer: Just like the header only renderer at the end, after the
+        last item.
+    
+    item: Rendered once for each item in the sequence. Can contain
+        subpatterns key and value.
 
-class DictWidget(widgets.Widget):
-    def setUp(self, request, node, data):
-        listHeaders = self.getAllPatterns('listHeader', None)
-        listFooters = self.getAllPatterns('listFooter', None)
-        emptyLists = self.getAllPatterns('emptyList', None)
+        If multiple item patterns are provided then the pattern is
+        cycled in the order defined.
+        
+    divider: Rendered once between each item in the sequence. Multiple
+        divider patterns are cycled.
 
-        if listHeaders:
-            for n in listHeaders:
-                node.appendChild(n)
+    empty: Rendered instead of item and divider patterns when the
+        sequence contains no items.
 
-        if data:
-            for key in data.keys():
-                newNode = self.getPattern('keyedListItem')
-                widgets.appendModel(newNode, key)
-                if not newNode.attributes.get("view"):
-                    newNode.attributes["view"] = "DefaultWidget"
-                node.appendChild(newNode)
-        elif emptyLists:
-            for n in emptyLists:
-                node.appendChild(n)
+    Example:
+    
+    <table nevow:render="sequence" nevow:data="peopleSeq">
+      <tr nevow:pattern="header">
+        <th>name</th>
+        <th>email</th>
+      </tr>
+      <tr nevow:pattern="item" class="odd">
+        <td>name goes here</td>
+        <td>email goes here</td>
+      </tr>
+      <tr nevow:pattern="item" class="even">
+        <td>name goes here</td>
+        <td>email goes here</td>
+      </tr>
+      <tr nevow:pattern="empty">
+        <td colspan="2"><em>they've all gone!</em></td>
+      </tr>
+    </table>
 
-        if listFooters:
-            for n in listFooters:
-                node.appendChild(n)
+    """
+    headers = context.allPatterns('header')
+    item = context.patternGenerator('item')
+    divider = context.patternGenerator('divider', default=tags.invisible)
+    content = []
+    for key, value in data.items():
+        content.append(item(data=(key, value)))
+        content.append(divider(data=(key, value)))
+    if not content:
+        content = context.allPatterns('empty')
+    else:
+        ## No divider after the last thing.
+        del content[-1]
+    footers = context.allPatterns('footer')
+    return context.tag.clear()[ headers, content, footers ]
 
-view.registerViewForModel(LDAPEntryWidget, ldapsyntax.LDAPEntry)
+def keyvalue_item(context, data):
+    key, value = data
 
-class DictEmulator:
-    def __init__(self, entry):
-        self.entry = entry
-    def keys(self):
-        return self.entry.keys()
-    def __getitem__(self, key):
-        return {'key': key, 'items': list(self.entry[key])}
-    def __contains__(self, key):
-        return key in self.entry
-    def __len__(self):
-        return len(self.entry)
+    k = context.patternGenerator('key')
+    v = context.patternGenerator('value')
 
-components.registerAdapter(model.DictionaryModel, DictEmulator, interfaces.IModel)
+    return context.tag.clear()[ k(data=key), v(data=value) ]
 
-class LDAPEntryModel(model.MethodModel):
-    def wmfactory_dn(self, request):
-        return self.original.dn
+class LDAPEntryContainer(object):
+    __implements__ = inevow.IContainer
 
-    def wmfactory_dict(self, request):
-        return DictEmulator(self.original)
+    def __init__(self, original):
+        self.original = original
 
-    def wmfactory_get(self, request):
-        return self.original.get()
+    def child(self, context, name):
+        if name == 'dn':
+            return self.original.dn
+        elif name == 'attributes':
+            return self.original
+        else:
+            return None
 
-    def wmfactory_keys(self, request):
-        return self.original.keys()
+compy.registerAdapter(LDAPEntryContainer, ldapsyntax.LDAPEntryWithClient, inevow.IContainer)
 
-    def wmfactory_items(self, request):
-        return self.original.items()
+def dnSerializer(original, context):
+    return flat.serialize(str(original), context)
 
-components.registerAdapter(LDAPEntryModel, ldapsyntax.LDAPEntry, interfaces.IModel)
+compy.registerAdapter(dnSerializer,
+                      distinguishedname.DistinguishedName,
+                      inevow.ISerializable)
 
+def entrySerializer(original, context):
+    ul = tags.ul()
+    for a,l in original.items():
+	if len(l)==0:
+	    ul[tags.li[a, ': none']]
+	elif len(l)==1:
+            for attr in l:
+                first = attr
+                break
+	    ul[tags.li[a, ': ', first]]
+	else:
+            li=tags.li[a, ':']
+            ul[li]
+            liul=tags.ul()
+            li[liul]
+	    for i in l:
+		liul[tags.li[i]]
+    return flat.serialize(ul, context)
 
-class SeparatedList(widgets.List):
-    def _iterateData(self, parentNode, submodel, data):
-        currentListItem = 0
-        retVal = []
-        for itemNum in range(len(data)):
-            # theory: by appending copies of the li node
-            # each node will be handled once we exit from
-            # here because handleNode will then recurse into
-            # the newly appended nodes
-
-            newNode = self.getPattern('listItem')
-            if newNode.getAttribute('model') == '.':
-                newNode.removeAttribute('model')
-            elif not newNode.attributes.get("view"):
-                newNode.attributes["view"] = self.defaultItemView
-            widgets.appendModel(newNode, itemNum)
-            retVal.append(newNode)
-            newNode.parentNode = parentNode
-
-            if itemNum < len(data)-1:
-                separator = self.getPattern('listSeparator')
-                if separator is not None:
-                    retVal.append(separator)
-                    separator.parentNode = parentNode
-        parentNode.childNodes.extend(retVal)
+compy.registerAdapter(entrySerializer,
+                      interfaces.ILDAPEntry,
+                      inevow.ISerializable)

@@ -2,7 +2,7 @@
 import os, os.path, commands
 import formatter, StringIO
 
-PYTHON_VERSIONS=['2.2', '2.3']
+PYTHON_VERSIONS=['2.3']
 PYTHON_VERSION_DEFAULT='2.3'
 PYTHON_VERSION_TOOBIG='2.4'
 

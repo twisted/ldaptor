@@ -44,9 +44,19 @@ class LDAPMessage(BERSequence):
 	BERSequence.decode(self, encoded, berdecoder)
 	self.id=self.data[0].value
 	self.value=self.data[1]
-	assert self.data[2:]==[]
+        if self.data[2:]:
+            self.controls = []
+            for c in self.data[2]:
+                self.controls.append((
+                    c.controlType,
+                    c.criticality,
+                    c.controlValue,
+                    ))
+        else:
+            self.controls = None
+        assert not self.data[3:]
 
-    def __init__(self, value=None, encoded=None, id=None, berdecoder=None):
+    def __init__(self, value=None, controls=None, encoded=None, id=None, berdecoder=None):
 	BERSequence.__init__(self, value=[], encoded=None)
 	if value is not None:
 	    assert encoded is None
@@ -54,15 +64,20 @@ class LDAPMessage(BERSequence):
 	    if self.id is None:
 		self.id=alloc_ldap_message_id()
 	    self.value=value
+            self.controls = controls
 	elif encoded is not None:
 	    assert value is None
+	    assert controls is None
 	    assert berdecoder
 	    self.decode(encoded, berdecoder)
 	else:
 	    raise "You must give either value or encoded"
 
     def __str__(self):
-	return str(BERSequence([BERInteger(self.id), self.value]))
+        l = [BERInteger(self.id), self.value]
+        if self.controls is not None:
+            l.append(LDAPControls([LDAPControl(*a) for a in self.controls]))
+	return str(BERSequence(l))
 
     def __repr__(self):
 	if self.tag==self.__class__.tag:
@@ -300,7 +315,8 @@ class LDAPFilter(BERStructured):
         BERStructured.__init__(self, tag=tag)
 
 class LDAPFilterSet(BERSet):
-    pass
+    def decode(self, encoded, berdecoder):
+	BERSet.decode(self, encoded, LDAPBERDecoderContext_Filter(fallback=berdecoder))
 
 class LDAPFilter_and(LDAPFilterSet):
     tag = CLASS_CONTEXT|0x00
@@ -837,10 +853,70 @@ class LDAPModification_delete(LDAPModification):
 class LDAPModification_replace(LDAPModification):
     op = 2
 
+class LDAPControls(BERSequence):
+    tag = CLASS_CONTEXT|0x00
+
+    def decode(self, encoded, berdecoder):
+        BERSequence.decode(self,
+                           encoded,
+                           berdecoder=LDAPBERDecoderContext_LDAPControls(
+            inherit=berdecoder))
+
+class LDAPControl(BERSequence):
+    def decode(self, encoded, berdecoder):
+        BERSequence.decode(self, encoded, berdecoder)
+        self.controlType = self.data[0].value
+        if self.data[1:]:
+            self.criticality = self.data[1].value
+        else:
+            self.criticality = None
+        if self.data[2:]:
+            self.controlValue = self.data[2].value
+        else:
+            self.controlValue = None
+        # TODO is controlType, controlValue allowed without criticality?
+        assert not self.data[3:]
+
+    def __init__(self,
+                 controlType=None, criticality=None, controlValue=None,
+                 encoded=None, id=None, berdecoder=None):
+	BERSequence.__init__(self, value=[], encoded=None)
+	if controlType is not None:
+	    assert encoded is None
+	    self.controlType = controlType
+            self.criticality = criticality
+            self.controlValue = controlValue
+	elif encoded is not None:
+	    assert controlType is None
+	    assert criticality is None
+	    assert controlValue is None
+	    assert berdecoder
+	    self.decode(encoded, berdecoder)
+	else:
+	    raise "You must give either value or encoded"
+
+    def __str__(self):
+        self.data=[LDAPOID(self.controlType)]
+        if self.criticality is not None:
+            self.data.append(BERBoolean(self.criticality))
+        if self.controlValue is not None:
+            self.data.append(BEROctetString(self.controlValue))
+	return BERSequence.__str__(self)
+
+class LDAPBERDecoderContext_LDAPControls(BERDecoderContext):
+    Identities = {
+        LDAPControl.tag: LDAPControl,
+        }
+
 class LDAPBERDecoderContext_LDAPMessage(BERDecoderContext):
     Identities = {
-	BERSequence.tag: LDAPMessage
+	LDAPControls.tag: LDAPControls,
 	}
+
+class LDAPBERDecoderContext_TopLevel(BERDecoderContext):
+    Identities = {
+	BERSequence.tag: LDAPMessage,
+        }
 
 class LDAPModifyRequest(LDAPProtocolRequest, BERSequence):
     tag=CLASS_APPLICATION|0x06
@@ -1219,7 +1295,6 @@ class LDAPExtendedResponse(LDAPResult):
         if self.response is not None:
             l.append(BEROctetString(self.response, tag=CLASS_CONTEXT|0x0b))
 	return str(BERSequence(l, tag=self.tag))
-
 
 class LDAPBERDecoderContext(BERDecoderContext):
     Identities = {

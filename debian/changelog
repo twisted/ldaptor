@@ -1,3 +1,151 @@
+ldaptor (0.0.27) unstable; urgency=low
+
+  * Applications changes:
+    - WebUI:
+      - ldaptor-webui has been ported to nevow.
+      - move now acts more like a shopping cart.
+      - Move most of the command line options of ldaptor-webui to
+        configuration file only; please switch to using a .tac file.
+    - Server:
+      - Support fetching the rootDSE.
+      - Claim to support the extended operation for password changing.
+      - Support non-anonymous bind against SSHA passwords stored in
+        userPassword attributes.
+      - Handle entry deletion.
+    - Add configuration file support. See files
+      /usr/share/doc/ldaptor-{doc,webui}/examples/global.cfg in packages
+      ldaptor-doc and ldaptor-webui.
+    - New-style Samba schema support, with objectClass sambaSamAccount.
+    - Add support for Samba LanMan password hashes, disabled by
+      default but configurable.
+    - Drop python 2.2 support, using 2.3 features.
+    - Allow serviceLocationOverride to have the empty DN ("") as
+      key, overriding default location (DNS SRV records) for everything.
+
+  * Documentation changes:
+    - Terminate addressbook example LDIFs with empty line so they
+      are actually valid LDIF.
+    - Modernize addressbook example files.
+
+  * API changes:
+    - Generic:
+      - Add ldapfilter.parseMaybeSubstring(), which takes attributeType and
+        partial filter as arguments, and allows e.g.  easily searching one
+        attributeType based on user input, without user having to understand
+        LDAP filters.
+      - Make DistinguishedName and RelativeDistingushedName do the right
+        thing even without explicit stringValue and listOfRDN keyword
+        arguments.
+      - Add comparison operators to schema.ObjectClassDescription, so they
+        can be sorted.
+      - Make DistinguishedNames equal their canonical string
+        representations and hash identically.
+      - Rename ReadOnlyInmemoryLDAPEntry.putChild to .addChild, make
+        it accept rdn also as a string.
+      - Added setPassword support to inmemory.
+      - Added ILDAPConfig.
+    - Client:
+      - Make LDAPClient.queue take extra arguments and pass them to the
+        callback given. Minimizes need for lambdas.
+      - Add ldapsyntax.LDAPEntryWithClient.addChild().
+      - Remove ldapclient.LDAPAddEntry, it is now unused.
+      - LDAPEntryWithClient.search() now understands attributes=None
+        to mean do not return any attributes.
+    - Server:
+      - Allow returning None from the message handler.
+      - handle_* API changed: now handlers can happily just
+        raise whatever they want, and fail_* (or failDefault) are used
+        to map the exception to LDAP errors.
+      - Added function checkControls() that all handlers should call
+        with unsupported controls. It raises error if unsupported
+        controls include any critical controls.
+
+  * Refactorings to adapt to Ldaptor APIs:
+    - Make webui edit use entry.fetch() instead of
+      ldapclient.LDAPSearch.
+
+  * Refactorings to adapt to Twisted/nevow APIs:
+    - Tell nevow how to serialize DistinguishedNames.
+    - Tell nevow how to serialize LDAP entries.
+    - Create an IContainer adaptor for LDAPEntries.
+    - Switch webui to use ISession.
+    - Follow Twisted DNS resolver API changes in
+      ldaptor-find-server.
+
+  * Bugfixes:
+    - Fix bug where entry.undo() switched off journaling and thus
+      sending any further updates to the server.
+    - In server, make failing searches indicate why they failed.
+    - Make sure LDAPFilter_and and LDAPFilter_or know how to decode
+      filter elements.
+    - Initialize BaseLDAPEntry attributes early so __repr__ works
+      even when __init__ was buggy.
+    - Protect against passing None to DistinguishedName.
+    - Raise LDAPOther, not LDAPUnknownError; unknown errors should
+      only be created by ldaperrors.get().
+    - Protect against no subschemaSubentry attribute in fetchschema.
+    - Make LDAPEntryWithClient repr work even in invalid state.
+    - Fix wrong number of arguments in handling unknown requests in
+      server. (Closes: #261837)
+    - Make sure LDAPEntryWithClient.delete can handle all kinds of
+      errors and not just LDAPDelResponse.
+    - In webui, protect against issue74 in nevow.guard. Can only be
+      triggered by adjusting the URL manually.
+    - Support LDAP controls in ldapserver, but only by ignoring
+      non-critical ones and triggering an error on critical ones.
+      (Closes: #263210)
+
+  * Cleanups:
+    - Remove dead imports, code, TODO entries etc.
+    - Improve unit test coverage:
+      - Test ldapfilter parsing whitespace handling.
+      - Add a simple unit test for callable serviceLocationOverride.
+      - Do automated testing of webui.
+      - Add unit tests for fetchschema.
+      - Test that the server can provide schemas, if the data is
+        right.
+      - Test failing searches in ldapsyntax.
+      - Test failing delete in ldapsyntax.
+      - In pureldap unit tests, use pureber.ber2object() instead of
+        instantiating the class directly, to simulate real use better.
+      - Allow overriding the BERDecoderContext to use in pureldap unit
+        tests.
+      - Unit test serialize/unserialize of pureldap.LDAPMessage.
+    - Prettify:
+      - Use pyparsing .setName() in ldapfilter parsing for nicer
+        debugging.
+      - Make PasswordSetAggregateError stringify itself nicely.
+      - Rename webui change_password action "Choose Password" to "Set
+        Password", it describes the action better.
+      - Add a more helpful assertion message.
+      - Avoid periods at end of error messages, they can be added when
+        doing actual outputting.
+      - Show pretty error when invalid DN is given to
+        --service-location= command line parameter.
+      - Nicer repr for pureber.BERDecoderContext.
+      - Nicer exception when pureber.ber2object sees an unknown tag.
+    - Code readability and cleanliness:
+      - Use constants from string module in LDAP filter parsing.
+      - Use pyparsing.delimitedList in ldapfilter parsing.
+      - Use "bool()" instead of "not not".
+      - Clean up dn handling in BaseLDAPEntry.
+      - Clean up webui delete and improve error handling.
+      - Modernize ldaptor-fetchschema.
+      - Modernize ldaptor-getfreenumber.
+      - Make autofillers share code.
+    - Developments support:
+      - LDAPClient and LDAPServer can now toggle debug output
+        dynamically.
+    - Do Things Right:
+      - Switch to relative URLs when referring to CSS stylesheets.
+      - domainComponent is an attributeType, not an objectClass.
+        Replace with dcObject.
+
+  * Packaging:
+    - Drop python 2.2 support.
+
+ -- Tommi Virtanen <tv@debian.org>  Thu,  5 Aug 2004 23:05:11 +0300
+
 ldaptor (0.0.26) unstable; urgency=low
 
   * Documentation changes:

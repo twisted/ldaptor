@@ -1,14 +1,4 @@
-class AutofillException(Exception):
-    pass
-
-class ObjectMissingObjectClassException(AutofillException):
-    """
-
-    The LDAPEntry is missing an objectClass this autofiller needs to
-    operate.
-
-    """
-    pass
+from ldaptor.protocols.ldap.autofill import ObjectMissingObjectClassException
 
 class Autofill_samba: #TODO baseclass
     def start(self, ldapObject):

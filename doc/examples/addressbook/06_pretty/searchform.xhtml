@@ -2,10 +2,11 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:nevow="http://nevow.com/ns/nevow/0.1">
   <head>
     <title>Address book search</title>
-    <link href="/freeform_css" rel="stylesheet" />
+    <link href="/form_css" rel="stylesheet" />
   </head>
   <body>
     <h1>Address book search</h1>
@@ -24,11 +25,11 @@
 	      <dt nevow:pattern="key" nevow:render="string">
 		Attribute type goes here
 	      </dt>
-	      <div nevow:pattern="value" nevow:render="sequence">
+	      <nevow:invisible nevow:pattern="value" nevow:render="sequence">
 		<dd nevow:pattern="item" nevow:render="string">
 		  Attribute value goes here
 		</dd>
-	      </div>
+	      </nevow:invisible>
 	    </dl>
 	  </li>
 	</ol>

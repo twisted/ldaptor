@@ -1,172 +1,136 @@
 from twisted.internet import reactor
-from twisted.web import html
-from twisted.web.woven import simpleguard
-from twisted.web.woven import page, simpleguard, form, model
-from twisted.web.microdom import lmx
-from twisted.python import formmethod
 from twisted.internet import defer
-from twisted.web.util import Redirect, redirectTo
+from twisted.web.util import Redirect
 from ldaptor.protocols.ldap import ldapsyntax, distinguishedname
 from ldaptor import generate_password
-from ldaptor import weave
-from ldaptor.apps.webui.uriquote import uriQuote, uriUnquote
+from ldaptor.apps.webui.uriquote import uriUnquote
 
-class NeedDNError(Exception):
-    def __str__(self):
-        return 'No DN specified. You need to use the search page.'
+import os
+from nevow import rend, inevow, loaders, url, tags
+from formless import annotate, webform, iformless
 
-class PasswordMissingError(Exception):
-    def __str__(self):
-        return 'The password is missing.'
+class IPasswordChange(annotate.TypedInterface):
+    def setPassword(self,
+                    context=annotate.Context(),
+                    newPassword=annotate.Password(required=True)):
+        pass
+    setPassword = annotate.autocallable(setPassword)
 
-class PasswordsDifferError(Exception):
-    def __str__(self):
-        return 'The passwords entered are different.'
+    def generateRandom(self,
+                       context=annotate.Context()):
+        pass
+    generateRandom = annotate.autocallable(generateRandom)
 
+class ConfirmChange(rend.Page):
+    __implements__ = rend.Page.__implements__, IPasswordChange
+    addSlash = True
 
-class ConfirmChange(page.Page):
-    isLeaf = 1
-    templateFile = 'change_password.xhtml'
+    docFactory = loaders.xmlfile(
+        'change_password.xhtml',
+        templateDir=os.path.split(os.path.abspath(__file__))[0])
 
-    def __init__(self, formSignature, args):
-        page.Page.__init__(self)
-        self.formSignature = formSignature
-        self.args = args
+    def __init__(self, dn):
+        super(ConfirmChange, self).__init__()
+        self.dn = dn
 
-    def wmfactory_header(self, request):
-        l=[]
-	l.append('<a href="%s">Search</a>'%request.sibLink("search"))
-	l.append('<a href="%s">add new entry</a>'%request.sibLink("add"))
+    def data_css(self, context, data):
+        request = context.locate(inevow.IRequest)
+        u = (url.URL.fromRequest(request).clear().parent().parent().parent()
+             .child('form.css'))
+        return [ u ]
 
-	if request.postpath and request.postpath!=['']:
-	    l.append('<a href="%s">edit</a>' \
-		     % request.sibLink("edit/" + request.postpath[0]))
-	    l.append('<a href="%s">delete</a>' \
-		     % request.sibLink("delete/" + request.postpath[0]))
+    def render_css_item(self, context, data):
+        context.fillSlots('url', data)
+        return context.tag
 
-	return l
-
-    def wmfactory_dn(self, request):
-	if not request.postpath or request.postpath==['']:
-	    raise NeedDNError
-
-        dn=uriUnquote(request.postpath[0])
-        return distinguishedname.DistinguishedName(dn)
-
-    def wvupdate_form(self, request, widget, model):
-        lmx(widget.node).form(model="formsignature")
-
-    def wmfactory_formsignature(self, request):
-        return self.formSignature.method(None)
-
-    def wvfactory_separatedList(self, request, node, model):
-        return weave.SeparatedList(model)
-
-    def wmfactory_submit(self, request):
-        x=self.args.get('submit', False)
-        if x is None:
-            x=False
-        return x
-
-    def wmfactory_generate(self, request):
-	return self.args.get('generate', False)
-
-    def _extractPassword(self):
-        password1 = self.args.get('password1', '')
-        password2 = self.args.get('password2', '')
-
-        if not password1:
-            raise PasswordMissingError
-        if password1!=password2:
-            raise PasswordsDifferError
-        return password1
-
-    def _htmlifyExceptions(self, reason, prefix='', errorTypes=None):
+    def _prettifyExceptions(self, reason, prefix='', errorTypes=None):
         if errorTypes is not None:
             reason.trap(*errorTypes)
-        return '<strong>'+prefix+html.escape(reason.getErrorMessage())+'</strong>'
+        return (prefix + reason.getErrorMessage())
 
-    def wmfactory_setPassword(self, request):
-        """Set the user-inputted password."""
-        d=defer.maybeDeferred(self._extractPassword)
-        d.addCallback(self._setPassword, request)
-        d.addErrback(self._htmlifyExceptions,
-                     errorTypes=[PasswordMissingError, PasswordsDifferError])
+    def _setPassword(self, context, password):
+        entry = context.locate(inevow.ISession).getLoggedInRoot().loggedIn
+        user = entry.dn
+        client = entry.client
+
+	e=ldapsyntax.LDAPEntry(client=client,
+                               dn=self.dn)
+        d=defer.maybeDeferred(e.setPassword, newPasswd=password)
         return d
 
-    def _getNewPass(self, request):
+    def setPassword(self, context, newPassword):
+        d = self._setPassword(context, newPassword)
+        d.addCallback(lambda dummy: 'Password set.')
+        d.addErrback(self._prettifyExceptions,
+                     prefix="Failed: ")
+        return d
+
+    def generateRandom(self, context):
         d=generate_password.generate(reactor)
         def _first(passwords):
             assert len(passwords)==1
             return passwords[0]
         d.addCallback(_first)
-        return d
 
-    def wmfactory_generatePassword(self, request):
-        d=self._getNewPass(request)
-        d.addCallback(self._gotPass, request)
-        return d
-
-    def _gotPass(self, password, request):
-        d = self._setPassword(password, request)
-        d.addCallback(lambda status:
-                      { 'password': html.escape(password),
-                        'status': status,
-                        })
-        return d
-
-    def _setPassword(self, password, request):
-        entry = request.getComponent(simpleguard.Authenticated).name
-        user = entry.dn
-        client = entry.client
-
-	if not request.postpath or request.postpath==['']:
-	    raise NeedDNError
-
-        dn=uriUnquote(request.postpath[0])
-
-	e=ldapsyntax.LDAPEntry(client=client,
-                               dn=dn)
-        d=defer.maybeDeferred(e.setPassword, newPasswd=password)
-        d.addCallback(lambda dummy: "Success.")
-        d.addErrback(self._htmlifyExceptions,
+        def _status(newPassword, context):
+            d = self._setPassword(context, newPassword)
+            d.addCallback(lambda dummy: 'Password set to %s' % newPassword)
+            return d
+        d.addCallback(_status, context)
+        d.addErrback(self._prettifyExceptions,
                      prefix="Failed: ")
         return d
 
-    def wvupdate_if(self, request, widget, model):
-        if not model:
-            while 1:
-                c=widget.node.firstChild()
-                if c is None:
-                    break
-                widget.node.removeChild(c)
+    def data_status(self, context, data):
+        try:
+            return context.locate(inevow.IStatusMessage)
+        except KeyError:
+            return ''
 
-    def wvupdate_ifNot(self, request, widget, model):
-        return self.wvupdate_if(request, widget, not model)
+    def data_dn(self, context, data):
+        return self.dn
 
-    def render(self, request):
-        if not request.postpath or request.postpath==['']:
-            entry = request.getComponent(simpleguard.Authenticated).name
-            dn = entry.dn
-	    url=request.childLink(uriQuote(dn))
-	    return redirectTo(url, request)
-	else:
-            return page.Page.render(self, request)
+    def render_form(self, context, data):
+        return webform.renderForms()
 
-def doChange(**kw):
-    return kw
+    def render_passthrough(self, context, data):
+        return context.tag.clear()[data]
+
+    def data_header(self, context, data):
+        request = context.locate(inevow.IRequest)
+        u=url.URL.fromRequest(request)
+        u=u.parent().parent()
+        l=[]
+	l.append(tags.a(href=u.sibling("search"))["Search"])
+	l.append(tags.a(href=u.sibling("add"))["add new entry"])
+        l.append(tags.a(href=u.sibling("edit").child(str(self.dn)))["edit"])
+        l.append(tags.a(href=u.sibling("delete").child(str(self.dn)))["delete"])
+	return l
+
+class GetDN(rend.Page):
+    def renderHTTP(self, request):
+        entry = request.getSession().getLoggedInRoot().loggedIn
+        u = url.URL.fromRequest(request)
+        request.redirect(u.child(str(entry.dn)))
+        return ''
+
+    def locateChild(self, request, segments):
+        ret = super(GetDN, self).locateChild(request, segments)
+        if ret != rend.NotFound:
+            return ret
+
+        path = segments[0]
+        unquoted=uriUnquote(path)
+        try:
+            dn = distinguishedname.DistinguishedName(stringValue=unquoted)
+        except distinguishedname.InvalidRelativeDistinguishedName, e:
+            # TODO There's no way to throw a FormException at this stage.
+            u = url.URL.fromRequest(request)
+            # TODO freeform_post!configurableName!methodName
+            u.add('dn', path)
+            return Redirect(str(u)), []
+        r=ConfirmChange(dn=dn)
+        return r, segments[1:]
 
 def getResource():
-    formSignature = formmethod.MethodSignature(
-        formmethod.Password('password1', shortDesc='New password', allowNone=1),
-        formmethod.Password('password2', shortDesc='Again', allowNone=1),
-        formmethod.Boolean('generate', shortDesc='Generate password automatically', allowNone=1),
-        formmethod.Submit('submit', shortDesc='Set password', allowNone=1),
-        )
-    class _P(form.FormProcessor):
-        isLeaf=1
-    def branch(args):
-        assert isinstance(args, model.DictionaryModel)
-        return ConfirmChange(formSignature, args.orig)
-    return _P(formSignature.method(doChange),
-              callback=branch)
+    return GetDN()

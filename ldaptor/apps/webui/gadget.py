@@ -1,154 +1,131 @@
-from twisted.web import microdom
 from twisted.web.util import Redirect, redirectTo
-from twisted.web.woven import simpleguard, page, form
-from twisted.python import urlpath, formmethod
-from ldaptor.apps.webui import util, login
-import search, edit, add, delete, mass_change_password, change_password, move
+from ldaptor.apps.webui import login, search, edit, add, delete, mass_change_password, change_password, move
 from ldaptor.protocols.ldap import distinguishedname
-from ldaptor.apps.webui.uriquote import uriQuote, uriUnquote
-import urllib
+from ldaptor.apps.webui.uriquote import uriUnquote
+from ldaptor import interfaces
 
-class LdaptorWebUIGadget2(page.Page):
-    def __init__(self,
-                 baseObject,
-		 serviceLocationOverride=None,
-		 searchFields=(),
-		 ):
-        page.Page.__init__(self)
+from nevow import rend, loaders, url, static
+from formless import annotate, webform, iformless
+import os
+
+class LdaptorWebUIGadget2(rend.Page):
+    addSlash = True
+
+    def __init__(self, baseObject):
+        super(LdaptorWebUIGadget2, self).__init__()
         self.baseObject = baseObject
-        self.serviceLocationOverride = serviceLocationOverride
-        self.searchFields = searchFields
 
-    def render(self, request):
-        if request.uri.split('?')[0][-1] != '/':
-            return redirectTo(request.childLink('search'), request)
-        else:
-            return redirectTo(request.sibLink('search'), request)
+    def renderHTTP(self, request):
+        entry = request.getSession().getLoggedInRoot().loggedIn
+        u = url.URL.fromRequest(request)
+        request.redirect(u.child('search'))
+        return ''
 
-    def wchild_search(self, request):
-        return search.getSearchPage(
-            baseObject=self.baseObject,
-            serviceLocationOverride=self.serviceLocationOverride,
-            searchFields=self.searchFields)
+    def child_search(self, request):
+        return search.getSearchPage()
 
-    def wchild_edit(self, request):
-        a=request.getComponent(simpleguard.Authenticated)
-        print 'wchild_edit', repr(a)
-        if not request.getComponent(simpleguard.Authenticated):
-            return util.InfiniChild(login.LoginPage())
+    def child_edit(self, request):
+        if not request.getSession().getLoggedInRoot().loggedIn:
+            return login.LoginPage([str(self.baseObject), 'edit'])
         return edit.EditPage()
 
-    def wchild_move(self, request):
-        if not request.getComponent(simpleguard.Authenticated):
-            return util.InfiniChild(login.LoginPage())
-        return move.MovePage(
-            baseObject=self.baseObject,
-            serviceLocationOverride=self.serviceLocationOverride,
-            searchFields=self.searchFields)
+    def child_move(self, request):
+        if not request.getSession().getLoggedInRoot().loggedIn:
+            return login.LoginPage([str(self.baseObject), 'move'])
+        return move.MovePage()
 
-    def wchild_add(self, request):
-        if not request.getComponent(simpleguard.Authenticated):
-            return util.InfiniChild(login.LoginPage())
+    def child_add(self, request):
+        if not request.getSession().getLoggedInRoot().loggedIn:
+            return login.LoginPage([str(self.baseObject), 'add'])
         return add.getResource(baseObject=self.baseObject,
                                request=request)
 
-    def wchild_delete(self, request):
-        if not request.getComponent(simpleguard.Authenticated):
-            return util.InfiniChild(login.LoginPage())
+    def child_delete(self, request):
+        if not request.getSession().getLoggedInRoot().loggedIn:
+            return login.LoginPage([str(self.baseObject), 'delete'])
         return delete.getResource()
 
-    def wchild_mass_change_password(self, request):
-        if not request.getComponent(simpleguard.Authenticated):
-            return util.InfiniChild(login.LoginPage())
+    def child_mass_change_password(self, request):
+        if not request.getSession().getLoggedInRoot().loggedIn:
+            return login.LoginPage([str(self.baseObject), 'mass_change_password'])
         return mass_change_password.MassPasswordChangePage(
             baseObject=self.baseObject)
 
-    def wchild_change_password(self, request):
-        if not request.getComponent(simpleguard.Authenticated):
-            return util.InfiniChild(login.LoginPage())
+    def child_change_password(self, request):
+        if not request.getSession().getLoggedInRoot().loggedIn:
+            return login.LoginPage([str(self.baseObject), 'change_password'])
         return change_password.getResource()
 
-class LdaptorWebUIGadget(page.Page):
-    appRoot = True
+class LDAPDN(annotate.String):
+    def coerce(self, *a, **kw):
+        val = super(LDAPDN, self).coerce(*a, **kw)
+        try:
+            dn = distinguishedname.DistinguishedName(stringValue=val)
+        except distinguishedname.InvalidRelativeDistinguishedName, e:
+            raise annotate.InputError, \
+                  "%r is not a valid LDAP DN: %s" % (val, e)
+        return dn
 
-    template = '''<html>
-    <head>
-        <title>Ldaptor Web Interface</title>
-        <style type="text/css">
-.formDescription, .formError {
-    /* fixme - inherit */
-    font-size: smaller;
-    font-family: sans-serif;
-    margin-bottom: 1em;
-}
+class IBaseDN(annotate.TypedInterface):
+    def go(self,
+           request=annotate.Request(),
+           baseDN=LDAPDN(description="The top-level LDAP DN you want"
+                         + " to browse, e.g. dc=example,dc=com")):
+        pass
+    go = annotate.autocallable(go)
 
-.formDescription {
-    color: green;
-}
+class BaseDN(object):
+    __implements__ = IBaseDN
 
-.formError {
-    color: red;
-}
-</style>
-    </head>
-    <body>
-    <h1>Base DN</h1>
-    <div view="basednform" />
+    def go(self, request, baseDN):
+        u = url.URL.fromRequest(request)
+        u = u.child(str(baseDN))
+        request.setComponent(iformless.IRedirectAfterPost, u)
+        return 'Redirecting...'
 
-    </body>
-</html>'''
+class LdaptorWebUIGadget(rend.Page):
+    docFactory = loaders.xmlfile(
+        'basedn.xhtml',
+        templateDir=os.path.split(os.path.abspath(__file__))[0])
 
-    formSignature = formmethod.MethodSignature(
-        formmethod.String("basedn", "",
-                          "Base DN", "The top-level LDAP DN you want to browse, e.g. dc=example,dc=com"),
-        formmethod.Submit("submit", allowNone=1),
-        )
+    def __init__(self, loggedIn, config):
+	super(LdaptorWebUIGadget, self).__init__()
+        self.loggedIn = loggedIn
+        self.config = config
+        self.putChild('form.css', webform.defaultCSS)
 
-    def __init__(self,
-		 serviceLocationOverride=None,
-		 searchFields=(),
-		 ):
-	page.Page.__init__(self)
-	self.serviceLocationOverride=serviceLocationOverride
-	self.searchFields=searchFields
+        dirname = os.path.abspath(os.path.dirname(__file__))
+        self.putChild('ldaptor.css', static.File(
+            os.path.join(dirname, 'ldaptor.css')))
 
-    def wvupdate_basednform(self, request, widget, model):
-        root = request.getRootURL()
-        if root is None:
-            root=request.prePathURL()
-        url = urlpath.URLPath.fromString(root)
-        microdom.lmx(widget.node).form(
-            action=str(url.child('process')),
-            model="form")
+    def configurable_(self, context):
+        return BaseDN()
 
-    def wmfactory_form(self, request):
-        return self.formSignature.method(None)
+    def render_form(self, context, data):
+        return webform.renderForms()
 
-    def wchild_process(self, request):
-        def process(basedn, submit=None):
-            try:
-                dn = distinguishedname.DistinguishedName(stringValue=basedn)
-            except distinguishedname.InvalidRelativeDistinguishedName, e:
-                raise formmethod.FormException, e
-            return dn
-        def callback(dn):
-            return Redirect(str(dn))
-        return form.FormProcessor(
-            self.formSignature.method(process),
-            callback=callback,
-            )
+    def locateChild(self, request, segments):
+        ret = super(LdaptorWebUIGadget, self).locateChild(request, segments)
+        if ret != rend.NotFound:
+            return ret
 
-    def getDynamicChild(self, path, request):
+        path = segments[0]
         unquoted=uriUnquote(path)
         try:
             dn = distinguishedname.DistinguishedName(stringValue=unquoted)
         except distinguishedname.InvalidRelativeDistinguishedName, e:
-            # There's no way to throw a FormException at this stage,
-            # so redirect to form submit. Ugly.
-            url = urlpath.URLPath.fromRequest(request)
-            url = url.sibling('process')
-            url.query = urllib.urlencode([('basedn', path)])
-            return Redirect(str(url))
-        return LdaptorWebUIGadget2(baseObject=dn,
-                                   serviceLocationOverride=self.serviceLocationOverride,
-                                   searchFields=self.searchFields)
+            # TODO There's no way to throw a FormException at this stage.
+            u = url.URL.fromRequest(request)
+
+            # TODO protect against guard bug, see
+            # http://divmod.org/users/roundup.twistd/nevow/issue74
+            u = u.child('')
+
+            # TODO freeform_post!configurableName!methodName
+            u.add('basedn', path)
+            return Redirect(str(u)), []
+
+        r=LdaptorWebUIGadget2(baseObject=dn)
+        cfg = self.config.copy(baseDN=dn)
+        r.remember(cfg, interfaces.ILDAPConfig)
+        return r, segments[1:]

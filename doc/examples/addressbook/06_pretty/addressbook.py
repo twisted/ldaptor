@@ -1,8 +1,9 @@
 import os
 from twisted.internet import reactor
 from twisted.cred import portal, checkers
-from nevow import rend, appserver, formless, freeform, inevow, compy, \
-     stan, guard
+from nevow import rend, appserver, inevow, compy, \
+     stan, guard, loaders
+from formless import annotate, webform
 
 from ldaptor.protocols.ldap import ldapclient, ldapsyntax, ldapconnector, \
      distinguishedname
@@ -40,31 +41,22 @@ class LDAPConfig(object):
     def getServiceLocationOverrides(self):
         return self.serviceLocationOverrides
 
-class LDAPSearchFilter(formless.String):
-    def coerce(self, val):
-        val = formless.String.coerce(self, val)
+class LDAPSearchFilter(annotate.String):
+    def coerce(self, *a, **kw):
+        val = super(LDAPSearchFilter, self).coerce(*a, **kw)
         try:
             f = ldapfilter.parseFilter(val)
         except ldapfilter.InvalidLDAPFilter, e:
-            raise formless.InputError, \
+            raise annotate.InputError, \
                   "%r is not a valid LDAP search filter: %s" % (val, e)
-        # We don't just return f here because then Nevow would want to
-        # serialize it to XML (why?). Maybe some day.
-        return val
+        return f
 
-class IAddressBookSearch(formless.TypedInterface):
-    search = LDAPSearchFilter()
-    search.label = "Search filter"
+class IAddressBookSearch(annotate.TypedInterface):
+    search = LDAPSearchFilter(label="Search filter")
 
 class CurrentSearch(object):
     __implements__ = IAddressBookSearch, inevow.IContainer
-
-    _searchFilter = None
-    def _setSearchFilter(self, val):
-        self._searchFilter = ldapfilter.parseFilter(val)
-    search = property(
-        fget = lambda self: self._searchFilter,
-        fset = _setSearchFilter)
+    search = None
 
     def child(self, context, name):
         if name == 'searchFilter':
@@ -106,7 +98,7 @@ for c in [
                           inevow.ISerializable)
 
 class AddressBookResource(rend.Page):
-    docFactory = rend.htmlfile(
+    docFactory = loaders.xmlfile(
         'searchform.xhtml',
         templateDir=os.path.split(os.path.abspath(__file__))[0])
 
@@ -123,14 +115,11 @@ class AddressBookResource(rend.Page):
         cur = configurable.original
         return cur
 
-    def child_freeform_css(self, request):
-        from twisted.python import util
-        from twisted.web import static
-        from nevow import __file__ as nevow_file
-        return static.File(util.sibpath(nevow_file, 'freeform-default.css'))
+    def child_form_css(self, request):
+        return webform.defaultCSS
 
     def render_input(self, context, data):
-        return freeform.renderForms()
+        return webform.renderForms()
 
     def render_haveSearch(self, context, data):
         r=context.allPatterns(str(data.search is not None))

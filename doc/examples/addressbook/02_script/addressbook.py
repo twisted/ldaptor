@@ -19,10 +19,6 @@ def search(config):
     d.addCallback(_doSearch, config)
     return d
 
-def show(results):
-    for item in results:
-        print item
-
 def main():
     import sys
     from twisted.python import log
@@ -30,15 +26,18 @@ def main():
 
     config = {
         'base':
-        distinguishedname.DistinguishedName('ou=People,dc=example,dc=com'),
+          distinguishedname.DistinguishedName('ou=People,dc=example,dc=com'),
         'serviceLocationOverrides': {
-        distinguishedname.DistinguishedName('dc=example,dc=com'):
-        ('localhost', 10389),
-        }
+          distinguishedname.DistinguishedName('dc=example,dc=com'):
+            ('localhost', 10389),
+          }
         }
 
     d = search(config)
-    d.addCallback(show)
+    def _show(results):
+        for item in results:
+            print item
+    d.addCallback(_show)
     d.addErrback(defer.logError)
     d.addBoth(lambda _: reactor.stop())
     reactor.run()

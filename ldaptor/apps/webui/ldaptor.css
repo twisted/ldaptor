@@ -1,0 +1,36 @@
+#ldaptorPage-search #moveEntries
+{
+  width: 70%;
+  border: 1px solid gray;
+  position: relative;
+  }
+
+#ldaptorPage-search #moveEntries li
+{
+  height: 1.5em;
+ }
+
+#ldaptorPage-search #moveEntries .moveForms
+{ 
+  display: inline;
+  margin-right: 0;
+  position: absolute;
+  right: 1em;
+  }
+
+#ldaptorPage-search #moveEntries .moveForms form
+{
+  display: inline;
+ }
+
+#ldaptorPage-search #moveEntries .moveForms form input
+{ 
+  font-size: 0.7em;
+  }
+
+#ldaptorPage-mass-change-password .freeform-label { float: none; width: auto; }
+#ldaptorPage-mass-change-password .freeform-description { font-size: 80%; }
+
+input:focus {
+ border-color: black;
+}

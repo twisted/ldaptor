@@ -7,47 +7,20 @@ from ldaptor.checkers import LDAPBindingChecker
 from ldaptor.protocols.ldap.distinguishedname import DistinguishedName
 
 from twisted.internet import reactor
-from twisted.web import server
 from twisted.python import log
-from twisted.web.woven import simpleguard
 
-class MyOptions(usage.Options, usage.Options_service_location, usage.Options_base):
+from nevow import appserver
+
+class MyOptions(usage.Options):
     """LDAPtor Web User Interface"""
 
     def __init__(self, *args, **kwargs):
 	usage.Options.__init__(self, *args, **kwargs)
-	self.opts['search-field']=None
 
     optParameters = (
 	('http-port', None, '38980', # think "ldap and http"
 	 "listen on this port"),
-	('identity-search', None,
-	 '(|(cn=%(name)s)(uid=%(name)s))',
-	 "unknown identities are searched with this filter"),
-	('identity-base', None,
-	 None,
-	 "unknown identities are searched with this base (defaults to the --base value)"),
 	)
-
-    def opt_search_field(self, s):
-	"""
-	Add extra search fields to search page. Value is of type
-	fieldname=ldapfilter, where ldapfilter is expanded according
-	to Python %(var)s convention, e.g. name=(cn=%(input)s).
-	"""
-
-	try:
-	    field, filter = s.split('=', 1)
-	except ValueError:
-	    raise usage.UsageError, 'search-field value must be of form field=filter'
-
-	if self.opts['search-field'] is None:
-	    self.opts['search-field']=[]
-	self.opts['search-field'].append((field, filter))
-
-    def postOptions_search_field(self):
-	if self.opts['search-field'] is None:
-	    self.opts['search-field']=()
 
     def postOptions_httpport(self):
 	try:
@@ -59,20 +32,15 @@ class MyOptions(usage.Options, usage.Options_service_location, usage.Options_bas
 if __name__ == '__main__':
     import sys
     try:
-	config = MyOptions()
-	config.parseOptions()
+	opts = MyOptions()
+	opts.parseOptions()
     except usage.UsageError, ue:
 	sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
 	sys.exit(1)
     log.startLogging(sys.stderr, setStdout=0)
-    resource = main.getResource(
-        identityBaseDN=DistinguishedName(stringValue=(config.opts['identity-base']
-                                                      or config.opts['base'])),
-        serviceLocationOverride=config.opts['service-location'],
-	searchFields=config.opts['search-field'],
-	)
+    resource = main.getResource()
 
-    sit = server.Site(resource)
+    sit = appserver.NevowSite(resource)
 
-    reactor.listenTCP(config.opts['http-port'], sit)
+    reactor.listenTCP(opts['http-port'], sit)
     reactor.run()

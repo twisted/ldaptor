@@ -4,18 +4,21 @@ from twisted.internet import defer
 from twisted.python.failure import Failure
 from twisted.python.util import InsensitiveDict
 from ldaptor.protocols.ldap import ldapclient, ldif, distinguishedname, ldaperrors
-from ldaptor.protocols import pureldap
+from ldaptor.protocols import pureldap, pureber
 from ldaptor.samba import smbpassword
 from ldaptor import ldapfilter, interfaces, delta, attributeset, entry
 
 class PasswordSetAggregateError(Exception):
-    """Some of the password plugins failed."""
+    """Some of the password plugins failed"""
     def __init__(self, errors):
         Exception.__init__(self)
         self.errors=errors
 
     def __str__(self):
-        return str(self.errors)
+        return '%s: %s.' % (
+            self.__doc__,
+            '; '.join([ '%s failed with %s' % (name, fail.getErrorMessage())
+                        for name, fail in self.errors]))
 
     def __repr__(self):
         return '<'+self.__class__.__name__+' errors='+repr(self.errors)+'>'
@@ -272,7 +275,8 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
     def undo(self):
         self._checkState()
 	self._attributes.clear()
-	self._attributes.update(self._remoteData)
+        for k, vs in self._remoteData.items():
+            self._attributes[k] = self.buildAttributeSet(k, vs)
 	self._journal=[]
 
     def _commit_success(self, data):
@@ -300,12 +304,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             op=pureldap.LDAPModifyRequest(
                 object=str(self.dn),
                 modification=[x.asLDAP() for x in self._journal])
-            self.client.queue(
-                op, (lambda
-                     msg,
-                     d=d,
-                     self=self:
-                     self._cbCommit(msg, d)))
+            self.client.queue(op, self._cbCommit, d)
 	except ldapclient.LDAPClientConnectionLostException:
 	    d.errback(Failure())
         else:
@@ -334,11 +333,15 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 					  newrdn=str(newrdn),
 					  deleteoldrdn=0,
 					  newSuperior=str(newSuperior))
-	self.client.queue(op, lambda msg, self=self, d=d: self._cbMoveDone(msg, d))
+	self.client.queue(op, self._cbMoveDone, d)
 	return d
 
     def _cbDeleteDone(self, msg, d):
-	assert isinstance(msg, pureldap.LDAPDelResponse)
+	assert isinstance(msg, pureldap.LDAPResult)
+        if not isinstance(msg, pureldap.LDAPDelResponse):
+            d.errback(ldaperrors.get(msg.resultCode,
+                                     msg.errorMessage))
+            return 1
 	assert msg.referral is None #TODO
 	if msg.resultCode==ldaperrors.Success.resultCode:
 	    assert msg.matchedDN==''
@@ -352,8 +355,41 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 	d = defer.Deferred()
 
 	op = pureldap.LDAPDelRequest(entry=str(self.dn))
-	self.client.queue(op, lambda msg, self=self, d=d: self._cbDeleteDone(msg, d))
+	self.client.queue(op, self._cbDeleteDone, d)
         self._state = 'deleted'
+	return d
+
+    def _cbAddDone(self, msg, d, dn):
+	assert isinstance(msg, pureldap.LDAPAddResponse)
+	assert msg.referral is None #TODO
+	if msg.resultCode==ldaperrors.Success.resultCode:
+	    assert msg.matchedDN==''
+            e = self.__class__(dn=dn, client=self.client)
+	    d.callback(e)
+	else:
+            d.errback(ldaperrors.get(msg.resultCode, msg.errorMessage))
+        return 1
+
+    def addChild(self, rdn, attributes):
+        self._checkState()
+	d = defer.Deferred()
+
+        rdn = distinguishedname.RelativeDistinguishedName(rdn)
+        dn = distinguishedname.DistinguishedName(
+            listOfRDNs=(rdn,)+self.dn.split())
+
+        ldapAttrs = []
+        for attrType, values in attributes.items():
+            ldapAttrType = pureldap.LDAPAttributeDescription(attrType)
+            l = []
+            for value in values:
+                l.append(pureldap.LDAPAttributeValue(value))
+            ldapValues = pureber.BERSet(l)
+
+            ldapAttrs.append((ldapAttrType, ldapValues))
+	op=pureldap.LDAPAddRequest(entry=str(dn),
+                                   attributes=ldapAttrs)
+	self.client.queue(op, self._cbAddDone, d, dn)
 	return d
 
     def _cbSetPassword_ExtendedOperation(self, msg, d):
@@ -382,18 +418,22 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 	d = defer.Deferred()
 
 	op = pureldap.LDAPPasswordModifyRequest(userIdentity=str(self.dn), newPasswd=newPasswd)
-	self.client.queue(op, lambda msg, self=self, d=d: self._cbSetPassword_ExtendedOperation(msg, d))
+	self.client.queue(op, self._cbSetPassword_ExtendedOperation, d)
 	return d
 
     _setPasswordPriority_ExtendedOperation=0
     setPasswordMaybe_ExtendedOperation = setPassword_ExtendedOperation
 
-    def setPassword_Samba(self, newPasswd):
+    def setPassword_Samba(self, newPasswd, style=None):
         """
 
         Set the Samba password on this object.
 
         @param newPasswd: A string containing the new password.
+
+        @param style: one of 'sambaSamAccount', 'sambaAccount' or
+        None. Specifies the style of samba accounts used. None is
+        default and is the same as 'sambaSamAccount'.
 
 	@return: A Deferred that will complete when the operation is
 	done.
@@ -405,15 +445,24 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 	nthash=smbpassword.nthash(newPasswd)
 	lmhash=smbpassword.lmhash(newPasswd)
 
-        self['ntPassword'] = [nthash]
-        self['lmPassword'] = [lmhash]
+        if style is None:
+            style = 'sambaSamAccount'
+        if style == 'sambaSamAccount':
+            self['sambaNTPassword'] = [nthash]
+            self['sambaLMPassword'] = [lmhash]
+        elif style == 'sambaAccount':
+            self['ntPassword'] = [nthash]
+            self['lmPassword'] = [lmhash]
+        else:
+            raise RuntimeError, "Unknown samba password style %r" % style
 	return self.commit()
 
     _setPasswordPriority_Samba=20
     def setPasswordMaybe_Samba(self, newPasswd):
         """
 
-        Set the Samba password on this object if it is a sambaAccount.
+        Set the Samba password on this object if it is a
+        sambaSamAccount or sambaAccount.
 
         @param newPasswd: A string containing the new password.
 
@@ -427,7 +476,9 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
                           self.setPasswordMaybe_Samba(newPasswd))
         else:
             if 'sambaAccount' in self.get('objectClass', ()):
-                d = self.setPassword_Samba(newPasswd)
+                d = self.setPassword_Samba(newPasswd, style="sambaAccount")
+            elif 'sambaSamAccount' in self.get('objectClass', ()):
+                d = self.setPassword_Samba(newPasswd, style="sambaSamAccount")
             else:
                 d = defer.succeed(self)
         return d
@@ -578,6 +629,9 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         if derefAliases is None:
             derefAliases = pureldap.LDAP_DEREF_neverDerefAliases
 
+        if attributes is None:
+            attributes = ['1.1']
+
 	results=[]
 	if callback is None:
 	    cb=results.append
@@ -593,14 +647,9 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 		typesOnly=typesOnly,
 		filter=filterObject,
 		attributes=attributes)
-	    self.client.queue(
-		op, (lambda
-		     msg,
-		     d=d,
-		     callback=cb,
-		     self=self:
-		     self._cbSearchMsg(msg, d, callback, complete=not attributes,
-                                       sizeLimitIsNonFatal=sizeLimitIsNonFatal)))
+	    self.client.queue(op, self._cbSearchMsg,
+                              d, cb, complete=not attributes,
+                              sizeLimitIsNonFatal=sizeLimitIsNonFatal)
 	except ldapclient.LDAPClientConnectionLostException:
 	    d.errback(Failure())
 	else:
@@ -612,9 +661,9 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 
     def __repr__(self):
 	x={}
-	for key in self.keys():
+	for key in super(LDAPEntryWithClient, self).keys():
 	    x[key]=self[key]
-	keys=self.keys()
+	keys=x.keys()
 	keys.sort()
 	a=[]
 	for key in keys:

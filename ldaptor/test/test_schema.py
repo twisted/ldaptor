@@ -5,6 +5,36 @@ Test cases for ldaptor.schema module.
 from twisted.trial import unittest
 from ldaptor import schema
 
+OBJECTCLASSES = {
+    'organization': """( 2.5.6.4 NAME 'organization'
+	DESC 'RFC2256: an organization'
+	SUP top STRUCTURAL
+	MUST o
+	MAY ( userPassword $ searchGuide $ seeAlso $ businessCategory $
+		x121Address $ registeredAddress $ destinationIndicator $
+		preferredDeliveryMethod $ telexNumber $ teletexTerminalIdentifier $
+		telephoneNumber $ internationaliSDNNumber $
+		facsimileTelephoneNumber $ street $ postOfficeBox $ postalCode $
+		postalAddress $ physicalDeliveryOfficeName $ st $ l $ description ) )""",
+
+    'organizationalUnit': """( 2.5.6.5 NAME 'organizationalUnit'
+	DESC 'RFC2256: an organizational unit'
+	SUP top STRUCTURAL
+	MUST ou
+	MAY ( userPassword $ searchGuide $ seeAlso $ businessCategory $
+		x121Address $ registeredAddress $ destinationIndicator $
+		preferredDeliveryMethod $ telexNumber $ teletexTerminalIdentifier $
+		telephoneNumber $ internationaliSDNNumber $
+		facsimileTelephoneNumber $ street $ postOfficeBox $ postalCode $
+		postalAddress $ physicalDeliveryOfficeName $ st $ l $ description ) )""",
+
+    'country': """( 2.5.6.2 NAME 'country'
+	DESC 'RFC2256: a country'
+	SUP top STRUCTURAL
+	MUST c
+	MAY ( searchGuide $ description ) )""",
+    }
+
 class AttributeType_KnownValues(unittest.TestCase):
     knownValues = [
 
@@ -109,16 +139,7 @@ class AttributeType_KnownValues(unittest.TestCase):
 class ObjectClass_KnownValues(unittest.TestCase):
     knownValues = [
 
-        ("""( 2.5.6.4 NAME 'organization'
-	DESC 'RFC2256: an organization'
-	SUP top STRUCTURAL
-	MUST o
-	MAY ( userPassword $ searchGuide $ seeAlso $ businessCategory $
-		x121Address $ registeredAddress $ destinationIndicator $
-		preferredDeliveryMethod $ telexNumber $ teletexTerminalIdentifier $
-		telephoneNumber $ internationaliSDNNumber $
-		facsimileTelephoneNumber $ street $ postOfficeBox $ postalCode $
-		postalAddress $ physicalDeliveryOfficeName $ st $ l $ description ) )""",
+        (OBJECTCLASSES['organization'],
          { 'oid': '2.5.6.4',
            'name': ('organization',),
            'desc': 'RFC2256: an organization',
@@ -135,16 +156,7 @@ class ObjectClass_KnownValues(unittest.TestCase):
                    'physicalDeliveryOfficeName', 'st', 'l', 'description'],
            }),
 
-        ("""( 2.5.6.5 NAME 'organizationalUnit'
-	DESC 'RFC2256: an organizational unit'
-	SUP top STRUCTURAL
-	MUST ou
-	MAY ( userPassword $ searchGuide $ seeAlso $ businessCategory $
-		x121Address $ registeredAddress $ destinationIndicator $
-		preferredDeliveryMethod $ telexNumber $ teletexTerminalIdentifier $
-		telephoneNumber $ internationaliSDNNumber $
-		facsimileTelephoneNumber $ street $ postOfficeBox $ postalCode $
-		postalAddress $ physicalDeliveryOfficeName $ st $ l $ description ) )""",
+        (OBJECTCLASSES['organizationalUnit'],
          { 'oid': '2.5.6.5',
            'name': ('organizationalUnit',),
            'desc': 'RFC2256: an organizational unit',
@@ -197,6 +209,51 @@ class ObjectClass_KnownValues(unittest.TestCase):
             got = ' '.join(str(a).split(None))
             self.assertEquals(got, want)
 
+
+class TestComparison(unittest.TestCase):
+    ORDER = [
+        'country',
+        'organization',
+        'organizationalUnit',
+        ]
+    def setUp(self):
+        data = {}
+        for oc,text in OBJECTCLASSES.items():
+            data[oc] = schema.ObjectClassDescription(text)
+        self.data = data
+
+    def test_eq(self):
+        for k1 in self.data:
+            for k2 in self.data:
+                if k1 == k2:
+                    self.failUnless(self.data[k1] == self.data[k2])
+                else:
+                    self.failIf(self.data[k1] == self.data[k2])
+
+    def test_ne(self):
+        for k1 in self.data:
+            for k2 in self.data:
+                if k1 == k2:
+                    self.failIf(self.data[k1] != self.data[k2])
+                else:
+                    self.failUnless(self.data[k1] != self.data[k2])
+
+    def test_order(self):
+        for i,base in enumerate(self.ORDER):
+            self.failUnless(self.data[base] <= self.data[base])
+            self.failUnless(self.data[base] >= self.data[base])
+            self.failIf(self.data[base] < self.data[base])
+            self.failIf(self.data[base] > self.data[base])
+            for lower in self.ORDER[:i]:
+                self.failUnless(self.data[lower] < self.data[base])
+                self.failUnless(self.data[lower] <= self.data[base])
+                self.failIf(self.data[base] < self.data[lower])
+                self.failIf(self.data[base] <= self.data[lower])
+            for higher in self.ORDER[i+1:]:
+                self.failUnless(self.data[higher] > self.data[base])
+                self.failUnless(self.data[higher] >= self.data[base])
+                self.failIf(self.data[base] > self.data[higher])
+                self.failIf(self.data[base] >= self.data[higher])
 
 """
 
@@ -417,11 +474,7 @@ attributetype ( 2.5.4.54 NAME 'dmdName'
 	SUP name )
 
 
-objectclass ( 2.5.6.2 NAME 'country'
-	DESC 'RFC2256: a country'
-	SUP top STRUCTURAL
-	MUST c
-	MAY ( searchGuide $ description ) )
+
 
 objectclass ( 2.5.6.3 NAME 'locality'
 	DESC 'RFC2256: a locality'

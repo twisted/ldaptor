@@ -4,11 +4,11 @@ Test cases for ldaptor.protocols.ldap.autofill.sambaAccount module.
 
 from twisted.trial import unittest
 from ldaptor.protocols.ldap import ldapsyntax
-from ldaptor.protocols.ldap.autofill import sambaAccount
+from ldaptor.protocols.ldap.autofill import sambaAccount, sambaSamAccount
 from ldaptor.testutil import LDAPClientTestDriver
 from twisted.trial.util import deferredResult, deferredError
 
-class LDAPAutoFill_Samba(unittest.TestCase):
+class LDAPAutoFill_sambaAccount(unittest.TestCase):
     def testMustHaveObjectClass(self):
         """Test that Autofill_samba fails unless object is a sambaAccount."""
         client = LDAPClientTestDriver()
@@ -106,3 +106,51 @@ class LDAPAutoFill_Samba(unittest.TestCase):
 	self.failUnlessEqual(o['primaryGroupID'], [str(2*0+1001)])
         o['gidNumber'] = ['16000']
 	self.failUnlessEqual(o['primaryGroupID'], [str(2*16000+1001)])
+
+class LDAPAutoFill_sambaSamAccount(unittest.TestCase):
+    def testMustHaveObjectClass(self):
+        """Test that Autofill_samba fails unless object is a sambaSamAccount."""
+        client = LDAPClientTestDriver()
+	o=ldapsyntax.LDAPEntryWithAutoFill(client=client,
+                                           dn='cn=foo,dc=example,dc=com',
+                                           attributes={
+	    'objectClass': ['something', 'other'],
+	    })
+        autoFiller = sambaSamAccount.Autofill_samba()
+        d = o.addAutofiller(autoFiller)
+
+        val = deferredError(d)
+        client.assertNothingSent()
+
+        val.trap(sambaSamAccount.ObjectMissingObjectClassException)
+
+    def testDefaultSetting(self):
+        """Test that fields get their default values."""
+        client = LDAPClientTestDriver()
+	o=ldapsyntax.LDAPEntryWithAutoFill(client=client,
+                                           dn='cn=foo,dc=example,dc=com',
+                                           attributes={
+	    'objectClass': ['sambaSamAccount', 'other'],
+	    })
+        d = o.addAutofiller(sambaSamAccount.Autofill_samba())
+        val = deferredResult(d)
+        client.assertNothingSent()
+
+	self.failUnless('sambaAcctFlags' in o)
+	self.failUnlessEqual(o['sambaAcctFlags'], ['[UX         ]'])
+
+        self.failUnless('sambaPwdLastSet' in o)
+	self.failUnlessEqual(o['sambaPwdLastSet'], ['0'])
+	self.failUnless('sambaLogonTime' in o)
+	self.failUnlessEqual(o['sambaLogonTime'], ['0'])
+	self.failUnless('sambaLogoffTime' in o)
+	self.failUnlessEqual(o['sambaLogoffTime'], ['0'])
+	self.failUnless('sambaPwdCanChange' in o)
+	self.failUnlessEqual(o['sambaPwdCanChange'], ['0'])
+	self.failUnless('sambaPwdMustChange' in o)
+	self.failUnlessEqual(o['sambaPwdMustChange'], ['0'])
+
+    def testRid(self): #TODO sambaSamAccount version needs the domain SID?
+        pass
+    def testPrimaryGroupId(self): #TODO sambaSamAccount version needs the domain SID?
+        pass

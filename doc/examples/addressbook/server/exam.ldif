@@ -5,3 +5,4 @@ gn: Ample
 sn: Exam
 # The password is "foo"
 userPassword: {crypt}12o7559gAGYWY
+

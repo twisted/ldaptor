@@ -8,14 +8,15 @@ from twisted.protocols import dns
 from twisted.names import client
 
 def printAnswer(answers, dn):
-    for rr in answers:
-	assert isinstance(rr.payload, dns.Record_SRV)
-	print '%s\tpri=%d weight=%d %s:%d' % (dn,
-					      rr.payload.priority,
-					      rr.payload.weight,
-					      rr.payload.target,
-					      rr.payload.port,
-					      )
+    for rrlist in answers:
+        for rr in rrlist:
+            assert isinstance(rr.payload, dns.Record_SRV)
+            print '%s\tpri=%d weight=%d %s:%d' % (dn,
+                                                  rr.payload.priority,
+                                                  rr.payload.weight,
+                                                  rr.payload.target,
+                                                  rr.payload.port,
+                                                  )
     return answers
 
 exitStatus = 0
@@ -33,7 +34,7 @@ def main(dns):
 	dn=DistinguishedName(stringValue=dnString)
 	domain=dn.getDomainName()
 
-	d = resolver.lookupService('_ldap._tcp.%s' % domain, 5)
+	d = resolver.lookupService('_ldap._tcp.%s' % domain)
 	l.append(d)
 	d.addCallback(printAnswer, dnString)
 	d.addErrback(errback)

@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 
-PYTHON_VERSIONS:=2.2 2.3
+PYTHON_VERSIONS:=2.3
 PYTHON_VERSION_DEFAULT:=2.3
 
 docdir=debian/install/$(1)/usr/share/doc/$(1)
