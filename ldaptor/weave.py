@@ -124,3 +124,23 @@ def entrySerializer(original, context):
 
 flat.registerFlattener(entrySerializer,
                        interfaces.ILDAPEntry)
+
+def zebra(colors=['#edf3fe', '#ffffff']):
+    """
+    Provide alternating background colors for e.g. zebra tables.
+
+    Use like this:
+
+    render_zebra = weave.zebra()
+
+    <table>
+      <tr nevow:render="zebra"><td>foo</td></tr>
+      <tr nevow:render="zebra"><td>bar</td></tr>
+      <tr nevow:render="zebra"><td>baz</td></tr>
+    </table>
+    """
+    colors = list(colors)
+    def f(self, ctx, data):
+        colors[:] = colors[1:]+colors[:1]
+        return ctx.tag(style="background-color: %s;" % colors[-1])
+    return f
