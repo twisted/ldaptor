@@ -291,14 +291,15 @@ class CreateEditForm:
         return attributes
 
 class CreateError:
-    def __init__(self, defe, dn, request):
+    def __init__(self, defe, what, dn, request):
         self.deferred=defe
+        self.what=what
         self.dn=dn
         self.request=request
 
     def __call__(self, fail):
         self.request.args['incomplete']=['true']
-        self.deferred.callback(["Trouble while fetching %s: %s.\n<HR>"%(repr(self.dn), fail.getErrorMessage)])
+        self.deferred.callback(["Trouble while fetching %s for %s: %s.\n<HR>"%(self.what, repr(self.dn), fail.getErrorMessage)])
 
 class NeedDNError(widgets.Widget):
     def display(self, request):
@@ -336,11 +337,11 @@ class EditPage(template.BasicPage):
                 deferred.addCallbacks(
                     callback=self._getContent_2,
                     callbackArgs=(dn, request, client, d),
-                    errback=CreateError(d, dn, request),
+                    errback=CreateError(d, 'subschema entry', dn, request),
                     )
                 deferred.addErrback(defer.logError)
             else:
-                CreateError(d, dn, request)(
+                CreateError(d, 'session client', dn, request)(
                     failure.Failure(
                     ldaperrors.LDAPUnknownError(ldaperrors.other,
                                                 "connection lost")))
@@ -357,7 +358,7 @@ class EditPage(template.BasicPage):
         deferred.addCallbacks(
             callback=self._getContent_3,
             callbackArgs=(dn, request, client, d),
-            errback=CreateError(d, dn, request),
+            errback=CreateError(d, 'schema', dn, request),
             )
 
     def _getContent_3(self, x, dn, request, client, d):
@@ -367,4 +368,4 @@ class EditPage(template.BasicPage):
         deferred.addCallbacks(
             callback=CreateEditForm(d, dn, request,
                                     attributeTypes, objectClasses),
-            errback=CreateError(d, dn, request))
+            errback=CreateError(d, 'attributes', dn, request))

@@ -779,9 +779,12 @@ class LDAPModifyRequest(LDAPProtocolRequest, BERSequence):
         self.modification=self.data[1]
 
     def __init__(self, object=None, modification=None, encoded=None, berdecoder=None, tag=None):
-        """Initialize the object
+        """
+        Initialize the object
 
-l=LDAPModifyRequest(object='cn=foo,dc=example,dc=com',
+        Example usage::
+
+		l=LDAPModifyRequest(object='cn=foo,dc=example,dc=com',
                     modification=(LDAPModification_add('attr1', ('value1', 'value2')),
                                  (LDAPModification_delete('attr2'))))
 """
@@ -824,10 +827,13 @@ class LDAPAddRequest(LDAPProtocolRequest, BERSequence):
         self.attributes=self.data[1]
 
     def __init__(self, entry=None, attributes=None, encoded=None, berdecoder=None, tag=None):
-        """Initialize the object
+        """
+        Initialize the object
 
-l=LDAPAddRequest(entry='cn=foo,dc=example,dc=com',
-                 attributes=(LDAPAttributeDescription("attrFoo"),
+        Example usage::
+
+		l=LDAPAddRequest(entry='cn=foo,dc=example,dc=com',
+			attributes=(LDAPAttributeDescription("attrFoo"),
                              BERSet(value=(
                                  LDAPAttributeValue("value1"),
                                  LDAPAttributeValue("value2"),

@@ -1,3 +1,5 @@
+"""Utility library for handling 32-bit unsigner integers."""
+
 # http://www.geocities.com/rozmanov/python/
 
 """

@@ -1,3 +1,5 @@
+"""Pure-Python MD4 digest algorithm implementation."""
+
 # http://www.geocities.com/rozmanov/python/
 
 """

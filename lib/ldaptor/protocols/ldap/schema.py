@@ -99,50 +99,52 @@ class ASN1ParserThingie:
 
 class ObjectClassDescription(ASN1ParserThingie):
     """
-    d               = "0" / "1" / "2" / "3" / "4" /
-                      "5" / "6" / "7" / "8" / "9"
+    ASN Syntax::
 
-    numericstring   = 1*d
+	d               = "0" / "1" / "2" / "3" / "4" /
+			  "5" / "6" / "7" / "8" / "9"
 
-    numericoid      = numericstring *( "." numericstring )
+	numericstring   = 1*d
 
-    space           = 1*" "
+	numericoid      = numericstring *( "." numericstring )
 
-    whsp            = [ space ]
+	space           = 1*" "
 
-    descr           = keystring
+	whsp            = [ space ]
 
-    qdescr          = whsp "'" descr "'" whsp
+	descr           = keystring
 
-    qdescrlist      = [ qdescr *( qdescr ) ]
+	qdescr          = whsp "'" descr "'" whsp
 
-    ; object descriptors used as schema element names
-    qdescrs         = qdescr / ( whsp "(" qdescrlist ")" whsp )
+	qdescrlist      = [ qdescr *( qdescr ) ]
 
-    dstring         = 1*utf8
+	; object descriptors used as schema element names
+	qdescrs         = qdescr / ( whsp "(" qdescrlist ")" whsp )
 
-    qdstring        = whsp "'" dstring "'" whsp
+	dstring         = 1*utf8
 
-    descr           = keystring
+	qdstring        = whsp "'" dstring "'" whsp
 
-    oid             = descr / numericoid
+	descr           = keystring
 
-    woid            = whsp oid whsp
+	oid             = descr / numericoid
 
-    ; set of oids of either form
-    oids            = woid / ( "(" oidlist ")" )
+	woid            = whsp oid whsp
 
-    ObjectClassDescription = "(" whsp
-    	numericoid whsp      ; ObjectClass identifier
-        [ "NAME" qdescrs ]
-        [ "DESC" qdstring ]
-        [ "OBSOLETE" whsp ]
-        [ "SUP" oids ]       ; Superior ObjectClasses
-        [ ( "ABSTRACT" / "STRUCTURAL" / "AUXILIARY" ) whsp ]
-        			; default structural
-	[ "MUST" oids ]      ; AttributeTypes
-        [ "MAY" oids ]       ; AttributeTypes
-        whsp ")"
+	; set of oids of either form
+	oids            = woid / ( "(" oidlist ")" )
+
+	ObjectClassDescription = "(" whsp
+		numericoid whsp      ; ObjectClass identifier
+                [ "NAME" qdescrs ]
+                [ "DESC" qdstring ]
+                [ "OBSOLETE" whsp ]
+                [ "SUP" oids ]       ; Superior ObjectClasses
+                [ ( "ABSTRACT" / "STRUCTURAL" / "AUXILIARY" ) whsp ]
+			             ; default structural
+                [ "MUST" oids ]      ; AttributeTypes
+                [ "MAY" oids ]       ; AttributeTypes
+                whsp ")"
     """
 
 
@@ -317,31 +319,33 @@ class ObjectClassDescription(ASN1ParserThingie):
 
 class AttributeTypeDescription(ASN1ParserThingie):
     """
-    AttributeTypeDescription = "(" whsp
-    	numericoid whsp              ; AttributeType identifier
-        [ "NAME" qdescrs ]             ; name used in AttributeType
-        [ "DESC" qdstring ]            ; description
-        [ "OBSOLETE" whsp ]
-        [ "SUP" woid ]                 ; derived from this other AttributeType
-        [ "EQUALITY" woid              ; Matching Rule name
-        [ "ORDERING" woid              ; Matching Rule name
-        [ "SUBSTR" woid ]              ; Matching Rule name
-        [ "SYNTAX" whsp noidlen whsp ] ; see section 4.3
-        [ "SINGLE-VALUE" whsp ]        ; default multi-valued
-        [ "COLLECTIVE" whsp ]          ; default not collective
-        [ "NO-USER-MODIFICATION" whsp ]; default user modifiable
-        [ "USAGE" whsp AttributeUsage ]; default userApplications
-        whsp ")"
+    ASN Syntax::
 
-    AttributeUsage =
-    	"userApplications"     /
-        "directoryOperation"   /
-        "distributedOperation" / ; DSA-shared
-        "dSAOperation"          ; DSA-specific, value depends on server
+	AttributeTypeDescription = "(" whsp
+		numericoid whsp                ; AttributeType identifier
+                [ "NAME" qdescrs ]             ; name used in AttributeType
+                [ "DESC" qdstring ]            ; description
+                [ "OBSOLETE" whsp ]
+                [ "SUP" woid ]                 ; derived from this other AttributeType
+                [ "EQUALITY" woid              ; Matching Rule name
+                [ "ORDERING" woid              ; Matching Rule name
+                [ "SUBSTR" woid ]              ; Matching Rule name
+                [ "SYNTAX" whsp noidlen whsp ] ; see section 4.3
+                [ "SINGLE-VALUE" whsp ]        ; default multi-valued
+                [ "COLLECTIVE" whsp ]          ; default not collective
+                [ "NO-USER-MODIFICATION" whsp ]; default user modifiable
+                [ "USAGE" whsp AttributeUsage ]; default userApplications
+                whsp ")"
 
-    noidlen = numericoid [ "{" len "}" ]
+	AttributeUsage =
+		"userApplications"     /
+                "directoryOperation"   /
+                "distributedOperation" / ; DSA-shared
+                "dSAOperation"          ; DSA-specific, value depends on server
 
-    len     = numericstring
+	noidlen = numericoid [ "{" len "}" ]
+
+	len     = numericstring
     """
 
     def __init__(self, text):
@@ -546,10 +550,12 @@ class AttributeTypeDescription(ASN1ParserThingie):
 
 class SyntaxDescription(ASN1ParserThingie):
     """
-    SyntaxDescription = "(" whsp
-    	numericoid whsp
-        [ "DESC" qdstring ]
-        whsp ")"
+    ASN Syntax::
+
+	SyntaxDescription = "(" whsp
+		numericoid whsp
+		[ "DESC" qdstring ]
+		whsp ")"
     """
 
     def __init__(self, text):
@@ -626,13 +632,15 @@ class SyntaxDescription(ASN1ParserThingie):
 
 class MatchingRuleDescription(ASN1ParserThingie):
     """
-    MatchingRuleDescription = "(" whsp
-    	numericoid whsp  ; MatchingRule identifier
-        [ "NAME" qdescrs ]
-        [ "DESC" qdstring ]
-        [ "OBSOLETE" whsp ]
-        "SYNTAX" numericoid
-        whsp ")"
+    ASN Syntax::
+
+    	MatchingRuleDescription = "(" whsp
+		numericoid whsp  ; MatchingRule identifier
+                [ "NAME" qdescrs ]
+                [ "DESC" qdstring ]
+                [ "OBSOLETE" whsp ]
+                "SYNTAX" numericoid
+                whsp ")"
     """
 
     def __init__(self, text):

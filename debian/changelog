@@ -1,3 +1,13 @@
+ldaptor (0.0.12) unstable; urgency=low
+
+  * Be epydoc-friendly in docstrings.
+  * LDAP server closing connection due to idle timeout is now
+    handled properly.
+  * Added option --identity-base, setting the base dn for the
+    search of identities (done with --identity-search).
+
+ -- Tommi Virtanen <tv@debian.org>  Sat,  7 Dec 2002 13:57:19 +0200
+
 ldaptor (0.0.11) unstable; urgency=low
 
   * New options-based, changeable search fields. To get the old
