@@ -12,6 +12,13 @@ def calltrace():
     import sys
     sys.setprofile(printfuncnames)
 
+class FakeTransport:
+    def __init__(self, proto):
+        self.proto = proto
+
+    def loseConnection(self):
+        self.proto.connectionLost()
+
 class LDAPClientTestDriver:
     """
 
@@ -27,19 +34,26 @@ class LDAPClientTestDriver:
     def __init__(self, *responses):
         self.sent=[]
         self.responses=list(responses)
-    def queue(self, x, callback, *args, **kwargs):
+        self.connected = None
+        self.transport = FakeTransport(self)
+    def queue(self, x, callback=None, *args, **kwargs):
         self.sent.append(x)
         assert self.responses, 'Ran out of responses at %r' % x
         responses = self.responses.pop(0)
-        while responses:
-            r = responses.pop(0)
-            ret = callback(r, *args, **kwargs)
-            if responses:
-                assert not ret, \
-                       "got %d responses still to give, but handler wants none (got %r)." % (len(responses), ret)
-            else:
-                assert ret, \
-                       "no more responses to give, but handler still wants more (got %r)." % ret
+        if callback is None:
+            assert not args
+            assert not kwargs
+            assert not responses
+        else:
+            while responses:
+                r = responses.pop(0)
+                ret = callback(r, *args, **kwargs)
+                if responses:
+                    assert not ret, \
+                           "got %d responses still to give, but handler wants none (got %r)." % (len(responses), ret)
+                else:
+                    assert ret, \
+                           "no more responses to give, but handler still wants more (got %r)." % ret
 
     def assertNothingSent(self):
         # just a bit more explicit
@@ -59,3 +73,18 @@ class LDAPClientTestDriver:
             self.__class__.__name__,
             shouldBeSentStr,
             sentStr)
+
+    def connectionMade(self):
+        """TCP connection has opened"""
+        self.connected = 1
+
+    def connectionLost(self, reason=None):
+        """Called when TCP connection has been lost"""
+        assert not self.responses
+        self.connected = 0
+
+    def unbind(self):
+        assert self.connected
+        r='fake-unbind-by-LDAPClientTestDriver'
+        self.queue(r)
+        self.transport.loseConnection()

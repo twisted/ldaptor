@@ -9,6 +9,7 @@ class Proxy(ldapserver.BaseLDAPServer):
 
     client = None
     waitingConnect = []
+    unbound = False
 
     def __init__(self, overrides):
         ldapserver.BaseLDAPServer.__init__(self)
@@ -59,7 +60,11 @@ class Proxy(ldapserver.BaseLDAPServer):
     def connectionLost(self, reason):
         assert self.client is not None
         if self.client.connected:
-            self.client.unbind()
+            if not self.unbound:
+                self.client.unbind()
+                self.unbound = True
+            else:
+                self.client.transport.loseConnection()
         self.client = None
         ldapserver.BaseLDAPServer.connectionLost(self, reason)
 
@@ -72,6 +77,9 @@ class Proxy(ldapserver.BaseLDAPServer):
         d.addCallback(self._handleUnknown, controls, reply)
         return d
 
+    def handle_LDAPUnbindRequest(self, request, controls, reply):
+        self.unbound = True
+        self.handleUnknown(request, controls, reply)
 
 if __name__ == '__main__':
     """
