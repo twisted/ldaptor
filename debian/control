@@ -3,7 +3,7 @@ Section: admin
 Priority: optional
 Maintainer: Tommi Virtanen <tv@debian.org>
 Standards-Version: 3.5.6
-Build-Depends-Indep: python2.1-dev, python2.2-dev, python2.3-dev
+Build-Depends-Indep: python2.1-dev, python2.2-dev
 
 Package: ldaptor-webui
 Architecture: all
@@ -92,23 +92,4 @@ Description: Pure-Python library for LDAP
  - Samba password changing logic.
  .
  This version is usable with python2.2
-
-Package: python2.3-ldaptor
-Architecture: all
-Depends: python2.3, python2.3-twisted, pwgen
-Description: Pure-Python library for LDAP
- Ldaptor is a pure-Python library that implements
- .
- - LDAP client logic.
- .
- - separately-accessible LDAP and BER protocol message
- generation/parsing.
- .
- - ASCII-format LDAP filter generation and parsing.
- .
- - LDIF format data generation.
- .
- - Samba password changing logic.
- .
- This version is usable with python2.3
 

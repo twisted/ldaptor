@@ -1,3 +1,10 @@
+ldaptor (0.0.8) unstable; urgency=low
+
+  * Take out the python2.3 support, Twisted doesn't support 2.3
+    yet anyway.
+
+ -- Tommi Virtanen <tv@debian.org>  Thu, 19 Sep 2002 20:06:26 +0300
+
 ldaptor (0.0.7) unstable; urgency=low
 
   * Don't leave LDAP connections open, cleanup.
