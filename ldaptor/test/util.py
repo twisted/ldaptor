@@ -19,7 +19,28 @@ class FakeTransport(protocol.FileWrapper):
     def loseConnection(self):
         self.disconnecting = True
 
-class IOPump(testutils.IOPump):
+class FasterIOPump(testutils.IOPump):
+    def pump(self):
+        """Move data back and forth.
+
+        Returns whether any data was moved.
+        """
+        self.clientIO.seek(0)
+        self.serverIO.seek(0)
+        cData = self.clientIO.read()
+        sData = self.serverIO.read()
+        self.clientIO.seek(0)
+        self.serverIO.seek(0)
+        self.clientIO.truncate()
+        self.serverIO.truncate()
+        self.server.dataReceived(cData)
+        self.client.dataReceived(sData)
+        if cData or sData:
+            return 1
+        else:
+            return 0
+
+class IOPump(FasterIOPump):
     active = []
     def __init__(self,
                  client, server,
@@ -33,7 +54,7 @@ class IOPump(testutils.IOPump):
                                   serverIO=serverTransport.data)
         self.active.append(self)
     def pump(self):
-        testutils.IOPump.pump(self)
+        FasterIOPump.pump(self)
         if (self.clientTransport.disconnecting
             and not self.clientTransport.data.getvalue()
             and not self.clientTransport.disconnect_done):
