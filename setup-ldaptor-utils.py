@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 #debian-section: admin
+#debian-depends:
 
 from distutils.core import setup, Extension
 

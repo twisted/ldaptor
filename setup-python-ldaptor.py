@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 #debian-section: python
+#debian-depends: python%(var python_version)s-twisted (>= 1.1.1), python%(var python_version)s-pyparsing, pwgen
 
 from distutils.core import setup, Extension
 

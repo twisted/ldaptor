@@ -211,7 +211,7 @@ class TestAuthenticatedCSS(TestCSS):
         'http://localhost/dc=example,dc=com/edit/uid=foo,dc=example,dc=com',
         'http://localhost/dc=example,dc=com/add',
         'http://localhost/dc=example,dc=com/add/',
-        'http://localhost/dc=example,dc=com/add/dcObject',
+        'http://localhost/dc=example,dc=com/add/manual/dcObject',
         'http://localhost/dc=example,dc=com/change_password',
         'http://localhost/dc=example,dc=com/change_password/',
         'http://localhost/dc=example,dc=com/change_password/uid=foo,dc=example,dc=com',

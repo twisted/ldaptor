@@ -1,6 +1,10 @@
 from ldaptor.protocols.ldap.autofill import ObjectMissingObjectClassException
 
 class Autofill_samba: #TODO baseclass
+    def __init__(self, domainSID, fixedPrimaryGroupSID=None):
+        self.domainSID = domainSID
+        self.fixedPrimaryGroupSID = fixedPrimaryGroupSID
+
     def start(self, ldapObject):
         assert 'objectClass' in ldapObject
         if 'sambaSamAccount' not in ldapObject['objectClass']:
@@ -19,26 +23,35 @@ class Autofill_samba: #TODO baseclass
         assert 'sambaPwdMustChange' not in ldapObject
         ldapObject['sambaPwdMustChange'] = ['0']
 
+        if self.fixedPrimaryGroupSID is not None:
+            assert 'sambaPrimaryGroupSID' not in ldapObject
+            ldapObject['sambaPrimaryGroupSID'] = ['%s-%d' % (
+                self.domainSID, self.fixedPrimaryGroupSID)]
+
+        # Handle attributeTypes that were added before we got
+        # started. We know we don't defer in notify, so we can do a
+        # simple loop here.
+        for attributeType in ldapObject.keys():
+            self.notify(ldapObject, attributeType)
+
     def notify(self, ldapObject, attributeType):
+        # sambaSID=2*uidNumber+1000
+        if attributeType == 'uidNumber':
+            assert 'uidNumber' in ldapObject
+            assert len(ldapObject['uidNumber']) == 1
+            for uidNumber in ldapObject['uidNumber']:
+                uidNumber = int(uidNumber)
+                sid = '%s-%d' % (self.domainSID, uidNumber*2+1000)
+                ldapObject['sambaSID'] = [str(sid)]
+                return
 
-        # rid=2*uid+1000
-##         if attributeType == 'uidNumber':
-##             assert 'uidNumber' in ldapObject
-##             assert len(ldapObject['uidNumber']) == 1
-##             for uidNumber in ldapObject['uidNumber']:
-##                 uidNumber = int(uidNumber)
-##                 rid = uidNumber*2+1000
-##                 ldapObject['rid'] = [str(rid)]
-##                 return
-
-        # primaryGroupID=2*gid+1001
-##         if attributeType == 'gidNumber':
-##             assert 'gidNumber' in ldapObject
-##             assert len(ldapObject['gidNumber']) == 1
-##             for gidNumber in ldapObject['gidNumber']:
-##                 gidNumber = int(gidNumber)
-##                 primaryGroupID = gidNumber*2+1001
-##                 ldapObject['primaryGroupID'] = [str(primaryGroupID)]
-##                 return
-
-        pass
+        # sambaPrimaryGroupSID = fixed or 2*gidNumber+1001
+        if (self.fixedPrimaryGroupSID is None
+            and attributeType == 'gidNumber'):
+            assert 'gidNumber' in ldapObject
+            assert len(ldapObject['gidNumber']) == 1
+            for gidNumber in ldapObject['gidNumber']:
+                gidNumber = int(gidNumber)
+                sid = '%s-%d' % (self.domainSID, gidNumber*2+1001)
+                ldapObject['sambaPrimaryGroupSID'] = [str(sid)]
+                return

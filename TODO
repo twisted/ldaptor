@@ -13,7 +13,7 @@ TODO file for the Ldaptor project.
 
 * changing the dn attribute
 
-* duplicate canonnames/mails/uids/uidNumbers/gidNumbers/homes
+* duplicate mails/uids/uidNumbers/gidNumbers/homes
 
 * suggest mails/uids/uidNumbers/gidNumbers/homes
 

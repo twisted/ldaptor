@@ -1,3 +1,17 @@
+ldaptor (0.0.28) unstable; urgency=low
+
+  * Applications changes:
+    - Support smarter object creation plugins in webui add.
+  * Cleanups:
+    - Remove references to dead code.
+    - Make sure LDAPAttributeTypeAndValue repr works even if
+      __init__ raised an exception.
+    - Make sambaSamAccount autofiller actually useful, add unit tests.
+  * Packaging:
+    - Make ldaptor-webui depend on python2.3-nevow. Closes: #264179.
+
+ -- Tommi Virtanen <tv@debian.org>  Tue, 17 Aug 2004 16:32:03 +0300
+
 ldaptor (0.0.27) unstable; urgency=low
 
   * Applications changes:

@@ -135,18 +135,18 @@ class KnownValues(unittest.TestCase):
 	(pureldap.LDAPModifyDNRequest,
 	 [],
 	 {'entry': 'cn=aoue,dc=example,dc=com',
-	  'newrdn': 'canonname=aoue',
+	  'newrdn': 'uid=aoue',
 	  'deleteoldrdn': 0,
 	  'newSuperior': 'ou=People,dc=example,dc=com',
 	  },
          None,
-	 [0x6c, 0x4b]
+	 [0x6c, 69]
 	 + [0x04]
 	 + [len("cn=aoue,dc=example,dc=com")]
 	 + l("cn=aoue,dc=example,dc=com")
 	 + [0x04]
-	 + [len("canonname=aoue")]
-	 + l("canonname=aoue")
+	 + [len("uid=aoue")]
+	 + l("uid=aoue")
 	 + [0x01, 0x01, 0x00]
 	 + [0x80]
 	 + [len("ou=People,dc=example,dc=com")]

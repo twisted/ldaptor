@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 #debian-section: admin
+#debian-depends: python%(var PYTHON_VERSION_DEFAULT)s-nevow
 
 import os
 from distutils.core import setup, Extension

@@ -74,6 +74,9 @@ class InvalidRelativeDistinguishedName(Exception):
 
 class LDAPAttributeTypeAndValue:
     # TODO I should be used everywhere
+    attributeType = None
+    value = None
+
     def __init__(self, stringValue=None, attributeType=None, value=None):
         if stringValue is None:
 	    assert attributeType is not None

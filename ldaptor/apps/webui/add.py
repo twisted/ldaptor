@@ -1,4 +1,5 @@
 from twisted.internet import defer
+from twisted.python import plugin
 
 from ldaptor.protocols import pureldap, pureber
 from ldaptor.protocols.ldap import ldapsyntax, distinguishedname
@@ -84,9 +85,10 @@ class AddOCForm(configurable.Configurable):
                 if v:
                     auxiliaryObjectClasses.append(k)
         u = url.URL.fromRequest(request)
-        request.setComponent(iformless.IRedirectAfterPost,
-                             u.child('+'.join([structuralObjectClass.name[0]]
-                                              + auxiliaryObjectClasses)))
+        request.setComponent(
+            iformless.IRedirectAfterPost,
+            u.child('manual').child('+'.join([structuralObjectClass.name[0]]
+                                             + auxiliaryObjectClasses)))
         if auxiliaryObjectClasses:
             return 'Using objectclasses %s and %s.' % (
                 structuralObjectClass.name[0],
@@ -315,20 +317,9 @@ class ReallyAddPage(rend.Page):
         'add-really.xhtml',
         templateDir=os.path.split(os.path.abspath(__file__))[0])
 
-    def __init__(self,
-                 structuralObjectClass,
-                 auxiliaryObjectClasses,
-                 attributeTypes,
-                 objectClasses):
-	super(ReallyAddPage, self).__init__()
-        self.structuralObjectClass = structuralObjectClass
-        self.auxiliaryObjectClasses = auxiliaryObjectClasses
-        self.attributeTypes = attributeTypes
-        self.objectClasses = objectClasses
-        
     def data_css(self, context, data):
         request = context.locate(inevow.IRequest)
-        u = (url.URL.fromRequest(request).clear().parent().parent().parent()
+        u = (url.URL.fromRequest(request).clear().parent().parent().parent().parent()
              .child('form.css'))
         return [ u ]
 
@@ -339,20 +330,12 @@ class ReallyAddPage(rend.Page):
     def data_header(self, context, data):
         request = context.locate(inevow.IRequest)
         u=url.URL.fromRequest(request)
-        u=u.parent().parent()
+        u=u.parent().parent().parent()
         l=[]
 	l.append(tags.a(href=u.sibling("search"))["Search"])
 	l.append(tags.a(href=u.sibling("add"))["add new entry"])
         
 	return l
-
-    def configurable_(self, context):
-        cfg = context.locate(interfaces.ILDAPConfig)
-        a = AddForm(chosenObjectClasses=[self.structuralObjectClass]
-                    + self.auxiliaryObjectClasses,
-                    attributeTypes=self.attributeTypes,
-                    objectClasses=self.objectClasses)
-        return a
     
     def render_form(self, context, data):
         return webform.renderForms()
@@ -372,7 +355,7 @@ class ReallyAddPage(rend.Page):
 
         request = context.locate(inevow.IRequest)
         u=url.URL.fromRequest(request)
-        u=u.parent().parent()
+        u=u.parent().parent().parent()
 
         return context.tag.clear()[
             "Added ",
@@ -391,12 +374,60 @@ class ReallyAddPage(rend.Page):
             ']',
             ]
             
+class SmartObjectAddPage(ReallyAddPage):
+    def __init__(self, smartObject):
+	super(SmartObjectAddPage, self).__init__()
+        self.smartObject = smartObject
+    
+    def configurable_(self, context):
+        return self.smartObject
+
+class ManualAddPage(ReallyAddPage):
+    def __init__(self,
+                 structuralObjectClass,
+                 auxiliaryObjectClasses,
+                 attributeTypes,
+                 objectClasses):
+	super(ManualAddPage, self).__init__()
+        self.structuralObjectClass = structuralObjectClass
+        self.auxiliaryObjectClasses = auxiliaryObjectClasses
+        self.attributeTypes = attributeTypes
+        self.objectClasses = objectClasses
+        
+    def configurable_(self, context):
+        a = AddForm(chosenObjectClasses=[self.structuralObjectClass]
+                    + self.auxiliaryObjectClasses,
+                    attributeTypes=self.attributeTypes,
+                    objectClasses=self.objectClasses)
+        return a
 
 def strObjectClass(oc):
     if oc.desc is not None:
         return '%s: %s' % (oc.name[0], oc.desc)
     else:
         return '%s' % (oc.name[0],)
+
+class IChooseSmartObject(annotate.TypedInterface):
+    def add(self,
+            context=annotate.Context(),
+            smartObjectClass=annotate.Choice(choicesAttribute='plugins')):
+        pass
+    add = annotate.autocallable(add)
+
+class ChooseSmartObject(object):
+    __implements__ = IChooseSmartObject
+
+    def __init__(self, pluginNames):
+        self.plugins = list(pluginNames)
+        self.plugins.sort()
+
+    def add(self, context, smartObjectClass):
+        request = context.locate(inevow.IRequest)
+        u = url.URL.fromRequest(request)
+        request.setComponent(
+            iformless.IRedirectAfterPost,
+            u.child('smart').child(smartObjectClass))
+        return 'Using smart objectclass %s.' % smartObjectClass
 
 class AddPage(rend.Page):
     addSlash = True
@@ -409,7 +440,22 @@ class AddPage(rend.Page):
 	super(AddPage, self).__init__()
         self.attributeTypes = attributeTypes
         self.objectClasses = objectClasses
-        
+
+    def listPlugins(self):
+        for plug in plugin.getPlugIns('ldaptor.apps.webui.smartObject'):
+            yield plug.name
+
+    def havePlugins(self):
+        for plug in plugin.getPlugIns('ldaptor.apps.webui.smartObject'):
+            return True
+        return False
+
+    def getPlugin(self, name):
+        for plug in plugin.getPlugIns('ldaptor.apps.webui.smartObject'):
+            if plug.name == name:
+                return plug
+        raise KeyError, name
+
     def data_css(self, context, data):
         request = context.locate(inevow.IRequest)
         u = (url.URL.fromRequest(request).clear().parent().parent()
@@ -428,11 +474,20 @@ class AddPage(rend.Page):
 	l.append(tags.a(href=u.sibling("search"))["Search"])
         return l
 
-    def configurable_(self, context):
+    def configurable_objectClass(self, context):
         return AddOCForm(self.objectClasses)
     
-    def render_form(self, context, data):
-        return webform.renderForms()
+    def render_objectClassForm(self, context, data):
+        return webform.renderForms('objectClass')
+
+    def configurable_smartObject(self, context):
+        return ChooseSmartObject(self.listPlugins())
+    
+    def render_smartObjectForm(self, context, data):
+        if self.havePlugins():
+            return webform.renderForms('smartObject')
+        else:
+            return context.tag.clear()
 
     def render_passthrough(self, context, data):
         return context.tag.clear()[data]
@@ -442,27 +497,43 @@ class AddPage(rend.Page):
         if ret != rend.NotFound:
             return ret
 
-        path=segments[0]
-        unquoted=uriUnquote(path)
-        objectClasses = unquoted.split('+')
-        assert len(objectClasses) >= 1
+        if segments[0] == 'manual':
+            if not segments[1:]:
+                return rend.NotFound
+            path=segments[1]
+            unquoted=uriUnquote(path)
+            objectClasses = unquoted.split('+')
+            assert len(objectClasses) >= 1
 
-        structName=objectClasses[0]
-        structuralObjectClass = mapNameToObjectClass(self.objectClasses,
-                                                     structName)
-        assert structuralObjectClass is not None, \
-               "objectClass %s must have schema"%structName
+            structName=objectClasses[0]
+            structuralObjectClass = mapNameToObjectClass(self.objectClasses,
+                                                         structName)
+            assert structuralObjectClass is not None, \
+                   "objectClass %s must have schema"%structName
 
-        auxiliaryObjectClasses = []
-        for auxName in objectClasses[1:]:
-            oc = mapNameToObjectClass(self.objectClasses, auxName)
-            assert oc is not None, "objectClass %s must have schema"%oc
-            auxiliaryObjectClasses.append(oc)
-        r = ReallyAddPage(structuralObjectClass=structuralObjectClass,
-                          auxiliaryObjectClasses=auxiliaryObjectClasses,
-                          attributeTypes=self.attributeTypes,
-                          objectClasses=self.objectClasses)
-        return r, segments[1:]
+            auxiliaryObjectClasses = []
+            for auxName in objectClasses[1:]:
+                oc = mapNameToObjectClass(self.objectClasses, auxName)
+                assert oc is not None, "objectClass %s must have schema"%oc
+                auxiliaryObjectClasses.append(oc)
+            r = ManualAddPage(structuralObjectClass=structuralObjectClass,
+                              auxiliaryObjectClasses=auxiliaryObjectClasses,
+                              attributeTypes=self.attributeTypes,
+                              objectClasses=self.objectClasses)
+            return r, segments[2:]
+        elif segments[0] == 'smart':
+            if not segments[1:]:
+                return rend.NotFound
+            name = segments[1]
+            if not name:
+                return rend.NotFound
+            plug = self.getPlugin(name)
+            module = plug.load()
+            add = module.add()
+            r = SmartObjectAddPage(add)
+            return r, segments[2:]
+        else:
+            return rend.NotFound
 
 def getResource(baseObject, request):
     entry = request.getSession().getLoggedInRoot().loggedIn

@@ -28,7 +28,7 @@ def reflow(s):
     return '\n'.join(l)
 
 
-class CmdDict:
+class CmdDict(object):
     def __init__(self, setup=None, **kwargs):
 	self.setup=setup
 	self.vars=kwargs
@@ -49,6 +49,8 @@ class CmdDict:
 	    line=line.strip()
 	    if line.startswith(start):
 		line=line[len(start):].strip()
+                # allow the line to contain %-magic, too
+                line = line % self
 		return line
 	raise 'No special variable %s in setup file %s' \
 	      % (repr(var), self.setup)
@@ -71,21 +73,38 @@ class CmdDict:
 	f=getattr(self, 'handle_'+first.replace('-', '_'))
 	return f(rest)
 
-otherpackage = """
-Package: %(var package)s
-Section: %(extract-setup-var debian-section)s
-Architecture: all
-Depends: python (>= %(var PYTHON_VERSION_DEFAULT)s), python (<< %(var PYTHON_VERSION_TOOBIG)s), python%(var PYTHON_VERSION_DEFAULT)s-ldaptor
-Description: %(setup --description)s
-"""
+    def handle_depends(self, s):
+        s1 = '%(extract-setup-var debian-depends)s' % self
+        s2 = ', '.join(self.vars['depends']) % self
+        s = ', '.join([x for x in [s1, s2] if x])
+        return s
 
-pypackage = """
+
+PACKAGE_TEMPLATE = """
 Package: %(var package)s
 Section: %(extract-setup-var debian-section)s
 Architecture: all
-Depends: python%(var python_version)s-twisted (>= 1.1.1), python%(var python_version)s-pyparsing, pwgen%(var extra_depends)s
+Depends: %(depends foo)s
 Description: %(setup --description)s
 """
+def printPackage(name,
+                 setupName,
+                 depends=[],
+                 descriptionFooter=None,
+                 **kwargs):
+    c = CmdDict(setupName,
+                package=name,
+                PYTHON_VERSION_DEFAULT=PYTHON_VERSION_DEFAULT,
+                PYTHON_VERSION_TOOBIG=PYTHON_VERSION_TOOBIG,
+                depends=depends,
+                **kwargs)
+    print PACKAGE_TEMPLATE.strip() % c
+    print reflow('%(setup --long-description)s' % c)
+    if descriptionFooter is not None:
+	print ' .'
+	print descriptionFooter % c
+    print
+
 printed_source=0
 files = os.listdir('.')
 files.sort()
@@ -106,46 +125,35 @@ Build-Depends-Indep: %(forpython python%s-dev)s, debhelper (>= 4.1.68), docbook-
     package=filename[len('setup-'):-len('.py')]
 
     if package.startswith('python-'):
-	c = CmdDict(filename,
-		    python_version='',
-		    package=package,
-		    extra_depends=', '.join(['',
-            'python (>= %s)' % PYTHON_VERSION_DEFAULT,
-            'python (<< %s)' % PYTHON_VERSION_TOOBIG,
-            'python'+PYTHON_VERSION_DEFAULT+'-'+package[len('python-'):],
-            ]),
-		    )
-	print pypackage.strip() % c
-	print reflow('%(setup --long-description)s' % c)
-	print ' .'
-	print '''\
+        printPackage(package, filename,
+                     depends=[
+            'python (>= %(var PYTHON_VERSION_DEFAULT)s)',
+            'python (<< %(var PYTHON_VERSION_TOOBIG)s)',
+            'python%(var PYTHON_VERSION_DEFAULT)s-'+package[len('python-'):],
+            ],
+                     descriptionFooter='''\
  This is a dummy package that depends on the correct version of
- %s for the default version of Python.
-'''.rstrip() % package
-	print
+ %(var package)s for the default version of Python.
+'''.rstrip(),
+                     python_version='',
+                     )
 
 	for pyver in PYTHON_VERSIONS:
-	    pkgname='python'+pyver+'-'+package[len('python-'):]
-	    c=CmdDict(
-		filename,
-                python_version=pyver,
-		package=pkgname,
-		extra_depends=', python%s' % pyver,
-		)
-	    print pypackage.strip() % c
-	    print reflow('%(setup --long-description)s' % c)
-	    print ' .'
-	    print ' This version is usable with python%s' % pyver
-	    print
-
+            printPackage('python'+pyver+'-'+package[len('python-'):],
+                         filename,
+                         depends=['python%(var python_version)s'],
+                         python_version=pyver,
+                         descriptionFooter="""\
+ This version is usable with python%(var python_version)s
+ """.rstrip(),
+                         )
     else:
-	c=CmdDict(filename, package=package,
-                  PYTHON_VERSION_DEFAULT=PYTHON_VERSION_DEFAULT,
-                  PYTHON_VERSION_TOOBIG=PYTHON_VERSION_TOOBIG,
-                  )
-	print otherpackage.strip() % c
-	print reflow('%(setup --long-description)s' % c)
-	print
+        printPackage(package, filename,
+                     depends=[
+            'python (>= %(var PYTHON_VERSION_DEFAULT)s)',
+            'python (<< %(var PYTHON_VERSION_TOOBIG)s)',
+            'python%(var PYTHON_VERSION_DEFAULT)s-ldaptor',
+            ])
 
 print '''\
 Package: ldaptor-doc
