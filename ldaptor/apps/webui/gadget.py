@@ -1,117 +1,154 @@
-from twisted.web import widgets, guard, static
+from twisted.web import microdom
+from twisted.web.util import Redirect
+from twisted.web.woven import simpleguard, page, form
+from twisted.python import urlpath, formmethod
+from twisted.web.static import redirectTo
+from ldaptor.apps.webui import util, login
 import search, edit, add, delete, mass_change_password, change_password, move
-import template
 from ldaptor.protocols.ldap import distinguishedname
 from ldaptor.apps.webui.uriquote import uriQuote, uriUnquote
+import urllib
 
-# TODO when twisted.web.static with this class gets released,
-# use it from there.
-from twisted.web import resource
-from twisted.protocols import http
-
-
-class LdaptorWebUIGadget2(widgets.Gadget):
-    def __init__(self, editService,
-		 baseObject,
+class LdaptorWebUIGadget2(page.Page):
+    def __init__(self,
+                 baseObject,
 		 serviceLocationOverride=None,
 		 searchFields=(),
 		 ):
-	widgets.Gadget.__init__(self)
+        page.Page.__init__(self)
+        self.baseObject = baseObject
+        self.serviceLocationOverride = serviceLocationOverride
+        self.searchFields = searchFields
 
-	siblings = {
-	    'search':
-	    search.SearchPage(baseObject=baseObject,
-			      serviceLocationOverride=serviceLocationOverride,
-			      searchFields=searchFields),
-
-	    'edit':
-	    guard.ResourceGuard(edit.EditPage(),
-				editService,
-				sessionPerspective="LdaptorPerspective",
-				sessionIdentity="LdaptorIdentity"),
-
-	    'add':
-	    guard.ResourceGuard(add.AddPage(baseObject=baseObject),
-				editService,
-				sessionPerspective="LdaptorPerspective",
-				sessionIdentity="LdaptorIdentity"),
-
-	    'delete':
-	    guard.ResourceGuard(delete.DeletePage(),
-				editService,
-				sessionPerspective="LdaptorPerspective",
-				sessionIdentity="LdaptorIdentity"),
-
-	    'mass_change_password':
-	    guard.ResourceGuard(
-	    mass_change_password.MassPasswordChangePage(
-	    baseObject=baseObject),
-	    editService,
-	    sessionPerspective="LdaptorPerspective",
-	    sessionIdentity="LdaptorIdentity"),
-
-	    'change_password':
-	    guard.ResourceGuard(change_password.PasswordChangePage(),
-				editService,
-				sessionPerspective="LdaptorPerspective",
-				sessionIdentity="LdaptorIdentity"),
-
-	    'move':
-	    guard.ResourceGuard(move.MovePage(
-	    baseObject=baseObject,
-	    serviceLocationOverride=serviceLocationOverride,
-	    searchFields=searchFields),
-	    editService,
-	    sessionPerspective="LdaptorPerspective",
-	    sessionIdentity="LdaptorIdentity"),
-
-	    }
-
-	self.putWidget('', siblings['search'])
-	for k,v in siblings.items():
-	    self.putWidget(k, v)
-
-class AskBaseDNForm(widgets.Form):
-    formFields = [
-	('string', 'Base DN', 'basedn', ''),
-	]
-
-    def process(self, write, request, submit, basedn):
-        try:
-            basedn = distinguishedname.DistinguishedName(stringValue=basedn)
-        except distinguishedname.InvalidRelativeDistinguishedName, e:
-            return self.tryAgain(e, request)
+    def render(self, request):
+        if request.uri.split('?')[0][-1] != '/':
+            return redirectTo(request.childLink('search'), request)
         else:
-            quoted=uriQuote(str(basedn))
-            return [static.redirectTo(request.childLink(quoted), request)]
+            return redirectTo(request.sibLink('search'), request)
 
-class AskBaseDNPage(template.BasicPage):
-    title = "Ldaptor Web Interface"
-    isLeaf = 1
+    def wchild_search(self, request):
+        return search.getSearchPage(
+            baseObject=self.baseObject,
+            serviceLocationOverride=self.serviceLocationOverride,
+            searchFields=self.searchFields)
 
-    def getContent(self, request):
-	return AskBaseDNForm().display(request)
+    def wchild_edit(self, request):
+        a=request.getComponent(simpleguard.Authenticated)
+        print 'wchild_edit', repr(a)
+        if not request.getComponent(simpleguard.Authenticated):
+            return util.InfiniChild(login.LoginPage())
+        return edit.EditPage()
 
-class LdaptorWebUIGadget(widgets.Gadget):
-    def __init__(self, editService,
+    def wchild_move(self, request):
+        if not request.getComponent(simpleguard.Authenticated):
+            return util.InfiniChild(login.LoginPage())
+        return move.MovePage(
+            baseObject=self.baseObject,
+            serviceLocationOverride=self.serviceLocationOverride,
+            searchFields=self.searchFields)
+
+    def wchild_add(self, request):
+        if not request.getComponent(simpleguard.Authenticated):
+            return util.InfiniChild(login.LoginPage())
+        return add.AddPage(baseObject=self.baseObject)
+
+    def wchild_delete(self, request):
+        if not request.getComponent(simpleguard.Authenticated):
+            return util.InfiniChild(login.LoginPage())
+        return delete.getResource()
+
+    def wchild_mass_change_password(self, request):
+        if not request.getComponent(simpleguard.Authenticated):
+            return util.InfiniChild(login.LoginPage())
+        return mass_change_password.MassPasswordChangePage(
+            baseObject=self.baseObject)
+
+    def wchild_change_password(self, request):
+        if not request.getComponent(simpleguard.Authenticated):
+            return util.InfiniChild(login.LoginPage())
+        return change_password.getResource()
+
+class LdaptorWebUIGadget(page.Page):
+    appRoot = True
+
+    template = '''<html>
+    <head>
+        <title>Ldaptor Web Interface</title>
+        <style type="text/css">
+.formDescription, .formError {
+    /* fixme - inherit */
+    font-size: smaller;
+    font-family: sans-serif;
+    margin-bottom: 1em;
+}
+
+.formDescription {
+    color: green;
+}
+
+.formError {
+    color: red;
+}
+</style>
+    </head>
+    <body>
+    <h1>Base DN</h1>
+    <div view="basednform" />
+
+    </body>
+</html>'''
+
+    formSignature = formmethod.MethodSignature(
+        formmethod.String("basedn", "",
+                          "Base DN", "The top-level LDAP DN you want to browse, e.g. dc=example,dc=com"),
+        formmethod.Submit("submit", allowNone=1),
+        )
+
+    def __init__(self,
 		 serviceLocationOverride=None,
 		 searchFields=(),
 		 ):
-	self.editService=editService
+	page.Page.__init__(self)
 	self.serviceLocationOverride=serviceLocationOverride
 	self.searchFields=searchFields
-	widgets.Gadget.__init__(self)
 
-    def getWidget(self, path, request):
-	if not path:
-	    return AskBaseDNPage()
-	else:
-	    unquoted=uriUnquote(path)
+    def wvupdate_basednform(self, request, widget, model):
+        root = request.getRootURL()
+        if root is None:
+            root=request.prePathURL()
+        url = urlpath.URLPath.fromString(root)
+        microdom.lmx(widget.node).form(
+            action=str(url.sibling('process')),
+            model="form")
+
+    def wmfactory_form(self, request):
+        return self.formSignature.method(None)
+
+    def wchild_process(self, request):
+        def process(basedn, submit=None):
             try:
-                dn = distinguishedname.DistinguishedName(stringValue=unquoted)
+                dn = distinguishedname.DistinguishedName(stringValue=basedn)
             except distinguishedname.InvalidRelativeDistinguishedName, e:
-                return AskBaseDNPage()
-	    return LdaptorWebUIGadget2(editService=self.editService,
-				       baseObject=dn,
-				       serviceLocationOverride=self.serviceLocationOverride,
-				       searchFields=self.searchFields)
+                raise formmethod.FormException, e
+            return dn
+        def callback(dn):
+            return Redirect(str(dn))
+        return form.FormProcessor(
+            self.formSignature.method(process),
+            callback=callback,
+            )
+
+    def getDynamicChild(self, path, request):
+        unquoted=uriUnquote(path)
+        try:
+            dn = distinguishedname.DistinguishedName(stringValue=unquoted)
+        except distinguishedname.InvalidRelativeDistinguishedName, e:
+            # There's no way to throw a FormException at this stage,
+            # so redirect to form submit. Ugly.
+            url = urlpath.URLPath.fromRequest(request)
+            url = url.sibling('process')
+            url.query = urllib.urlencode([('basedn', path)])
+            return Redirect(str(url))
+        return LdaptorWebUIGadget2(baseObject=dn,
+                                   serviceLocationOverride=self.serviceLocationOverride,
+                                   searchFields=self.searchFields)

@@ -2,7 +2,9 @@
 
 #debian-section: admin
 
+import os
 from distutils.core import setup, Extension
+from distutils import sysconfig
 
 if __name__=='__main__':
     setup(name="ldaptor-webui",
@@ -24,4 +26,12 @@ directory.
 	  scripts=[
 	"bin/ldaptor-webui",
 	],
+          data_files=[
+        (os.path.join(sysconfig.get_python_lib(), 'ldaptor/apps/webui'),
+         [ 'ldaptor/apps/webui/change_password.xhtml',
+           'ldaptor/apps/webui/delete-done.xhtml',
+           'ldaptor/apps/webui/delete.xhtml',
+           'ldaptor/apps/webui/search.xhtml',
+           ]),
+        ],
 	  )

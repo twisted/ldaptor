@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Address book search</title>
+  </head>
+  <body>
+    <h1>Address book search</h1>
+
+    <form action="" method="POST">
+      <p>Search filter:
+        <input type="text" name="search" view="previousSearch" />
+      </p>
+      <input type="submit"/>
+    </form>
+
+    <p>Results:</p>
+    <div model="results" view="List">
+      <ol>
+        <li pattern="listItem">
+          <dl>
+            <dt>Last name:</dt>
+            <div view="List" model="sn">
+	      <dd pattern="listItem" view="Text"/>
+	    </div>
+            <dt>First name:</dt>
+	    <div view="List" model="givenName">
+	      <dd pattern="listItem" view="Text"/>
+            </div>
+            <dt>Phone:</dt>
+            <div view="List" model="telephoneNumber">
+	      <dd pattern="listItem" view="Text"/>
+            </div>
+            <dt>Description:</dt>
+            <div view="List" model="description">
+	      <dd pattern="listItem" view="Text"/>
+            </div>
+          </dl>
+        </li>
+      </ol>
+      <p pattern="emptyList">No entries matched or no search given.</p>
+    </div>
+
+    <p>Used query: <span model="query" view="Text" /></p>
+  </body>
+</html>

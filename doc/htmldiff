@@ -1,0 +1,39 @@
+#!/usr/bin/python
+import sys, difflib
+
+a, b = sys.argv[1:]
+al = [line.rstrip() for line in file(a).readlines()]
+bl = [line.rstrip() for line in file(b).readlines()]
+
+def rem(s):
+    return '<span style="background-color: #FF5050">' + s + '</span>'
+
+def add(s):
+    return '<span style="background-color: #00FF00">' + s + '</span>'
+
+lastRemoved = None
+for line in difflib.ndiff(al, bl):
+    prefix, line = line[:2], line[2:]
+    if prefix == '? ':
+        continue
+    elif prefix == '  ':
+        print line
+    elif prefix == '- ':
+        if lastRemoved:
+            print rem(lastRemoved)
+            lastRemoved = None
+        lastRemoved=line
+    elif prefix == '+ ':
+        if lastRemoved:
+            if (lastRemoved.lstrip() == line.lstrip()
+                and line.endswith(lastRemoved)):
+                # special case added indent
+                print add(line[:-len(lastRemoved)]) + lastRemoved
+                lastRemoved = None
+                continue
+            else:
+                print rem(lastRemoved)
+                lastRemoved = None
+        print add(line)
+    else:
+        raise 'Impossible!'

@@ -104,6 +104,13 @@ def parseLess(attr, s):
 	attributeDesc=pureldap.LDAPAttributeDescription(attr),
 	assertionValue=pureldap.LDAPAssertionValue(s))
 
+def parseMaybeSubstring(attr, s):
+    if s=="*":
+        return parsePresent(attr)
+    elif "*" in s:
+        return parseSubstring(attr, s)
+    else:
+        return parseEqual(attr, s)
 
 def parseItem(s):
     i=0
@@ -117,13 +124,8 @@ def parseItem(s):
     attr=s[:i]
     s=s[i:]
 
-    if s=="=*":
-	return parsePresent(attr)
-    elif s.startswith("="):
-	if "*" in s:
-	    return parseSubstring(attr, s[1:])
-	else:
-	    return parseEqual(attr, s[1:])
+    if s.startswith("="):
+        return parseMaybeSubstring(attr, s[1:])
     elif s.startswith("~="):
 	return parseApprox(attr, s[2:])
     elif s.startswith(">="):

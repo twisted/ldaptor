@@ -1,13 +1,15 @@
 #!/usr/bin/python
 
 from ldaptor.apps import webui
-from ldaptor.apps.webui import gadget
-from ldaptor import cred
+from ldaptor.apps.webui import gadget, util
+from ldaptor import cred, usage
+from ldaptor.checkers import LDAPBindingChecker
+from ldaptor.protocols.ldap.distinguishedname import DistinguishedName
 
-from twisted.internet import main, app
-from twisted.web import server, guard
-from ldaptor import usage
+from twisted.internet import reactor
+from twisted.web import server
 from twisted.python import log
+from twisted.web.woven import simpleguard
 
 class MyOptions(usage.Options, usage.Options_service_location, usage.Options_base):
     """LDAPtor Web User Interface"""
@@ -63,22 +65,20 @@ if __name__ == '__main__':
 	sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
 	sys.exit(1)
     log.startLogging(sys.stderr, setStdout=0)
-    auth = cred.LDAPAuthorizer(
-	ldapbase=config.opts['base'],
-	serviceLocationOverride=config.opts['service-location'],
-	ldapFilterTemplate=config.opts['identity-search'],
-	ldapFilterBase=config.opts['identity-base'],
-	)
-    application = app.Application('ldaptor-webui', authorizer=auth)
-    svc = cred.LDAPService("edit", serviceParent=application, authorizer=auth)
-    svc.perspectiveClass = cred.LDAPPerspective
     gdgt = gadget.LdaptorWebUIGadget(
-	svc,
 	serviceLocationOverride=config.opts['service-location'],
 	searchFields=config.opts['search-field'],
 	)
+    checker = LDAPBindingChecker(ldapbase=DistinguishedName(stringValue=(config.opts['identity-base']
+                                                                         or config.opts['base'])),
+                                 serviceLocationOverride=config.opts['service-location'],
+                                 ldapFilterTemplate=config.opts['identity-search'])
+    gdgt = simpleguard.guardResource(
+        gdgt,
+        [checker],
+        callback=util.callback)
 
     sit = server.Site(gdgt)
-    sit.application = application
-    application.listenTCP(config.opts['http-port'], sit)
-    application.run(save=0)
+
+    reactor.listenTCP(config.opts['http-port'], sit)
+    reactor.run()

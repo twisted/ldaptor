@@ -1,8 +1,9 @@
 from twisted.web import widgets, static
+from twisted.web.woven import simpleguard
 from twisted.internet import defer
 
 from ldaptor.protocols import pureldap, pureber
-from ldaptor.protocols.ldap import ldapclient, ldaperrors, ldapsyntax
+from ldaptor.protocols.ldap import ldapclient, ldapsyntax
 from ldaptor.protocols.ldap import fetchschema
 from ldaptor import numberalloc
 from ldaptor.apps.webui.uriquote import uriQuote, uriUnquote
@@ -186,7 +187,8 @@ class AddForm(widgets.Form):
 	return r
 
     def _process2(self, changes, request, dn, kw):
-	client = request.getSession().LdaptorIdentity.getLDAPClient()
+        entry = request.getComponent(simpleguard.Authenticated).name
+        client = entry.client
 
 	if not client:
 	    return self._output_status_and_form(
@@ -211,7 +213,8 @@ class AddForm(widgets.Form):
 	    else:
 		DoAdd(client, dn, mod, defe.callback)
 
-	user = request.getSession().LdaptorPerspective.getPerspectiveName()
+        entry = request.getComponent(simpleguard.Authenticated).name
+        user = entry.dn
 	return self._output_status_and_form(
 	    request, kw,
 	    "<P>Submitting add of %s as user %s.."%(dn, user),
@@ -227,7 +230,7 @@ class AddError:
 	self.request.args['incomplete']=['true']
 	if errorMessage:
 	    errorMessage=": "+errorMessage
-	if resultCode!=None:
+	if resultCode is not None:
 	    errorMessage = str(resultCode)+errorMessage
 	self.deferred.callback(["Got error %s.\n<HR>"%errorMessage])
 
@@ -279,7 +282,8 @@ class AddPage(template.BasicPage):
 	d=defer.Deferred()
 
 	if self.allowedObjectClasses is None:
-	    client = request.getSession().LdaptorIdentity.getLDAPClient()
+            entry = request.getComponent(simpleguard.Authenticated).name
+            client = entry.client
 	    if client:
                 deferred = fetchschema.fetch(client, self.baseObject)
                 deferred.addCallback(self._getContent_have_objectClasses,
@@ -312,7 +316,8 @@ class AddPage(template.BasicPage):
 		    d.callback(ChooseObjectClass(self.allowedObjectClasses).display(request))
 		    return
 
-	    client = request.getSession().LdaptorIdentity.getLDAPClient()
+            entry = request.getComponent(simpleguard.Authenticated).name
+            client = entry.client
 	    if client:
                 deferred = fetchschema.fetch(client, self.baseObject)
                 deferred.addCallbacks(

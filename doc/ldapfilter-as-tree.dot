@@ -1,0 +1,13 @@
+digraph ldapfilter_as_tree {
+  and [label="&"];
+  objectClass [label="objectClass=person"];
+  not [label="!"];
+  or [label="|"];
+  telephoneNumber [label="telephoneNumber=*"];
+  cn_ab [label="cn=*a*b*"];
+  cn_ba [label="cn=*b*a*"];
+
+  and -> { objectClass; not; or; };
+  not -> telephoneNumber;
+  or -> { cn_ab; cn_ba; };
+};

@@ -1,75 +1,38 @@
-from twisted.web import widgets
 from twisted.internet import defer, protocol
-from twisted.python.failure import Failure
-from twisted.python import reflect
-from ldaptor.protocols.ldap import ldapclient
+from twisted.python import reflect, formmethod
+from ldaptor.protocols.ldap import ldapclient, ldapsyntax
 from ldaptor.protocols.ldap import distinguishedname, ldapconnector
 from ldaptor.protocols import pureber, pureldap
 from ldaptor import ldapfilter
 from twisted.internet import reactor
 from ldaptor.apps.webui.htmlify import htmlify_attributes
 from ldaptor.apps.webui.uriquote import uriQuote, uriUnquote
+from twisted.web.woven import page, view, form
+from twisted.web.microdom import lmx
+from ldaptor import weave
 
-import template
+class EntryLinks:
+    def __init__(self, objectName, request):
+        self.objectName = objectName
+        self.request = request
 
-class LDAPSearchEntry(ldapclient.LDAPSearch):
-
-    # I ended up separating the deferred that signifies when the
-    # search is complete and whether it failed from the deferred that
-    # generates web content. Maybe they should be combined some day.
-
-    def __init__(self,
-		 deferred,
-		 contentDeferred,
-		 client,
-		 baseObject,
-		 filter,
-		 scope,
-		 request):
-	ldapclient.LDAPSearch.__init__(self, deferred, client,
-				       baseObject=baseObject,
-				       filter=filter,
-				       sizeLimit=20,
-				       scope=scope,
-				       )
-	self.baseObject=baseObject
-	self.contentDeferred=contentDeferred
-	self.request=request
-	self.result=""
-	self.count=0
-	deferred.addCallbacks(self._ok, errback=self._fail)
-
-    def _ok(self, dummy):
-	self.contentDeferred.callback(
-	    ["<p>%d entries matched."%self.count])
-	return dummy
-
-    def _fail(self, fail):
-	self.contentDeferred.callback(["fail: %s"%fail.getErrorMessage()])
-
-    def entryLink_001_edit(self, objectName, attributes):
+    def entryLink_001_edit(self, objectName):
 	return ['<a href="%s">edit</a>\n'
 		% self.request.sibLink('edit/'+uriQuote(objectName))]
 
-    def entryLink_002_move(self, objectName, attributes):
+    def entryLink_002_move(self, objectName):
 	return ['<a href="%s">move</a>\n'
 		% self.request.sibLink('move/'+uriQuote(objectName))]
 
-    def entryLink_003_delete(self, objectName, attributes):
+    def entryLink_003_delete(self, objectName):
 	return ['<a href="%s">delete</a>\n'
 		% self.request.sibLink('delete/'+uriQuote(objectName))]
 
-    def entryLink_004_change_password(self, objectName, attributes):
+    def entryLink_004_change_password(self, objectName):
 	return ['<a href="%s">change password</a>\n'
 		% self.request.sibLink('change_password/'+uriQuote(objectName))]
 
-    def _upLink(self, request, name):
-	if request.postpath:
-	    return (len(request.postpath)*"../") + "../" + name
-	else:
-	    return "../" + name
-
-    def handle_entry(self, objectName, attributes):
+    def __str__(self):
 	l=[]
 
 	entryLinks = {}
@@ -79,179 +42,44 @@ class LDAPSearchEntry(ldapclient.LDAPSearch):
 	names.sort()
 	for name in names:
 	    method = getattr(self, 'entryLink_'+name)
-	    l.extend(method(objectName, attributes))
+	    l.extend(method(self.objectName))
 
 	entryLinks=''
 	if l:
 	    entryLinks='[' + '|'.join(l) + ']'
+        return entryLinks
 
-	r=[]
-	dn=distinguishedname.DistinguishedName(stringValue=objectName)
-	while dn!=self.baseObject \
-	      and dn!=distinguishedname.DistinguishedName(stringValue=''):
-	    firstPart=dn.split()[0]
+def _upLink(request, name):
+    if request.postpath:
+        return (len(request.postpath)*"../") + "../" + name
+    else:
+        return "../" + name
 
-	    me=self.request.path.split('/', 3)[2]
-	    r.append('<a href="../%s">%s</a>'
-		     % (self._upLink(self.request,
-				     '/'.join([uriQuote(str(dn)), me]
-					      + self.request.postpath)),
-			str(firstPart)))
-	    dn=dn.up()
+def prettyLinkedDN(dn, baseObject, request):
+    r=[]
+    while (dn!=baseObject
+           and dn!=distinguishedname.DistinguishedName(stringValue='')):
+        firstPart=dn.split()[0]
 
-	r.append('%s\n' % str(dn))
+        me=request.path.split('/', 3)[2]
+        r.append('<a href="../%s">%s</a>'
+                 % (_upLink(request,
+                            '/'.join([uriQuote(str(dn)), me]
+                                     + request.postpath)),
+                    str(firstPart)))
+        dn=dn.up()
 
-	result = (
-	    '<p>'
-	    + ','.join(r)
-	    + entryLinks
-	    + htmlify_attributes(attributes)
-	    )
+    r.append('%s\n' % str(dn))
+    return ','.join(r)
 
-	d=defer.Deferred()
-	self.contentDeferred.callback([result, d])
-	self.contentDeferred=d
-	self.count=self.count+1
+class Searcher:
+    def __init__(self, **config):
+        self.config = config
 
-class DoSearch(ldapclient.LDAPClient):
-    factory = None
+    def search(self, submit, searchfilter, scope, **kw):
+        if not submit:
+            return {}
 
-    def __init__(self):
-	ldapclient.LDAPClient.__init__(self)
-
-    def connectionMade(self):
-	d=self.bind()
-	d.addCallbacks(self._handle_bind_success,
-		       self._handle_bind_fail)
-
-    def _handle_bind_fail(self, fail):
-	self.unbind()
-	self.factory.deferred.errback(fail)
-	raise fail
-
-    def _handle_bind_success(self, x):
-	matchedDN, serverSaslCreds = x
-	self.factory.searchClass(self.factory.deferred,
-				 self.factory.contentDeferred,
-				 self,
-				 baseObject=self.factory.baseObject,
-				 filter=self.factory.ldapFilter,
-				 scope=self.factory.scope,
-				 request=self.factory.request)
-	self.factory.deferred.addCallbacks(self._unbind, lambda x:x)
-
-    def _unbind(self, dummy):
-	self.unbind()
-	return None # if we return self or x here, self is never deleted
-
-class DoSearchFactory(protocol.ClientFactory):
-    protocol=DoSearch
-    searchClass=LDAPSearchEntry
-
-    def __init__(self, deferred, contentDeferred, baseObject,
-		 ldapFilter, scope, request):
-	self.deferred=deferred
-	self.contentDeferred=contentDeferred
-	self.baseObject=baseObject
-	self.ldapFilter=ldapFilter
-	self.scope=scope
-	self.request=request
-
-    def clientConnectionFailed(self, connector, reason):
-	self.deferred.errback(reason)
-
-    def clientConnectionLost(self, connector, reason):
-	if not self.deferred.called:
-	    self.deferred.errback(reason)
-
-class SearchForm(widgets.Form):
-    searchFactory = DoSearchFactory
-    formFields = [
-	('string', 'Advanced', 'ldapfilter', ''),
-	('radio', 'Search depth', 'scope',
-	 (('wholeSubtree', 'whole subtree', 1),
-	  ('singleLevel', 'single level', 0),
-	  ('baseObject', 'baseobject', 0),
-	  ),
-	 ),
-	]
-    submitNames = ['Search']
-
-    def __init__(self, baseObject, serviceLocationOverride,
-		 searchFields=(),
-		 ):
-	self.baseObject = baseObject
-	self.serviceLocationOverride = serviceLocationOverride
-	self.searchFields = searchFields
-
-    def getFormFields(self, request, kws=None):
-	#TODO widgets.Form.getFormFields would be nicer
-	# if it tried to get values from request; but that
-	# parsing happens elsewhere, need to share code
-	# and preferably results too.
-	if kws==None:
-	    kws={}
-	r=[]
-
-	for (displayName, filter) in self.searchFields:
-	    inputType='string'
-	    inputName='search_'+displayName
-	    if kws.has_key(inputName):
-		inputValue=kws[inputName]
-	    else:
-		inputValue=''
-	    r.append((inputType, displayName, inputName, inputValue))
-
-	for (inputType, displayName, inputName, inputValue) in self.formFields:
-	    if inputType=='string':
-		if kws.has_key(inputName):
-		    inputValue=kws[inputName]
-	    elif inputType=='radio':
-		if kws.has_key(inputName):
-		    checkedName=kws[inputName][0]
-		    newInputValue=[]
-		    for value, name, checked in inputValue:
-			checked = (checkedName == value)
-			newInputValue.append((value, name, checked))
-		    inputValue = newInputValue
-	    r.append((inputType, displayName, inputName, inputValue))
-
-	return r
-
-    def format(self, form, write, request):
-	if self.shouldProcess(request):
-	    widgets.Form.format(self, form, write, request)
-	else:
-	    widgets.Form.format(self, form, write, request)
-
-	    deferred=defer.Deferred()
-	    contentDeferred=defer.Deferred()
-
-	    s = self.searchFactory(deferred,
-				   contentDeferred,
-				   baseObject=self.baseObject,
-				   ldapFilter=pureldap.LDAPFilterMatchAll,
-				   scope=pureldap.LDAP_SCOPE_baseObject,
-				   request=request)
-
-	    contentDeferred.addErrback(defer.logError)
-	    deferred.addErrback(lambda reason, contentDeferred=contentDeferred:
-				contentDeferred.callback(["fail: %s"
-							  % reason.getErrorMessage()]))
-
-	    c=ldapconnector.LDAPConnector(
-		reactor, self.baseObject, s, overrides=self.serviceLocationOverride)
-	    c.connect()
-
-	    # Eww. But it'll do, t.w.widgets is deprecated anyway.
-	    write(contentDeferred)
-
-    def process(self, write, request, submit, **kw):
-	from cStringIO import StringIO
-	io=StringIO()
-	self.format(self.getFormFields(request, kw), io.write, request)
-
-	scope=pureldap.LDAP_SCOPE_wholeSubtree
 	filt=[]
 	for k,v in kw.items():
 	    if k[:len("search_")]=="search_":
@@ -261,70 +89,60 @@ class SearchForm(widgets.Form):
 		    continue
 
 		filter = None
-		for (displayName, searchFilter) in self.searchFields:
+		for (displayName, searchFilter) in self.config['searchFields']:
 		    if k == displayName:
 			filter = searchFilter
 		# TODO handle not filter right (old form open in browser etc)
 		assert filter
 		# TODO escape ) in v
 		filt.append(ldapfilter.parseFilter(filter % {'input': v}))
-	    elif k=='ldapfilter' and v:
-		filt.append(ldapfilter.parseFilter(v))
-	    elif k=='scope' and len(v)==1:
-		scope = getattr(pureldap, 'LDAP_SCOPE_'+v[0], scope)
+        if searchfilter:
+            filt.append(ldapfilter.parseFilter(searchfilter))
+
 	if filt:
 	    if len(filt)==1:
-		filt=filt[0]
+		query=filt[0]
 	    else:
-		filt=pureldap.LDAPFilter_and(filt)
+		query=pureldap.LDAPFilter_and(filt)
 	else:
-	    filt=pureldap.LDAPFilterMatchAll
-	deferred=defer.Deferred()
-	contentDeferred=defer.Deferred()
+	    query=pureldap.LDAPFilterMatchAll
 
-	s = self.searchFactory(deferred,
-			       contentDeferred,
-			       baseObject=self.baseObject,
-			       ldapFilter=filt,
-			       scope=scope,
-			       request=request)
+        c=ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
+        d=c.connectAnonymously(self.config['base'], self.config['serviceLocationOverrides'])
 
-	contentDeferred.addErrback(defer.logError)
-	deferred.addErrback(lambda reason, contentDeferred=contentDeferred:
-			    contentDeferred.callback(["fail: %s"
-						      % reason.getErrorMessage()]))
+        def _search(proto, base, query):
+            baseEntry = ldapsyntax.LDAPEntry(client=proto, dn=base)
+            d=baseEntry.search(filterObject=query,
+                               scope=scope,
+                               sizeLimit=20,
+                               sizeLimitIsNonFatal=True)
+            return d
 
-	c=ldapconnector.LDAPConnector(reactor, self.baseObject, s,
-				      overrides=self.serviceLocationOverride)
-	c.connect()
+        d.addCallback(_search, self.config['base'], query)
+        d.addCallback(lambda results: {'query': query.asText(), 'results': results})
+        return d
 
-	filtText=filt.asText()
-	return [io.getvalue(),
-		contentDeferred,
-		'<P>Used filter %s' % filtText,
-		self._searchTrailer(filtText),
-		]
-
-    def _searchTrailer(self, filtText):
-	return '<P><a href="mass_change_password/%s">Mass change passwords</a>\n'%uriQuote(filtText)
-
-class SearchPage(template.BasicPage):
-    title = "Ldaptor Search Page"
+class SearchPage(page.Page):
+    templateFile = 'search.xhtml'
     isLeaf = 1
 
-    def __init__(self, baseObject, serviceLocationOverride,
-		 searchFields=(),
-		 ):
-	template.BasicPage.__init__(self)
+    def wmfactory_title(self, request):
+        return "Ldaptor Search Page"
+
+    def __init__(self, formModel, baseObject, serviceLocationOverride, formSignature):
+	page.Page.__init__(self)
+        self.formModel = formModel
 	self.baseObject = baseObject
 	self.serviceLocationOverride = serviceLocationOverride
-	self.searchFields = searchFields
+        self.formSignature = formSignature
 
-    def _header(self, request):
-	l=[]
-	l.append('<a href="%s">add new entry</a>'%request.sibLink("add"))
+    def wmfactory_header(self, request):
+	return [
+            '<a href="%s">add new entry</a>'%request.sibLink("add"),
+            ]
 
-	return '[' + '|'.join(l) + ']'
+    def wmfactory_form(self, request):
+        return self.formModel
 
     def _navilink(self, request):
 	dn=self.baseObject
@@ -337,10 +155,116 @@ class SearchPage(template.BasicPage):
 
 	return ','.join(r)
 
-    def getContent(self, request):
-	return [self._navilink(request),
-		'<p>',
-		self._header(request)] \
-		+ SearchForm(baseObject=self.baseObject,
-			     serviceLocationOverride=self.serviceLocationOverride,
-			     searchFields=self.searchFields).display(request)
+    def wmfactory_base(self, request):
+        c=ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
+        d=c.connectAnonymously(self.baseObject, self.serviceLocationOverride)
+
+        def _search(proto, base):
+            baseEntry = ldapsyntax.LDAPEntry(client=proto,
+                                             dn=base)
+            d=baseEntry.search(scope=pureldap.LDAP_SCOPE_baseObject,
+                               sizeLimit=1)
+            return d
+        d.addCallback(_search, self.baseObject)
+
+        def _first(results):
+            assert len(results)==1
+            return results[0]
+        d.addCallback(_first)
+
+        return d
+
+    def wvupdate_navilink(self, request, widget, model):
+        node = lmx(widget.node)
+        node.text(self._navilink(request), raw=1)
+
+    def wvupdate_if(self, request, widget, model):
+        if not model:
+            while 1:
+                c=widget.node.firstChild()
+                if c is None:
+                    break
+                widget.node.removeChild(c)
+
+    def wvupdate_ifNot(self, request, widget, model):
+        return self.wvupdate_if(request, widget, not model)
+
+    def wvupdate_searchform(self, request, widget, model):
+        lmx(widget.node).form(model="formsignature")
+
+    def wmfactory_formsignature(self, request):
+        return self.formSignature.method(None)
+
+    def wvupdate_linkedDN(self, request, widget, model):
+        node = lmx(widget.node)
+        e = prettyLinkedDN(model, self.baseObject, request)
+        node.text(e, raw=1)
+
+    def wvupdate_entryLinks(self, request, widget, model):
+        node = lmx(widget.node)
+        e = str(EntryLinks(model, request))
+        node.text(e, raw=1)
+
+    def wvupdate_listLen(self, request, widget, model):
+        node = lmx(widget.node)
+        if model is None:
+            length = 0
+        else:
+            length = len(model)
+        node.text('%d' % length)
+
+    def wvfactory_ldapEntry(self, request, node, model):
+        return weave.LDAPEntryWidget(model)
+
+    def wvfactory_dictWidget(self, request, node, model):
+        return weave.DictWidget(model)
+
+    def wvfactory_separatedList(self, request, node, model):
+        return weave.SeparatedList(model)
+
+    def wmfactory_mass_change_password(self, request):
+        form = self.getSubmodel(request, 'form')
+        query = form.getSubmodel(request, 'query')
+        filtText = query.original
+        url = request.sibLink("mass_change_password/%s" % uriQuote(filtText))
+        return url
+
+# This has to be named Choice or
+# twisted.web.woven.form.FormFillerWidget.createInput tries to access
+# something other than self.input_choice
+class Choice(formmethod.Choice):
+    def coerce(self, inIdent):
+        try:
+            r=formmethod.Choice.coerce(self, inIdent)
+        except formmethod.InputError, e:
+            if str(e) != 'Invalid Choice: ': #TODO ugly
+                raise
+            r=formmethod.Choice.coerce(self, self.default[0])
+        else:
+            return r
+
+def getSearchPage(baseObject,
+                  serviceLocationOverride,
+                  searchFields):
+    sig = []
+    for field, filter in searchFields:
+        sig.append(formmethod.String(name='search_'+field, shortDesc=field))
+    formSignature = formmethod.MethodSignature(
+        *(sig
+          + [ formmethod.String('searchfilter', allowNone=1, shortDesc="Advanced"),
+              Choice('scope',
+                       choices=[ ('wholeSubtree', pureldap.LDAP_SCOPE_wholeSubtree, 'whole subtree'),
+                                 ('singleLevel', pureldap.LDAP_SCOPE_singleLevel, 'single level'),
+                                 ('baseObject', pureldap.LDAP_SCOPE_baseObject, 'baseobject'),
+                                 ],
+                       default=['wholeSubtree'],
+                       shortDesc='Search depth'),
+              formmethod.Submit('submit', shortDesc='Search', allowNone=1),
+              ]))
+    class _P(form.FormProcessor):
+        isLeaf=1
+    return _P(formSignature.method(
+        Searcher(base=baseObject,
+                 searchFields=searchFields,
+                 serviceLocationOverrides=serviceLocationOverride).search),
+                              callback=lambda model: SearchPage(model, baseObject, serviceLocationOverride, formSignature))

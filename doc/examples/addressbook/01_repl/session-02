@@ -1,0 +1,8 @@
+>>> from ldaptor.protocols.ldap import \
+... ldapclient, ldapconnector
+>>> from twisted.internet import reactor
+>>> connector=ldapconnector.LDAPClientCreator(reactor, 
+... ldapclient.LDAPClient)
+>>> connector
+<ldaptor.protocols.ldap.ldapconnector.LDAPClientCreator 
+instance at 0x40619b6c>

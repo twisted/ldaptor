@@ -3,7 +3,7 @@ Section: admin
 Priority: optional
 Maintainer: Tommi Virtanen <tv@debian.org>
 Standards-Version: 3.5.6
-Build-Depends-Indep: python2.2-dev, python2.3-dev, debhelper (>= 4.1.68)
+Build-Depends-Indep: python2.2-dev, python2.3-dev, debhelper (>= 4.1.68), docbook-slides (>= 3.2.0), xsltproc, source-highlight, python2.3-epydoc
 
 Package: ldaptor-utils
 Section: admin
@@ -49,7 +49,7 @@ Description: Web user interface for editing LDAP directories
 Package: python-ldaptor
 Section: python
 Architecture: all
-Depends: python-twisted (>= 1.0.6), pwgen, python (>= 2.3), python (<< 2.4), python2.3-ldaptor
+Depends: python-twisted (>= 1.1.1), pwgen, python (>= 2.3), python (<< 2.4), python2.3-ldaptor
 Description: Pure-Python library for LDAP
  Ldaptor is a pure-Python library that implements
  .
@@ -70,7 +70,7 @@ Description: Pure-Python library for LDAP
 Package: python2.2-ldaptor
 Section: python
 Architecture: all
-Depends: python2.2-twisted (>= 1.0.6), pwgen, python2.2
+Depends: python2.2-twisted (>= 1.1.1), pwgen, python2.2
 Description: Pure-Python library for LDAP
  Ldaptor is a pure-Python library that implements
  .
@@ -90,7 +90,7 @@ Description: Pure-Python library for LDAP
 Package: python2.3-ldaptor
 Section: python
 Architecture: all
-Depends: python2.3-twisted (>= 1.0.6), pwgen, python2.3
+Depends: python2.3-twisted (>= 1.1.1), pwgen, python2.3
 Description: Pure-Python library for LDAP
  Ldaptor is a pure-Python library that implements
  .
@@ -106,4 +106,16 @@ Description: Pure-Python library for LDAP
  - Samba password changing logic.
  .
  This version is usable with python2.3
+
+Package: ldaptor-doc
+Section: doc
+Architecture: all
+Description: Documentation for Ldaptor
+ A collection of documentation about Ldaptor and LDAP, including
+ .
+ - An introduction to LDAP
+ .
+ - The Ldaptor library API
+ .
+ - Slides for a talk "Creating a simple LDAP application"
 

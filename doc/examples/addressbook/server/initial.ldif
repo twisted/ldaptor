@@ -1,0 +1,42 @@
+dn: dc=example,dc=com
+dc: example
+objectClass: top
+objectClass: dcObject
+objectClass: organization
+o: Example, Inc.
+
+dn: ou=People,dc=example,dc=com
+ou: People
+objectClass: top
+objectClass: organizationalUnit
+
+dn: ou=Something Else,dc=example,dc=com
+ou: Something Else
+objectClass: top
+objectClass: organizationalUnit
+
+dn: ou=Marketing, ou=People,dc=example,dc=com
+ou: Marketing
+objectClass: top
+objectClass: organizationalUnit
+
+dn: ou=Sales, ou=People,dc=example,dc=com
+ou: Sales
+objectClass: top
+objectClass: organizationalUnit
+
+dn: ou=Support, ou=People,dc=example,dc=com
+ou: Support
+objectClass: top
+objectClass: organizationalUnit
+
+dn: ou=Accounting, ou=People,dc=example,dc=com
+ou: Accounting
+objectClass: top
+objectClass: organizationalUnit
+
+dn: ou=Research & Development, ou=People,dc=example,dc=com
+ou: Research & Development
+objectClass: top
+objectClass: organizationalUnit
+

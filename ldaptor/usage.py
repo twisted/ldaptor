@@ -12,7 +12,7 @@ class Options(usage.Options):
 	    method = getattr(self, 'postOptions_'+name)
 	    method()
 
-class Options_service_location(Options):
+class Options_service_location:
     def opt_service_location(self, value):
 	"""Service location, in the form BASEDN:HOST[:PORT]"""
 
@@ -42,7 +42,7 @@ class Options_service_location(Options):
 	if not self.opts.has_key('service-location'):
 	    self.opts['service-location']={}
 
-class Options_base(Options):
+class Options_base:
     optParameters = (
 	('base', None, None,
 	 "LDAP base dn"),
@@ -53,7 +53,7 @@ class Options_base(Options):
 	if self.opts['base'] is None:
 	    raise usage.UsageError, "%s must be given" % 'base'
 
-class Options_scope(Options):
+class Options_scope:
     optParameters = (
 	('scope', None, 'sub',
 	 "LDAP search scope (one of base, one, sub)"),
@@ -74,7 +74,7 @@ class Options_scope(Options):
 	    raise usage.UsageError, "bad scope: %s" % scope
 	self.opts['scope'] = scope
 
-class Options_bind(Options):
+class Options_bind:
     optParameters = (
 	('binddn', None, None,
 	 "use Distinguished Name to bind to the directory"),

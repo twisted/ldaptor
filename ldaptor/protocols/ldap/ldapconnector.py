@@ -50,6 +50,11 @@ class LDAPConnector(utils.SRVConnector):
 	    if self.overriddenPort is not None:
 		port = self.overriddenPort
 
+        try:
+            port = int(port)
+        except ValueError:
+            pass
+
 	assert host is not None
 	if port is None:
 	    port = 389
@@ -62,4 +67,15 @@ class LDAPClientCreator(protocol.ClientCreator):
         f = protocol._InstanceFactory(self.reactor, self.protocolClass(*self.args, **self.kwargs), d)
         c = LDAPConnector(self.reactor, dn, f, overrides=overrides)
         c.connect()
+        return d
+
+    def connectAnonymously(self, dn, overrides=None):
+        """Connect to remote host and bind anonymously, return Deferred of resulting protocol instance."""
+        d = self.connect(dn, overrides=overrides)
+
+        def _bind(proto):
+            d=proto.bind()
+            d.addCallback(lambda _: proto)
+            return d
+        d.addCallback(_bind)
         return d

@@ -14,35 +14,74 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-from ldaptor.bidirdict import BidirDict
-
 def get(resultCode, errorMessage):
     """Get an instance of the correct exception for this resultCode."""
-    #TODO
-    return LDAPUnknownError(resultCode, errorMessage)
 
-class LDAPException(Exception):
+    klass = reverse.get(resultCode)
+    if klass is not None:
+        return klass(errorMessage)
+    else:
+        return LDAPUnknownError(resultCode, errorMessage)
+
+class LDAPResult:
     resultCode=None
+    name=None
 
-class LDAPOperationsError(LDAPException):
-    resultCode=1
+class Success(LDAPResult):
+    resultCode=0
+    name='success'
 
-class LDAPProtocolError(LDAPException):
-    resultCode=2
+    def __init__(self, msg):
+        pass
+
+class LDAPException(Exception, LDAPResult):
+    def __init__(self, message=None):
+        Exception.__init__(self)
+        self.message=message
+        
+    def __str__(self):
+	message=self.message
+	if message:
+	    return '%s: %s' % (self.name, message)
+        elif self.name:
+	    return self.name
+        else:
+            return 'Unknown LDAP error %r' % self
+
 
 class LDAPUnknownError(LDAPException):
     resultCode=None
 
+    def __init__(self, resultCode, message=None):
+        assert resultCode not in reverse
+        self.code=resultCode
+        LDAPException.__init__(self, message)
+
     def __str__(self):
-	code=self.args[0]
-	codeName=errors.reverse[code] or 'unknownError(%d)'%code
-	message=self.args[1]
-	if message:
-	    return '%s: %s' % (codeName, message)
+	codeName='unknownError(%d)'%self.code
+	if self.message:
+	    return '%s: %s' % (codeName, self.message)
 	else:
 	    return codeName
 
-errors = BidirDict(
+import new
+def init(**errors):
+    global reverse
+    reverse = {}
+    for name, value in errors.items():
+        if value == errors['success']:
+            klass = Success
+        else:
+            classname = 'LDAP'+name[0].upper()+name[1:]
+            klass = new.classobj(classname,
+                                 (LDAPException,),
+                                 { 'resultCode': value,
+                                   'name': name,
+                                   })
+            globals()[classname] = klass
+        reverse[value] = klass
+
+init(
     success=0,
     operationsError=1,
     protocolError=2,
@@ -92,4 +131,4 @@ errors = BidirDict(
     # 81-90 reserved for APIs
     )
 
-other=errors['other']
+other=LDAPOther.resultCode

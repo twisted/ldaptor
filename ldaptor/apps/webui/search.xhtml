@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+     PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <title model="title" />
+  </head>
+  <body>
+    <h1 model="title" />
+    <p><div view="navilink" /></p>
+    <p model="header" view="separatedList"><span
+ pattern="listHeader">[</span><span pattern="listItem" view="RawText">foo</span><span
+ pattern="listSeparator">|</span><span
+ pattern="listFooter">]</span></p>
+
+    <div view="searchform" />
+
+    <div view="if" model="form">
+      <ul model="form/results" view="List">
+	<li pattern="listItem" view="Widget">
+          <span model="./dn" view="linkedDN" />
+          <span model="./dn" view="entryLinks" />
+
+      <ul model="./dict" view="KeyedList">
+        <li pattern="emptyList">None</li>
+        <li pattern="keyedListItem">
+          <span model="key" view="Text"/>:
+	  <span model="items" view="List">
+            <span pattern="singleListItem" view="Text" />
+            <ul pattern="listItem">
+              <li view="Text" />
+            </ul>
+          </span>
+        </li>
+      </ul>
+    </li>
+  </ul>
+
+  <p><span model="form/results" view="listLen" /> entries matched.</p>
+  <p>Used filter <span model="form/query" view="Text" /></p>
+  <p><a view="Link" model="mass_change_password">Mass change passwords</a></p>
+</div>
+
+<div view="ifNot" model="form">
+  <div model="base" view="Widget">
+    <span model="./dn" view="linkedDN" />
+    <span model="./dn" view="entryLinks" />
+    <ul model="./dict" view="KeyedList">
+      <li pattern="emptyList">None</li>
+      <li pattern="keyedListItem">
+        <span model="key" view="Text"/>:
+        <ul model="items" view="List">
+          <li pattern="listItem" view="Text" />
+        </ul>
+      </li>
+    </ul>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,88 +1,28 @@
-from twisted.web import widgets
-from twisted.internet import defer
+from twisted.web.woven import page, simpleguard, form
+from twisted.web.microdom import lmx
+from twisted.python import formmethod
+from twisted.web.util import Redirect
+from ldaptor.protocols.ldap import ldapsyntax
+from ldaptor import weave
+from ldaptor.apps.webui.uriquote import uriUnquote
 
-from ldaptor.protocols import pureldap
-from ldaptor.protocols.ldap import ldapclient, ldaperrors, ldapsyntax
-from ldaptor.apps.webui.uriquote import uriQuote, uriUnquote
+class NeedDNError(Exception):
+    def __str__(self):
+        return 'No DN specified. You need to use the search page.'
 
-from cStringIO import StringIO
-
-from ldaptor.apps.webui import template
-
-class DeleteForm(widgets.Form):
-    formFields = [
-	# getFormFields barfs if there's nothing here
-	['hidden', '', 'dummy', '', ''],
-    ]
-
-    def __init__(self, dn, attributes):
-	self.dn=dn
-	self.attributes=attributes
-
-    def format(self, form, write, request):
-	write('<P>You are about to delete this entry:\n')
-	write('<UL>\n')
-	for attr, values in self.attributes.items():
-	    write('  <LI>%s:\n' % attr)
-	    if len(values)==1:
-                for v in values:
-                    write('    %s\n' % v)
-	    else:
-		write('  <UL>\n')
-		for val in values:
-		    write('    <LI>%s</LI>\n' % val)
-		write('  </UL>\n')
-	    write('  </LI>\n')
-
-	widgets.Form.format(self, form, write, request)
-
-    def process(self, write, request, submit, **kw):
-	user = request.getSession().LdaptorPerspective.getPerspectiveName()
-	client = request.getSession().LdaptorIdentity.getLDAPClient()
-
-	if not client:
-	    return ["<P>Del failed: connection lost."]
-
-	o=ldapsyntax.LDAPEntry(client=client,
-                               dn=self.dn)
-        d=o.delete()
-        d.addCallbacks(
-            callback=lambda dummy: "<p>Success.",
-            errback=lambda fail: "<p><strong>Failed</strong>: %s."
-            % fail.getErrorMessage())
-
-	return ["<P>Submitting delete as user %s.."%user, d]
-
-class CreateDeleteForm:
-    def __init__(self, defe, dn, request):
-	self.deferred=defe
-	self.dn=dn
-	self.request=request
-
-    def __call__(self, ldapobj):
-	self.deferred.callback(
-	    DeleteForm(self.dn, ldapobj).display(self.request))
-
-class CreateError:
-    def __init__(self, defe, dn, request):
-	self.deferred=defe
-	self.dn=dn
-	self.request=request
-
-    def __call__(self, fail):
-	self.request.args['incomplete']=['true']
-	self.deferred.callback(["Trouble while fetching %s: %s.\n<HR>"%(repr(self.dn), fail.getErrorMessage())])
-
-class NeedDNError(widgets.Widget):
-    def display(self, request):
-	return ['No DN specified. You need to use the <a href="%s">search page</a>.'%request.sibLink("search")]
-
-class DeletePage(template.BasicPage):
-    title = "Ldaptor Delete Page"
+class ConfirmDelete(page.Page):
     isLeaf = 1
+    templateFile = 'delete.xhtml'
 
-    def _header(self, request):
-	l=[]
+    def __init__(self, formSignature):
+        page.Page.__init__(self)
+        self.formSignature = formSignature
+
+    def wmfactory_title(self, request):
+        return "Ldaptor Delete Page"
+
+    def wmfactory_header(self, request):
+        l=[]
 	l.append('<a href="%s">Search</a>'%request.sibLink("search"))
 	l.append('<a href="%s">add new entry</a>'%request.sibLink("add"))
 
@@ -92,24 +32,79 @@ class DeletePage(template.BasicPage):
 	    l.append('<a href="%s">change password</a>' \
 		     % request.sibLink("change_password/" + '/'.join(request.postpath)))
 
-	return '[' + '|'.join(l) + ']'
+	return l
 
-    def getContent(self, request):
+    def wvupdate_form(self, request, widget, model):
+        lmx(widget.node).form(model="formsignature")
+
+    def wmfactory_formsignature(self, request):
+        return self.formSignature.method(None)
+
+    def wmfactory_entry(self, request):
 	if not request.postpath or request.postpath==['']:
-	    return NeedDNError()
-	else:
-	    dn=uriUnquote(request.postpath[0])
+	    raise NeedDNError
 
-	    d=defer.Deferred()
+        dn=uriUnquote(request.postpath[0])
 
-	    client = request.getSession().LdaptorIdentity.getLDAPClient()
-	    if client:
-                o = ldapsyntax.LDAPEntry(client=client, dn=dn)
-                deferred = o.fetch()
-		deferred.addCallbacks(
-		    CreateDeleteForm(d, dn, request),
-		    CreateError(d, dn, request))
-	    else:
-		CreateError(d, dn, request)(errorMessage="connection lost")
+        user = request.getComponent(simpleguard.Authenticated).name
+        assert user
 
-	    return [self._header(request), d]
+        entry = ldapsyntax.LDAPEntry(client=user.client, dn=dn)
+        d = entry.fetch()
+        return d
+
+    def wvfactory_separatedList(self, request, node, model):
+        return weave.SeparatedList(model)
+
+class Remove(page.Page):
+    isLeaf = 1
+    templateFile = 'delete-done.xhtml'
+
+    def wmfactory_header(self, request):
+        l=[]
+	l.append('<a href="%s">Search</a>'%request.sibLink("search"))
+	l.append('<a href="%s">add new entry</a>'%request.sibLink("add"))
+	return l
+
+    def wmfactory_delete(self, request):
+        entry = request.getComponent(simpleguard.Authenticated).name
+        user = entry.dn
+        client = entry.client
+
+	if not request.postpath or request.postpath==['']:
+	    raise NeedDNError
+
+        dn=uriUnquote(request.postpath[0])
+
+	e=ldapsyntax.LDAPEntry(client=client,
+                               dn=dn)
+        d=e.delete()
+        d.addCallbacks(
+            callback=lambda dummy: "Success.",
+            errback=lambda fail: "Failed: %s."
+            % fail.getErrorMessage())
+
+        return d
+
+    def wvfactory_separatedList(self, request, node, model):
+        return weave.SeparatedList(model)
+
+def doDelete(submit):
+    if submit:
+        return True
+    else:
+        return False
+
+def getResource():
+    formSignature = formmethod.MethodSignature(
+        formmethod.Submit('submit', shortDesc='Delete', allowNone=1),
+        )
+    class _P(form.FormProcessor):
+        isLeaf=1
+    def branch(doRemove):
+        if doRemove:
+            return Remove()
+        else:
+            return ConfirmDelete(formSignature)
+    return _P(formSignature.method(doDelete),
+              callback=branch)

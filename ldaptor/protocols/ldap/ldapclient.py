@@ -25,7 +25,8 @@ from twisted.python.failure import Failure
 from twisted.internet import protocol, defer
 
 class LDAPClientConnectionLostException(ldaperrors.LDAPException):
-    pass
+    def __str__(self):
+        return 'Connection lost'
 
 class LDAPClient(protocol.Protocol):
     """An LDAP client"""
@@ -82,7 +83,7 @@ class LDAPClient(protocol.Protocol):
 	    handler = self.onwire[msg.id]
 
 	    # Return true to mark request as fully handled
-	    if handler==None or handler(msg.value):
+	    if handler is None or handler(msg.value):
 		del self.onwire[msg.id]
 
 
@@ -100,7 +101,7 @@ class LDAPClient(protocol.Protocol):
 
     def _handle_bind_msg(self, resp):
 	assert isinstance(resp, pureldap.LDAPBindResponse)
-	assert resp.referral==None #TODO
+	assert resp.referral is None #TODO
 	if resp.resultCode==0:
 	    return (resp.matchedDN, resp.serverSaslCreds)
 	else:
@@ -146,7 +147,7 @@ class LDAPSearch(LDAPOperation):
 
     def handle_msg(self, msg):
 	if isinstance(msg, pureldap.LDAPSearchResultDone):
-	    assert msg.referral==None #TODO
+	    assert msg.referral is None #TODO
 	    if msg.resultCode==0: #TODO ldap.errors.success
 		assert msg.matchedDN==''
 		self.deferred.callback(self)
@@ -186,7 +187,7 @@ class LDAPAddEntry(LDAPOperation):
 
     def handle_msg(self, msg):
 	assert isinstance(msg, pureldap.LDAPAddResponse)
-	assert msg.referral==None #TODO
+	assert msg.referral is None #TODO
 	if msg.resultCode==0: #TODO ldap.errors.success
 	    assert msg.matchedDN==''
 	    self.handle_success()

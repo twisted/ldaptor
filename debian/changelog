@@ -1,3 +1,99 @@
+ldaptor (0.0.21) unstable; urgency=low
+
+  * Documentation changes:
+    - Added document "Introduction to LDAP".
+    - Added example web-based application, a simple addressbook
+      search, and slides demonstrating how one might write one
+      incrementally. These might not make much sense without
+      the talk (or even with it), my apologies for that.
+    - Upgrade to docbook-slides 3.2.0.
+    - Allow xsltproc to use net in case the XML catalog isn't well
+      setup -- will re-enable --nonet when docbook-slides registers
+      with xml-core.
+
+  * API changes:
+    - Add a new utility function
+      ldapconnector.LDAPClientCreator.connectAnonymously(), which does
+      an anonymous bind on behalf of the caller.
+    - Allow ldaptor.apps.webui.htmlify.htmlify_attributes() to work on
+      sets and sequences alike.
+    - Search supports new sizeLimitIsNonFatal flag, that makes
+      sizeLimitExceeded errors from server just truncate the result
+      list instead of aborting the search.
+    - Implement LDAPExtendedResponse.
+
+  * Refactorings to adapt to Ldaptor APIs:
+
+  * Refactorings to adapt to Twisted APIs:
+    - Adapt to Twisted changing Options superclass from UserDict to
+      dict: Options mixins can no longer inherit Options, as otherwise
+      python2.3 throws a TypeError: Cannot create a consistent method
+      resolution order (MRO) for bases. Closes: #232255, 223632,
+      232022.
+    - Add twisted newcred support.
+    - Partial woven support (twisted.web.widgets is deprecated, but
+      now woven is deprecated too, in favor of newov! I can't keep
+      up!)
+      - Woven integration of the basic LDAP objects.
+      - ldaptor-webui search, delete and change_password
+    - Ldaptor-webui refactoring
+      - newcred and simpleguard
+      - get rid of twisted.internet.app
+
+  * Internal refactorings:
+    - Refactor LDAP filter parsing to have all the things looking like
+      (key=...) in one function.
+    - Refactor ldaperrors to actually use the exception classes.
+    - Modularize the experimental LDAP server implementation.
+
+  * Bugfixes:
+    - Fix webui moves: typo in variable name, handle
+      distinguishednames as objects and not strings.
+    - Make sure the port number is an integer before using it in
+      LDAPConnector.
+    - Add proper stringification to LDAPClientConnectionLostException;
+      used to cause tuple index errors in LDAPException.__str__().
+    - Make URLs like http://localhost:38980/dc=example,dc=com (no
+      trailing slash) work in ldaptor-webui.
+    - In ldaptor-webui search, do not show the default twisted form
+      error screen when there was no form submitted. Ugly workaround
+      that provides default values instead of '', I can't seem to find
+      a nicer way.
+
+  * Cleanups:
+    - Remove unused methods and imports.
+    - Remove BidirDict, it's not used anymore.
+    - Remove debug prints.
+    - Move from equality comparison to identity comparison when
+      comparing against None. Cleaner and should even be faster.
+    - Cleanup doc/Makefile
+      - split the massive "do all" target into smaller targets
+      - protect targets against missing parent directories of target
+        file
+      - move the HTML diff files and such out of doc/examples/
+    - Cleanup LDAPException stringification, protect against
+      exceptions with neither arguments nor class attribute name.
+    - Cleanup indentation.
+    - Pychecker cleanups.
+
+  * Packaging:
+    - Add build-depends needed for generating the documentation.
+    - Move examples/ to doc/examples/
+    - Make sure the documents can be built automatically.
+    - Build-Depend on things needed for generating the documentation.
+    - Add a new binary package, ldaptor-doc, that will contain the
+      documentation.
+    - Depend on a new enough version of Twisted.
+
+  * Administrivia:
+    - Edit TODO notes.
+    - Ignore documentation generated files.
+    - Add unit test coverage checking.
+    - When rsyncing documentation to pyramid.twistedmatrix.com, rsync
+      the full directories of slides, not just the index.html.
+
+ -- Tommi Virtanen <tv@debian.org>  Sun, 29 Feb 2004 00:23:15 +0200
+
 ldaptor (0.0.20) unstable; urgency=low
 
   * Applications changes:

@@ -11,7 +11,8 @@ binary: binary-indep binary-arch
 binary-indep: binary-indep-dummy \
 	$(foreach p,$(PYTHON_VERSIONS),binary-indep-python-$(p)) \
 	binary-indep-ldaptor-webui \
-	binary-indep-ldaptor-utils
+	binary-indep-ldaptor-utils \
+	binary-indep-ldaptor-doc
 binary-arch:
 
 clean:
@@ -71,8 +72,6 @@ install-python-%:
 	gzip -9f \
 		'$(call docdir,python$*-ldaptor)/README' \
 		'$(call docdir,python$*-ldaptor)/changelog'
-	find examples -name SCCS -prune -o -type f -print0 -exec \
-		install -D -m0644 '{}' '$(call docdir,python$*-ldaptor)/{}' \;
 
 
 install-ldaptor-%:
@@ -98,6 +97,24 @@ install-ldaptor-%:
 		'$(call docdir,ldaptor-$*)/README' \
 		'$(call docdir,ldaptor-$*)/changelog'
 
+install-ldaptor-doc:
+	test -e debian/control
+	test root = "`whoami`" || (echo need root priviledges; exit 1)
+	rm -rf debian/substvars
+	install -d -m0755 'debian/install/ldaptor-doc'
+	make -C doc install DESTDIR='$(PWD)/$(call docdir,ldaptor-doc)'
+	install --mode=0644 \
+		README \
+		TODO \
+		debian/copyright \
+		'$(call docdir,ldaptor-doc)'
+	install --mode=0644 \
+		debian/changelog \
+		'$(call docdir,ldaptor-doc)/changelog'
+	gzip -9f \
+		'$(call docdir,ldaptor-doc)/README' \
+		'$(call docdir,ldaptor-doc)/changelog'
+
 binary-indep-python-%: install-python-%
 	test -e debian/control
 	test root = "`whoami`" || (echo need root priviledges; exit 1)
@@ -110,7 +127,8 @@ binary-indep-python-%: install-python-%
 
 binary-indep-ldaptor-%: \
 	install-ldaptor-webui \
-	install-ldaptor-utils
+	install-ldaptor-utils \
+	install-ldaptor-doc
 	test -e debian/control
 	test root = "`whoami`" || (echo need root priviledges; exit 1)
 

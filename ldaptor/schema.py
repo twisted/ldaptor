@@ -164,7 +164,7 @@ class ObjectClassDescription(ASN1ParserThingie):
 	    text=text[1:]
 
 	if text.startswith("ABSTRACT "):
-	    assert self.type==None
+	    assert self.type is None
 	    self.type="ABSTRACT"
 	    text=text[len("ABSTRACT "):]
 
@@ -172,7 +172,7 @@ class ObjectClassDescription(ASN1ParserThingie):
 	    text=text[1:]
 
 	if text.startswith("STRUCTURAL "):
-	    assert self.type==None
+	    assert self.type is None
 	    self.type="STRUCTURAL"
 	    text=text[len("STRUCTURAL "):]
 
@@ -180,7 +180,7 @@ class ObjectClassDescription(ASN1ParserThingie):
 	    text=text[1:]
 
 	if text.startswith("AUXILIARY "):
-	    assert self.type==None
+	    assert self.type is None
 	    self.type="AUXILIARY"
 	    text=text[len("AUXILIARY "):]
 
@@ -233,7 +233,7 @@ class ObjectClassDescription(ASN1ParserThingie):
 	assert self.oid
 	for c in self.oid:
 	    assert c in "0123456789."
-	assert self.name==None or self.name
+	assert self.name is None or self.name
 	assert self.type in ("ABSTRACT", "STRUCTURAL", "AUXILIARY")
 
     def __repr__(self):
@@ -405,7 +405,7 @@ class AttributeTypeDescription(ASN1ParserThingie):
 	    text=text[1:]
 
 	if text.startswith("SINGLE-VALUE "):
-	    assert self.single_value==None
+	    assert self.single_value is None
 	    self.single_value=1
 	    text=text[len("SINGLE-VALUE "):]
 
@@ -413,7 +413,7 @@ class AttributeTypeDescription(ASN1ParserThingie):
 	    text=text[1:]
 
 	if text.startswith("COLLECTIVE "):
-	    assert self.collective==None
+	    assert self.collective is None
 	    self.collective=1
 	    text=text[len("COLLECTIVE "):]
 
@@ -421,7 +421,7 @@ class AttributeTypeDescription(ASN1ParserThingie):
 	    text=text[1:]
 
 	if text.startswith("NO-USER-MODIFICATION "):
-	    assert self.no_user_modification==None
+	    assert self.no_user_modification is None
 	    self.no_user_modification=1
 	    text=text[len("NO-USER-MODIFICATION "):]
 
@@ -429,7 +429,7 @@ class AttributeTypeDescription(ASN1ParserThingie):
 	    text=text[1:]
 
 	if text.startswith("USAGE "):
-	    assert self.usage==None
+	    assert self.usage is None
 	    text=text[len("USAGE "):]
 	    while text.startswith(" "):
 		text=text[1:]
@@ -442,20 +442,20 @@ class AttributeTypeDescription(ASN1ParserThingie):
 
 	assert text=="", "Text was not empty: %s"%repr(text)
 
-	if self.single_value==None:
+	if self.single_value is None:
 	    self.single_value=0
 
-	if self.collective==None:
+	if self.collective is None:
 	    self.collective=0
 
-	if self.no_user_modification==None:
+	if self.no_user_modification is None:
 	    self.no_user_modification=0
 
 	assert self.oid
 	for c in self.oid:
 	    assert c in "0123456789."
-	assert self.name==None or self.name
-	assert self.usage==None or self.usage in (
+	assert self.name is None or self.name
+	assert self.usage is None or self.usage in (
 	    "userApplications",
 	    "directoryOperation",
 	    "distributedOperation",
@@ -648,7 +648,7 @@ class MatchingRuleDescription(ASN1ParserThingie):
 
 	assert text=="", "Text was not empty: %s"%repr(text)
 
-	if self.obsolete==None:
+	if self.obsolete is None:
 	    self.obsolete=0
 	assert self.oid
 	for c in self.oid:

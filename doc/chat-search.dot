@@ -1,0 +1,37 @@
+digraph protocol_events {
+  ranksep=0.1;
+
+  subgraph start {
+    rank=same;
+
+    cStart [label="Client"];
+    sStart [label="Server"];
+  };
+
+  subgraph cluster_client {
+    style=invis;
+    node [width=0, height=0, label=""];
+    edge [weight=100, arrowhead=none];
+
+    cEnd [style=invis];
+    cStart -> c1 -> c2 -> c3 -> c4 -> c5 -> c6 -> c7;
+    c7 -> cEnd [arrowhead=normal];
+  };
+
+  subgraph cluster_server {
+    style=invis;
+
+    node [width=0, height=0, label=""];
+    edge [weight=100, arrowhead=none];
+
+    sEnd [style=invis];
+    sStart -> s1 -> s2 -> s3 -> s4 -> s5 -> s6 -> s7;
+    s7 -> sEnd [arrowhead=normal];
+  };
+
+  c1 -> s2 [label="search"];
+  s3 -> c4 [label="entry"];
+  s4 -> c5 [label="entry"];
+  s5 -> c6 [label="entry"];
+  s6 -> c7 [label="done"];
+};

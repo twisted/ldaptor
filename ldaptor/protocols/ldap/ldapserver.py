@@ -30,6 +30,8 @@ class LDAPServerConnectionLostException(ldaperrors.LDAPException):
 class LDAPServer(protocol.Protocol):
     """An LDAP server"""
 
+    boundUser = None
+
     def __init__(self):
 	self.buffer = MutableString()
 	self.connected = None
@@ -67,6 +69,33 @@ class LDAPServer(protocol.Protocol):
     def unsolicitedNotification(self, msg):
 	log.msg("Got unsolicited notification: %s" % repr(msg))
 
+    def handle_LDAPBindRequest(self, request):
+        if request.version != 3:
+            msg = pureldap.LDAPBindResponse(resultCode=ldaperrors.errors['protocolError'],
+                                            errorMessage='Version %u not supported' % request.version)
+        elif request.dn == '':
+            # anonymous bind
+            self.boundUser=None
+            msg = pureldap.LDAPBindResponse(resultCode=0)
+        else:
+            msg = pureldap.LDAPBindResponse(resultCode=ldaperrors.errors['invalidCredentials'],
+                                            errorMessage='Authentication not yet supported (TODO)')
+        return defer.succeed(msg)
+
+    def handle_LDAPUnbindRequest(self, request):
+        self.transport.loseConnection()
+
+    def handleUnknown(self, request):
+        log.msg('Unknown request: %r' % request)
+        self.queue(0,
+                   pureldap.LDAPExtendedResponse(resultCode=ldaperrors.errors['protocolError'],
+                                                 responseName='1.3.6.1.4.1.1466.20036',
+                                                 errorMessage='Unknown request.'))
+        self.transport.loseConnection()
+
+    def _cbHandle(self, response, id):
+        self.queue(id, response)
+
     def handle(self, msg):
 	assert isinstance(msg.value, pureldap.LDAPProtocolRequest)
 	log.msg('<- %s' % repr(msg))
@@ -74,27 +103,24 @@ class LDAPServer(protocol.Protocol):
 	if msg.id==0:
 	    self.unsolicitedNotification(msg.value)
 	else:
-            if isinstance(msg.value, pureldap.LDAPBindRequest):
-                self.queue(msg.id,
-                           pureldap.LDAPBindResponse(resultCode=0,
-                                                     matchedDN='TODO',
-                                                     errorMessage=''))
-            elif isinstance(msg.value, pureldap.LDAPSearchRequest):
-                self.queue(msg.id,
-                           pureldap.LDAPSearchResultDone(resultCode=0))
-            elif isinstance(msg.value, pureldap.LDAPUnbindRequest):
-                self.transport.loseConnection()
-            else:
-                log.msg('Unknown request: %r' % msg.value)
-                pass #TODO reply with error
-
-class LDAPServerFactory(protocol.ServerFactory):
-    protocol = LDAPServer
+            name = msg.value.__class__.__name__
+            handler = getattr(self, 'handle_'+name, self.handleUnknown)
+            d = handler(msg.value)
+            if d:
+                assert isinstance(d, defer.Deferred)
+                d.addCallback(self._cbHandle, msg.id)
 
 if __name__ == '__main__':
     from twisted.internet import reactor
     import sys
     log.startLogging(sys.stderr)
-    factory = LDAPServerFactory()
+
+    class TestLDAPServer(LDAPServer):
+        def handle_LDAPSearchRequest(self, request):
+            msg = pureldap.LDAPSearchResultDone(resultCode=0)
+            return defer.succeed(msg)
+    
+    factory = protocol.ServerFactory()
+    factory.protocol = TestLDAPServer
     reactor.listenTCP(10389, factory)
     reactor.run()

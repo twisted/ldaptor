@@ -1,0 +1,11 @@
+dn: gn=John+sn=Smith,ou=Marketing,ou=People,
+ dc=example,dc=com
+objectClass: addressbookPerson
+gn: John
+sn: Smith
+telephoneNumber: 555-1234
+facsimileTelephoneNumber: 555-1235
+description: This is a description that can span multi
+ ple lines as long as the non-first lines are inden
+ ted in the LDIF.
+

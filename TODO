@@ -1,12 +1,5 @@
 TODO file for the Ldaptor project.
 
-* Fix these:
-
-ldaptor/protocols/ldap/ldapsyntax.py:492: SyntaxWarning: local name 'attributes' in 'search' shadows use of 'attributes' as global in nested scope 'lambda'
-ldaptor/protocols/ldap/ldapsyntax.py:492: SyntaxWarning: local name 'results' in 'search' shadows use of 'results' as global in nested scope 'lambda'
-ldaptor/protocols/ldap/ldapsyntax.py:832: SyntaxWarning: local name 'self' in 'setPassword' shadows use of 'self' as global in nested scope '_passwordChangerPriorityComparison'
-
-
 * ldaptor-webui: twisted.web.widgets.Form.tryAgain()
 
 * ldaptor-webui: edit: adding attributes in schema MAY that didn't
@@ -85,3 +78,31 @@ ldaptor/protocols/ldap/ldapsyntax.py:832: SyntaxWarning: local name 'self' in 's
    bin/ldaptor-fetchschema should be ok already.
 
 * use LineOnlyReceiver
+
+* write a getting started doc with steps #2 and #3 from openldap.org quickstart.html
+
+* if user presses enter when focus is on a checkbox, atleast Galeon
+   submits the form _without_ the submit button info -> atleast
+   apps.webui.change_password.ConfirmChange.wmfactory_submit fails to
+   understand that as submit.
+
+* use twisted-web.deb for ldaptor-webui; steps needed:
+   1. exarkun/moshez twisted.web improvement that returns 403 for
+   non-localhost requests must be integrated to twisted (jml promised
+   to do) (code is in sandbox/exarkun/rresource.py in Twisted CVS)
+   2. twisted release
+   3. twisted-web upload to debian
+
+* add->search->delete => your basedn has been removed, parent links
+   fail also
+
+* ldaptor-ldap2maradns: Anetmask. should set A record as x.y.z.0 and
+   TXT as "16" (bitcount)
+
+* ldaptor-ldap2maradns: generate gw.X automatically
+
+* ldaptor: study WebUnit unit testing.
+
+* http://www.sitepoint.com/print/1273
+
+  - add <label for="id-of-input-field">foo:</label> <input id="id-of-input-field" ... />

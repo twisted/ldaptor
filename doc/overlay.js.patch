@@ -1,0 +1,15 @@
+--- /usr/share/sgml/docbook/custom/slides/3.0b1/browser/overlay.js	Tue Jun 18 19:03:26 2002
++++ bk-for-sg-engine/browser/overlay.js	Tue Dec 31 11:31:48 2002
+@@ -53,8 +53,10 @@
+ 	overlayLy = window.innerHeight;
+ 	overlayLx = window.innerWidth;
+ 	overlayH  = document.overlayDiv.clip.height;
+-	overlayW  = body.clip.width; // document.overlayDiv.clip.width;
+-	contentH  = body.clip.height;
++	//overlayW  = body.clip.width; // document.overlayDiv.clip.width;
++	overlayW  = document.overlayDiv.clip.width;
++	//contentH  = body.clip.height;
++	contentH  = document.overlayDiv.clip.height;
+     } else if (overlayNS6) {
+ 	var odiv = document.getElementById('overlayDiv');
+ 

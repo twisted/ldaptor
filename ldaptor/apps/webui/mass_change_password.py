@@ -1,4 +1,5 @@
 from twisted.web import widgets
+from twisted.web.woven import simpleguard
 from twisted.internet import defer, protocol
 from twisted.python.failure import Failure
 from ldaptor.protocols.ldap import ldaperrors, ldapsyntax
@@ -41,7 +42,8 @@ class MassPasswordChangeForm(widgets.Form):
     def _got_passwords(self, passwords, dnlist, request):
 	assert len(passwords)==len(dnlist)
 	l=[]
-	client = request.getSession().LdaptorIdentity.getLDAPClient()
+        entry = request.getComponent(simpleguard.Authenticated).name
+        client = entry.client
 	if not client:
 	    return ['<P>Password change failed: connection lost.']
 	for dn, pwd in zip(dnlist, passwords):
@@ -91,7 +93,8 @@ class MassPasswordChangePage(template.BasicPage):
 	    filtText=uriUnquote(request.postpath[0])
 
 	    d=defer.Deferred()
-	    client = request.getSession().LdaptorIdentity.getLDAPClient()
+            entry = request.getComponent(simpleguard.Authenticated).name
+            client = entry.client
 	    if client:
                 o=ldapsyntax.LDAPEntry(client=client,
                                        dn=self.baseObject)

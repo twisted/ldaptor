@@ -42,6 +42,7 @@ class NoContainingNamingContext(Exception):
 class CannotRemoveRDNError(Exception):
     """The attribute to be removed is the RDN for the object and cannot be removed."""
     def __init__(self, key, val=None):
+        Exception.__init__(self)
         self.key=key
         self.val=val
 
@@ -400,8 +401,8 @@ class LDAPEntry:
 
     def _cbCommit(self, msg, d):
 	assert isinstance(msg, pureldap.LDAPModifyResponse)
-	assert msg.referral==None #TODO
-	if msg.resultCode==ldaperrors.errors['success']:
+	assert msg.referral is None #TODO
+	if msg.resultCode==ldaperrors.Success.resultCode:
 	    assert msg.matchedDN==''
 	    d.callback(self)
 	else:
@@ -442,6 +443,9 @@ class LDAPEntry:
         self._checkState()
 	return self._attributeCache.keys()
 
+    def __len__(self):
+	return len(self.keys())
+
     def items(self):
         self._checkState()
 	return self._attributeCache.items()
@@ -471,17 +475,23 @@ class LDAPEntry:
                     complete=complete)
 	callback(o)
 
-    def _cbSearchMsg(self, msg, d, callback, complete):
+    def _cbSearchMsg(self, msg, d, callback, complete, sizeLimitIsNonFatal):
 	if isinstance(msg, pureldap.LDAPSearchResultDone):
-	    assert msg.referral==None #TODO
-	    if msg.resultCode==0: #TODO ldap.errors.success
-		assert msg.matchedDN==''
-		d.callback(None)
-	    else:
+	    assert msg.referral is None #TODO
+            e = ldaperrors.get(msg.resultCode, msg.errorMessage)
+            if not isinstance(e, ldaperrors.Success):
 		try:
-		    raise ldaperrors.get(msg.resultCode, msg.errorMessage)
+                    raise e
+                except ldaperrors.LDAPSizeLimitExceeded, e:
+                    if sizeLimitIsNonFatal:
+                        pass
 		except:
 		    d.errback(Failure())
+                    return 1
+
+            # search ended successfully
+            assert msg.matchedDN==''
+            d.callback(None)
 	    return 1
 	else:
 	    assert isinstance(msg, pureldap.LDAPSearchResultEntry)
@@ -496,6 +506,7 @@ class LDAPEntry:
 	       scope=pureldap.LDAP_SCOPE_wholeSubtree,
 	       derefAliases=pureldap.LDAP_DEREF_neverDerefAliases,
 	       sizeLimit=0,
+	       sizeLimitIsNonFatal=False,
 	       timeLimit=0,
 	       typesOnly=0,
 	       callback=None):
@@ -569,7 +580,8 @@ class LDAPEntry:
 		     d=d,
 		     callback=cb,
 		     self=self:
-		     self._cbSearchMsg(msg, d, callback, complete=not attributes)))
+		     self._cbSearchMsg(msg, d, callback, complete=not attributes,
+                                       sizeLimitIsNonFatal=sizeLimitIsNonFatal)))
 	except ldapclient.LDAPClientConnectionLostException:
 	    d.errback(Failure())
 	else:
@@ -661,10 +673,13 @@ class LDAPEntry:
 	"""
 	return not self==other
 
+    def __nonzero__(self):
+        return True
+
     def _cbMoveDone(self, msg, d):
 	assert isinstance(msg, pureldap.LDAPModifyDNResponse)
-	assert msg.referral==None #TODO
-	if msg.resultCode==ldaperrors.errors['success']:
+	assert msg.referral is None #TODO
+	if msg.resultCode==ldaperrors.Success.resultCode:
 	    assert msg.matchedDN==''
 	    d.callback(self)
 	else:
@@ -697,8 +712,8 @@ class LDAPEntry:
 
     def _cbDeleteDone(self, msg, d):
 	assert isinstance(msg, pureldap.LDAPDelResponse)
-	assert msg.referral==None #TODO
-	if msg.resultCode==ldaperrors.errors['success']:
+	assert msg.referral is None #TODO
+	if msg.resultCode==ldaperrors.Success.resultCode:
 	    assert msg.matchedDN==''
 	    d.callback(self)
 	else:
@@ -745,8 +760,8 @@ class LDAPEntry:
 
     def _cbSetPassword_ExtendedOperation(self, msg, d):
 	assert isinstance(msg, pureldap.LDAPExtendedResponse)
-	assert msg.referral==None #TODO
-	if msg.resultCode==ldaperrors.errors['success']:
+	assert msg.referral is None #TODO
+	if msg.resultCode==ldaperrors.Success.resultCode:
 	    assert msg.matchedDN==''
 	    d.callback(self)
 	else:
@@ -859,7 +874,7 @@ class LDAPEntry:
             # Eat the failure or it will be logged.
             # DeferredList already got its copy, so we
             # don't lose any information here.
-            d.addErrback(lambda x: None)
+            d.addErrback(lambda dummy: None)
         dl.addCallback(self._cbSetPassword, names)
         return dl
 

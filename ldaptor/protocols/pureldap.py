@@ -40,14 +40,14 @@ class LDAPMessage(BERSequence):
 
     def __init__(self, value=None, encoded=None, id=None, berdecoder=None):
 	BERSequence.__init__(self, value=[], encoded=None)
-	if value!=None:
-	    assert encoded==None
+	if value is not None:
+	    assert encoded is None
 	    self.id=id
-	    if self.id==None:
+	    if self.id is None:
 		self.id=alloc_ldap_message_id()
 	    self.value=value
-	elif encoded!=None:
-	    assert value==None
+	elif encoded is not None:
+	    assert value is None
 	    assert berdecoder
 	    self.decode(encoded, berdecoder)
 	else:
@@ -95,21 +95,21 @@ class LDAPBindRequest(LDAPProtocolRequest, BERSequence):
     def __init__(self, version=None, dn=None, auth=None, encoded=None, berdecoder=None, tag=None):
 	LDAPProtocolRequest.__init__(self)
 	BERSequence.__init__(self, [], tag=tag)
-	if encoded!=None:
-	    assert version==None
-	    assert dn==None
-	    assert auth==None
+	if encoded is not None:
+	    assert version is None
+	    assert dn is None
+	    assert auth is None
 	    assert berdecoder
 	    self.decode(encoded, berdecoder)
 	else:
 	    self.version=version
-	    if self.version==None:
+	    if self.version is None:
 		self.version=3
 	    self.dn=dn
-	    if self.dn==None:
+	    if self.dn is None:
 		self.dn=''
 	    self.auth=auth
-	    if self.auth==None:
+	    if self.auth is None:
 		self.auth=''
 
     def __str__(self):
@@ -158,7 +158,7 @@ class LDAPResult(LDAPProtocolResponse, BERSequence):
 	LDAPProtocolResponse.__init__(self)
 	BERSequence.__init__(self, value=[])
 	if resultCode is not None:
-	    assert encoded==None
+	    assert encoded is None
 	    self.resultCode=resultCode
             if matchedDN is None:
                 matchedDN=''
@@ -169,18 +169,18 @@ class LDAPResult(LDAPProtocolResponse, BERSequence):
 	    self.referral=referral
 	    self.serverSaslCreds=serverSaslCreds
 	elif encoded is not None:
-	    assert resultCode==None
-	    assert matchedDN==None
-	    assert errorMessage==None
-	    assert referral==None
-	    assert serverSaslCreds==None
+	    assert resultCode is None
+	    assert matchedDN is None
+	    assert errorMessage is None
+	    assert referral is None
+	    assert serverSaslCreds is None
 	    assert berdecoder
 	    self.decode(encoded, berdecoder)
 	else:
 	    raise "You must give either value or encoded"
 
     def __str__(self):
-	assert self.referral==None #TODO
+	assert self.referral is None #TODO
 	return str(BERSequence([
 	    BEREnumerated(self.resultCode),
 	    BEROctetString(self.matchedDN),
@@ -226,15 +226,15 @@ class LDAPBindResponse(LDAPResult):
 	    self.serverSaslCreds=None
 
     def __init__(self, resultCode=None, matchedDN=None, errorMessage=None, referral=None, serverSaslCreds=None, encoded=None, berdecoder=None):
-	assert serverSaslCreds==None #TODO
+	assert serverSaslCreds is None #TODO
 	LDAPResult.__init__(self, resultCode=resultCode, matchedDN=matchedDN, errorMessage=errorMessage, referral=referral, encoded=encoded, berdecoder=berdecoder)
 
     def __str__(self):
-	assert self.serverSaslCreds==None #TODO
+	assert self.serverSaslCreds is None #TODO
 	return LDAPResult.__str__(self)
 
     def __repr__(self):
-	assert self.serverSaslCreds==None #TODO
+	assert self.serverSaslCreds is None #TODO
 	return LDAPResult.__repr__(self)
 
 class LDAPUnbindRequest(LDAPProtocolRequest, BERNull):
@@ -261,13 +261,13 @@ class LDAPAttributeValueAssertion(BERSequence):
     def __init__(self, attributeDesc=None, assertionValue=None,
 		 encoded=None, berdecoder=None):
 	BERSequence.__init__(self, value=[])
-	if attributeDesc!=None:
-	    assert encoded==None
+	if attributeDesc is not None:
+	    assert encoded is None
 	    self.attributeDesc=attributeDesc
 	    self.assertionValue=assertionValue
-	elif encoded!=None:
-	    assert attributeDesc==None
-	    assert assertionValue==None
+	elif encoded is not None:
+	    assert attributeDesc is None
+	    assert assertionValue is None
 	    assert berdecoder
 	    self.decode(encoded, berdecoder)
 	else:
@@ -324,10 +324,10 @@ class LDAPFilter_not(LDAPFilter):
 
     def __init__(self, value=None, encoded=None, berdecoder=None):
         LDAPFilter.__init__(self)
-	if encoded!=None:
+	if encoded is not None:
 	    assert berdecoder
 	    self.decode(encoded, berdecoder)
-	elif value!=None:
+	elif value is not None:
 	    self.value=value
 	else:
 	    raise "You must give either value or encoded"
@@ -394,11 +394,11 @@ class LDAPFilter_substrings(BERSequence):
 
     def __init__(self, type=None, substrings=None, encoded=None, berdecoder=None, tag=None):
 	BERSequence.__init__(self, value=[], tag=tag)
-	if type!=None and substrings!=None:
-	    assert encoded==None
+	if type is not None and substrings is not None:
+	    assert encoded is None
 	    self.type=type
 	    self.substrings=substrings
-	elif encoded!=None:
+	elif encoded is not None:
 	    assert berdecoder
 	    self.decode(encoded, berdecoder)
 	else:
@@ -538,19 +538,19 @@ class LDAPMatchingRuleAssertion(BERSequence):
 		 matchValue=None, dnAttributes=None,
 		 encoded=None, berdecoder=None, tag=None):
 	BERSequence.__init__(self, value=[], tag=tag)
-	if matchValue!=None:
-	    assert encoded==None
+	if matchValue is not None:
+	    assert encoded is None
 	    self.matchingRule=matchingRule
 	    self.type=type
 	    self.matchValue=matchValue
 	    self.dnAttributes=dnAttributes
 	    if not self.dnAttributes:
 		self.dnAttributes=None
-	elif encoded!=None:
-	    assert matchingRule==None
-	    assert type==None
-	    assert matchValue==None
-	    assert dnAttributes==None
+	elif encoded is not None:
+	    assert matchingRule is None
+	    assert type is None
+	    assert matchValue is None
+	    assert dnAttributes is None
 	    assert berdecoder
 	    self.decode(encoded, berdecoder)
 	else:
@@ -558,7 +558,7 @@ class LDAPMatchingRuleAssertion(BERSequence):
 
     def __str__(self):
 	return str(BERSequence(
-	    filter(lambda x: x!=None, [self.matchingRule, self.type, self.matchValue, self.dnAttributes]), tag=self.tag))
+	    filter(lambda x: x is not None, [self.matchingRule, self.type, self.matchValue, self.dnAttributes]), tag=self.tag))
 
 class LDAPFilter_extensibleMatch(LDAPMatchingRuleAssertion):
     tag = CLASS_CONTEXT|0x09
@@ -711,13 +711,13 @@ class LDAPSearchResultEntry(LDAPProtocolResponse, BERSequence):
     def __init__(self, objectName=None, attributes=None, encoded=None, berdecoder=None):
 	LDAPProtocolResponse.__init__(self)
 	BERSequence.__init__(self, [])
-	if objectName!=None and attributes!=None:
-	    assert encoded==None
+	if objectName is not None and attributes is not None:
+	    assert encoded is None
 	    self.objectName=objectName
 	    self.attributes=attributes
-	elif encoded!=None:
-	    assert objectName==None
-	    assert attributes==None
+	elif encoded is not None:
+	    assert objectName is None
+	    assert attributes is None
 	    assert berdecoder
 	    self.decode(encoded, berdecoder)
 	else:
@@ -769,12 +769,12 @@ class LDAPModification(BERSequence):
 
     def __init__(self, vals=None, op=None, encoded=None, berdecoder=None, tag=None):
 	BERSequence.__init__(self, [], tag=tag)
-	if encoded!=None:
-	    assert vals==None
-	    assert op==None
+	if encoded is not None:
+	    assert vals is None
+	    assert op is None
 	    assert berdecoder
 	    self.decode(encoded, berdecoder)
-	elif vals!=None:
+	elif vals is not None:
 	    self.vals=vals
 	    if op:
 		self.op=op
@@ -783,7 +783,7 @@ class LDAPModification(BERSequence):
 
 
     def __str__(self):
-	assert self.op!=None
+	assert self.op is not None
 	r=[]
 	for x in self.vals:
 	    type=x[0]
@@ -839,9 +839,9 @@ class LDAPModifyRequest(LDAPProtocolRequest, BERSequence):
 
 	LDAPProtocolRequest.__init__(self)
 	BERSequence.__init__(self, [], tag=tag)
-	if encoded!=None:
-	    assert object==None
-	    assert modification==None
+	if encoded is not None:
+	    assert object is None
+	    assert modification is None
 	    assert berdecoder
 	    self.decode(encoded, berdecoder)
 	else:
@@ -896,9 +896,9 @@ class LDAPAddRequest(LDAPProtocolRequest, BERSequence):
 
 	LDAPProtocolRequest.__init__(self)
 	BERSequence.__init__(self, [], tag=tag)
-	if encoded!=None:
-	    assert entry==None
-	    assert attributes==None
+	if encoded is not None:
+	    assert entry is None
+	    assert attributes is None
 	    assert berdecoder
 	    self.decode(encoded, berdecoder)
 	else:
@@ -992,11 +992,11 @@ class LDAPModifyDNRequest(LDAPProtocolRequest, BERSequence):
 
 	LDAPProtocolRequest.__init__(self)
 	BERSequence.__init__(self, [], tag=tag)
-	if encoded!=None:
-	    assert entry==None
-	    assert newrdn==None
-	    assert deleteoldrdn==None
-	    assert newSuperior==None
+	if encoded is not None:
+	    assert entry is None
+	    assert newrdn is None
+	    assert deleteoldrdn is None
+	    assert newSuperior is None
 	    assert berdecoder
 	    self.decode(encoded, berdecoder)
 	else:
@@ -1065,9 +1065,9 @@ class LDAPExtendedRequest(LDAPProtocolRequest, BERSequence):
 		 encoded=None, berdecoder=None, tag=None):
 	LDAPProtocolRequest.__init__(self)
 	BERSequence.__init__(self, [], tag=tag)
-	if encoded!=None:
-	    assert requestName==None
-	    assert requestValue==None
+	if encoded is not None:
+	    assert requestName is None
+	    assert requestValue is None
 	    assert berdecoder
 	    self.decode(encoded, berdecoder)
 	else:
@@ -1111,12 +1111,12 @@ class LDAPPasswordModifyRequest(LDAPExtendedRequest):
 
     def __init__(self, userIdentity=None, oldPasswd=None, newPasswd=None,
 		 encoded=None, berdecoder=None, tag=None):
-	if encoded!=None:
-	    assert userIdentity==None
-	    assert oldPasswd==None
-	    assert newPasswd==None
+	if encoded is not None:
+	    assert userIdentity is None
+	    assert oldPasswd is None
+	    assert newPasswd is None
 	    assert berdecoder
-	    assert tag==None
+	    assert tag is None
 	    LDAPExtendedRequest.__init__(self, encoded=encoded, berdecoder=berdecoder)
 	else:
 	    l=[]
@@ -1149,14 +1149,51 @@ class LDAPBERDecoderContext_LDAPExtendedResponse(BERDecoderContext):
 class LDAPExtendedResponse(LDAPResult):
     tag = CLASS_APPLICATION|0x18
 
+    responseName = None
+    response = None
+
     def decode(self, encoded, berdecoder):
 	LDAPResult.decode(self, encoded, LDAPBERDecoderContext_LDAPExtendedResponse(fallback=berdecoder))
 
-    #TODO LDAPResult plus the following:
-    # COMPONENTS OF LDAPResult,
-    # responseName     [10] LDAPOID OPTIONAL,
-    # response         [11] OCTET STRING OPTIONAL }
+    def __init__(self, resultCode=None, matchedDN=None, errorMessage=None,
+                 referral=None, serverSaslCreds=None,
+                 responseName=None, response=None,
+                 encoded=None, berdecoder=None):
+        if encoded is not None:
+            assert resultCode is None
+            assert matchedDN is None
+            assert errorMessage is None
+            assert referral is None
+            assert serverSaslCreds is None
+            assert responseName is None
+            assert response is None
 
+            assert berdecoder is not None
+            LDAPResult.__init__(self, encoded=encoded, berdecoder=berdecoder)
+        else:
+            assert berdecoder is None
+
+            LDAPResult.__init__(self,
+                                resultCode=resultCode,
+                                matchedDN=matchedDN,
+                                errorMessage=errorMessage,
+                                referral=referral,
+                                serverSaslCreds=serverSaslCreds)
+            self.responseName=responseName
+            self.response=response
+
+    def __str__(self):
+	assert self.referral is None #TODO
+        l=[BEREnumerated(self.resultCode),
+           BEROctetString(self.matchedDN),
+           BEROctetString(self.errorMessage),
+           #TODO referral [3] Referral OPTIONAL
+           ]
+        if self.responseName is not None:
+            l.append(LDAPOID(self.responseName, tag=CLASS_CONTEXT|0x0a))
+        if self.response is not None:
+            l.append(BEROctetString(self.response, tag=CLASS_CONTEXT|0x0b))
+	return str(BERSequence(l, tag=self.tag))
 
 
 class LDAPBERDecoderContext(BERDecoderContext):

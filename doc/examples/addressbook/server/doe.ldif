@@ -1,0 +1,13 @@
+dn: gn=John+sn=Doe,ou=Research & Development,ou=Pe
+ ople,dc=example,dc=com
+objectClass: addressbookPerson
+gn: John
+sn: Doe
+street: Back alley
+postOfficeBox: 123
+postalCode: 54321
+postalAddress: Backstreet
+st: NY
+l: New York City
+c: US
+

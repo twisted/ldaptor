@@ -6,7 +6,10 @@ def htmlify_attributes(attributes):
 	if len(l)==0:
 	    result=result+"  <li>%s: <i>none</i>\n"%a
 	elif len(l)==1:
-	    result=result+"  <li>%s: %s\n"%(a, l[0])
+            for attr in l:
+                first = attr
+                break
+	    result=result+"  <li>%s: %s\n"%(a, first)
 	else:
 	    result=result+"  <li>%s:\n    <ul>\n"%a
 	    for i in l:

@@ -1,7 +1,0 @@
-#!/bin/sh
-set -e
-epydoc \
-	-o ../ldaptor-API \
-	-n Ldaptor \
-	-u http://tv.debian.net/software/ldaptor/ \
-	$(bk sfiles -Ug|grep '\.py$'|grep -v -- '-')

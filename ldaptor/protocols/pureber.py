@@ -115,7 +115,7 @@ class BERBase:
 	return self.tag
 
     def __init__(self, tag=None):
-	if tag!=None:
+	if tag is not None:
 	    self.tag=tag
 
     def __len__(self):
@@ -162,11 +162,11 @@ class BERInteger(BERBase):
 	value is an integer, encoded is a MutableString.
 	"""
 	BERBase.__init__(self, tag)
-	if value!=None:
-	    assert encoded==None
+	if value is not None:
+	    assert encoded is None
 	    self.value=value
-	elif encoded!=None:
-	    assert value==None
+	elif encoded is not None:
+	    assert value is None
 	    assert berdecoder
 	    self.decode(encoded, berdecoder)
 	else:
@@ -203,11 +203,11 @@ class BEROctetString(BERBase):
 
     def __init__(self, value=None, encoded=None, berdecoder=None, tag=None):
 	BERBase.__init__(self, tag)
-	if value!=None:
-	    assert encoded==None
+	if value is not None:
+	    assert encoded is None
 	    self.value=value
-	elif encoded!=None:
-	    assert value==None
+	elif encoded is not None:
+	    assert value is None
 	    assert berdecoder
 	    self.decode(encoded, berdecoder)
 	else:
@@ -238,7 +238,7 @@ class BERNull(BERBase):
 
     def __init__(self, encoded=None, berdecoder=None, tag=None):
 	BERBase.__init__(self, tag)
-	if encoded!=None:
+	if encoded is not None:
 	    assert berdecoder
 	    self.decode(encoded, berdecoder)
 
@@ -276,13 +276,13 @@ class BERBoolean(BERBase):
 	value is an integer, encoded is a MutableString.
 	"""
 	BERBase.__init__(self, tag)
-	if value!=None:
-	    assert encoded==None
+	if value is not None:
+	    assert encoded is None
 	    if value:
 		value=0xFF
 	    self.value=value
-	elif encoded!=None:
-	    assert value==None
+	elif encoded is not None:
+	    assert value is None
 	    assert berdecoder
 	    self.decode(encoded, berdecoder)
 	else:
@@ -322,18 +322,18 @@ class BERSequence(BERStructured, UserList.UserList):
 	# decode content
 	while content:
 	    n=ber2object(berdecoder, content)
-	    assert n!=None
+	    assert n is not None
 	    self.append(n)
 	encoded.set(e2)
 
     def __init__(self, value=None, encoded=None, berdecoder=None, tag=None):
 	BERStructured.__init__(self, tag)
 	UserList.UserList.__init__(self)
-	if value!=None:
-	    assert encoded==None
+	if value is not None:
+	    assert encoded is None
 	    self[:]=value
-	elif encoded!=None:
-	    assert value==None
+	elif encoded is not None:
+	    assert value is None
 	    assert berdecoder
 	    self.decode(encoded, berdecoder)
 	else:

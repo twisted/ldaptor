@@ -1,0 +1,24 @@
+# iso.org.dod.internet.private.enterprise.Debian.project.ScaleMail
+# 1.3.6.1.4.1.9586.100.2
+#
+# Under that 1 is for attributes and 2 is for object classes.
+#
+# 555 is experimental.
+#
+
+objectIdentifier ScalemailRoot 1.3.6.1.4.1.9586.100.2
+objectIdentifier AddressBookRoot ScalemailRoot:555
+
+objectIdentifier AddressBook AddressBookRoot:1
+objectIdentifier AddressBookAttributeType AddressBook:1
+objectIdentifier AddressBookObjectClass AddressBook:2
+
+objectclass ( AddressBookObjectClass:1
+	NAME 'addressbookPerson'
+	DESC 'A person entry in an address book'
+	SUP top STRUCTURAL
+	MUST ( sn $ gn )
+	MAY ( 	cn $ description $
+		telephoneNumber $ facsimileTelephoneNumber $
+		street $ postOfficeBox $ postalCode $
+		postalAddress $ physicalDeliveryOfficeName $ st $ l $ c ) )

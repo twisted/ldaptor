@@ -1,4 +1,5 @@
 from twisted.web import widgets
+from twisted.web.woven import simpleguard
 from twisted.internet import defer
 from twisted.python import failure
 
@@ -138,7 +139,7 @@ class EditForm(widgets.Form):
 		for attr in real_attr.name:
 		    if process.has_key(attr.upper()):
 			found_one=1
-			if process[attr.upper()]!=None:
+			if process[attr.upper()] is not None:
 			    self._one_formfield(attr,
 						self.object[process[attr.upper()]],
 						result=r)
@@ -154,7 +155,7 @@ class EditForm(widgets.Form):
 		for attr in real_attr.name:
 		    if process.has_key(attr.upper()):
 			found_one=1
-			if process[attr.upper()]!=None:
+			if process[attr.upper()] is not None:
 			    self._one_formfield(attr,
 						self.object[process[attr.upper()]],
 						result=r)
@@ -170,7 +171,7 @@ class EditForm(widgets.Form):
 		for name in real_attr.name:
 		    process[name.upper()]=None
 
-	assert [v==None for k,v in process.items()], "All attributes must be in objectClasses MUST or MAY: %s"%process
+	assert [v is None for k,v in process.items()], "All attributes must be in objectClasses MUST or MAY: %s"%process
 	return r
 
     def _textarea_to_list(self, t):
@@ -209,8 +210,9 @@ class EditForm(widgets.Form):
 	return list(status)+["<P>", io.getvalue()]
 
     def process(self, write, request, submit, **kw):
-	user = request.getSession().LdaptorPerspective.getPerspectiveName()
-	client = request.getSession().LdaptorIdentity.getLDAPClient()
+        entry = request.getComponent(simpleguard.Authenticated).name
+        user = entry.dn
+        client = entry.client
 
 	if not client:
 	    return self._output_status_and_form(
@@ -333,7 +335,8 @@ class EditPage(template.BasicPage):
 
 	    d=defer.Deferred()
 
-	    client = request.getSession().LdaptorIdentity.getLDAPClient()
+            entry = request.getComponent(simpleguard.Authenticated).name
+            client = entry.client
 	    if client:
                 deferred = fetchschema.fetch(client, dn)
                 deferred.addCallback(self._getContent_3,
