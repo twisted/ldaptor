@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import os, errno
-from distutils.core import setup, Extension
+from distutils.core import setup
 from distutils import sysconfig, cmd
 from distutils.command.build import build as _build
 from distutils.command.clean import clean as _clean
