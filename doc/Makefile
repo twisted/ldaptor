@@ -137,7 +137,6 @@ api:
 	epydoc \
 	        -o api \
 		-n Ldaptor \
-		--check \
 		-u http://www.inoi.fi/open/trac/ldaptor/ \
 		$$(find ../ldaptor \( -name SCCS -prune \) -o -name '*.py' -print)
 
