@@ -44,7 +44,7 @@ class IPasswordChange(annotate.TypedInterface):
 
 class IServicePasswordChange(annotate.TypedInterface):
     def remove(self,
-                      ctx=annotate.Context()):
+               ctx=annotate.Context()):
         pass
     remove = annotate.autocallable(remove)
 
