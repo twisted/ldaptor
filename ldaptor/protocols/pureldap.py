@@ -205,11 +205,11 @@ class LDAPResult(LDAPProtocolResponse, BERSequence):
 	l=[]
 	l.append('resultCode=%r' % self.resultCode)
 	if self.matchedDN:
-	    l.append('matchedDN=%r' % repr(str(self.matchedDN)))
+	    l.append('matchedDN=%r' % str(self.matchedDN))
 	if self.errorMessage:
-	    l.append('errorMessage=%r' % repr(str(self.errorMessage)))
+	    l.append('errorMessage=%r' % str(self.errorMessage))
 	if self.referral:
-	    l.append('referral=%r' % repr(self.referral))
+	    l.append('referral=%r' % self.referral)
 	if self.tag!=self.__class__.tag:
 	    l.append('tag=%d' % self.tag)
 	return self.__class__.__name__+'('+', '.join(l)+')'
