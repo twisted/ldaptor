@@ -80,4 +80,4 @@ tobedone() {
 tobedone 'UNTRANSLATED' --untranslated
 tobedone 'FUZZY' --only-fuzzy
 
-./admin/l10n-generate
+./setup.py build_locale

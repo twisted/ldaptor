@@ -17,12 +17,12 @@ class Wrap(object):
         self.resource = resource
 
     def locateChild(self, ctx, segments):
-        ctx.remember(i18n.I18NConfig(localeDir='locale'))
+        ctx.remember(i18n.I18NConfig(localeDir='build/locale'))
         ctx.remember(['fi'], i18n.ILanguages)
         return self.resource, segments
 
     def renderHTTP(self, ctx):
-        ctx.remember(i18n.I18NConfig(localeDir='locale'))
+        ctx.remember(i18n.I18NConfig(localeDir='build/locale'))
         ctx.remember(['fi'], i18n.ILanguages)
         return self.resource.renderHTTP(ctx)
 
