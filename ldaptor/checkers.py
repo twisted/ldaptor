@@ -2,7 +2,7 @@ from twisted.cred import checkers, credentials, error
 from twisted.internet import defer, reactor
 from twisted.python import failure
 from ldaptor import ldapfilter, config
-from ldaptor.protocols.ldap import ldapconnector, ldapclient, ldapsyntax
+from ldaptor.protocols.ldap import ldapconnector, ldapclient, ldapsyntax, ldaperrors
 
 def makeFilter(name, template=None):
     filter=None
@@ -70,4 +70,8 @@ class LDAPBindingChecker:
 	c = ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
 	d = c.connect(baseDN, self.config.getServiceLocationOverrides())
         d.addCallback(self._connected, filt, credentials)
+        def _err(reason):
+            reason.trap(ldaperrors.LDAPInvalidCredentials)
+            return failure.Failure(error.UnauthorizedLogin())
+        d.addErrback(_err)
         return d
