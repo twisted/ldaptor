@@ -1304,3 +1304,5 @@ class LDAPSyntaxMove(unittest.TestCase):
             deleteoldrdn=1,
             newSuperior='ou=somewhere,dc=example,dc=com',
             ))
+
+        self.assertEquals(o.dn, 'cn=bar,ou=somewhere,dc=example,dc=com')

@@ -311,11 +311,12 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             d.addCallback(self._commit_success)
 	return d
 
-    def _cbMoveDone(self, msg, d):
+    def _cbMoveDone(self, msg, d, newDN):
 	assert isinstance(msg, pureldap.LDAPModifyDNResponse)
 	assert msg.referral is None #TODO
 	if msg.resultCode==ldaperrors.Success.resultCode:
 	    assert msg.matchedDN==''
+            self.dn = newDN
 	    d.callback(self)
 	else:
 	    d.errback(ldaperrors.get(msg.resultCode, msg.errorMessage))
@@ -328,11 +329,12 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 
 	newrdn=newDN.split()[0]
 	newSuperior=distinguishedname.DistinguishedName(listOfRDNs=newDN.split()[1:])
+        newDN = distinguishedname.DistinguishedName((newrdn,) + newSuperior.split())
 	op = pureldap.LDAPModifyDNRequest(entry=str(self.dn),
 					  newrdn=str(newrdn),
 					  deleteoldrdn=1,
 					  newSuperior=str(newSuperior))
-	self.client.queue(op, self._cbMoveDone, d)
+	self.client.queue(op, self._cbMoveDone, d, newDN)
 	return d
 
     def _cbDeleteDone(self, msg, d):
