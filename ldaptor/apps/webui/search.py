@@ -211,12 +211,6 @@ class SearchForm(configurable.Configurable):
     def __nonzero__(self):
         return self.filter is not None
 
-def _upLink(request, name):
-    if request.postpath:
-        return (len(request.postpath)*"../") + "../" + name
-    else:
-        return "../" + name
-
 class SearchPage(rend.Page):
     addSlash = True
 
