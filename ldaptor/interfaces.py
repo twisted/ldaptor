@@ -329,7 +329,12 @@ class ILDAPConfig(components.Interface):
     """Generic LDAP configuration retrieval."""
 
     def getBaseDN(self):
-        """Get the LDAP base DN, as a DistinguishedName, or None."""
+        """
+        Get the LDAP base DN, as a DistinguishedName.
+
+        Raises ldaptor.config.MissingBaseDNError
+        if configuration does not specify a base DN.
+        """
 
     def getServiceLocationOverrides(self):
         """

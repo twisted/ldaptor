@@ -4,6 +4,12 @@ from ldaptor import interfaces
 from ldaptor.insensitive import InsensitiveString
 from ldaptor.protocols.ldap import distinguishedname
 
+class MissingBaseDNError(Exception):
+    """Configuration must specify a base DN"""
+
+    def __str__(self):
+        return self.__doc__
+
 class LDAPConfig(object):
     __implements__ = interfaces.ILDAPConfig
 
@@ -32,7 +38,7 @@ class LDAPConfig(object):
             return cfg.get('ldap', 'base')
         except (ConfigParser.NoOptionError,
                 ConfigParser.NoSectionError):
-            return None
+            raise MissingBaseDNError
 
     def getServiceLocationOverrides(self):
         r = self._loadServiceLocationOverrides()

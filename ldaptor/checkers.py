@@ -1,7 +1,7 @@
 from twisted.cred import checkers, credentials, error
 from twisted.internet import defer, reactor
 from twisted.python import failure
-from ldaptor import ldapfilter
+from ldaptor import ldapfilter, config
 from ldaptor.protocols.ldap import ldapconnector, ldapclient, ldapsyntax
 
 def makeFilter(name, template=None):
@@ -55,9 +55,10 @@ class LDAPBindingChecker:
         return d
 
     def requestAvatarId(self, credentials):
-        baseDN = self.config.getIdentityBaseDN()
-        if baseDN is None:
-            return failure.Failure(error.UnauthorizedLogin("Disabled due to missing LDAP base DN."))
+        try:
+            baseDN = self.config.getIdentityBaseDN()
+        except config.MissingBaseDNError, e:
+            return failure.Failure(error.UnauthorizedLogin("Disabled due configuration error: %s." % e))
         if not credentials.username:
             return failure.Failure(error.UnauthorizedLogin("I don't support anonymous"))
         filtText = self.config.getIdentitySearch(credentials.username)

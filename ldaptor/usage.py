@@ -45,12 +45,13 @@ class Options_service_location:
 	if not self.opts.has_key('service-location'):
 	    self.opts['service-location']={}
 
-class Options_base:
+class Options_base_optional:
     optParameters = (
 	('base', None, None,
 	 "LDAP base dn"),
 	)
 
+class Options_base(Options_base_optional):
     def postOptions_base(self):
 	# check that some things are given
 	if self.opts['base'] is None:
