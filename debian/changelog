@@ -1,3 +1,10 @@
+ldaptor (0.0.18) unstable; urgency=low
+
+  * Bugfixes:
+    - Make serviceLocationOverrides work once again in LDAPConnector.
+
+ -- Tommi Virtanen <tv@debian.org>  Sun,  3 Aug 2003 10:17:00 +0300
+
 ldaptor (0.0.17) unstable; urgency=low
 
   * API changes:

@@ -21,8 +21,8 @@ class LDAPConnector(utils.SRVConnector):
 
     def _findOverRide(self, dn, overrides):
 	while dn != distinguishedname.DistinguishedName(stringValue=''):
-	    if overrides.has_key(str(dn)):
-		return overrides[str(dn)]
+	    if overrides.has_key(dn):
+		return overrides[dn]
 	    dn = dn.up()
 	return None, None
 
