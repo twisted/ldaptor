@@ -42,28 +42,53 @@ class IPasswordChange(annotate.TypedInterface):
         pass
     generateRandom = annotate.autocallable(generateRandom)
 
-class IServicePasswordChange(annotate.TypedInterface):
+class IRemoveServicePassword(annotate.TypedInterface):
     def remove(self,
                ctx=annotate.Context()):
         pass
     remove = annotate.autocallable(remove)
 
+class ISetServicePassword(annotate.TypedInterface):
     def setServicePassword(self,
                            ctx=annotate.Context(),
                            newPassword=annotate.Password(required=True)):
         pass
     setServicePassword = annotate.autocallable(setServicePassword)
 
+class ISetRandomServicePassword(annotate.TypedInterface):
     def generateRandom(self,
                        ctx=annotate.Context()):
         pass
     generateRandom = annotate.autocallable(generateRandom)
 
-class ServicePasswordChange(object):
-    __implements__ = IServicePasswordChange
+class RemoveServicePassword(object):
+    __implements__ = IRemoveServicePassword
 
     def __init__(self, dn):
-        super(ServicePasswordChange, self).__init__()
+        super(RemoveServicePassword, self).__init__()
+        self.dn = dn
+
+    def remove(self, ctx):
+        e = getEntry(ctx, self.dn)
+        d = getServiceName(ctx, self.dn)
+
+        def _delete(name, e):
+            d = e.delete()
+            d.addCallback(lambda _: name)
+            return d
+        d.addCallback(_delete, e)
+
+        def _report(name):
+            return 'Removed service %r' % name
+        d.addCallback(_report)
+
+        return d
+
+class SetServicePassword(object):
+    __implements__ = ISetServicePassword
+
+    def __init__(self, dn):
+        super(SetServicePassword, self).__init__()
         self.dn = dn
 
     def setServicePassword(self, ctx, newPassword):
@@ -80,6 +105,13 @@ class ServicePasswordChange(object):
         d.addCallback(_report)
 
         return d
+
+class SetRandomServicePassword(object):
+    __implements__ = ISetRandomServicePassword
+
+    def __init__(self, dn):
+        super(SetRandomServicePassword, self).__init__()
+        self.dn = dn
 
     def generateRandom(self, ctx):
         d=generate_password.generate(reactor)
@@ -104,22 +136,6 @@ class ServicePasswordChange(object):
             return d
 
         d.addCallback(_setPass, ctx)
-        return d
-
-    def remove(self, ctx):
-        e = getEntry(ctx, self.dn)
-        d = getServiceName(ctx, self.dn)
-
-        def _delete(name, e):
-            d = e.delete()
-            d.addCallback(lambda _: name)
-            return d
-        d.addCallback(_delete, e)
-
-        def _report(name):
-            return 'Removed service %r' % name
-        d.addCallback(_report)
-
         return d
 
 class IAddService(annotate.TypedInterface):
@@ -196,6 +212,25 @@ class ServicePasswordChangeMixin(object):
         super(ServicePasswordChangeMixin, self).__init__()
         self.dn = dn
 
+    def listServicePasswordActions(self):
+        l = [(int(pri), name)
+             for x, pri, name in [name.split('_', 2) for name in dir(self)
+                                     if name.startswith('servicePasswordAction_')]]
+        l.sort()
+        for pri, name in l:
+            yield name
+
+    def getServicePasswordAction(self, name):
+        for attrName in dir(self):
+            if not attrName.startswith('servicePasswordAction_'):
+                continue
+
+            x, pri, actionName = attrName.split('_', 2)
+                              
+            if actionName == name:
+                return getattr(self, attrName)
+        return None
+
     def render_servicePasswords(self, ctx, data):
         docFactory = loaders.xmlfile(
             'change_service_passwords.xhtml',
@@ -228,7 +263,8 @@ class ServicePasswordChangeMixin(object):
         # TODO error messages for one password change form display in
         # all of them.
         e = inevow.IData(ctx)
-        return webform.renderForms('service_%s' % e.dn)[ctx.tag()]
+        for name in self.listServicePasswordActions():
+            yield webform.renderForms('service_%s_%s' % (name, e.dn))[ctx.tag()]
 
     def locateConfigurable(self, ctx, name):
         try:
@@ -239,8 +275,16 @@ class ServicePasswordChangeMixin(object):
             else:
                 raise
 
-        dn = name[len('service_'):]
-        return iformless.IConfigurable(ServicePasswordChange(dn))
+        rest = name[len('service_'):]
+        l = rest.split('_', 1)
+        if len(l) != 2:
+            raise AttributeError, name
+
+        c = self.getServicePasswordAction(l[0])
+        if c is None:
+            raise AttributeError, name
+        return iformless.IConfigurable(c(l[1]))
+
 
     render_zebra = weave.zebra()
 
@@ -252,6 +296,10 @@ class ConfirmChange(ServicePasswordChangeMixin, rend.Page):
     docFactory = loaders.xmlfile(
         'change_password.xhtml',
         templateDir=os.path.split(os.path.abspath(__file__))[0])
+
+    servicePasswordAction_10_remove = RemoveServicePassword
+    servicePasswordAction_20_set = SetServicePassword
+    servicePasswordAction_30_random = SetRandomServicePassword
 
     def data_css(self, ctx, data):
         request = ctx.locate(inevow.IRequest)
