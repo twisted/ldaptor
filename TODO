@@ -122,3 +122,15 @@ TODO file for the Ldaptor project.
 * better API to handle controls
 
 * use interfaces and adapters for serializing BER objects
+
+* split webui unit tests
+
+* install unit tests when doing setup.py install
+
+* samba password changing should set these, too:
+  - sambaPwdCanChange: 1093889533
+  - sambaPwdLastSet: 1093889533
+  - sambaPwdMustChange: 2147483647
+
+* ldaptor-passwd doesn't fetch entry objectClasses from server, so it
+   never notices it should set samba passwords, too.
