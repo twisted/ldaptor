@@ -1,6 +1,7 @@
 from twisted.web import widgets, guard, static
 import search, edit, add, delete, mass_change_password, change_password, move
 import template
+from ldaptor.protocols.ldap import distinguishedname
 from ldaptor.apps.webui.uriquote import uriQuote, uriUnquote
 
 # TODO when twisted.web.static with this class gets released,
@@ -12,7 +13,7 @@ from twisted.protocols import http
 class LdaptorWebUIGadget2(widgets.Gadget):
     def __init__(self, editService,
 		 baseObject,
-		 serviceLocationOverride,
+		 serviceLocationOverride=None,
 		 searchFields=(),
 		 ):
 	widgets.Gadget.__init__(self)
@@ -76,8 +77,13 @@ class AskBaseDNForm(widgets.Form):
 	]
 
     def process(self, write, request, submit, basedn):
-	quoted=uriQuote(basedn)
-	return [static.redirectTo(request.childLink(quoted), request)]
+        try:
+            basedn = distinguishedname.DistinguishedName(stringValue=basedn)
+        except distinguishedname.InvalidRelativeDistinguishedName, e:
+            return self.tryAgain(e, request)
+        else:
+            quoted=uriQuote(str(basedn))
+            return [static.redirectTo(request.childLink(quoted), request)]
 
 class AskBaseDNPage(template.BasicPage):
     title = "Ldaptor Web Interface"
@@ -88,12 +94,10 @@ class AskBaseDNPage(template.BasicPage):
 
 class LdaptorWebUIGadget(widgets.Gadget):
     def __init__(self, editService,
-		 baseObject,
-		 serviceLocationOverride,
+		 serviceLocationOverride=None,
 		 searchFields=(),
 		 ):
 	self.editService=editService
-	self.baseObject=baseObject
 	self.serviceLocationOverride=serviceLocationOverride
 	self.searchFields=searchFields
 	widgets.Gadget.__init__(self)
@@ -103,7 +107,11 @@ class LdaptorWebUIGadget(widgets.Gadget):
 	    return AskBaseDNPage()
 	else:
 	    unquoted=uriUnquote(path)
+            try:
+                dn = distinguishedname.DistinguishedName(stringValue=unquoted)
+            except distinguishedname.InvalidRelativeDistinguishedName, e:
+                return AskBaseDNPage()
 	    return LdaptorWebUIGadget2(editService=self.editService,
-				       baseObject=unquoted,
+				       baseObject=dn,
 				       serviceLocationOverride=self.serviceLocationOverride,
 				       searchFields=self.searchFields)

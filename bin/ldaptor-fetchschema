@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import sys
-from ldaptor.protocols.ldap import ldapclient, ldif, ldapsyntax, distinguishedname, ldapconnector
+from ldaptor.protocols.ldap import ldapclient, ldif, ldapsyntax, distinguishedname, ldapconnector, fetchschema
 from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage, ldapfilter
 from twisted.internet import protocol, reactor, defer
@@ -12,26 +12,32 @@ class Search(ldapclient.LDAPClient):
 	d.addCallback(self._handle_bind_success)
 	d.addErrback(self.factory.deferred.errback)
 
-    def _printResults(self, o):
-	sys.stdout.write(str(o))
+    def _printResults(self, x):
+        attributeTypes, objectClasses = x
+
+        something = False
+        for at in attributeTypes:
+            print at
+            something = True
+
+        if something:
+            print
+
+        for oc in objectClasses:
+            print oc
 
     def _handle_bind_success(self, x):
 	matchedDN, serverSaslCreds = x
-	o=ldapsyntax.LDAPEntry(client=self,
-                               dn=self.factory.base)
-	d=o.search(filterText=self.factory.filt,
-		   attributes=self.factory.attributes,
-		   callback=self._printResults)
+        d=fetchschema.fetch(self, self.factory.base)
+        d.addCallback(self._printResults)
 	d.chainDeferred(self.factory.deferred)
 
 class SearchFactory(protocol.ClientFactory):
     protocol = Search
 
-    def __init__(self, deferred, base, filt, attributes):
+    def __init__(self, deferred, base):
 	self.deferred=deferred
 	self.base=base
-	self.filt=filt
-	self.attributes=attributes
 
     def clientConnectionFailed(self, connector, reason):
 	self.deferred.errback(reason)
@@ -43,9 +49,9 @@ def error(fail):
     global exitStatus
     exitStatus=1
 
-def main(base, serviceLocationOverride, filter_text, attributes):
+def main(base, serviceLocationOverride):
     d=defer.Deferred()
-    s=SearchFactory(d, base, filter_text, attributes)
+    s=SearchFactory(d, base)
     d.addErrback(error)
     d.addBoth(lambda x: reactor.stop())
 
@@ -57,11 +63,7 @@ def main(base, serviceLocationOverride, filter_text, attributes):
     sys.exit(exitStatus)
 
 class MyOptions(usage.Options, usage.Options_service_location, usage.Options_base):
-    """LDAPtor command line search utility"""
-
-    def parseArgs(self, filter, *attributes):
-	self.opts['filter'] = filter
-	self.opts['attributes'] = attributes
+    """LDAPtor command line schema fetching utility"""
 
 if __name__ == "__main__":
     try:
@@ -72,6 +74,4 @@ if __name__ == "__main__":
 	sys.exit(1)
 
     main(config.opts['base'],
-	 config.opts['service-location'],
-	 config.opts['filter'],
-	 config.opts['attributes'])
+	 config.opts['service-location'])

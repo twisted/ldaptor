@@ -1,13 +1,13 @@
 from twisted.web import widgets, static
 from twisted.internet import defer, protocol
 from twisted.python.failure import Failure
-from ldaptor.protocols.ldap import ldapclient, ldapfilter
+from ldaptor.protocols.ldap import ldapclient
 from ldaptor.protocols.ldap import distinguishedname, ldapconnector, ldapsyntax
 from ldaptor.protocols import pureber, pureldap
+from ldaptor import ldapfilter
 from twisted.internet import reactor
 from ldaptor.apps.webui.htmlify import htmlify_attributes
 from ldaptor.apps.webui.uriquote import uriQuote, uriUnquote
-import string
 
 import template
 
@@ -46,10 +46,8 @@ class MoveForm(search.SearchForm):
 		request)]
 	elif submit != 'Put it here':
 	    return search.SearchForm.process(self, write, request, submit, **kw)
-	base = distinguishedname.DistinguishedName(self.baseObject)
-	dn = distinguishedname.DistinguishedName(self.dn)
 	newDN = distinguishedname.DistinguishedName(
-	    listOfRDNs=(dn.split()[0],)+base.split())
+	    listOfRDNs=(self.dn.split()[0],)+self.baseObject.split())
 
 	user = request.getSession().LdaptorPerspective.getPerspectiveName()
 	client = request.getSession().LdaptorIdentity.getLDAPClient()
@@ -58,7 +56,7 @@ class MoveForm(search.SearchForm):
 	    return ["<P>Del failed: connection lost."]
 
 
-	o = ldapsyntax.LDAPObject(client, dn)
+	o = ldapsyntax.LDAPEntry(client, self.dn)
 	d = o.move(newDN)
 
 	d.addCallback(lambda x: "<p>Success.")
@@ -98,7 +96,7 @@ class MovePage(template.BasicPage):
 	    done=0
 
 
-	dn=distinguishedname.DistinguishedName(stringValue=self.baseObject)
+	dn=self.baseObject
 	fromDN=uriUnquote(request.postpath[0])
 
 	r=[]

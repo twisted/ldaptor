@@ -2,13 +2,13 @@ from twisted.web import widgets
 from twisted.internet import defer, protocol
 from twisted.python.failure import Failure
 from twisted.python import reflect
-from ldaptor.protocols.ldap import ldapclient, ldapfilter
+from ldaptor.protocols.ldap import ldapclient
 from ldaptor.protocols.ldap import distinguishedname, ldapconnector
 from ldaptor.protocols import pureber, pureldap
+from ldaptor import ldapfilter
 from twisted.internet import reactor
 from ldaptor.apps.webui.htmlify import htmlify_attributes
 from ldaptor.apps.webui.uriquote import uriQuote, uriUnquote
-import string
 
 import template
 
@@ -87,7 +87,7 @@ class LDAPSearchEntry(ldapclient.LDAPSearch):
 
 	r=[]
 	dn=distinguishedname.DistinguishedName(stringValue=objectName)
-	while dn!=distinguishedname.DistinguishedName(stringValue=self.baseObject) \
+	while dn!=self.baseObject \
 	      and dn!=distinguishedname.DistinguishedName(stringValue=''):
 	    firstPart=dn.split()[0]
 
@@ -239,9 +239,8 @@ class SearchForm(widgets.Form):
 				contentDeferred.callback(["fail: %s"
 							  % reason.getErrorMessage()]))
 
-	    dn = distinguishedname.DistinguishedName(stringValue=self.baseObject)
 	    c=ldapconnector.LDAPConnector(
-		reactor, dn, s, overrides=self.serviceLocationOverride)
+		reactor, self.baseObject, s, overrides=self.serviceLocationOverride)
 	    c.connect()
 
 	    # Eww. But it'll do, t.w.widgets is deprecated anyway.
@@ -257,7 +256,7 @@ class SearchForm(widgets.Form):
 	for k,v in kw.items():
 	    if k[:len("search_")]=="search_":
 		k=k[len("search_"):]
-		v=string.strip(v)
+		v=v.strip()
 		if v=='':
 		    continue
 
@@ -295,8 +294,7 @@ class SearchForm(widgets.Form):
 			    contentDeferred.callback(["fail: %s"
 						      % reason.getErrorMessage()]))
 
-	dn = distinguishedname.DistinguishedName(stringValue=self.baseObject)
-	c=ldapconnector.LDAPConnector(reactor, dn, s,
+	c=ldapconnector.LDAPConnector(reactor, self.baseObject, s,
 				      overrides=self.serviceLocationOverride)
 	c.connect()
 
@@ -329,7 +327,7 @@ class SearchPage(template.BasicPage):
 	return '[' + '|'.join(l) + ']'
 
     def _navilink(self, request):
-	dn=distinguishedname.DistinguishedName(stringValue=self.baseObject)
+	dn=self.baseObject
 
 	r=[]
 	while dn!=distinguishedname.DistinguishedName(stringValue=''):

@@ -23,7 +23,6 @@ from ldaptor.mutablestring import MutableString
 from twisted.python import log
 from twisted.python.failure import Failure
 from twisted.internet import protocol, defer
-from ldaptor.samba import smbpassword
 
 class LDAPClientConnectionLostException(ldaperrors.LDAPException):
     pass
@@ -135,7 +134,7 @@ class LDAPSearch(LDAPOperation):
 		 ):
 	LDAPOperation.__init__(self, client)
 	self.deferred=deferred
-	r=pureldap.LDAPSearchRequest(baseObject=baseObject,
+	r=pureldap.LDAPSearchRequest(baseObject=str(baseObject),
 				     scope=scope,
 				     derefAliases=derefAliases,
 				     sizeLimit=sizeLimit,
@@ -164,62 +163,6 @@ class LDAPSearch(LDAPOperation):
 
     def handle_entry(self, objectName, attributes):
 	pass
-
-class LDAPModifyAttributes(LDAPOperation):
-    def __init__(self,
-		 deferred,
-		 client,
-		 object,
-		 modification):
-	"""
-	Request modification of LDAP attributes.
-
-	object is a string representation of the object DN.
-
-	modification is a list of LDAPModifications
-	"""
-
-	LDAPOperation.__init__(self, client)
-	self.deferred=deferred
-	r=pureldap.LDAPModifyRequest(object=object,
-				     modification=modification)
-	self.client.queue(r, self.handle_msg)
-
-    def handle_msg(self, msg):
-	assert isinstance(msg, pureldap.LDAPModifyResponse)
-	assert msg.referral==None #TODO
-	if msg.resultCode==0: #TODO ldap.errors.success
-	    assert msg.matchedDN==''
-	    self.deferred.callback(self)
-	    return 1
-	else:
-	    self.deferred.errback(Failure(
-		ldaperrors.get(msg.resultCode, msg.errorMessage)))
-	    return 1
-
-class LDAPDeleteAttributes(LDAPModifyAttributes):
-    def __init__(self,
-		 deferred,
-		 client,
-		 object,
-		 vals):
-	"""
-	Request deletion of LDAP attributes.
-
-	object is a string representation of the object DN.
-
-	vals is a list of (type, vals) pairs, where
-
-	type is a string
-
-	vals is a list of values to remove. Additionally, vals can be
-	an empty list or can be left out in order to remove all
-	values. """
-
-	mod = pureldap.LDAPModification_delete(vals=vals)
-	LDAPModifyAttributes.__init__(self, deferred, client,
-				      object, [mod])
-
 
 class LDAPAddEntry(LDAPOperation):
     def __init__(self,
@@ -258,93 +201,3 @@ class LDAPAddEntry(LDAPOperation):
 
     def handle_fail(self, fail):
 	pass
-
-
-class LDAPDelEntry(LDAPOperation):
-    def __init__(self,
-		 client,
-		 object):
-	"""
-	Request deleteition of LDAP entry.
-
-	object is a string representation of the object DN.
-	"""
-
-	LDAPOperation.__init__(self, client)
-	r=pureldap.LDAPDelRequest(entry=object)
-	self.client.queue(r, self.handle_msg)
-
-    def handle_msg(self, msg):
-	assert isinstance(msg, pureldap.LDAPDelResponse)
-	assert msg.referral==None #TODO
-	if msg.resultCode==0: #TODO ldap.errors.success
-	    assert msg.matchedDN==''
-	    self.handle_success()
-	    return 1
-	else:
-	    self.handle_fail(Failure(
-		ldaperrors.get(msg.resultCode, msg.errorMessage)))
-	    return 1
-
-    def handle_success(self):
-	pass
-
-    def handle_fail(self, fail):
-	pass
-
-class LDAPModifyPassword(LDAPOperation):
-    def __init__(self,
-		 deferred,
-		 client,
-		 userIdentity=None,
-		 oldPasswd=None,
-		 newPasswd=None):
-	LDAPOperation.__init__(self, client)
-	r=pureldap.LDAPPasswordModifyRequest(userIdentity=userIdentity,
-					     oldPasswd=oldPasswd,
-					     newPasswd=newPasswd)
-	self.client.queue(r, self.handle_msg)
-	self.deferred=deferred
-
-    def handle_msg(self, msg):
-	assert isinstance(msg, pureldap.LDAPExtendedResponse)
-	assert msg.referral==None #TODO
-	if msg.resultCode==0: #TODO ldap.errors.success
-	    assert msg.matchedDN==''
-	    self.deferred.callback(self)
-	    return 1
-	else:
-	    self.deferred.errback(Failure(
-		ldaperrors.get(msg.resultCode, msg.errorMessage)))
-	    return 1
-
-class LDAPModifySambaPassword(LDAPModifyAttributes):
-    def __init__(self,
-		 deferred,
-		 client,
-		 object,
-		 newPassword):
-	"""
-	Request modification of LDAP attributes.
-
-	object is a string representation of the object DN.
-
-	newPassword is plaintext version of new password.
-	"""
-
-	nthash=smbpassword.nthash(newPassword)
-	lmhash=smbpassword.lmhash(newPassword)
-
-	self.deferred=deferred
-	self.object=object
-
-	LDAPModifyAttributes.__init__(
-	    self, deferred, client, object,
-	    modification=pureldap.LDAPModification_replace(vals=(
-	    ('ntPassword', (nthash,)),
-	    ('lmPassword', (lmhash,)))))
-
-    def handle_success(self):
-	self.deferred.callback(self.object)
-    def handle_fail(self, fail):
-	self.deferred.errback(fail)

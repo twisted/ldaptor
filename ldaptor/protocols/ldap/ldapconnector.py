@@ -3,13 +3,21 @@ from ldaptor.protocols.ldap import distinguishedname
 
 class LDAPConnector(utils.SRVConnector):
     def __init__(self, reactor, dn, factory,
-		 overrides={}):
+		 overrides=None):
 	assert isinstance(dn, distinguishedname.DistinguishedName)
+        if overrides is None:
+            overrides={}
 	self.overriddenHost, self.overriddenPort = self._findOverRide(dn, overrides)
 
 	domain = dn.getDomainName()
 	utils.SRVConnector.__init__(self, reactor,
 				    'ldap', domain, factory)
+
+    def __getstate__(self):
+        r={}
+        r.update(self.__dict__)
+        r['connector'] = None
+        return r
 
     def _findOverRide(self, dn, overrides):
 	while dn != distinguishedname.DistinguishedName(stringValue=''):

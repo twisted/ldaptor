@@ -24,4 +24,5 @@ __all__ = [
     "ldif",
     "ldapsyntax",
     "distinguishedname",
+    "ldapconnector",
     ]

@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Ldaptor -- TODO
 # Copyright (C) 2001 Matthew W. Lefkowitz
 #
@@ -20,7 +18,7 @@
 Test cases for ldaptor.protocols.pureber module.
 """
 
-import unittest
+from twisted.trial import unittest
 from ldaptor.protocols import pureber
 from ldaptor.mutablestring import MutableString
 import types
@@ -46,14 +44,14 @@ class BERBaseEquality(unittest.TestCase):
 	(pureber.BERSequence, [[pureber.BERInteger(1000), pureber.BERInteger(2000)]]),
 	(pureber.BERSequence, [[pureber.BERInteger(2000), pureber.BERInteger(1000)]]),
 	(pureber.BEROctetString, ["foo"]),
-	(pureber.BEROctetString, ["b‰‰"]),
+	(pureber.BEROctetString, ["b"+chr(0xe4)+chr(0xe4)]),
 	)
 
     def testBERBaseEquality(self):
 	"""BER objects equal BER objects with same type and content"""
 	for class_, args in self.valuesToTest:
-	    x=apply(class_, args)
-	    y=apply(class_, args)
+	    x=class_(*args)
+	    y=class_(*args)
 	    assert x==x
 	    assert x==y
 
@@ -64,8 +62,8 @@ class BERBaseEquality(unittest.TestCase):
 		if i!=j:
 		    i_class, i_args = self.valuesToTest[i]
 		    j_class, j_args = self.valuesToTest[j]
-		    x=apply(i_class, i_args)
-		    y=apply(j_class, j_args)
+		    x=i_class(*i_args)
+		    y=j_class(*j_args)
 		    assert x!=y
 
 
@@ -99,7 +97,7 @@ class BERIntegerKnownValues(unittest.TestCase):
     def testFromBERIntegerKnownValues(self):
 	"""BERInteger(encoded="...") should give known result with known input"""
 	for integer, encoded in self.knownValues:
-	    m=MutableString(apply(s,encoded))
+	    m=MutableString(s(*encoded))
 	    m.append('foo')
 	    result = pureber.BERInteger(encoded=m, berdecoder=pureber.BERDecoderContext())
 	    assert m=='foo'
@@ -147,7 +145,7 @@ class BEROctetStringKnownValues(unittest.TestCase):
     def testFromBEROctetStringKnownValues(self):
 	"""BEROctetString(encoded="...") should give known result with known input"""
 	for st, encoded in self.knownValues:
-	    m=MutableString(apply(s,encoded))
+	    m=MutableString(s(*encoded))
 	    m.append('foo')
 	    result = pureber.BEROctetString(encoded=m, berdecoder=pureber.BERDecoderContext())
 	    assert m=='foo'
@@ -196,7 +194,7 @@ class BERNullKnownValues(unittest.TestCase):
     def testFromBERNullKnownValues(self):
 	"""BERNull(encoded="...") should give known result with known input"""
 	encoded=[0x05, 0x00]
-	m=MutableString(apply(s,encoded))
+	m=MutableString(s(*encoded))
 	m.append('foo')
 	result = pureber.BERNull(encoded=m, berdecoder=pureber.BERDecoderContext())
 	assert m=='foo'
@@ -246,7 +244,7 @@ class BERBooleanKnownValues(unittest.TestCase):
     def testFromBERBooleanKnownValues(self):
 	"""BERBoolean(encoded="...") should give known result with known input"""
 	for integer, encoded, canon in self.knownValues:
-	    m=MutableString(apply(s,encoded))
+	    m=MutableString(s(*encoded))
 	    m.append('foo')
 	    result = pureber.BERBoolean(encoded=m, berdecoder=pureber.BERDecoderContext())
 	    assert m=='foo'
@@ -298,7 +296,7 @@ class BEREnumeratedKnownValues(unittest.TestCase):
     def testFromBEREnumeratedKnownValues(self):
 	"""BEREnumerated(encoded="...") should give known result with known input"""
 	for integer, encoded in self.knownValues:
-	    m=MutableString(apply(s,encoded))
+	    m=MutableString(s(*encoded))
 	    m.append('foo')
 	    result = pureber.BEREnumerated(encoded=m, berdecoder=pureber.BERDecoderContext())
 	    assert m=='foo'
@@ -348,7 +346,7 @@ class BERSequenceKnownValues(unittest.TestCase):
     def testFromBERSequenceKnownValues(self):
 	"""BERSequence(encoded="...") should give known result with known input"""
 	for content, encoded in self.knownValues:
-	    m=MutableString(apply(s,encoded))
+	    m=MutableString(s(*encoded))
 	    m.append('foo')
 	    result = pureber.BERSequence(encoded=m, berdecoder=pureber.BERDecoderContext())
 	    assert m=='foo'
@@ -371,6 +369,3 @@ class BERSequenceKnownValues(unittest.TestCase):
 
 # TODO BERSequenceOf
 # TODO BERSet
-
-if __name__ == '__main__':
-    unittest.main()

@@ -3,8 +3,8 @@ from twisted.internet import defer
 from twisted.python import failure
 
 from ldaptor.protocols import pureldap
-from ldaptor.protocols.ldap import ldapclient, ldaperrors
-from ldaptor.protocols.ldap import schema
+from ldaptor.protocols.ldap import ldapclient, ldaperrors, ldapsyntax
+from ldaptor.protocols.ldap import fetchschema
 from ldaptor.apps.webui.uriquote import uriQuote, uriUnquote
 
 from cStringIO import StringIO
@@ -41,11 +41,6 @@ class LDAPSearch_FetchByDN(ldapclient.LDAPSearch):
 	self.dn=objectName
 	self.attributes=attributes
 
-class DoModify(ldapclient.LDAPModifyAttributes):
-    def __init__(self, client, object, modification, deferred):
-	ldapclient.LDAPModifyAttributes.__init__(self, deferred, client, object, modification)
-
-
 multiLineAttributeTypes = {
     'description': 1,
     }
@@ -62,14 +57,16 @@ class EditForm(widgets.Form):
 	}
 
     def __init__(self, dn, attributes, attributeTypes, objectClasses):
-	self.dn=dn
-
-	self.attributes={}
+	attr={}
 	for k,vs in attributes:
 	    k=str(k)
 	    vs=map(str, vs)
-	    assert not self.attributes.has_key(k)
-	    self.attributes[k]=vs
+	    assert not attr.has_key(k)
+	    attr[k]=vs
+
+        self.object = ldapsyntax.LDAPEntry(client=None,
+                                           dn=dn,
+                                           attributes=attr)
 
 	self.attributeTypes=attributeTypes
 	self.objectClasses=objectClasses
@@ -88,17 +85,20 @@ class EditForm(widgets.Form):
 	    if attrtype.uiHint_multiline:
 		if attrtype.single_value:
 		    assert len(values)==1
-		    result.append(('text', attr, 'edit_'+attr, values[0], attrtype.desc or ''))
-		    result.append(('hidden', '', 'old_'+attr, values[0]))
+                    for val in values:
+                        result.append(('text', attr, 'edit_'+attr, val, attrtype.desc or ''))
+                        result.append(('hidden', '', 'old_'+attr, val))
 		else:
 		    assert len(values)==1 # TODO handle multivalued multiline attributetypes
-		    result.append(('text', attr, 'edit_'+attr, values[0], attrtype.desc or ''))
-		    result.append(('hidden', '', 'old_'+attr, values[0]))
+                    for val in values:
+                        result.append(('text', attr, 'edit_'+attr, val, attrtype.desc or ''))
+                        result.append(('hidden', '', 'old_'+attr, val))
 	    else:
 		if attrtype.single_value:
 		    assert len(values)==1
-		    result.append(('string', attr, 'edit_'+attr, values[0], attrtype.desc or ''))
-		    result.append(('hidden', '', 'old_'+attr, values[0]))
+                    for val in values:
+                        result.append(('string', attr, 'edit_'+attr, val, attrtype.desc or ''))
+                        result.append(('hidden', '', 'old_'+attr, val))
 		else:
 		    # TODO maybe use a string field+button to add entries,
 		    # multiselection list+button to remove entries?
@@ -108,14 +108,14 @@ class EditForm(widgets.Form):
 
     def getFormFields(self, request, kws={}):
 	r=[]
-	assert self.attributes
+	assert self.object
 
 	process = {}
-	for k,v in self.attributes.items():
+	for k in self.object.keys():
 	    process[k.upper()]=k
 
 	# TODO sort objectclasses somehow?
-	objectClasses = list(self.attributes[process["OBJECTCLASS"]])
+	objectClasses = list(self.object[process["OBJECTCLASS"]])
 	objectClassesSeen = {}
 	while objectClasses:
 	    objclassName = objectClasses.pop()
@@ -140,13 +140,13 @@ class EditForm(widgets.Form):
 			found_one=1
 			if process[attr.upper()]!=None:
 			    self._one_formfield(attr,
-						self.attributes[process[attr.upper()]],
+						self.object[process[attr.upper()]],
 						result=r)
 			    for name in real_attr.name:
 				process[name.upper()]=None
 
 		if not found_one:
-		    raise "Object doesn't have required attribute %s: %s"%(attr, self.attributes)
+		    raise "Object doesn't have required attribute %s: %s"%(attr, self.object)
 
 	    for attr_alias in objclass.may:
 		found_one=0
@@ -156,7 +156,7 @@ class EditForm(widgets.Form):
 			found_one=1
 			if process[attr.upper()]!=None:
 			    self._one_formfield(attr,
-						self.attributes[process[attr.upper()]],
+						self.object[process[attr.upper()]],
 						result=r)
 
 		if not found_one:
@@ -239,39 +239,42 @@ class EditForm(widgets.Form):
 		    changes.append((attr, old, v))
 		    #TODO
 	if not changes:
-	    changes_desc=" no changes!"
+            changes_desc=" no changes!"
 	    defe=""
 	else:
-	    changes_desc=""
-	    mod=[]
-	    for attr,old,new in changes:
-		if new:
-		    if not self.attributes.has_key(attr):
-			self.attributes[attr]=[]
-		    self.attributes[attr].extend(new)
-		    mod.append(pureldap.LDAPModification_add(vals=((attr, new),)))
-		if old:
-		    for x in old: self.attributes[attr].remove(x)
-		    mod.append(pureldap.LDAPModification_delete(vals=((attr, old),)))
-		if old:
-		    changes_desc=changes_desc+"<br>changing %s: remove %s"%(repr(attr), old)
-		if new:
-		    changes_desc=changes_desc+"<br>changing %s: add %s"%(repr(attr), new)
-	    defe=defer.Deferred()
-	    if not mod:
-		defe.callback([""])
-	    else:
-		DoModify(client, self.dn, mod, defe)
-		defe.addCallbacks(
-		    callback=lambda x: "<p>Success.",
-		    errback=(lambda fail:
-			     "<p><strong>Failed</strong>: %s" \
-			     %fail.getErrorMessage()))
+            self.object.client=client
+            changes_desc=""
+            for attr,old,new in changes:
+                if new:
+                    if self.object.has_key(attr):
+                        self.object[attr].update(new)
+                    else:
+                        self.object[attr]=new
+                if old:
+                    for x in old:
+                        if x=='':
+                            continue
+                        try:
+                            self.object[attr].remove(x)
+                        except ldapsyntax.CannotRemoveRDNError, e:
+                            changes_desc=changes_desc+"<br>changing %s: cannot remove old value %s: %s"%(repr(attr), x, e)
+                            old.remove(x)
+                if old:
+                    changes_desc=changes_desc+"<br>changing %s: remove %s"%(repr(attr), old)
+                if new:
+                    changes_desc=changes_desc+"<br>changing %s: add %s"%(repr(attr), new)
+
+            defe=self.object.commit()
+            defe.addCallbacks(
+                callback=lambda dummy: "<p>Success.",
+                errback=(lambda fail:
+                         "<p><strong>Failed</strong>: %s" \
+                         %fail.getErrorMessage()))
 
 	return self._output_status_and_form(
 	    request, kw,
 	    "<P>Submitting edit as user %s.."%user,
-	    changes_desc,
+            changes_desc,
 	    defe)
 
 class CreateEditForm:
@@ -299,7 +302,7 @@ class CreateError:
 
     def __call__(self, fail):
 	self.request.args['incomplete']=['true']
-	self.deferred.callback(["Trouble while fetching %s for %s: %s.\n<HR>"%(self.what, repr(self.dn), fail.getErrorMessage)])
+	self.deferred.callback(["Trouble while fetching %s for %s: %s.\n<HR>"%(self.what, repr(self.dn), fail.getErrorMessage())])
 
 class NeedDNError(widgets.Widget):
     def display(self, request):
@@ -332,14 +335,10 @@ class EditPage(template.BasicPage):
 
 	    client = request.getSession().LdaptorIdentity.getLDAPClient()
 	    if client:
-		deferred=defer.Deferred()
-		schema.LDAPGet_subschemaSubentry(deferred, client, dn)
-		deferred.addCallbacks(
-		    callback=self._getContent_2,
-		    callbackArgs=(dn, request, client, d),
-		    errback=CreateError(d, 'subschema entry', dn, request),
-		    )
-		deferred.addErrback(defer.logError)
+                deferred = fetchschema.fetch(client, dn)
+                deferred.addCallback(self._getContent_3,
+                                     dn, request, client, d)
+                deferred.addErrback(CreateError(d, 'schema', dn, request))
 	    else:
 		CreateError(d, 'session client', dn, request)(
 		    failure.Failure(
@@ -347,19 +346,6 @@ class EditPage(template.BasicPage):
 						"connection lost")))
 
 	    return [self._header(request), d]
-
-    def _getContent_2(self, subschemaSubentry, dn, request, client, d):
-	deferred=defer.Deferred()
-
-	schema.LDAPGetSchema(
-	    deferred,
-	    client, subschemaSubentry,
-	    )
-	deferred.addCallbacks(
-	    callback=self._getContent_3,
-	    callbackArgs=(dn, request, client, d),
-	    errback=CreateError(d, 'schema', dn, request),
-	    )
 
     def _getContent_3(self, x, dn, request, client, d):
 	attributeTypes, objectClasses = x

@@ -1,10 +1,8 @@
-#!/usr/bin/python
-
 """
 Test cases for ldaptor.protocols.ldap.distinguishedname module.
 """
 
-import unittest
+from twisted.trial import unittest
 from ldaptor.protocols.ldap import distinguishedname as dn
 
 class TestCaseWithKnownValues(unittest.TestCase):
@@ -13,11 +11,16 @@ class TestCaseWithKnownValues(unittest.TestCase):
     def testKnownValues(self):
 	for s, l in self.knownValues:
 	    fromString = dn.DistinguishedName(stringValue=s)
-	    fromList = dn.DistinguishedName(
-		listOfRDNs=[dn.RelativeDistinguishedName(attributeTypesAndValues=x)
-			    for x in l])
+            listOfRDNs = []
+            for av in l:
+                listOfAttributeTypesAndValues = []
+                for a,v in av:
+                    listOfAttributeTypesAndValues.append(dn.LDAPAttributeTypeAndValue(attributeType=a, value=v))
+                r=dn.RelativeDistinguishedName(attributeTypesAndValues=listOfAttributeTypesAndValues)
+                listOfRDNs.append(r)
+	    fromList = dn.DistinguishedName(listOfRDNs=listOfRDNs)
 
-	    assert fromString == fromList
+	    self.assertEquals(fromString, fromList)
 
 	    fromStringToString = str(fromString)
 	    fromListToString = str(fromList)
@@ -30,41 +33,41 @@ class LDAPDistinguishedName_Escaping(TestCaseWithKnownValues):
 
 	('', []),
 
-	('foo', [['foo']]),
+	('cn=foo', [[('cn', 'foo')]]),
 
-	(r'\,bar', [[r',bar']]),
-	(r'foo\,bar', [[r'foo,bar']]),
-	(r'foo\,', [[r'foo,']]),
+	(r'cn=\,bar', [[('cn', r',bar')]]),
+	(r'cn=foo\,bar', [[('cn', r'foo,bar')]]),
+	(r'cn=foo\,', [[('cn', r'foo,')]]),
 
-	(r'\+bar', [[r'+bar']]),
-	(r'foo\+bar', [[r'foo+bar']]),
-	(r'foo\+', [[r'foo+']]),
+	(r'cn=\+bar', [[('cn', r'+bar')]]),
+	(r'cn=foo\+bar', [[('cn', r'foo+bar')]]),
+	(r'cn=foo\+', [[('cn', r'foo+')]]),
 
-	(r'\"bar', [[r'"bar']]),
-	(r'foo\"bar', [[r'foo"bar']]),
-	(r'foo\"', [[r'foo"']]),
+	(r'cn=\"bar', [[('cn', r'"bar')]]),
+	(r'cn=foo\"bar', [[('cn', r'foo"bar')]]),
+	(r'cn=foo\"', [[('cn', r'foo"')]]),
 
-	(r'\\bar', [[r'\bar']]),
-	(r'foo\\bar', [[r'foo\bar']]),
-	(r'foo\\', [['foo\\']]),
+	(r'cn=\\bar', [[('cn', r'\bar')]]),
+	(r'cn=foo\\bar', [[('cn', r'foo\bar')]]),
+	(r'cn=foo\\', [[('cn', 'foo\\')]]),
 
-	(r'\<bar', [[r'<bar']]),
-	(r'foo\<bar', [[r'foo<bar']]),
-	(r'foo\<', [[r'foo<']]),
+	(r'cn=\<bar', [[('cn', r'<bar')]]),
+	(r'cn=foo\<bar', [[('cn', r'foo<bar')]]),
+	(r'cn=foo\<', [[('cn', r'foo<')]]),
 
-	(r'\>bar', [[r'>bar']]),
-	(r'foo\>bar', [[r'foo>bar']]),
-	(r'foo\>', [[r'foo>']]),
+	(r'cn=\>bar', [[('cn', r'>bar')]]),
+	(r'cn=foo\>bar', [[('cn', r'foo>bar')]]),
+	(r'cn=foo\>', [[('cn', r'foo>')]]),
 
-	(r'\;bar', [[r';bar']]),
-	(r'foo\;bar', [[r'foo;bar']]),
-	(r'foo\;', [[r'foo;']]),
+	(r'cn=\;bar', [[('cn', r';bar')]]),
+	(r'cn=foo\;bar', [[('cn', r'foo;bar')]]),
+	(r'cn=foo\;', [[('cn', r'foo;')]]),
 
-	(r'\#bar', [[r'#bar']]),
+	(r'cn=\#bar', [[('cn', r'#bar')]]),
 
-	(r'\ bar', [[r' bar']]),
+	(r'cn=\ bar', [[('cn', r' bar')]]),
 
-	(r'bar\ ', [[r'bar ']]),
+	(r'cn=bar\ ', [[('cn', r'bar ')]]),
 
 	)
 
@@ -72,23 +75,34 @@ class LDAPDistinguishedName_RFC2253_Examples(TestCaseWithKnownValues):
     knownValues = (
 
 	('CN=Steve Kille,O=Isode Limited,C=GB',
-	 [['CN=Steve Kille'], ['O=Isode Limited'], ['C=GB']]),
+	 [[('CN', 'Steve Kille')],
+          [('O', 'Isode Limited')],
+          [('C', 'GB')]]),
 
 
 	('OU=Sales+CN=J. Smith,O=Widget Inc.,C=US',
-	 [['OU=Sales', 'CN=J. Smith'], ['O=Widget Inc.'], ['C=US']]),
+	 [[('OU', 'Sales'),
+           ('CN', 'J. Smith')],
+          [('O', 'Widget Inc.')],
+          [('C', 'US')]]),
 
 	(r'CN=L. Eagle,O=Sue\, Grabbit and Runn,C=GB',
-	 [['CN=L. Eagle'], ['O=Sue, Grabbit and Runn'], ['C=GB']]),
+	 [[('CN', 'L. Eagle')],
+          [('O', 'Sue, Grabbit and Runn')],
+          [('C', 'GB')]]),
 
 	(r'CN=Before\0DAfter,O=Test,C=GB',
-	 [['CN=Before\x0dAfter'], ['O=Test'], ['C=GB']]),
+	 [[('CN', 'Before\x0dAfter')],
+          [('O', 'Test')],
+          [('C', 'GB')]]),
 
 	(r'1.3.6.1.4.1.1466.0=#04024869,O=Test,C=GB',
-	 [['1.3.6.1.4.1.1466.0=#04024869'], ['O=Test'], ['C=GB']]),
+	 [[('1.3.6.1.4.1.1466.0', '#04024869')],
+          [('O', 'Test')],
+          [('C', 'GB')]]),
 
 	(u'SN=Lu\u010di\u0107'.encode('utf-8'),
-	 [[u'SN=Lu\u010di\u0107'.encode('utf-8')]])
+	 [[('SN', u'Lu\u010di\u0107'.encode('utf-8'))]])
 
 	)
 
@@ -96,10 +110,10 @@ class LDAPDistinguishedName_InitialSpaces(TestCaseWithKnownValues):
     knownValues = (
 
 	('cn=foo, ou=bar,  dc=quux, \ attributeThatStartsWithSpace=Value',
-	 [['cn=foo'],
-	  ['ou=bar'],
-	  ['dc=quux'],
-	  [' attributeThatStartsWithSpace=Value']]),
+	 [[('cn', 'foo')],
+	  [('ou', 'bar')],
+	  [('dc', 'quux')],
+	  [(' attributeThatStartsWithSpace', 'Value')]]),
 
 	)
 
@@ -212,5 +226,23 @@ class LDAPDistinguishedName_contains(unittest.TestCase):
 	assert not self.c.contains(self.other)
 	assert not self.other.contains(self.c)
 
-if __name__ == '__main__':
-    unittest.main()
+class LDAPDistinguishedName_Malformed(unittest.TestCase):
+    def testMalformed(self):
+        self.assertRaises(dn.InvalidRelativeDistinguishedName,
+                          dn.DistinguishedName,
+                          stringValue='foo')
+        self.assertRaises(dn.InvalidRelativeDistinguishedName,
+                          dn.DistinguishedName,
+                          stringValue='foo,dc=com')
+        self.assertRaises(dn.InvalidRelativeDistinguishedName,
+                          dn.DistinguishedName,
+                          stringValue='ou=something,foo')
+        self.assertRaises(dn.InvalidRelativeDistinguishedName,
+                          dn.DistinguishedName,
+                          stringValue='foo,foo')
+
+class LDAPDistinguishedName_Prettify(unittest.TestCase):
+    def testPrettifySpaces(self):
+        """str(DistinguishedName(...)) prettifies the DN by removing extra whitespace."""
+	d=dn.DistinguishedName(stringValue='cn=foo, o=bar,  c=us')
+	assert str(d) == 'cn=foo,o=bar,c=us'

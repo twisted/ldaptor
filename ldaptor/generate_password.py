@@ -20,15 +20,15 @@ class ReadPassword(protocol.ProcessProtocol):
     def processEnded(self, reason):
 	if self.stderr:
 	    self.deferred.errback(failure.Failure(
-		PwgenException(self.stderr)))
+		PwgenException(reason, self.stderr)))
 	elif self.stdout:
 	    lines=[x for x in self.stdout.split('\n') if x]
 	    if len(lines)!=self.count:
 		self.deferred.errback(failure.Failure(
-		    PwgenException('Wrong number of lines received.')))
+		    PwgenException(reason, 'Wrong number of lines received.')))
 	    self.deferred.callback(lines)
 	else:
-	    self.deferred.errback(failure.Failure(PwgenException('')))
+	    self.deferred.errback(failure.Failure(PwgenException(reason, '')))
 
 def generate(reactor, n=1):
     assert n>0

@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
 import sys, getpass
-from ldaptor.protocols.ldap import ldapclient, ldapfilter, ldif, ldapsyntax, distinguishedname, ldapconnector
+from ldaptor.protocols.ldap import ldapclient, ldif, ldapsyntax, distinguishedname, ldapconnector
 from ldaptor.protocols import pureber, pureldap
-from ldaptor import usage
+from ldaptor import usage, ldapfilter
 from twisted.internet import protocol, reactor, defer
 
 class Move(ldapclient.LDAPClient):
@@ -21,8 +21,8 @@ class Move(ldapclient.LDAPClient):
 
     def _handle_bind_success(self, x):
 	matchedDN, serverSaslCreds = x
-	o=ldapsyntax.LDAPObject(client=self,
-				dn=self.factory.fromDN)
+	o=ldapsyntax.LDAPEntry(client=self,
+                               dn=self.factory.fromDN)
 	d=o.move(self.factory.toDN)
 	d.chainDeferred(self.factory.deferred)
 

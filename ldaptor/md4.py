@@ -133,8 +133,6 @@ class MD4Type:
 	ilen = U32(len(buf))
 	#print (ilen)
 
-	# проверяем не переполнилась ли первая длина
-	# длина измеряется в битах, поэтому умножаем на 8
 	if (long(self.len1 + (ilen << 3)) < long(self.len1)):
 	    self.len2 = self.len2 + U32(1)
 

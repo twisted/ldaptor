@@ -34,6 +34,6 @@ def callback(basedir, dirname, filenames):
 	    test(modulename)
     filenames[:]=r
 
-sys.path.insert(0, 'lib')
-dir=os.path.join(os.path.dirname(sys.argv[0]), '..', 'lib')
-os.path.walk(dir, callback, dir)
+sys.path.insert(0, '.')
+dir=os.path.join(os.path.dirname(sys.argv[0]), '..')
+os.path.walk(os.path.join(dir, 'ldaptor'), callback, dir)

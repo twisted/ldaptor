@@ -61,23 +61,78 @@ def _splitOnNotEscaped(s, separator):
 		s=s[1:]
     return r
 
+class InvalidRelativeDistinguishedName(Exception):
+    """Invalid relative distinguished name."""
+
+    def __init__(self, rdn):
+        Exception.__init__(self)
+        self.rdn = rdn
+
+    def __str__(self):
+        return "Invalid relative distinguished name %s." \
+               % repr(self.rdn)
+
+class LDAPAttributeTypeAndValue:
+    # TODO I should be used everywhere
+    def __init__(self, stringValue=None, attributeType=None, value=None):
+        if stringValue is None:
+	    assert attributeType is not None
+	    assert value is not None
+	    self.attributeType = attributeType
+            self.value = value
+	else:
+	    assert attributeType is None
+	    assert value is None
+            try:
+                self.attributeType, self.value = stringValue.split('=', 1)
+            except ValueError, e:
+                if str(e) == 'unpack list of wrong size':
+                    raise InvalidRelativeDistinguishedName, stringValue
+                else:
+                    raise
+
+    def __str__(self):
+	return '='.join((escape(self.attributeType), escape(self.value)))
+
+    def __repr__(self):
+	return (self.__class__.__name__
+		+ '(attributeType='
+		+ repr(self.attributeType)
+		+ ', value='
+		+ repr(self.value)
+		+ ')')
+
+    def __hash__(self):
+	return hash((self.attributeType, self.value))
+
+    def __eq__(self, other):
+	if not isinstance(other, LDAPAttributeTypeAndValue):
+	    return NotImplemented
+	return (self.attributeType == other.attributeType
+                and self.value == other.value)
+
+    def __ne__(self, other):
+	return not (self == other)
+
 class RelativeDistinguishedName:
     """LDAP Relative Distinguished Name."""
 
     def __init__(self, stringValue=None, attributeTypesAndValues=None):
 	if stringValue is None:
 	    assert attributeTypesAndValues is not None
+            import types
+            assert not isinstance(attributeTypesAndValues, types.StringType)
 	    self.attributeTypesAndValues = tuple(attributeTypesAndValues)
 	else:
 	    assert attributeTypesAndValues is None
-	    self.attributeTypesAndValues = tuple([unescape(x)
+	    self.attributeTypesAndValues = tuple([LDAPAttributeTypeAndValue(stringValue=unescape(x))
 						  for x in _splitOnNotEscaped(stringValue, '+')])
 
     def split(self):
 	return self.attributeTypesAndValues
 
     def __str__(self):
-	return '+'.join([escape(x) for x in self.attributeTypesAndValues])
+	return '+'.join([str(x) for x in self.attributeTypesAndValues])
 
     def __repr__(self):
 	return (self.__class__.__name__
@@ -148,10 +203,9 @@ class DistinguishedName:
 	    if rdn.count() != 1:
 		break
 	    attributeTypeAndValue = rdn.split()[0]
-	    attributeType, value = attributeTypeAndValue.split('=', 1)
-	    if attributeType.upper() != 'DC':
+	    if attributeTypeAndValue.attributeType.upper() != 'DC':
 		break
-	    domainParts.insert(0, value)
+	    domainParts.insert(0, attributeTypeAndValue.value)
 	if domainParts:
 	    return '.'.join(domainParts)
 	else:
@@ -161,6 +215,8 @@ class DistinguishedName:
 	"""Does the tree rooted at DN contain or equal the other DN."""
 	if self == other:
 	    return 1
+        if not isinstance(other, DistinguishedName):
+            other=DistinguishedName(other)
 	its=list(other.split())
 	mine=list(self.split())
 

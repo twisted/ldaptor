@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Ldaptor -- TODO
 # Copyright (C) 2001 Matthew W. Lefkowitz
 #
@@ -20,7 +18,7 @@
 Test cases for ldaptor.protocols.pureldap module.
 """
 
-import unittest
+from twisted.trial import unittest
 from ldaptor.protocols import pureldap, pureber
 from ldaptor.mutablestring import MutableString
 import types
@@ -99,12 +97,122 @@ class KnownValues(unittest.TestCase):
 	 + [len("ou=People,dc=example,dc=com")]
 	 + l("ou=People,dc=example,dc=com")),
 
-	)
+        (pureldap.LDAPSearchRequest,
+         [],
+         {'baseObject': 'dc=yoja,dc=example,dc=com',
+          },
+         [0x63, 57]
+         + [0x04]
+         + [len('dc=yoja,dc=example,dc=com')]
+         + l('dc=yoja,dc=example,dc=com')
+         # scope
+         + [0x0a, 1, 2]
+         # derefAliases
+         + [0x0a, 1, 0]
+         # sizeLimit
+         + [0x02, 1, 0]
+         # timeLimit
+         + [0x02, 1, 0]
+         # typesOnly
+         + [0x01, 1, 0]
+         # filter
+         + [135, 11, 111, 98, 106, 101, 99, 116, 99, 108, 97, 115, 115]
+         # attributes
+         + [48, 0]
+         ),
+
+        (pureldap.LDAPUnbindRequest,
+         [],
+         {},
+         [0x42, 0x00]
+	),
+
+        (pureldap.LDAPSearchResultDone,
+         [],
+         {'resultCode': 0,
+          },
+         [0x65, 0x07]
+         # resultCode
+         + [0x0a, 0x01, 0x00]
+         # matchedDN
+         + [0x04]
+         + [len('')]
+         + l('')
+         # errorMessage
+         + [0x04]
+         + [len('')]
+         + l('')
+         # referral, TODO
+         + []
+	),
+
+        (pureldap.LDAPSearchResultDone,
+         [],
+         {'resultCode': 0,
+          'matchedDN': 'dc=foo,dc=example,dc=com',
+          },
+         [0x65, 31]
+         # resultCode
+         + [0x0a, 0x01, 0x00]
+         # matchedDN
+         + [0x04]
+         + [len('dc=foo,dc=example,dc=com')]
+         + l('dc=foo,dc=example,dc=com')
+         # errorMessage
+         + [0x04]
+         + [len('')]
+         + l('')
+         # referral, TODO
+         + []
+	),
+
+        (pureldap.LDAPSearchResultDone,
+         [],
+         {'resultCode': 0,
+          'matchedDN': 'dc=foo,dc=example,dc=com',
+          'errorMessage': 'the foobar was fubar',
+          },
+         [0x65, 51]
+         # resultCode
+         + [0x0a, 0x01, 0x00]
+         # matchedDN
+         + [0x04]
+         + [len('dc=foo,dc=example,dc=com')]
+         + l('dc=foo,dc=example,dc=com')
+         # errorMessage
+         + [0x04]
+         + [len('the foobar was fubar')]
+         + l('the foobar was fubar',)
+         # referral, TODO
+         + []
+	),
+
+        (pureldap.LDAPSearchResultDone,
+         [],
+         {'resultCode': 0,
+          'errorMessage': 'the foobar was fubar',
+          },
+         [0x65, 27]
+         # resultCode
+         + [0x0a, 0x01, 0x00]
+         # matchedDN
+         + [0x04]
+         + [len('')]
+         + l('')
+         # errorMessage
+         + [0x04]
+         + [len('the foobar was fubar')]
+         + l('the foobar was fubar',)
+         # referral, TODO
+         + []
+	),
+
+        )
 
     def testToLDAP(self):
 	"""str(LDAPClass(...)) should give known result with known input"""
 	for klass, args, kwargs, encoded in self.knownValues:
-	    result = apply(klass, args, kwargs)
+	    result = klass(*args, **kwargs)
 	    result = str(result)
 	    result = map(ord, result)
 	    if result!=encoded:
@@ -117,12 +225,12 @@ class KnownValues(unittest.TestCase):
     def testFromLDAP(self):
 	"""LDAPClass(encoded="...") should give known result with known input"""
 	for klass, args, kwargs, encoded in self.knownValues:
-	    m=MutableString(apply(s,encoded))
+	    m=MutableString(s(*encoded))
 	    m.append('foo')
 	    result = klass(encoded=m, berdecoder=pureber.BERDecoderContext())
 	    assert m=='foo'
 
-	    shouldBe = apply(klass, args, kwargs)
+	    shouldBe = klass(*args, **kwargs)
 	    #TODO shouldn't use str below
 	    assert str(result)==str(shouldBe), \
 		   "Class %s(*%s, **%s) doesn't decode properly: " \
@@ -134,7 +242,7 @@ class KnownValues(unittest.TestCase):
 	"""LDAPClass(encoded="...") with too short input should throw BERExceptionInsufficientData"""
 	for klass, args, kwargs, encoded in self.knownValues:
 	    for i in xrange(len(encoded)):
-		m=MutableString(apply(s,encoded))[:i]
+		m=MutableString(s(*encoded))[:i]
 		self.assertRaises(pureber.BERExceptionInsufficientData,
 				  klass,
 				  encoded=m,
@@ -145,6 +253,3 @@ class KnownValues(unittest.TestCase):
 	m=str(pureldap.LDAPModifyRequest(object='foo', modification=[pureldap.LDAPModification_delete(['bar'])]))
 	for i in xrange(len(m)):
 	    self.assertRaises(pureber.BERExceptionInsufficientData, pureldap.LDAPModifyRequest, encoded=m[:i], berdecoder=pureber.BERDecoderContext())
-
-if __name__ == '__main__':
-    unittest.main()

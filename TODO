@@ -7,8 +7,6 @@ TODO file for the Ldaptor project.
 
 * ldaptor-webui: edit: adding objectClasses
 
-* ldaptor-webui: editing hierarchical things
-
 * ldaptor-webui, ldaptor-utils: editing a users groups
    - for ldaptor-webui, a multiselection with a list of existing
       groups to choose from
@@ -46,9 +44,6 @@ TODO file for the Ldaptor project.
 
 * ldaptor-webui: on failed add, don't clear form
 
-* move the Deferred handling from LDAPModifySambaPassword to
-   LDAPModifyAttributes
-
 * ldaptor-ldap2dhcpconf: data validity
 
 * ldaptor-webui: forms accesskey, fieldset & legend, disabled,
@@ -56,8 +51,6 @@ TODO file for the Ldaptor project.
 
 * ldaptor-webui: choosing the right dn key for users? Prefer
    uid?
-
-* ldaptor-webui: subtrees, creating objects in them, etc..
 
 * ldaptor-webui: samba fields.
 
@@ -73,8 +66,6 @@ TODO file for the Ldaptor project.
 
 * ldaptor-search: twisted support for --base=''
 
-* SRV records
-
 * Samba rid=2*uid+1000, primaryGroupID=2*gid+1001
 
 * Samba pwdLastSet, logonTime, logoffTime, pwdCanChange, pwdMustChange
@@ -83,3 +74,5 @@ TODO file for the Ldaptor project.
 * Samba ntpassword, lmpassword equal clear text passwords: keep
    secret.
 
+* ldaptor.schema: add stringification in the same format it parses.
+   bin/ldaptor-fetchschema should be ok already.

@@ -1,36 +1,14 @@
 from twisted.web import widgets
 from twisted.internet import defer, protocol
 from twisted.python.failure import Failure
-from ldaptor.protocols.ldap import ldapclient, ldapfilter, ldaperrors
+from ldaptor.protocols.ldap import ldaperrors, ldapsyntax
 from ldaptor.protocols import pureber, pureldap
-from ldaptor.apps.webui.htmlify import htmlify_attributes
-from ldaptor import generate_password
+from ldaptor.apps.webui.htmlify import htmlify_object
+from ldaptor import generate_password, ldapfilter
 from ldaptor.apps.webui.uriquote import uriQuote, uriUnquote
 from twisted.internet import reactor
-import string
 
 import template
-
-
-class LDAPSearchEntry(ldapclient.LDAPSearch):
-    def __init__(self,
-		 deferred,
-		 client,
-		 baseObject,
-		 filter=pureldap.LDAPFilterMatchAll):
-	self.ldapObjects=[]
-	ldapclient.LDAPSearch.__init__(self, deferred, client,
-				       baseObject=baseObject,
-				       filter=filter,
-				       sizeLimit=20,
-				       )
-	deferred.addCallback(self._ok)
-
-    def _ok(self, me):
-	return me.ldapObjects
-
-    def handle_entry(self, objectName, attributes):
-	self.ldapObjects.append((objectName, attributes))
 
 class MassPasswordChangeForm(widgets.Form):
     def __init__(self, ldapObjects):
@@ -38,9 +16,9 @@ class MassPasswordChangeForm(widgets.Form):
 
     def getFormFields(self, request, kws=None):
 	r=[]
-	for dn, attributes in self.ldapObjects:
-	    safedn=dn #TODO
-	    r.append((safedn, '<b>'+dn+'</b>'+htmlify_attributes(attributes), 0))
+	for o in self.ldapObjects:
+	    safedn=o.dn #TODO
+	    r.append((safedn, htmlify_object(o), 0)) #TODO
 	return (
 	    ('checkgroup', '',
 	     'masspass', r),
@@ -67,10 +45,8 @@ class MassPasswordChangeForm(widgets.Form):
 	if not client:
 	    return ['<P>Password change failed: connection lost.']
 	for dn, pwd in zip(dnlist, passwords):
-	    d=defer.Deferred()
-	    ldapclient.LDAPModifyPassword(d, client,
-					  userIdentity=dn,
-					  newPasswd=pwd)
+            o=ldapsyntax.LDAPEntry(client=client, dn=dn)
+            d=o.setPassword(newPasswd=pwd)
 	    d.addCallbacks(
 		callback=(lambda dummy, dn, pwd:
 			  "<p>%s&nbsp;%s</p>"%(dn, pwd)),
@@ -113,16 +89,13 @@ class MassPasswordChangePage(template.BasicPage):
 	    return NeedFilterError()
 	else:
 	    filtText=uriUnquote(request.postpath[0])
-	    filt=ldapfilter.parseFilter(filtText)
 
 	    d=defer.Deferred()
 	    client = request.getSession().LdaptorIdentity.getLDAPClient()
 	    if client:
-		deferred=defer.Deferred()
-		LDAPSearchEntry(deferred,
-				client,
-				baseObject=self.baseObject,
-				filter=filt)
+                o=ldapsyntax.LDAPEntry(client=client,
+                                       dn=self.baseObject)
+		deferred=o.search(filterText=filtText, sizeLimit=20)
 		deferred.addCallbacks(
 		    callback=self._getContent_2,
 		    callbackArgs=(d, request),

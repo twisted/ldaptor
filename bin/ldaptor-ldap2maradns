@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
-from ldaptor.protocols.ldap import ldapclient, ldapfilter, distinguishedname, ldapconnector
+from ldaptor.protocols.ldap import ldapclient, distinguishedname, ldapconnector
 from ldaptor.protocols import pureber, pureldap
-from ldaptor import usage
+from ldaptor import usage, ldapfilter
 from socket import inet_aton, inet_ntoa
 import sys
 from twisted.internet import protocol, defer, reactor

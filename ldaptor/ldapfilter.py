@@ -120,7 +120,7 @@ def parseItem(s):
     if s=="=*":
 	return parsePresent(attr)
     elif s.startswith("="):
-	if s.find("*")>=0:
+	if "*" in s:
 	    return parseSubstring(attr, s[1:])
 	else:
 	    return parseEqual(attr, s[1:])

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#debian-section: interpreters
+#debian-section: python
 
 from distutils.core import setup, Extension
 
@@ -28,7 +28,6 @@ generation/parsing.
 	  #url="TODO",
 	  licence="GNU LGPL",
 
-	  package_dir={"": "lib"},
 	  packages=[
 	"ldaptor",
 

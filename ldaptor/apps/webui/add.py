@@ -3,7 +3,7 @@ from twisted.internet import defer
 
 from ldaptor.protocols import pureldap, pureber
 from ldaptor.protocols.ldap import ldapclient, ldaperrors, ldapsyntax
-from ldaptor.protocols.ldap import schema
+from ldaptor.protocols.ldap import fetchschema
 from ldaptor import numberalloc
 from ldaptor.apps.webui.uriquote import uriQuote, uriUnquote
 
@@ -25,8 +25,8 @@ class DoAdd(ldapclient.LDAPAddEntry):
 
 class AddForm(widgets.Form):
     def _nonUserEditableAttributeType_getFreeNumber(self, attributeType):
-	o=ldapsyntax.LDAPObject(client=self.ldapClient,
-				dn=self.baseObject)
+	o=ldapsyntax.LDAPEntry(client=self.ldapClient,
+                               dn=self.baseObject)
 	d=numberalloc.getFreeNumber(ldapObject=o,
                                     numberType=attributeType,
 				    min=1000)
@@ -144,7 +144,7 @@ class AddForm(widgets.Form):
 	assert kw['dn'], 'Must have dn set.'
 	assert kw.has_key('add_'+kw['dn']), 'Must have attribute dn %s points to.' % kw['dn']
 	assert kw['add_'+kw['dn']], 'Attribute %s must have value.' % 'add_'+kw['dn']
-	dn=kw['dn']+'='+kw['add_'+kw['dn']]+','+self.baseObject
+	dn=kw['dn']+'='+kw['add_'+kw['dn']]+','+str(self.baseObject)
 
 	#TODO verify
 	changes = []
@@ -229,7 +229,7 @@ class AddError:
 	    errorMessage=": "+errorMessage
 	if resultCode!=None:
 	    errorMessage = str(resultCode)+errorMessage
-	self.deferred.callback(["Got error%s.\n<HR>"%errorMessage])
+	self.deferred.callback(["Got error %s.\n<HR>"%errorMessage])
 
 class ChooseObjectClass(widgets.Form):
     def __init__(self, allowedObjectClasses):
@@ -265,7 +265,7 @@ class AddPage(template.BasicPage):
 	   and request.args.get('dn')[0]:
 	    dnattr=request.args['dn'][0]
 	    if request.args.get('add_'+dnattr):
-		dn=dnattr+'='+request.args.get('add_'+dnattr)[0]+','+self.baseObject
+		dn=dnattr+'='+request.args.get('add_'+dnattr)[0]+','+str(self.baseObject)
 		l.append('<a href="%s">edit</a>' \
 			 % request.sibLink('edit/%s' % uriQuote(dn)))
 		l.append('<a href="%s">delete</a>' \
@@ -278,36 +278,19 @@ class AddPage(template.BasicPage):
     def getContent(self, request):
 	d=defer.Deferred()
 
-	if self.allowedObjectClasses == None:
+	if self.allowedObjectClasses is None:
 	    client = request.getSession().LdaptorIdentity.getLDAPClient()
 	    if client:
-		deferred=defer.Deferred()
-		schema.LDAPGet_subschemaSubentry(
-		    deferred, client, self.baseObject)
-		deferred.addCallbacks(
-		    callback=self._getContent_have_subschemaSubentry,
-		    callbackArgs=(request, client, d),
-		    errback=AddError(d, request),
-		    )
+                deferred = fetchschema.fetch(client, self.baseObject)
+                deferred.addCallback(self._getContent_have_objectClasses,
+                                     request, d)
+                deferred.addErrback(AddError(d, request))
 	    else:
 		AddError(d, request)(errorMessage="connection lost")
 	else:
 	    self._getContent_real(request, d)
 
 	return [self._header(request), d]
-
-    def _getContent_have_subschemaSubentry(self, subschemaSubentry,
-					   request, client, d):
-	deferred=defer.Deferred()
-	schema.LDAPGetSchema(
-	    deferred,
-	    client, subschemaSubentry,
-	    )
-	deferred.addCallbacks(
-	    callback=self._getContent_have_objectClasses,
-	    callbackArgs=(request, d),
-	    errback=AddError(d, request),
-	    )
 
     def _getContent_have_objectClasses(self, x, request, d):
 	attributeTypes, objectClasses = x
@@ -318,7 +301,7 @@ class AddPage(template.BasicPage):
 	self._getContent_real(request, d)
 
     def _getContent_real(self, request, d):
-	assert self.allowedObjectClasses != None
+	assert self.allowedObjectClasses is not None
 	assert self.allowedObjectClasses != []
 	if not request.postpath or request.postpath==['']:
 	    d.callback(ChooseObjectClass(self.allowedObjectClasses).display(request))
@@ -331,28 +314,16 @@ class AddPage(template.BasicPage):
 
 	    client = request.getSession().LdaptorIdentity.getLDAPClient()
 	    if client:
-		deferred=defer.Deferred()
-		schema.LDAPGet_subschemaSubentry(
-		    deferred, client, self.baseObject)
-		deferred.addCallbacks(
-		    callback=self._getContent_2,
-		    callbackArgs=(chosenObjectClasses, request, client, d),
-		    errback=AddError(d, request),
-		    )
+                deferred = fetchschema.fetch(client, self.baseObject)
+                deferred.addCallbacks(
+                    callback=self._getContent_2,
+                    callbackArgs=(chosenObjectClasses, request, client, d),
+                    errback=AddError(d, request),
+                    )
 	    else:
 		AddError(d, request)(errorMessage="connection lost")
 
-    def _getContent_2(self, subschemaSubentry, chosenObjectClasses, request, client, d):
-	deferred=defer.Deferred()
-	schema.LDAPGetSchema(
-	    deferred, client, subschemaSubentry)
-	deferred.addCallbacks(
-	    callback=self._getContent_3,
-	    callbackArgs=(chosenObjectClasses, request, client, d),
-	    errback=AddError(d, request),
-	    )
-
-    def _getContent_3(self, x, chosenObjectClasses, request, client, d):
+    def _getContent_2(self, x, chosenObjectClasses, request, client, d):
 	attributeTypes, objectClasses = x
 	d.callback(AddForm(baseObject=self.baseObject,
 			   ldapClient=client,

@@ -1,3 +1,145 @@
+ldaptor (0.0.16) unstable; urgency=low
+
+  * Applications changes:
+    - Make ldaptor-passwd actually follow it's usage. Defaults to
+      changing password of the bind DN, if unspecified.
+    - Make ldaptor-passwd Samba password changing more intelligent;
+      instead of a Boolean, it's now a tristate option, with the new
+      value "auto" checking for objectClass and setting the Samba
+      password if and only if it sees the value sambaAccount there.
+    - ldaptor-passwd now always changes all applicable passwords.
+    - Hierarchical structure editing in ldaptor-webui is done, remove from
+      TODO.
+    - In ldaptor-webui change_password, don't make the DN a form
+      field, there's no point in changing it at that time.
+    - In ldaptor-webui, parse invalid base DNs and complain to user.
+    - In ldaptor-webui, store DNs as DistinguishedNames, not as
+      strings.
+    - We fully support DNS SRV records now.
+    - Add sample app bin/ldaptor-fetchschema, and notes on it's
+      future direction. The current output looks ugly.
+
+  * API changes:
+    - LDAPObject.namingContext returns the naming context containing
+      the LDAP object.
+    - Deprecate LDAPModifyAttributes in LDAPObject, ldaptor-webui.
+    - Add password changing support to LDAPObject.
+    - LDAPModifyPassword is no longer used anywhere, remove it.
+    - Add LDAPObject.items().
+    - Add LDAPObject.fetch().
+    - Support partial fetching in LDAPObject.fetch().
+    - Add LDAPObject.setPassword_Samba().
+    - Remove LDAPModifySambaPassword, it has no users anymore.
+    - LDAPObject.setPassword() password setting now changes all
+      applicable passwords automatically.
+    - Remove LDAPModifyAttributes as obsolete.
+    - "key in ldapobject" support, better iteration support for
+      LDAPObject keys and key values.
+    - Move authentication bits from ldaptor-webui main script to
+      ldaptor.cred module.
+    - Prevent removing attributes that are in the RDN of the object.
+    - DistinguishedName now parses the actual values in DNs into
+      attributetypes and values, and raises
+      InvalidRelativeDistinguishedName for malformed RDNs.
+    - Add preliminary support for LDAP object data content
+      suggestions. Still need to implement a lot more hints and
+      integrate into ldaptor-webui.
+    - Add simple&stupid server-side support. Only knows bind/unbind
+      and search, and all searches return no items.
+    - Add LDIF parsing support.
+    - Move ldaptor.protocols.ldap.ldapfilter to ldaptor.ldapfilter.
+    - Split LDAP schema implementation into pure-ASCII parsing part
+      and LDAP client remote schema fetching.
+    - Rename the module that does LDAP schema fetching over the
+      client connection to fetchschema, to better separate it from
+      the ASCII schema parser.
+    - Rename LDAPObject to LDAPEntry, that might be a bit more
+      descriptive.
+
+  * Refactorings to adapt to Ldaptor APIs:
+    - Deleting LDAP object is now done via LDAPObject.delete().
+    - Switch from ldapclient helpers to LDAPObjects in ldaptor-webui
+      mass_change_password.
+    - Change ldaptor-webui change_password to use
+      LDAPObject.setPassword() instead of LDAPModifyPassword.
+    - In ldaptor-passwd, use LDAPObject.setPassword_Samba() instead
+      of LDAPModifySambaPassword.
+    - Rewrite more code away from LDAPSearch.
+    - Refactor ldaptor-ldap2passwd to use LDAPObjects.
+    - Refactor ldaptor-webui add and delete to use LDAPObjects and
+      DistinguishedNames more.
+    - Modernize the ldap_parallelsearch.py example to use
+      LDAPEntries.
+
+  * Refactorings to adapt to Twisted APIs:
+    - Authorizer.setApplication() has been obsoleted, apparently
+      .setServiceCollection() does the same thing.
+    - Use new-style maybeDeferred.
+    - Switch from standard unittest to Twisted's trial. Also
+      reorganized the package to match trial's expectations; that
+      is, removed the lib/ dir.
+    - Move from my own waitForDeferred to twisted's deferredResult,
+      deferredError.
+    - Rewrite the ldap_parallelsearch.py example to suit
+      twisted.internet.protocol.ClientCreator and to not use global
+      variables.
+
+  * Refactorings to adapt to Python APIs:
+    - Avoid using deprecated features of python.
+
+  * Internal refactorings:
+    - ldaptor-webui's Gadget() does not need or want the base DN; it
+      asks it from the user.
+    - Work towards running ldaptor-webui from an .rpy: add state
+      serialization support, make serviceLocationOverride optional.
+
+  * Bugfixes:
+    - Use a python2.1 scope rules compatible lambda.
+    - Add missing module ldapconnector to package
+      ldaptor.protocols.ldap's __all__ list.
+    - Make LDAPSearchRequest inherit BERSequence so that it has a
+      comparison function.
+    - Make sure the other dn is not just a string in
+      DistinguishedName.contains().
+    - Fix broken test and implementation for
+      LDAPObject.setPassword() -- used to change the password for the
+      bind DN.
+    - Be more explicit by stringifying DNs before trying to do
+      string-like operations on them.
+    - Avoid requesting LDAPIdentities before the necessary LDAP
+      connection has opened.
+
+  * Cleanups:
+    - Cleanup unit tests and merge similar functionality into helper
+      functions.
+    - Remove unintelligible comments in md4.py.
+    - Avoid non-ASCII in source (but still keep it in the test).
+    - Add unit tests for NT password hashing.
+    - Add test for LDAPObject.keys().
+    - Clean up LDAPObject journal handling. Rename journal operation
+      classes, provide a superclass to inherit, and give
+      LDAPAttributeSet a real API to submit changes.
+    - Actually call fail.getErrorMessage, don't just print the
+      function.
+
+  * Packaging:
+    - Depend on twisted >= 1.0.6
+    - Change Debian section for python{,2.1,2.2}-ldaptor from
+      interpreters to python.
+
+  * Administrivia:
+    - API documentation:
+      - Support setting PYTHONPATH outside the script (to use CVS
+        Twisted).
+      - New home page URL.
+      - Support uploading the API docs.
+    - Ignore editor backup files.
+    - Ignore Twisted tap files.
+    - Fix admin/doctest-all.py that got broken in the lib/
+      reorganization.
+
+ -- Tommi Virtanen <tv@debian.org>  Sat,  2 Aug 2003 14:06:32 +0300
+
 ldaptor (0.0.15) unstable; urgency=low
 
   * Typo fix.

@@ -1,15 +1,11 @@
-#!/usr/bin/python
-
-# Ldaptor -- TODO
-
 """
 Test cases for ldaptor.protocols.ldap.ldapfilter module.
 """
 
-import unittest
+from twisted.trial import unittest
 from ldaptor.mutablestring import MutableString
 from ldaptor.protocols import pureldap, pureber
-from ldaptor.protocols.ldap import ldapfilter
+from ldaptor import ldapfilter
 import types
 
 def s(*l):
@@ -45,7 +41,7 @@ class LDAPFilter(unittest.TestCase):
     def testToLDAPModifyRequestKnownValues(self):
 	"""str(LDAPModifyRequest(...)) should give known result with known input"""
 	for args, kwargs, encoded in self.knownValues:
-	    result = apply(pureldap.LDAPModifyRequest, args, kwargs)
+	    result = pureldap.LDAPModifyRequest(*args, **kwargs)
 	    result = str(result)
 	    result = map(ord, result)
 	    if encoded!=result:
@@ -54,7 +50,7 @@ class LDAPFilter(unittest.TestCase):
     def testFromLDAPModifyRequestKnownValues(self):
 	"""LDAPModifyRequest(encoded="...") should give known result with known input"""
 	for args, kwargs, encoded in self.knownValues:
-	    m=MutableString(apply(s,encoded))
+	    m=MutableString(s(*encoded))
 	    m.append('foo')
 	    result = pureldap.LDAPModifyRequest(encoded=m, berdecoder=pureber.BERDecoderContext())
 	    assert m=='foo'
@@ -65,6 +61,3 @@ class LDAPFilter(unittest.TestCase):
 	m=str(pureldap.LDAPModifyRequest(object='foo', modification=[pureldap.LDAPModification_delete(['bar'])]))
 	for i in xrange(len(m)):
 	    self.assertRaises(pureber.BERExceptionInsufficientData, pureldap.LDAPModifyRequest, encoded=m[:i], berdecoder=pureber.BERDecoderContext())
-
-if __name__ == '__main__':
-    unittest.main()

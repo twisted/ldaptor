@@ -83,11 +83,13 @@ pypackage = """
 Package: %(var package)s
 Section: %(extract-setup-var debian-section)s
 Architecture: all
-Depends: python%(var python_version)s, python%(var python_version)s-twisted, pwgen%(var extra_depends)s
+Depends: python%(var python_version)s, python%(var python_version)s-twisted (>= 1.0.6), pwgen%(var extra_depends)s
 Description: %(setup --description)s
 """
 printed_source=0
-for filename in os.listdir('.'):
+files = os.listdir('.')
+files.sort()
+for filename in files:
     if not filename.startswith('setup-') \
        or not filename.endswith('.py'):
 	continue

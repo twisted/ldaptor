@@ -14,8 +14,8 @@ class Search(ldapclient.LDAPClient):
 
     def _handle_bind_success(self, x):
 	matchedDN, serverSaslCreds = x
-	o=ldapsyntax.LDAPObject(client=self,
-				dn=self.factory.base)
+	o=ldapsyntax.LDAPEntry(client=self,
+                               dn=self.factory.base)
 	return numberalloc.getFreeNumber(o,
 					 'uidNumber',
 					 min=1000)

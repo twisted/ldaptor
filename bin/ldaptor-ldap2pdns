@@ -8,7 +8,7 @@ from twisted.protocols.basic import LineReceiver
 from twisted.internet.protocol import ClientFactory
 from twisted.python.failure import Failure
 from ldaptor.protocols.ldap import ldapclient, distinguishedname, ldapconnector
-from ldaptor.protocols.ldap.ldapsyntax import LDAPObject
+from ldaptor.protocols.ldap.ldapsyntax import LDAPEntry
 from ldaptor import usage
 from cStringIO import StringIO
 
@@ -24,7 +24,7 @@ class Search(ldapclient.LDAPClient):
 	d.addErrback(lambda dummy: self.transport.loseConnection())
 
     def bind_ok(self, dummy):
-	o = LDAPObject(client=self, dn=self.factory.base)
+	o = LDAPEntry(client=self, dn=self.factory.base)
 	self.pdnsPipeProtocol = PdnsPipeProtocol(o, self.factory.dnsDomain)
 	reactor.addReader(StandardIO(self.pdnsPipeProtocol))
 

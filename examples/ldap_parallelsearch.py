@@ -15,59 +15,11 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-from ldaptor.protocols.ldap import ldapclient
+from ldaptor.protocols.ldap import ldapclient, ldapsyntax
 from ldaptor.protocols import pureber
-from twisted.internet import protocol, defer
-from twisted.internet import reactor
+from twisted.internet import protocol, defer, reactor
+from twisted.python import log
 import sys
-
-CONNECTIONS=5
-SEARCHES=10
-
-class LDAPSearchAndPrint(ldapclient.LDAPSearch):
-    def __init__(self, deferred, client, prefix):
-	ldapclient.LDAPSearch.__init__(self, deferred, client,
-				       baseObject='dc=example, dc=com')
-	self.prefix=prefix
-
-    def handle_entry(self, objectName, attributes):
-	print "%s: %s %s"%(self.prefix, objectName,
-			   repr(map(lambda (a,l):
-				    (str(a),
-				     map(lambda i: str(i), l)),
-				    attributes)))
-
-class SearchALot(ldapclient.LDAPClient):
-    factory=None
-
-    def __init__(self):
-	ldapclient.LDAPClient.__init__(self)
-
-    def connectionMade(self):
-	d=self.bind()
-	d.addCallback(self._handle_bind_success)
-
-    def _handle_bind_success(self, x):
-	matchedDN, serverSaslCreds = x
-	l=[]
-	for prefix in [self.factory.prefix+x
-		       for x
-		       in map(str, range(0,SEARCHES))]:
-	    d=defer.Deferred()
-	    l.append(d)
-	    LDAPSearchAndPrint(d, self, prefix)
-
-	dl=defer.DeferredList(l)
-	dl.chainDeferred(self.factory.deferred)
-
-class SearchALotFactory(protocol.ClientFactory):
-    protocol = SearchALot
-    def __init__(self, deferred, prefix):
-	self.deferred=deferred
-	self.prefix=prefix
-
-    def clientConnectionFailed(self, connector, reason):
-	self.deferred.errback(reason)
 
 exitStatus=0
 
@@ -76,18 +28,46 @@ def error(fail):
     global exitStatus
     exitStatus=1
 
-def main():
+def _bind(proto):
+    d=proto.bind()
+    d.addCallback(lambda _: proto)
+    return d
+
+def _handle_entry(entry, connection, search):
+    sys.stdout.write("# connection %d, search %d\n%s"
+                     % (connection, search, entry))
+
+def _search(proto, base, connection, numOfSearches):
     l=[]
-    for x in xrange(0,CONNECTIONS):
-	d=defer.Deferred()
-	l.append(d)
+    baseEntry = ldapsyntax.LDAPEntry(client=proto,
+                                     dn=base)
+    for search in xrange(0, numOfSearches):
+        d=baseEntry.search(callback=lambda x:
+                           _handle_entry(x, connection, search))
+        d.addErrback(error)
+        l.append(d)
+
+    dl=defer.DeferredList(l)
+    return dl
+
+def main(base, numOfConnections=3, numOfSearches=3):
+    log.startLogging(sys.stderr, setStdout=0)
+    l=[]
+    for connection in xrange(0, numOfConnections):
+        c=protocol.ClientCreator(reactor, ldapclient.LDAPClient)
+        d=c.connectTCP("localhost", 389)
+
+
+        d.addCallback(_bind)
+        d.addCallback(_search, base, connection, numOfSearches)
 	d.addErrback(error)
-	s=SearchALotFactory(d, str(x)+'.')
-	reactor.connectTCP("localhost", 389, s)
+	l.append(d)
     dl=defer.DeferredList(l)
     dl.addBoth(lambda dummy: reactor.stop())
     reactor.run()
     sys.exit(exitStatus)
 
 if __name__ == "__main__":
-    main()
+    main(base='dc=example,dc=com',
+         numOfConnections=5,
+         numOfSearches=10)

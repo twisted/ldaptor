@@ -36,13 +36,14 @@ info.
 
 ldaptor-ldap2pdns -- pdns pipe backend.
 
+ldaptor-fetchschema -- Fetch schema from a server.
+
 """.strip(),
 	  author="Tommi Virtanen",
 	  author_email="tv@debian.org",
 	  #url="TODO",
 	  licence="GNU LGPL",
 
-	  package_dir={"": "lib"},
 	  packages=[
 	],
 	  scripts=[
@@ -56,5 +57,6 @@ ldaptor-ldap2pdns -- pdns pipe backend.
 	"bin/ldaptor-ldap2pdns",
 	"bin/ldaptor-find-server",
 	"bin/ldaptor-rename",
+	"bin/ldaptor-fetchschema",
 	],
 	  )

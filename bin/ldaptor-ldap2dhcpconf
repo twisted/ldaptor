@@ -15,9 +15,9 @@
 #shared-network "foo" {
 #}
 
-from ldaptor.protocols.ldap import ldapclient, ldapfilter, distinguishedname, ldapconnector
+from ldaptor.protocols.ldap import ldapclient, distinguishedname, ldapconnector
 from ldaptor.protocols import pureber, pureldap
-from ldaptor import usage
+from ldaptor import usage, ldapfilter
 from twisted.internet import protocol, reactor, defer
 from socket import inet_aton, inet_ntoa
 

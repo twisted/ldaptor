@@ -2,50 +2,12 @@ from twisted.web import widgets
 from twisted.internet import defer
 
 from ldaptor.protocols import pureldap
-from ldaptor.protocols.ldap import ldapclient, ldaperrors
+from ldaptor.protocols.ldap import ldapclient, ldaperrors, ldapsyntax
 from ldaptor.apps.webui.uriquote import uriQuote, uriUnquote
 
 from cStringIO import StringIO
 
 from ldaptor.apps.webui import template
-
-class LDAPSearch_FetchByDN(ldapclient.LDAPSearch):
-    def __init__(self, deferred, client, dn):
-	ldapclient.LDAPSearch.__init__(self, deferred, client,
-				       baseObject=dn,
-				       scope=pureldap.LDAP_SCOPE_baseObject,
-				       sizeLimit=1,
-				       )
-	self.found=0
-	self.dn=None
-	self.attributes=None
-	deferred.addCallbacks(callback=self._ok,
-			      errback=lambda x: x)
-
-    def _ok(self, dummy):
-	if self.found==0:
-	    raise ldaperrors.LDAPUnknownError(ldaperrors.other, "No such DN")
-	elif self.found==1:
-	    return self.attributes
-	else:
-	    raise ldaperrors.LDAPUnknownError(ldaperrors.other,
-					      "DN matched multiple entries")
-
-    def handle_entry(self, objectName, attributes):
-	self.found=self.found+1
-	self.dn=objectName
-	self.attributes=attributes
-
-class DoDelete(ldapclient.LDAPDelEntry):
-    def __init__(self, client, object, callback):
-	ldapclient.LDAPDelEntry.__init__(self, client, object)
-	self.callback=callback
-
-    def handle_success(self):
-	self.callback("<p>Success.")
-
-    def handle_fail(self, fail):
-	self.callback("<p><strong>Failed</strong>: %s."%fail.getErrorMessage())
 
 class DeleteForm(widgets.Form):
     formFields = [
@@ -60,10 +22,11 @@ class DeleteForm(widgets.Form):
     def format(self, form, write, request):
 	write('<P>You are about to delete this entry:\n')
 	write('<UL>\n')
-	for attr, values in self.attributes:
+	for attr, values in self.attributes.items():
 	    write('  <LI>%s:\n' % attr)
 	    if len(values)==1:
-		write('    %s\n' % values[0])
+                for v in values:
+                    write('    %s\n' % v)
 	    else:
 		write('  <UL>\n')
 		for val in values:
@@ -80,10 +43,15 @@ class DeleteForm(widgets.Form):
 	if not client:
 	    return ["<P>Del failed: connection lost."]
 
-	defe=defer.Deferred()
-	DoDelete(client, self.dn, defe.callback)
+	o=ldapsyntax.LDAPEntry(client=client,
+                               dn=self.dn)
+        d=o.delete()
+        d.addCallbacks(
+            callback=lambda dummy: "<p>Success.",
+            errback=lambda fail: "<p><strong>Failed</strong>: %s."
+            % fail.getErrorMessage())
 
-	return ["<P>Submitting delete as user %s.."%user, defe]
+	return ["<P>Submitting delete as user %s.."%user, d]
 
 class CreateDeleteForm:
     def __init__(self, defe, dn, request):
@@ -91,9 +59,9 @@ class CreateDeleteForm:
 	self.dn=dn
 	self.request=request
 
-    def __call__(self, attributes):
+    def __call__(self, ldapobj):
 	self.deferred.callback(
-	    DeleteForm(self.dn, attributes).display(self.request))
+	    DeleteForm(self.dn, ldapobj).display(self.request))
 
 class CreateError:
     def __init__(self, defe, dn, request):
@@ -103,7 +71,7 @@ class CreateError:
 
     def __call__(self, fail):
 	self.request.args['incomplete']=['true']
-	self.deferred.callback(["Trouble while fetching %s: %s.\n<HR>"%(repr(self.dn), fail.getErrorMessage)])
+	self.deferred.callback(["Trouble while fetching %s: %s.\n<HR>"%(repr(self.dn), fail.getErrorMessage())])
 
 class NeedDNError(widgets.Widget):
     def display(self, request):
@@ -136,8 +104,8 @@ class DeletePage(template.BasicPage):
 
 	    client = request.getSession().LdaptorIdentity.getLDAPClient()
 	    if client:
-		deferred=defer.Deferred()
-		LDAPSearch_FetchByDN(deferred, client, dn)
+                o = ldapsyntax.LDAPEntry(client=client, dn=dn)
+                deferred = o.fetch()
 		deferred.addCallbacks(
 		    CreateDeleteForm(d, dn, request),
 		    CreateError(d, dn, request))

@@ -1,10 +1,8 @@
-#!/usr/bin/python
-
 """
 Test cases for bidirdict module
 """
 
-import unittest
+from twisted.trial import unittest
 from ldaptor.bidirdict import BidirDict
 
 class SimpleOps(unittest.TestCase):
@@ -27,6 +25,3 @@ class KwArgs(unittest.TestCase):
 	assert d.reverse['baz']=='foo'
 	assert d.reverse['thud']=='quux'
 	assert d.reverse['foobar']=='thud'
-
-if __name__ == '__main__':
-    unittest.main()

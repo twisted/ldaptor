@@ -18,7 +18,6 @@ directory.
 	  #url="TODO",
 	  licence="GNU LGPL",
 
-	  package_dir={"": "lib"},
 	  packages=[
 	"ldaptor.apps.webui",
 	],
