@@ -174,6 +174,11 @@ class LDAPClient(protocol.Protocol):
 
     ##Bind
     def bind(self, dn='', auth=''):
+        """
+        @depreciated: Use e.bind(auth).
+
+        @todo: Remove this method when there are no callers.
+        """
 	if not self.connected:
 	    raise LDAPClientConnectionLostException()
 	else:
