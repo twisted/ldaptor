@@ -217,24 +217,6 @@ def _upLink(request, name):
     else:
         return "../" + name
 
-def prettyLinkedDN(dn, baseObject, request):
-    r=[]
-    while (dn!=baseObject
-           and dn!=distinguishedname.DistinguishedName(stringValue='')):
-        firstPart=dn.split()[0]
-
-        me=request.path.split('/', 4)[3]
-        r.append(tags.a(href="../../%s" \
-                        % _upLink(request,
-                                  '/'.join([uriQuote(str(dn)), me]
-                                           + request.postpath)))[
-            str(firstPart)])
-        r.append(',')
-        dn=dn.up()
-
-    r.append('%s\n' % str(dn))
-    return r
-
 class SearchPage(rend.Page):
     addSlash = True
 
@@ -332,10 +314,29 @@ class SearchPage(rend.Page):
         context.fillSlots('description', desc)
         return context.tag
 
-    def render_linkedDN(self, context, data):
-        cfg = context.locate(interfaces.ILDAPConfig)
-        request = context.locate(inevow.IRequest)
-        return context.tag.clear()[prettyLinkedDN(data, cfg.getBaseDN(), request)]
+    def render_linkedDN(self, ctx, data):
+        dn = data
+        cfg = ctx.locate(interfaces.ILDAPConfig)
+        baseDN = cfg.getBaseDN()
+
+        ctx.tag.clear()
+        while (dn!=baseDN
+               and dn!=distinguishedname.DistinguishedName(stringValue='')):
+            firstPart=dn.split()[0]
+
+            u = url.here.parent().parent().child(dn)
+            segments = inevow.ICurrentSegments(ctx)
+            if segments[-1] == '':
+                u = u.child(segments[-2]).child(segments[-1])
+            else:
+                u = u.child(segments[-1])
+            for segment in inevow.IRemainingSegments(ctx):
+                u = u.child(segment)
+            ctx.tag[tags.a(href=u)[str(firstPart)], ',']
+            dn=dn.up()
+
+        ctx.tag['%s\n' % str(dn)]
+        return ctx.tag
 
     def render_entryLinks(self, context, data):
         request = context.locate(inevow.IRequest)
