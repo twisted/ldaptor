@@ -30,7 +30,7 @@ class Add(Modification):
             entry[self.key] = self
 
     def asLDAP(self):
-	return pureldap.LDAPModification_add(self.key, self)
+	return pureldap.LDAPModification_add(self.key, list(self))
 
     def asLDIF(self):
         r=[]
@@ -51,7 +51,7 @@ class Delete(Modification):
                 entry[self.key].remove(v)
 
     def asLDAP(self):
-	return pureldap.LDAPModification_delete(self.key, self)
+	return pureldap.LDAPModification_delete(self.key, list(self))
 
     def asLDIF(self):
         r=[]
@@ -74,7 +74,7 @@ class Replace(Modification):
                 pass
 
     def asLDAP(self):
-	return pureldap.LDAPModification_replace(self.key, self)
+	return pureldap.LDAPModification_replace(self.key, list(self))
 
     def asLDIF(self):
         r=[]
