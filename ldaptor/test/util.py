@@ -1,6 +1,7 @@
 from twisted.python import failure
 from twisted.internet import reactor, protocol, address, error
 from twisted.test import testutils
+from twisted.trial import unittest
 
 from StringIO import StringIO
 
@@ -124,3 +125,11 @@ def pumpingDeferredResult(d, timeout=None):
         raise result.value
     else:
         return result
+
+
+def pumpingDeferredError(d, timeout=None):
+    result = _getDeferredResult(d, timeout)
+    if isinstance(result, failure.Failure):
+        return result
+    else:
+        raise unittest.FailTest, "Deferred did not fail: %r" % (result,)
