@@ -68,6 +68,11 @@ class LDAPClient(protocol.Protocol):
     def connectionLost(self, reason=protocol.connectionDone):
 	"""Called when TCP connection has been lost"""
 	self.connected = 0
+        # notify handlers of operations in flight
+        while self.onwire:
+            k, v = self.onwire.popitem()
+            d, _, _, _ = v
+            d.errback(reason)
 
     def _send(self, op):
 	if not self.connected:
