@@ -17,19 +17,19 @@ class Proxy(ldapserver.BaseLDAPServer):
     def _cbConnectionMade(self, proto):
         self.client = proto
         while self.waitingConnect:
-            request, controls, handler = self.waitingConnect.pop(0)
-            self._clientQueue(request, controls, handler)
+            request, controls, reply = self.waitingConnect.pop(0)
+            self._clientQueue(request, controls, reply)
 
-    def _clientQueue(self, request, controls, handler):
+    def _clientQueue(self, request, controls, reply):
         # TODO controls
         if request.needs_answer:
-            self.client.queue(request, self._gotReply, handler)
+            self.client.queue(request, self._gotResponse, reply)
         else:
             self.client.queue(request)
 
-    def _gotReply(self, reply, handler):
-        handler(reply)
-        return isinstance(reply, (
+    def _gotResponse(self, response, reply):
+        reply(response)
+        return isinstance(response, (
             pureldap.LDAPSearchResultDone,
             pureldap.LDAPBindResponse,
             ))
@@ -54,16 +54,16 @@ class Proxy(ldapserver.BaseLDAPServer):
         self.client = None
         ldapserver.BaseLDAPServer.connectionLost(self, reason)
 
-    def _handleUnknown(self, request, controls, handler):
+    def _handleUnknown(self, request, controls, reply):
         if self.client is None:
-            self.waitingConnect.append((request, controls, handler))
+            self.waitingConnect.append((request, controls, reply))
         else:
-            self._clientQueue(request, controls, handler)
+            self._clientQueue(request, controls, reply)
         return None
 
-    def handleUnknown(self, request, controls, handler):
+    def handleUnknown(self, request, controls, reply):
         d = defer.succeed(request)
-        d.addCallback(self._handleUnknown, controls, handler)
+        d.addCallback(self._handleUnknown, controls, reply)
         return d
 
 
