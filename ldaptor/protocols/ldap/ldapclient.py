@@ -119,9 +119,9 @@ class LDAPClient(protocol.Protocol):
         response. It should return a boolean, whether this was the
         final response.
 
-        @param *args: positional arguments to pass to handler
+        @param args: positional arguments to pass to handler
 
-        @param *kwargs: keyword arguments to pass to handler
+        @param kwargs: keyword arguments to pass to handler
 
         @return: the result from the last handler as a deferred that
         completes when the last response has been received

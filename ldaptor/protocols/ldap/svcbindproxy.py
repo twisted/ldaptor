@@ -12,11 +12,11 @@ class ServiceBindingProxy(proxy.Proxy):
     against each configured service. This authentication is performed
     against a separate LDAP entry, found by searching for entries with
 
-    - objectClass: serviceSecurityObject
+     - objectClass: serviceSecurityObject
 
-    - owner: the DN of the original bind attempt
+     - owner: the DN of the original bind attempt
 
-    - cn: the service name.
+     - cn: the service name.
 
     starting at the identity-base as configured in the config file.
 
