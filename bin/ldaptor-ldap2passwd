@@ -5,53 +5,36 @@ from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage, ldapfilter, config
 from twisted.internet import protocol, reactor, defer
 
-class Search(ldapclient.LDAPClient):
-    def connectionMade(self):
-	d=self.bind()
-	d.addCallback(self._handle_bind_success)
+def _cbSearch(obj):
+    a={}
+    for attr, vals in obj.items():
+        attr=str(attr)
+        assert not a.has_key(attr)
+        a[attr]=map(str, vals)
 
-    def _cbSearch(self, obj):
-	a={}
-	for attr, vals in obj.items():
-	    attr=str(attr)
-	    assert not a.has_key(attr)
-	    a[attr]=map(str, vals)
+    print ':'.join((
+        a['uid'][0],
+        'x',
+        a['uidNumber'][0],
+        a['gidNumber'][0],
+        a.get('gecos', a.get('cn', ['']))[0],
+        a['homeDirectory'][0],
+        a.get('loginShell', [''])[0],
+        ))
 
-	print ':'.join((
-	    a['uid'][0],
-	    'x',
-	    a['uidNumber'][0],
-	    a['gidNumber'][0],
-	    a.get('gecos', a.get('cn', ['']))[0],
-	    a['homeDirectory'][0],
-	    a.get('loginShell', [''])[0],
-	    ))
-
-    def _handle_bind_success(self, x):
-	matchedDN, serverSaslCreds = x
-        o = ldapsyntax.LDAPEntry(client=self,
-                                 dn=self.factory.base)
-        d = o.search(filterObject=self.factory.filt,
-                     attributes=['uid',
-                                 'uidNumber',
-                                 'gidNumber',
-                                 'gecos',
-                                 'cn',
-                                 'homeDirectory',
-                                 'loginShell',
-                                 ],
-                     callback=self._cbSearch)
-        d.chainDeferred(self.factory.deferred)
-
-class SearchFactory(protocol.ClientFactory):
-    protocol = Search
-    def __init__(self, deferred, base, filt):
-	self.deferred=deferred
-	self.base=base
-	self.filt=filt
-
-    def clientConnectionFailed(self, connector, reason):
-	self.deferred.errback(reason)
+def search(client, baseDN, filt):
+    e=ldapsyntax.LDAPEntry(client=client, dn=baseDN)
+    d = e.search(filterObject=filt,
+                 attributes=['uid',
+                             'uidNumber',
+                             'gidNumber',
+                             'gecos',
+                             'cn',
+                             'homeDirectory',
+                             'loginShell',
+                             ],
+                 callback=_cbSearch)
+    return d
 
 exitStatus=0
 
@@ -72,14 +55,15 @@ def main(cfg, filter_text):
 	filt = pureldap.LDAPFilter_and([
 	    filt,
 	    ldapfilter.parseFilter(filter_text)])
-    d=defer.Deferred()
-    s=SearchFactory(d, baseDN, filt)
+
+    c = ldapconnector.LDAPClientCreator(reactor,
+                                        ldapclient.LDAPClient)
+    d = c.connectAnonymously(dn=baseDN,
+                             overrides=cfg.getServiceLocationOverrides())
+    d.addCallback(search, baseDN, filt)
     d.addErrback(error)
     d.addBoth(lambda x: reactor.stop())
 
-    c=ldapconnector.LDAPConnector(reactor, baseDN, s,
-                                  overrides=cfg.getServiceLocationOverrides())
-    c.connect()
     reactor.run()
     sys.exit(exitStatus)
 
