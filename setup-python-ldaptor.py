@@ -18,8 +18,6 @@ TODO
 
     "ldaptor.protocols", "ldaptor.protocols.ldap",
 
-    "ldaptor.twisted",
-
     "ldaptor.apps",
     ],
       )

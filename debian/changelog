@@ -1,3 +1,9 @@
+ldaptor (0.0.4) unstable; urgency=low
+
+  * Remove the obsolete ldaptor.twisted package.
+
+ -- Tommi Virtanen <tv@debian.org>  Sat,  3 Aug 2002 16:20:21 +0300
+
 ldaptor (0.0.3) unstable; urgency=low
 
   * NOTE: Requires a CVS version of twisted!
