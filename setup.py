@@ -36,6 +36,7 @@ from the command line.
 	"ldaptor",
 	"ldaptor.protocols",
         "ldaptor.protocols.ldap",
+        "ldaptor.protocols.ldap.autofill",
 	"ldaptor.samba",
 	"ldaptor.apps",
 	"ldaptor.apps.webui",
