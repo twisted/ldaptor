@@ -76,7 +76,6 @@ class SearchForm(configurable.Configurable):
     __implements__ = configurable.Configurable.__implements__, inevow.IContainer
 
     filter = None
-    scope = None
 
     def __init__(self):
         super(SearchForm, self).__init__(None)
