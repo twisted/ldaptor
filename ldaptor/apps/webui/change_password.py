@@ -20,6 +20,16 @@ def getEntryWithAttributes(ctx, dn, *attributes):
     d = e.fetch(*attributes)
     return d
 
+def getServiceName(ctx, dn):
+    d = getEntryWithAttributes(ctx, dn, 'cn')
+    def _cb(e):
+        for cn in e.get('cn', []):
+            return cn
+        raise RuntimeError, \
+              "Service password entry has no attribute cn: %r" % e
+    d.addCallback(_cb)
+    return d
+
 class IPasswordChange(annotate.TypedInterface):
     def setPassword(self,
                     ctx=annotate.Context(),
@@ -56,22 +66,12 @@ class ServicePasswordChange(object):
         super(ServicePasswordChange, self).__init__()
         self.dn = dn
 
-    def _getServiceName(self, ctx):
-        d = getEntryWithAttributes(ctx, self.dn, 'cn')
-        def _cb(e):
-            for cn in e.get('cn', []):
-                return cn
-            raise RuntimeError, \
-                  "Service password entry has no attribute cn: %r" % e
-        d.addCallback(_cb)
-        return d
-
     def setServicePassword(self, ctx, newPassword):
         e = getEntry(ctx, self.dn)
         d = e.setPassword(newPassword)
 
         def _getName(_, ctx):
-            d = self._getServiceName(ctx)
+            d = getServiceName(ctx, self.dn)
             return d
         d.addCallback(_getName, ctx)
 
@@ -93,7 +93,7 @@ class ServicePasswordChange(object):
             d = e.setPassword(newPassword)
 
             def _getName(_, ctx):
-                d = self._getServiceName(ctx)
+                d = getServiceName(ctx, self.dn)
                 return d
             d.addCallback(_getName, ctx)
 
@@ -108,7 +108,7 @@ class ServicePasswordChange(object):
 
     def remove(self, ctx):
         e = getEntry(ctx, self.dn)
-        d = self._getServiceName(ctx)
+        d = getServiceName(ctx, self.dn)
 
         def _delete(name, e):
             d = e.delete()
