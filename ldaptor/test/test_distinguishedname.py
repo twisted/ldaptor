@@ -85,6 +85,15 @@ class LDAPDistinguishedName_Escaping(TestCaseWithKnownValues):
 
 	(r'cn=bar\ ', [[('cn', r'bar ')]]),
 
+	(r'cn=test+owner=uid\=foo\,ou\=depar'
+         +r'tment\,dc\=example\,dc\=com,dc=ex'
+         +r'ample,dc=com', [[('cn', r'test'),
+                             ('owner', r'uid=foo,ou=depart'
+                              +r'ment,dc=example,dc=com'),
+                             ],
+                            [('dc', r'example')],
+                            [('dc', r'com')]]),
+    
 	(r'cn=bar,dc=example,dc=com', [[('cn', 'bar')],
                                        [('dc', 'example')],
                                        [('dc', 'com')]]),
@@ -96,6 +105,25 @@ class LDAPDistinguishedName_Escaping(TestCaseWithKnownValues):
                                          [('dc', 'com')]]),
 
 	)
+
+    def testOpenLDAPEqualsEscape(self):
+        """Slapd wants = to be escaped in RDN attributeValues."""
+        got = dn.DistinguishedName(listOfRDNs=[
+            dn.RelativeDistinguishedName(
+            attributeTypesAndValues=[
+            dn.LDAPAttributeTypeAndValue(attributeType='cn', value=r'test'),
+            dn.LDAPAttributeTypeAndValue(attributeType='owner', value=r'uid=foo,ou=depart'
+                                         +r'ment,dc=example,dc=com'),
+                                     ]),
+
+            dn.RelativeDistinguishedName('dc=example'),
+            dn.RelativeDistinguishedName('dc=com'),
+            ])
+        got = str(got)
+        self.assertEquals(got,
+                          r'cn=test+owner=uid\=foo\,ou\=depar'
+                          +r'tment\,dc\=example\,dc\=com,dc=ex'
+                          +r'ample,dc=com')
 
 class LDAPDistinguishedName_RFC2253_Examples(TestCaseWithKnownValues):
     knownValues = (

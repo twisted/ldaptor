@@ -1,6 +1,9 @@
 # See rfc2253
 
-escapedChars = r',+"\<>;'
+# Note that RFC 2253 sections 2.4 and 3 disagree whether "=" needs to
+# be quoted. Let's trust the syntax, slapd refuses to accept unescaped
+# "=" in RDN values.
+escapedChars = r',+"\<>;='
 escapedChars_leading = r' #'
 escapedChars_trailing = r' #'
 
