@@ -2,45 +2,10 @@
 
 from ldaptor.protocols.ldap import distinguishedname, ldapconnector, ldapsyntax, ldapclient
 from ldaptor.protocols import pureber, pureldap
-from ldaptor import usage, ldapfilter, config
+from ldaptor import usage, ldapfilter, config, dns
 from socket import inet_aton, inet_ntoa
 import sys
 from twisted.internet import protocol, defer, reactor
-
-def my_aton_octets(ip):
-    s=inet_aton(ip)
-    octets=map(None, s)
-    n=0L
-    for o in octets:
-	n=n<<8
-	n+=ord(o)
-    return n
-
-def my_aton_numbits(num):
-    n=0L
-    while num>0:
-	n>>=1
-	n |= 2**31
-	num-=1
-    return n
-
-def my_aton(ip):
-    try:
-	i=int(ip)
-    except ValueError:
-	return my_aton_octets(ip)
-    else:
-	return my_aton_numbits(i)
-
-def my_ntoa(n):
-    s=(
-	chr((n>>24)&0xFF)
-	+ chr((n>>16)&0xFF)
-	+ chr((n>>8)&0xFF)
-	+ chr(n&0xFF)
-       )
-    ip=inet_ntoa(s)
-    return ip
 
 def printIPAddress(name, ip):
     print 'A'+name+'.%|86400|'+ip
@@ -90,9 +55,9 @@ class Net:
 	self.mask=mask
 
     def isInNet(self, ipAddress):
-	net = my_aton(self.address)
-	mask = my_aton(self.mask)
-	ip = my_aton(ipAddress)
+	net = dns.aton(self.address)
+	mask = dns.aton(self.mask)
+	ip = dns.aton(ipAddress)
 	if ip&mask == net:
 	    return 1
 	return 0
@@ -101,10 +66,10 @@ class Net:
 	print '#'+self.dn
 	printIPAddress(self.name, self.address)
 	printPTR(self.name, self.address)
-	ip = my_aton(self.address)
-	mask = my_aton(self.mask)
-	ipmask = my_ntoa(mask)
-	broadcast = my_ntoa(ip|~mask)
+	ip = dns.aton(self.address)
+	mask = dns.aton(self.mask)
+	ipmask = dns.ntoa(mask)
+	broadcast = dns.ntoa(ip|~mask)
 	printIPAddress('netmask.'+self.name, ipmask)
 	printIPAddress('broadcast.'+self.name, broadcast)
 	printPTR('broadcast.'+self.name, broadcast)
