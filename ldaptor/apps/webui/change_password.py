@@ -190,17 +190,75 @@ class AddService(object):
 
         return d
 
-class ConfirmChange(rend.Page):
+
+class ServicePasswordChangeMixin(object):
+    def __init__(self, dn):
+        super(ServicePasswordChangeMixin, self).__init__()
+        self.dn = dn
+
+    def render_servicePasswords(self, ctx, data):
+        docFactory = loaders.xmlfile(
+            'change_service_passwords.xhtml',
+            templateDir=os.path.split(os.path.abspath(__file__))[0])
+        r = inevow.IQ(docFactory).onePattern('main')
+        return r
+
+    def render_hideIfNot(self, ctx, data):
+        if data:
+            return ctx.tag
+        else:
+            return tags.invisible()
+
+    def data_servicePasswords(self, ctx, data):
+        user = ctx.locate(inevow.ISession).getLoggedInRoot().loggedIn
+        config = interfaces.ILDAPConfig(ctx)
+        e=ldapsyntax.LDAPEntry(client=user.client, dn=config.getBaseDN())
+        print pureldap.LDAPFilter_and([
+            pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('objectClass'),
+                                              assertionValue=pureldap.LDAPAssertionValue('serviceSecurityObject')),
+            pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('owner'),
+                                              assertionValue=pureldap.LDAPAssertionValue(str(self.dn))),
+            pureldap.LDAPFilter_present('cn'),
+            ]).asText()
+        d = e.search(filterObject=pureldap.LDAPFilter_and([
+            pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('objectClass'),
+                                              assertionValue=pureldap.LDAPAssertionValue('serviceSecurityObject')),
+            pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('owner'),
+                                              assertionValue=pureldap.LDAPAssertionValue(str(self.dn))),
+            pureldap.LDAPFilter_present('cn'),
+            ]),
+                     attributes=['cn'])
+
+        return d
+
+    def render_form_service(self, ctx, data):
+        # TODO error messages for one password change form display in
+        # all of them.
+        e = inevow.IData(ctx)
+        return webform.renderForms('service_%s' % e.dn)[ctx.tag()]
+
+    def locateConfigurable(self, ctx, name):
+        try:
+            return super(ServicePasswordChangeMixin, self).locateConfigurable(ctx, name)
+        except AttributeError:
+            if name.startswith('service_'):
+                pass
+            else:
+                raise
+
+        dn = name[len('service_'):]
+        return iformless.IConfigurable(ServicePasswordChange(dn))
+
+    render_zebra = weave.zebra()
+
+
+class ConfirmChange(ServicePasswordChangeMixin, rend.Page):
     __implements__ = rend.Page.__implements__, IPasswordChange
     addSlash = True
 
     docFactory = loaders.xmlfile(
         'change_password.xhtml',
         templateDir=os.path.split(os.path.abspath(__file__))[0])
-
-    def __init__(self, dn):
-        super(ConfirmChange, self).__init__()
-        self.dn = dn
 
     def data_css(self, ctx, data):
         request = ctx.locate(inevow.IRequest)
@@ -258,47 +316,6 @@ class ConfirmChange(rend.Page):
 
     def render_form(self, ctx, data):
         return webform.renderForms()
-
-    def render_hideIfNot(self, ctx, data):
-        if data:
-            return ctx.tag
-        else:
-            return tags.invisible()
-
-    def data_servicePasswords(self, ctx, data):
-        user = ctx.locate(inevow.ISession).getLoggedInRoot().loggedIn
-        config = interfaces.ILDAPConfig(ctx)
-        e=ldapsyntax.LDAPEntry(client=user.client, dn=config.getBaseDN())
-        d = e.search(filterObject=pureldap.LDAPFilter_and([
-            pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('objectClass'),
-                                              assertionValue=pureldap.LDAPAssertionValue('serviceSecurityObject')),
-            pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('owner'),
-                                              assertionValue=pureldap.LDAPAssertionValue(str(self.dn))),
-            pureldap.LDAPFilter_present('cn'),
-            ]),
-                     attributes=['cn'])
-
-        return d
-
-    def render_form_service(self, ctx, data):
-        # TODO error messages for one password change form display in
-        # all of them.
-        e = inevow.IData(ctx)
-        return webform.renderForms('service_%s' % e.dn)[ctx.tag()]
-
-    render_zebra = weave.zebra()
-
-    def locateConfigurable(self, ctx, name):
-        try:
-            return super(ConfirmChange, self).locateConfigurable(ctx, name)
-        except AttributeError:
-            if name.startswith('service_'):
-                pass
-            else:
-                raise
-
-        dn = name[len('service_'):]
-        return iformless.IConfigurable(ServicePasswordChange(dn))
 
     def render_passthrough(self, ctx, data):
         return ctx.tag.clear()[data]
