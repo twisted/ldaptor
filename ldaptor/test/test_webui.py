@@ -228,7 +228,7 @@ class TestAuthenticatedCSS(TestCSS):
 
     def checkPage(self, url, cookies):
         data = self.getPage(url, cookies)
-        self.assertEquals(data['title'], 'Log In')
+        self.assertEquals(data['title'], 'Login')
 
         # fill form, submit
         forms = data['tree'].getElementsByTagName('form')
@@ -254,7 +254,7 @@ class TestAuthentication(SiteMixin, unittest.TestCase):
 
     def checkPage(self, url, cookies):
         data = self.getPage(url, cookies)
-        self.assertEquals(data['title'], 'Log In')
+        self.assertEquals(data['title'], 'Login')
 
         # fill form, submit
         forms = data['tree'].getElementsByTagName('form')
@@ -326,7 +326,7 @@ class TestAuthentication(SiteMixin, unittest.TestCase):
 class TestDelete(SiteMixin, unittest.TestCase):
     def checkPage(self, url, cookies):
         data = self.getPage(url, cookies)
-        self.assertEquals(data['title'], 'Log In')
+        self.assertEquals(data['title'], 'Login')
 
         # fill form, submit
         forms = data['tree'].getElementsByTagName('form')
