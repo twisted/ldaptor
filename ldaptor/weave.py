@@ -81,6 +81,9 @@ class _DictLike(object):
     def child(self, context, name):
         return self.original.get(name, None)
 
+    def items(self):
+        return self.original.items()
+
 class LDAPEntryContainer(object):
     __implements__ = inevow.IContainer
 
