@@ -108,8 +108,9 @@ class ConfirmChange(rend.Page):
 	return l
 
 class GetDN(rend.Page):
-    def renderHTTP(self, request):
-        entry = request.getSession().getLoggedInRoot().loggedIn
+    def renderHTTP(self, context):
+        entry = inevow.ISession(context).getLoggedInRoot().loggedIn
+        request = inevow.IRequest(context)
         u = url.URL.fromRequest(request)
         request.redirect(u.child(str(entry.dn)))
         return ''

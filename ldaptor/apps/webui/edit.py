@@ -386,9 +386,9 @@ class EditPage(rend.Page):
         u = url.URL.fromRequest(request)
         return context.tag(href=u.parent().child('search'))
 
-    def getDynamicChild(self, name, request):
+    def getDynamicChild(self, name, context):
         dn = uriUnquote(name)
-        userEntry = request.getSession().getLoggedInRoot().loggedIn
+        userEntry = inevow.ISession(context).getLoggedInRoot().loggedIn
 
         e = ldapsyntax.LDAPEntryWithClient(dn=dn,
                                            client=userEntry.client)

@@ -4,7 +4,7 @@ from ldaptor.protocols.ldap import distinguishedname
 from ldaptor.apps.webui.uriquote import uriUnquote
 from ldaptor import interfaces
 
-from nevow import rend, loaders, url, static
+from nevow import rend, loaders, url, static, inevow
 from formless import annotate, webform, iformless
 import os
 
@@ -15,44 +15,44 @@ class LdaptorWebUIGadget2(rend.Page):
         super(LdaptorWebUIGadget2, self).__init__()
         self.baseObject = baseObject
 
-    def renderHTTP(self, request):
-        entry = request.getSession().getLoggedInRoot().loggedIn
+    def renderHTTP(self, context):
+        request = inevow.IRequest(context)
         u = url.URL.fromRequest(request)
         request.redirect(u.child('search'))
         return ''
 
-    def child_search(self, request):
+    def child_search(self, context):
         return search.getSearchPage()
 
-    def child_edit(self, request):
-        if not request.getSession().getLoggedInRoot().loggedIn:
+    def child_edit(self, context):
+        if not inevow.ISession(context).getLoggedInRoot().loggedIn:
             return login.LoginPage([str(self.baseObject), 'edit'])
         return edit.EditPage()
 
-    def child_move(self, request):
-        if not request.getSession().getLoggedInRoot().loggedIn:
+    def child_move(self, context):
+        if not inevow.ISession(context).getLoggedInRoot().loggedIn:
             return login.LoginPage([str(self.baseObject), 'move'])
         return move.MovePage()
 
-    def child_add(self, request):
-        if not request.getSession().getLoggedInRoot().loggedIn:
+    def child_add(self, context):
+        if not inevow.ISession(context).getLoggedInRoot().loggedIn:
             return login.LoginPage([str(self.baseObject), 'add'])
         return add.getResource(baseObject=self.baseObject,
-                               request=request)
+                               request=inevow.IRequest(context))
 
-    def child_delete(self, request):
-        if not request.getSession().getLoggedInRoot().loggedIn:
+    def child_delete(self, context):
+        if not inevow.ISession(context).getLoggedInRoot().loggedIn:
             return login.LoginPage([str(self.baseObject), 'delete'])
         return delete.getResource()
 
-    def child_mass_change_password(self, request):
-        if not request.getSession().getLoggedInRoot().loggedIn:
+    def child_mass_change_password(self, context):
+        if not inevow.ISession(context).getLoggedInRoot().loggedIn:
             return login.LoginPage([str(self.baseObject), 'mass_change_password'])
         return mass_change_password.MassPasswordChangePage(
             baseObject=self.baseObject)
 
-    def child_change_password(self, request):
-        if not request.getSession().getLoggedInRoot().loggedIn:
+    def child_change_password(self, context):
+        if not inevow.ISession(context).getLoggedInRoot().loggedIn:
             return login.LoginPage([str(self.baseObject), 'change_password'])
         return change_password.getResource()
 

@@ -17,9 +17,9 @@ class MovePage(rend.Page):
         u = url.URL.fromRequest(request)
         return context.tag(href=u.parent().child('search'))
 
-    def getDynamicChild(self, name, request):
+    def getDynamicChild(self, name, context):
         dn = uriUnquote(name)
-        session = request.getSession()
+        session = inevow.ISession(context)
         userEntry = session.getLoggedInRoot().loggedIn
 
         move = session.getComponent(IMove)
@@ -30,5 +30,5 @@ class MovePage(rend.Page):
         e = ldapsyntax.LDAPEntryWithClient(dn=dn,
                                            client=userEntry.client)
         move.append(e)
-        u = url.URL.fromRequest(request).sibling('search')
+        u = url.URL.fromRequest(inevow.IRequest(context)).sibling('search')
         return util.Redirect(str(u))
