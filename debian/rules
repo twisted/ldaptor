@@ -8,8 +8,9 @@ DEB_COMPRESS_EXCLUDE := .py .js
 DEB_DH_INSTALL_SOURCEDIR := debian/python2.3-ldaptor
 DEB_DH_ALWAYS_EXCLUDE := .svn
 
-pre-build::
-	PYTHONPATH=. trial2.3 --text --tbformat=emacs -R ldaptor
+$(patsubst %,binary-post-install/%,$(DEB_PYTHON_REAL_LIB_PACKAGES)):: binary-post-install/python%-ldaptor:
+	PYTHONPATH='debian/$(cdbs_curpkg)/usr/lib/python$(patsubst python%-ldaptor,%,$(cdbs_curpkg))/site-packages' \
+		'trial$(patsubst python%-ldaptor,%,$(cdbs_curpkg))' --text --tbformat=emacs -R ldaptor
 
 build/ldaptor-doc::
 	make -C doc
