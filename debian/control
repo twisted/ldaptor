@@ -47,7 +47,7 @@ Description: Command-line LDAP utilities
 Package: ldaptor-webui
 Section: admin
 Architecture: all
-Depends: python2.3-nevow, python (>= 2.3), python (<< 2.4), python2.3-ldaptor
+Depends: python2.3-nevow (>= 0.3.0), python (>= 2.3), python (<< 2.4), python2.3-ldaptor
 Description: Web user interface for editing LDAP directories
  A web-based user interface to search and edit information in an LDAP
  directory.
