@@ -1,3 +1,10 @@
+ldaptor (0.0.30) unstable; urgency=low
+
+  * Install the webui template and CSS files that were missing
+    from the deb. Unit tests really don't cover everything :(
+
+ -- Tommi Virtanen <tv@debian.org>  Tue, 17 Aug 2004 17:06:07 +0300
+
 ldaptor (0.0.29) unstable; urgency=low
 
   * Brown paper bag time; 0.0.28 was never uploaded.

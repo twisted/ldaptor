@@ -29,10 +29,23 @@ directory.
 	],
           data_files=[
         (os.path.join(sysconfig.get_python_lib(), 'ldaptor/apps/webui'),
-         [ 'ldaptor/apps/webui/change_password.xhtml',
-           'ldaptor/apps/webui/delete-done.xhtml',
-           'ldaptor/apps/webui/delete.xhtml',
-           'ldaptor/apps/webui/search.xhtml',
-           ]),
+         [
+        'ldaptor/apps/webui/add-really.xhtml',
+        'ldaptor/apps/webui/add.xhtml',
+        'ldaptor/apps/webui/basedn.xhtml',
+        'ldaptor/apps/webui/change_password.xhtml',
+        'ldaptor/apps/webui/delete-done.xhtml',
+        'ldaptor/apps/webui/delete-nodn.xhtml',
+        'ldaptor/apps/webui/delete.xhtml',
+        'ldaptor/apps/webui/edit-really.xhtml',
+        'ldaptor/apps/webui/edit.xhtml',
+        'ldaptor/apps/webui/login.xhtml',
+        'ldaptor/apps/webui/mass_change_password-really.xhtml',
+        'ldaptor/apps/webui/mass_change_password.xhtml',
+        'ldaptor/apps/webui/move.xhtml',
+        'ldaptor/apps/webui/search.xhtml',
+
+        'ldaptor/apps/webui/ldaptor.css',
+        ]),
         ],
 	  )
