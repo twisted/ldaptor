@@ -5,7 +5,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:nevow="http://nevow.com/ns/nevow/0.1">
   <head>
-    <title>Log In</title>
+    <title>Login</title>
   </head>
   <body>
     <form name="login" method="post" action="PLACEHOLDER" nevow:render="form">
@@ -19,7 +19,9 @@
 	<input id="password" name="password" type="password"/>
       </p>
       <p>
-	<input type="submit"/>
+	<input type="submit">
+	  <nevow:attr name="value">Login</nevow:attr>
+	</input>
       </p>
     </form>
   </body>
