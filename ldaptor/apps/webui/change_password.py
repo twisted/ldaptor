@@ -51,7 +51,9 @@ class IRemoveServicePassword(annotate.TypedInterface):
 class ISetServicePassword(annotate.TypedInterface):
     def setServicePassword(self,
                            ctx=annotate.Context(),
-                           newPassword=annotate.Password(required=True)):
+                           newPassword=annotate.PasswordEntry(required=True),
+                           again=annotate.PasswordEntry(required=True),
+                           ):
         pass
     setServicePassword = annotate.autocallable(setServicePassword)
 
@@ -91,9 +93,19 @@ class SetServicePassword(object):
         super(SetServicePassword, self).__init__()
         self.dn = dn
 
-    def setServicePassword(self, ctx, newPassword):
-        e = getEntry(ctx, self.dn)
-        d = e.setPassword(newPassword)
+    def _isPasswordAcceptable(self, ctx, newPassword, again):
+        if newPassword != again:
+            raise annotate.ValidateError(
+                {},
+                formErrorMessage='Passwords do not match.')
+
+    def setServicePassword(self, ctx, newPassword, again):
+        d = defer.maybeDeferred(self._isPasswordAcceptable, ctx, newPassword, again)
+        def _setPassword(ctx, dn, newPassword):
+            e = getEntry(ctx, dn)
+            d=defer.maybeDeferred(e.setPassword, newPasswd=newPassword)
+            return d
+        d.addCallback(lambda _: _setPassword(ctx, self.dn, newPassword))
 
         def _getName(_, ctx):
             d = getServiceName(ctx, self.dn)
