@@ -72,6 +72,15 @@ def keyvalue_item(context, data):
 
     return context.tag.clear()[ k(data=key), v(data=value) ]
 
+class _DictLike(object):
+    __implements__ = inevow.IContainer
+    
+    def __init__(self, original):
+        self.original = original
+
+    def child(self, context, name):
+        return self.original.get(name, None)
+
 class LDAPEntryContainer(object):
     __implements__ = inevow.IContainer
 
@@ -82,7 +91,7 @@ class LDAPEntryContainer(object):
         if name == 'dn':
             return self.original.dn
         elif name == 'attributes':
-            return self.original
+            return _DictLike(self.original)
         else:
             return None
 
