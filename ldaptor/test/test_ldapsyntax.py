@@ -1164,8 +1164,8 @@ class LDAPSyntaxPasswords(unittest.TestCase):
 
         assert len(l[1])==2
         self.assertEquals(l[1][0], 'Samba')
-        assert not isinstance(l[1][1], failure.Failure)
-        self.assertEquals(l[1][1], 'Aborted')
+        assert isinstance(l[1][1], failure.Failure)
+        l[1][1].trap(ldapsyntax.PasswordSetAborted)
 
 	client.assertSent(pureldap.LDAPPasswordModifyRequest(
             userIdentity='cn=foo,dc=example,dc=com',

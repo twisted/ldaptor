@@ -23,6 +23,12 @@ class PasswordSetAggregateError(Exception):
     def __repr__(self):
         return '<'+self.__class__.__name__+' errors='+repr(self.errors)+'>'
 
+class PasswordSetAborted(Exception):
+    """Aborted"""
+
+    def __str__(self):
+        return self.__doc__
+
 class DNNotPresentError(Exception):
     """The requested DN cannot be found by the server."""
     pass
@@ -508,7 +514,8 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         name, names = names[0], names[1:]
         if results and not results[-1][0]:
             # failing
-            d = defer.succeed(results+[(None, 'Aborted')])
+            fail = Failure(PasswordSetAborted())
+            d = defer.succeed(results+[(None, fail)])
         else:
             fn = getattr(self, prefix+name)
             d = defer.maybeDeferred(fn, newPasswd)
