@@ -32,17 +32,23 @@ class Search(ldapclient.LDAPClient):
         o = ldapsyntax.LDAPEntry(client=self,
                                  dn=self.factory.base)
         d = o.search(filterObject=self.factory.filt,
-                     attributes=self.factory.attributes,
+                     attributes=['uid',
+                                 'uidNumber',
+                                 'gidNumber',
+                                 'gecos',
+                                 'cn',
+                                 'homeDirectory',
+                                 'loginShell',
+                                 ],
                      callback=self._cbSearch)
         d.chainDeferred(self.factory.deferred)
 
 class SearchFactory(protocol.ClientFactory):
     protocol = Search
-    def __init__(self, deferred, base, filt, attributes):
+    def __init__(self, deferred, base, filt):
 	self.deferred=deferred
 	self.base=base
 	self.filt=filt
-	self.attributes=attributes
 
     def clientConnectionFailed(self, connector, reason):
 	self.deferred.errback(reason)
@@ -54,14 +60,14 @@ def error(fail):
     global exitStatus
     exitStatus=1
 
-def main(base, serviceLocationOverride, filter_text, attributes):
+def main(base, serviceLocationOverride, filter_text):
     filt = ldapfilter.parseFilter('(objectClass=posixAccount)')
     if filter_text is not None:
 	filt = pureldap.LDAPFilter_and([
 	    filt,
 	    ldapfilter.parseFilter(filter_text)])
     d=defer.Deferred()
-    s=SearchFactory(d, base, filt, attributes)
+    s=SearchFactory(d, base, filt)
     d.addErrback(error)
     d.addBoth(lambda x: reactor.stop())
 
@@ -74,9 +80,8 @@ def main(base, serviceLocationOverride, filter_text, attributes):
 class MyOptions(usage.Options, usage.Options_service_location, usage.Options_base):
     """LDAPtor command line search utility"""
 
-    def parseArgs(self, filter=None, *attributes):
+    def parseArgs(self, filter=None):
 	self.opts['filter'] = filter
-	self.opts['attributes'] = attributes
 
 if __name__ == "__main__":
     try:
@@ -88,5 +93,4 @@ if __name__ == "__main__":
 
     main(config.opts['base'],
 	 config.opts['service-location'],
-	 config.opts['filter'],
-	 config.opts['attributes'])
+	 config.opts['filter'])
