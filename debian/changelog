@@ -1,3 +1,13 @@
+ldaptor (0.0.35) unstable; urgency=low
+
+  * Bugfixes:
+    - Fix LDAPServer to understand new e.bind() semantics from r196.
+
+  * Packaging:
+    - Bumped standards version to 3.6.1.
+
+ -- Tommi Virtanen <tv@debian.org>  Fri, 28 Jan 2005 19:49:24 +0200
+
 ldaptor (0.0.34) unstable; urgency=low
 
   * Brown paper bag time, 0.0.33 was never uploaded. Epydoc --check only
