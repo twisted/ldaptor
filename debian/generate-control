@@ -2,9 +2,9 @@
 import os, os.path, commands
 import formatter, StringIO
 
-PYTHON_VERSIONS=['2.1', '2.2']
-PYTHON_VERSION_DEFAULT='2.2'
-PYTHON_VERSION_TOOBIG='2.3'
+PYTHON_VERSIONS=['2.1', '2.2', '2.3']
+PYTHON_VERSION_DEFAULT='2.3'
+PYTHON_VERSION_TOOBIG='2.4'
 
 def reflow(s):
     out=StringIO.StringIO()

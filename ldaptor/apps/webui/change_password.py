@@ -45,8 +45,7 @@ class PasswordChangeForm(widgets.Form):
                 o=ldapsyntax.LDAPEntry(client=client, dn=self.dn)
                 d=o.setPassword(newPasswd=password1)
 		d.addCallback(lambda dummy, dn=self.dn:
-			      "<p>Password for <em>%s</em> has been set.</p>"%(dn),
-                              dn)
+			      "<p>Password for <em>%s</em> has been set.</p>"%(dn))
 		return [d, io.getvalue()]
 	    else:
 		return ['<p><strong>Passwords were different or not set.</strong></p>',

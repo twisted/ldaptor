@@ -76,3 +76,5 @@ TODO file for the Ldaptor project.
 
 * ldaptor.schema: add stringification in the same format it parses.
    bin/ldaptor-fetchschema should be ok already.
+
+* use LineOnlyReceiver

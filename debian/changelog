@@ -1,3 +1,11 @@
+ldaptor (0.0.19) unstable; urgency=low
+
+  * Fix reference to non-existent local variable dn in webui
+    change_password.py
+  * Python 2.3 is now the default.
+
+ -- Tommi Virtanen <tv@debian.org>  Sat,  9 Aug 2003 14:18:15 +0300
+
 ldaptor (0.0.18) unstable; urgency=low
 
   * Bugfixes:
