@@ -3,6 +3,7 @@ Test cases for ldaptor.protocols.ldap.ldapsyntax module.
 """
 
 from twisted.trial import unittest
+from ldaptor import config
 from ldaptor.protocols.ldap import ldapsyntax, distinguishedname, ldaperrors
 from ldaptor.protocols import pureldap, pureber
 from twisted.internet import defer
@@ -844,6 +845,10 @@ class LDAPSyntaxContainingNamingContext(unittest.TestCase):
 
 
 class LDAPSyntaxPasswords(unittest.TestCase):
+    def setUp(self):
+        cfg = config.loadConfig()
+        cfg.set('samba', 'use-lmhash', 'no')
+
     def testPasswordSetting_ExtendedOperation(self):
         """LDAPEntry.setPassword_ExtendedOperation(newPasswd=...) changes the password."""
         client = LDAPClientTestDriver(
