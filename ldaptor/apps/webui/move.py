@@ -1,5 +1,4 @@
 import os
-from twisted.web import util
 from ldaptor.protocols.ldap import ldapsyntax
 from ldaptor.apps.webui.uriquote import uriUnquote
 from nevow import rend, loaders, url, inevow
@@ -31,4 +30,4 @@ class MovePage(rend.Page):
                                            client=userEntry.client)
         move.append(e)
         u = url.URL.fromRequest(inevow.IRequest(context)).sibling('search')
-        return util.Redirect(str(u))
+        return u

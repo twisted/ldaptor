@@ -1,6 +1,5 @@
 from twisted.internet import reactor
 from twisted.internet import defer
-from twisted.web.util import Redirect
 from ldaptor.protocols.ldap import ldapsyntax, distinguishedname
 from ldaptor import generate_password
 from ldaptor.apps.webui.uriquote import uriUnquote
@@ -110,30 +109,20 @@ class ConfirmChange(rend.Page):
 class GetDN(rend.Page):
     addSlash = True
 
-    def renderHTTP(self, context):
+    def child_(self, context):
         entry = inevow.ISession(context).getLoggedInRoot().loggedIn
-        request = inevow.IRequest(context)
-        u = url.URL.fromRequest(request)
-        request.redirect(u.child(str(entry.dn)))
-        return ''
+        u = inevow.IRequest(context).URLPath()
+        return u.child(str(entry.dn))
 
-    def locateChild(self, request, segments):
-        ret = super(GetDN, self).locateChild(request, segments)
-        if ret != rend.NotFound:
-            return ret
-
-        path = segments[0]
-        unquoted=uriUnquote(path)
+    def childFactory(self, context, name):
+        unquoted=uriUnquote(name)
         try:
             dn = distinguishedname.DistinguishedName(stringValue=unquoted)
         except distinguishedname.InvalidRelativeDistinguishedName, e:
             # TODO There's no way to throw a FormException at this stage.
-            u = url.URL.fromRequest(request)
-            # TODO freeform_post!configurableName!methodName
-            u.add('dn', path)
-            return Redirect(str(u)), []
+            return None
         r=ConfirmChange(dn=dn)
-        return r, segments[1:]
+        return r
 
 def getResource():
     return GetDN()

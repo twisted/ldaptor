@@ -1,4 +1,3 @@
-from twisted.web.util import Redirect
 from ldaptor.protocols.ldap import ldapsyntax, distinguishedname
 from ldaptor.apps.webui.uriquote import uriUnquote
 from ldaptor import weave
@@ -144,23 +143,15 @@ class GetDN(rend.Page):
         u = url.URL.fromRequest(request)
         return context.tag(href=u.parent().child('search'))
 
-    def locateChild(self, request, segments):
-        ret = super(GetDN, self).locateChild(request, segments)
-        if ret != rend.NotFound:
-            return ret
-
-        path = segments[0]
-        unquoted=uriUnquote(path)
+    def childFactory(self, context, name):
+        unquoted=uriUnquote(name)
         try:
             dn = distinguishedname.DistinguishedName(stringValue=unquoted)
         except distinguishedname.InvalidRelativeDistinguishedName, e:
             # TODO There's no way to throw a FormException at this stage.
-            u = url.URL.fromRequest(request)
-            # TODO freeform_post!configurableName!methodName
-            u.add('dn', path)
-            return Redirect(str(u)), []
+            return None
         r=ConfirmDelete(dn=dn)
-        return r, segments[1:]
+        return r
 
 def getResource():
     return GetDN()

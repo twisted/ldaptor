@@ -1,4 +1,3 @@
-from twisted.web.util import Redirect, redirectTo
 from ldaptor.apps.webui import login, search, edit, add, delete, mass_change_password, change_password, move
 from ldaptor.protocols.ldap import distinguishedname
 from ldaptor.apps.webui.uriquote import uriUnquote
@@ -15,11 +14,8 @@ class LdaptorWebUIGadget2(rend.Page):
         super(LdaptorWebUIGadget2, self).__init__()
         self.baseObject = baseObject
 
-    def renderHTTP(self, context):
-        request = inevow.IRequest(context)
-        u = url.URL.fromRequest(request)
-        request.redirect(u.child('search'))
-        return ''
+    def child_(self, context):
+        return inevow.IRequest(context).URLPath().child('search')
 
     def child_search(self, context):
         return search.getSearchPage()
@@ -125,7 +121,7 @@ class LdaptorWebUIGadget(rend.Page):
 
             # TODO freeform_post!configurableName!methodName
             u.add('basedn', path)
-            return Redirect(str(u)), []
+            return u, []
 
         r=LdaptorWebUIGadget2(baseObject=dn)
         cfg = self.config.copy(baseDN=dn)
