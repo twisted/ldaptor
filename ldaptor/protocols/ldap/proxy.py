@@ -39,6 +39,8 @@ class Proxy(ldapserver.BaseLDAPServer):
 
     def _gotResponse(self, response, reply):
         reply(response)
+
+        # TODO this is ugly
         return isinstance(response, (
             pureldap.LDAPSearchResultDone,
             pureldap.LDAPBindResponse,
