@@ -1,0 +1,51 @@
+# Ldaptor schema file
+#
+# OID 1.3.6.1.4.1.22024.1.1 is reserved for Ldaptor.
+#
+# Under that, the following apply:
+#
+# .1 = attributeTypes
+# .2 = objectClasses
+#
+
+# Time format is like with modifyTimestamp: "YYYYMMDDHHMMSSZ", for
+# example "20050117143623Z".  The actual format is only documented in
+# CCITT Rec. X.208 and/or ISO/IEC 8824, which seems to cost
+# 136€. NICE! For now, let's hope nothing uses anything more complex
+# than the simplest possible format.
+
+# If validFrom or validUntil is not set, the defaults are -infinity
+# and infinity.
+
+attributetype ( 1.3.6.1.4.1.22024.1.1.1.1
+	NAME 'validFrom'
+        DESC 'Authentication is possible only after this time'
+        EQUALITY generalizedTimeMatch
+        ORDERING generalizedTimeOrderingMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.24
+        SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.22024.1.1.1.2
+	NAME 'validUntil'
+        DESC 'Authentication is possible only before this time'
+        EQUALITY generalizedTimeMatch
+        ORDERING generalizedTimeOrderingMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.24
+        SINGLE-VALUE )
+
+# It is suggested that the RDN contains
+# both the cn and owner attributes, to
+# make it specific enough.
+# Note the amount of quoting required
+# for this:
+#	dn: cn=test+owner=uid\=jdoe\,dc\=example\,dc\=com,dc=example,dc=com
+#	objectClass: serviceSecurityObject
+#	cn: test
+#	owner: uid=jdoe,dc=example,dc=com
+
+objectclass ( 1.3.6.1.4.1.22024.1.1.2.1
+	NAME 'serviceSecurityObject'
+	DESC 'A service-specific authentication method'
+	SUP top STRUCTURAL
+	MUST ( cn $ owner $ userPassword )
+	MAY ( validFrom $ validUntil ) )
