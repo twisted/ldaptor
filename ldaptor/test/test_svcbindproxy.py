@@ -15,13 +15,16 @@ class ServiceBindingProxy(unittest.TestCase):
         inherit=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext())))
 
     def createServer(self, services, fallback=None, responses=[]):
-        return testutil.createServer(lambda config: svcbindproxy.ServiceBindingProxy(
+        server = testutil.createServer(lambda config: svcbindproxy.ServiceBindingProxy(
             config=config,
             services=services,
             fallback=fallback,
             ),
                                      baseDN='dc=example,dc=com',
                                      *responses)
+        server.now = '20050213140302Z'
+        server.timestamp = lambda : server.now
+        return server
     
     def test_bind_noMatchingServicesFound_noFallback(self):
         server = self.createServer(
@@ -45,21 +48,39 @@ class ServiceBindingProxy(unittest.TestCase):
                                        sizeLimit=0,
                                        timeLimit=0,
                                        typesOnly=0,
-                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc1))'),
+                                       filter=ldapfilter.parseFilter('(&'
+                                                                     +'(objectClass=serviceSecurityObject)'
+                                                                     +'(owner=cn=jack,dc=example,dc=com)'
+                                                                     +'(cn=svc1)'
+                                                                     +('(|(!(validFrom=*))(validFrom<=%s))' % server.now)
+                                                                     +('(|(!(validUntil=*))(validUntil>=%s))' % server.now)
+                                                                     +')'),
                                        attributes=('1.1',)),
             pureldap.LDAPSearchRequest(baseObject='dc=example,dc=com',
                                        derefAliases=0,
                                        sizeLimit=0,
                                        timeLimit=0,
                                        typesOnly=0,
-                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc2))'),
+                                       filter=ldapfilter.parseFilter('(&'
+                                                                     +'(objectClass=serviceSecurityObject)'
+                                                                     +'(owner=cn=jack,dc=example,dc=com)'
+                                                                     +'(cn=svc2)'
+                                                                     +('(|(!(validFrom=*))(validFrom<=%s))' % server.now)
+                                                                     +('(|(!(validUntil=*))(validUntil>=%s))' % server.now)
+                                                                     +')'),
                                        attributes=('1.1',)),
             pureldap.LDAPSearchRequest(baseObject='dc=example,dc=com',
                                        derefAliases=0,
                                        sizeLimit=0,
                                        timeLimit=0,
                                        typesOnly=0,
-                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc3))'),
+                                       filter=ldapfilter.parseFilter('(&'
+                                                                     +'(objectClass=serviceSecurityObject)'
+                                                                     +'(owner=cn=jack,dc=example,dc=com)'
+                                                                     +'(cn=svc3)'
+                                                                     +('(|(!(validFrom=*))(validFrom<=%s))' % server.now)
+                                                                     +('(|(!(validUntil=*))(validUntil>=%s))' % server.now)
+                                                                     +')'),
                                        attributes=('1.1',)),
             )
         self.assertEquals(server.transport.value(),
@@ -88,21 +109,39 @@ class ServiceBindingProxy(unittest.TestCase):
                                        sizeLimit=0,
                                        timeLimit=0,
                                        typesOnly=0,
-                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc1))'),
+                                       filter=ldapfilter.parseFilter('(&'
+                                                                     +'(objectClass=serviceSecurityObject)'
+                                                                     +'(owner=cn=jack,dc=example,dc=com)'
+                                                                     +'(cn=svc1)'
+                                                                     +('(|(!(validFrom=*))(validFrom<=%s))' % server.now)
+                                                                     +('(|(!(validUntil=*))(validUntil>=%s))' % server.now)
+                                                                     +')'),
                                        attributes=('1.1',)),
             pureldap.LDAPSearchRequest(baseObject='dc=example,dc=com',
                                        derefAliases=0,
                                        sizeLimit=0,
                                        timeLimit=0,
                                        typesOnly=0,
-                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc2))'),
+                                       filter=ldapfilter.parseFilter('(&'
+                                                                     +'(objectClass=serviceSecurityObject)'
+                                                                     +'(owner=cn=jack,dc=example,dc=com)'
+                                                                     +'(cn=svc2)'
+                                                                     +('(|(!(validFrom=*))(validFrom<=%s))' % server.now)
+                                                                     +('(|(!(validUntil=*))(validUntil>=%s))' % server.now)
+                                                                     +')'),
                                        attributes=('1.1',)),
             pureldap.LDAPSearchRequest(baseObject='dc=example,dc=com',
                                        derefAliases=0,
                                        sizeLimit=0,
                                        timeLimit=0,
                                        typesOnly=0,
-                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc3))'),
+                                       filter=ldapfilter.parseFilter('(&'
+                                                                     +'(objectClass=serviceSecurityObject)'
+                                                                     +'(owner=cn=jack,dc=example,dc=com)'
+                                                                     +'(cn=svc3)'
+                                                                     +('(|(!(validFrom=*))(validFrom<=%s))' % server.now)
+                                                                     +('(|(!(validUntil=*))(validUntil>=%s))' % server.now)
+                                                                     +')'),
                                        attributes=('1.1',)),
             pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='s3krit'))
         self.assertEquals(server.transport.value(),
@@ -132,21 +171,39 @@ class ServiceBindingProxy(unittest.TestCase):
                                        sizeLimit=0,
                                        timeLimit=0,
                                        typesOnly=0,
-                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc1))'),
+                                       filter=ldapfilter.parseFilter('(&'
+                                                                     +'(objectClass=serviceSecurityObject)'
+                                                                     +'(owner=cn=jack,dc=example,dc=com)'
+                                                                     +'(cn=svc1)'
+                                                                     +('(|(!(validFrom=*))(validFrom<=%s))' % server.now)
+                                                                     +('(|(!(validUntil=*))(validUntil>=%s))' % server.now)
+                                                                     +')'),
                                        attributes=('1.1',)),
             pureldap.LDAPSearchRequest(baseObject='dc=example,dc=com',
                                        derefAliases=0,
                                        sizeLimit=0,
                                        timeLimit=0,
                                        typesOnly=0,
-                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc2))'),
+                                       filter=ldapfilter.parseFilter('(&'
+                                                                     +'(objectClass=serviceSecurityObject)'
+                                                                     +'(owner=cn=jack,dc=example,dc=com)'
+                                                                     +'(cn=svc2)'
+                                                                     +('(|(!(validFrom=*))(validFrom<=%s))' % server.now)
+                                                                     +('(|(!(validUntil=*))(validUntil>=%s))' % server.now)
+                                                                     +')'),
                                        attributes=('1.1',)),
             pureldap.LDAPSearchRequest(baseObject='dc=example,dc=com',
                                        derefAliases=0,
                                        sizeLimit=0,
                                        timeLimit=0,
                                        typesOnly=0,
-                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc3))'),
+                                       filter=ldapfilter.parseFilter('(&'
+                                                                     +'(objectClass=serviceSecurityObject)'
+                                                                     +'(owner=cn=jack,dc=example,dc=com)'
+                                                                     +'(cn=svc3)'
+                                                                     +('(|(!(validFrom=*))(validFrom<=%s))' % server.now)
+                                                                     +('(|(!(validUntil=*))(validUntil>=%s))' % server.now)
+                                                                     +')'),
                                        attributes=('1.1',)),
             pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='wrong-s3krit'))
         self.assertEquals(server.transport.value(),
@@ -179,7 +236,13 @@ class ServiceBindingProxy(unittest.TestCase):
                                        sizeLimit=0,
                                        timeLimit=0,
                                        typesOnly=0,
-                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc1))'),
+                                       filter=ldapfilter.parseFilter('(&'
+                                                                     +'(objectClass=serviceSecurityObject)'
+                                                                     +'(owner=cn=jack,dc=example,dc=com)'
+                                                                     +'(cn=svc1)'
+                                                                     +('(|(!(validFrom=*))(validFrom<=%s))' % server.now)
+                                                                     +('(|(!(validUntil=*))(validUntil>=%s))' % server.now)
+                                                                     +')'),
                                        attributes=('1.1',)),
             pureldap.LDAPBindRequest(dn=r'cn=svc1+owner=cn\=jack\,dc\=example\,dc\=com,dc=example,dc=com', auth='secret'),
             )
@@ -222,7 +285,13 @@ class ServiceBindingProxy(unittest.TestCase):
                                        sizeLimit=0,
                                        timeLimit=0,
                                        typesOnly=0,
-                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc1))'),
+                                       filter=ldapfilter.parseFilter('(&'
+                                                                     +'(objectClass=serviceSecurityObject)'
+                                                                     +'(owner=cn=jack,dc=example,dc=com)'
+                                                                     +'(cn=svc1)'
+                                                                     +('(|(!(validFrom=*))(validFrom<=%s))' % server.now)
+                                                                     +('(|(!(validUntil=*))(validUntil>=%s))' % server.now)
+                                                                     +')'),
                                        attributes=('1.1',)),
             pureldap.LDAPBindRequest(dn=r'cn=svc1+owner=cn\=jack\,dc\=example\,dc\=com,dc=example,dc=com', auth='secret'),
             pureldap.LDAPSearchRequest(baseObject='dc=example,dc=com',
@@ -230,14 +299,26 @@ class ServiceBindingProxy(unittest.TestCase):
                                        sizeLimit=0,
                                        timeLimit=0,
                                        typesOnly=0,
-                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc2))'),
+                                       filter=ldapfilter.parseFilter('(&'
+                                                                     +'(objectClass=serviceSecurityObject)'
+                                                                     +'(owner=cn=jack,dc=example,dc=com)'
+                                                                     +'(cn=svc2)'
+                                                                     +('(|(!(validFrom=*))(validFrom<=%s))' % server.now)
+                                                                     +('(|(!(validUntil=*))(validUntil>=%s))' % server.now)
+                                                                     +')'),
                                        attributes=('1.1',)),
             pureldap.LDAPSearchRequest(baseObject='dc=example,dc=com',
                                        derefAliases=0,
                                        sizeLimit=0,
                                        timeLimit=0,
                                        typesOnly=0,
-                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc3))'),
+                                       filter=ldapfilter.parseFilter('(&'
+                                                                     +'(objectClass=serviceSecurityObject)'
+                                                                     +'(owner=cn=jack,dc=example,dc=com)'
+                                                                     +'(cn=svc3)'
+                                                                     +('(|(!(validFrom=*))(validFrom<=%s))' % server.now)
+                                                                     +('(|(!(validUntil=*))(validUntil>=%s))' % server.now)
+                                                                     +')'),
                                        attributes=('1.1',)),
             pureldap.LDAPBindRequest(dn='cn=svc3+owner=cn\=jack\,dc\=example\,dc\=com,dc=example,dc=com', auth='secret'),
             )
@@ -281,7 +362,13 @@ class ServiceBindingProxy(unittest.TestCase):
                                        sizeLimit=0,
                                        timeLimit=0,
                                        typesOnly=0,
-                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc1))'),
+                                       filter=ldapfilter.parseFilter('(&'
+                                                                     +'(objectClass=serviceSecurityObject)'
+                                                                     +'(owner=cn=jack,dc=example,dc=com)'
+                                                                     +'(cn=svc1)'
+                                                                     +('(|(!(validFrom=*))(validFrom<=%s))' % server.now)
+                                                                     +('(|(!(validUntil=*))(validUntil>=%s))' % server.now)
+                                                                     +')'),
                                        attributes=('1.1',)),
             pureldap.LDAPBindRequest(dn=r'cn=svc1+owner=cn\=jack\,dc\=example\,dc\=com,dc=example,dc=com', auth='wrong-s3krit'),
             pureldap.LDAPSearchRequest(baseObject='dc=example,dc=com',
@@ -289,14 +376,26 @@ class ServiceBindingProxy(unittest.TestCase):
                                        sizeLimit=0,
                                        timeLimit=0,
                                        typesOnly=0,
-                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc2))'),
+                                       filter=ldapfilter.parseFilter('(&'
+                                                                     +'(objectClass=serviceSecurityObject)'
+                                                                     +'(owner=cn=jack,dc=example,dc=com)'
+                                                                     +'(cn=svc2)'
+                                                                     +('(|(!(validFrom=*))(validFrom<=%s))' % server.now)
+                                                                     +('(|(!(validUntil=*))(validUntil>=%s))' % server.now)
+                                                                     +')'),
                                        attributes=('1.1',)),
             pureldap.LDAPSearchRequest(baseObject='dc=example,dc=com',
                                        derefAliases=0,
                                        sizeLimit=0,
                                        timeLimit=0,
                                        typesOnly=0,
-                                       filter=ldapfilter.parseFilter('(&(objectClass=serviceSecurityObject)(owner=cn=jack,dc=example,dc=com)(cn=svc3))'),
+                                       filter=ldapfilter.parseFilter('(&'
+                                                                     +'(objectClass=serviceSecurityObject)'
+                                                                     +'(owner=cn=jack,dc=example,dc=com)'
+                                                                     +'(cn=svc3)'
+                                                                     +('(|(!(validFrom=*))(validFrom<=%s))' % server.now)
+                                                                     +('(|(!(validUntil=*))(validUntil>=%s))' % server.now)
+                                                                     +')'),
                                        attributes=('1.1',)),
             pureldap.LDAPBindRequest(dn='cn=svc3+owner=cn\=jack\,dc\=example\,dc\=com,dc=example,dc=com', auth='wrong-s3krit'),
             pureldap.LDAPBindRequest(version=3, dn='cn=jack,dc=example,dc=com', auth='wrong-s3krit'),
