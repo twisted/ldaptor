@@ -26,7 +26,10 @@ clean:
 	rm -rf \
 		$(GENERATED) \
 		ldap-intro \
-		$(DIAPNG:%=%.tmp)
+		$(DIAPNG:%=%.tmp) \
+		addressbook-ldif \
+		addressbook-session \
+		addressbook-slides
 
 rsync: $(GENERATED)
 	rsync -a $(DOCBOOK:%.xml=%.html) $(SLIDES:%.xml=%) $(DIAPNG) pyramid.twistedmatrix.com:public_html/ldap-intro/
