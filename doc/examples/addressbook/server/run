@@ -3,7 +3,7 @@ set -e
 
 rm -rf database
 mkdir database
-cat initial.ldif smith.ldif doe.ldif esim.ldif \
+cat initial.ldif smith.ldif doe.ldif exam.ldif \
 | /usr/sbin/slapadd -b 'dc=example,dc=com' -f slapd.conf
 echo Starting server...
 /usr/sbin/slapd -d0 -f slapd.conf -n 'addressbook-slapd' -h 'ldap://127.0.0.1:10389/'

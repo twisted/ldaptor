@@ -1,83 +1,162 @@
-#!/usr/bin/python
-import sys, os
-from twisted.internet import app, reactor, defer
-from twisted.web import server
-from twisted.python import log, formmethod, components
-from twisted.web.woven import page, input, controller, model, form, view, interfaces
+import os
+from twisted.internet import reactor
+from twisted.cred import portal, checkers
+from nevow import rend, appserver, formless, freeform, inevow, compy, \
+     stan, guard
 
-from ldaptor.protocols.ldap import ldapclient, ldapsyntax, ldapconnector, distinguishedname
+from ldaptor.protocols.ldap import ldapclient, ldapsyntax, ldapconnector, \
+     distinguishedname
 from ldaptor import ldapfilter
 from ldaptor.protocols import pureldap
 
-class DictionaryModelWithDefaults(model.DictionaryModel):
-    def getSubmodel(self, *a, **kw):
-        ret = model.DictionaryModel.getSubmodel(self, *a, **kw)
-        if ret is None:
-            ret = model.adaptToIModel([])
-        return ret
+class ILDAPConfig(compy.Interface):
+    """Addressbook configuration retrieval."""
 
-components.registerAdapter(DictionaryModelWithDefaults, ldapsyntax.LDAPEntry, interfaces.IModel)
-components.registerAdapter(model.ListModel, ldapsyntax.LDAPAttributeSet, interfaces.IModel)
+    def getBaseDN(self):
+        """Get the LDAP base DN, as a DistinguishedName."""
 
-class FormView(view.View):
-    def wvupdate_previousSearch(self, request, widget, model):
-        name = widget.node.getAttribute('name')
-        prevSearch = request.args.get(name, [None])[0]
-        if prevSearch:
-            widget.setAttribute('value', prevSearch)
+    def getServiceLocationOverrides(self):
+        """
+        Get the LDAP service location overrides, as a mapping of
+        DistinguishedName to (host, port) tuples.
+        """
 
-class SearchForm(form.FormProcessor):
-    isLeaf = 1
+class LDAPConfig(object):
+    __implements__ = ILDAPConfig
 
-    def viewFactory(self, model):
-        return FormView(model,
-                        templateFile = "searchform.xhtml",
-                        templateDirectory = os.path.split(os.path.abspath(__file__))[0])
+    def __init__(self,
+                 baseDN,
+                 serviceLocationOverrides=None):
+        self.baseDN = distinguishedname.DistinguishedName(baseDN)
+        self.serviceLocationOverrides = {}
+        if serviceLocationOverrides is not None:
+            for k,v in serviceLocationOverrides.items():
+                dn = distinguishedname.DistinguishedName(k)
+                self.serviceLocationOverrides[dn]=v
 
-class Searcher:
-    def __init__(self, config):
-        self.config = config
+    def getBaseDN(self):
+        return self.baseDN
 
-    def search(self, search):
-        if not search:
-            return {'results': [],
-                    'query': None}
+    def getServiceLocationOverrides(self):
+        return self.serviceLocationOverrides
 
+class LDAPSearchFilter(formless.String):
+    def coerce(self, val):
+        val = formless.String.coerce(self, val)
         try:
-            query = ldapfilter.parseFilter(search)
+            f = ldapfilter.parseFilter(val)
         except ldapfilter.InvalidLDAPFilter, e:
-            raise formmethod.InputError, e
+            raise formless.InputError, \
+                  "%r is not a valid LDAP search filter: %s" % (val, e)
+        # We don't just return f here because then Nevow would want to
+        # serialize it to XML (why?). Maybe some day.
+        return val
+
+class IAddressBookSearch(formless.TypedInterface):
+    search = LDAPSearchFilter()
+    search.label = "Search filter"
+
+class CurrentSearch(object):
+    __implements__ = IAddressBookSearch, inevow.IContainer
+
+    _searchFilter = None
+    def _setSearchFilter(self, val):
+        self._searchFilter = ldapfilter.parseFilter(val)
+    search = property(
+        fget = lambda self: self._searchFilter,
+        fset = _setSearchFilter)
+
+    def child(self, context, name):
+        if name == 'searchFilter':
+            return self.search
+        if name != 'results':
+            return None
+        config = context.locate(ILDAPConfig)
 
         c=ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
-        d=c.connectAnonymously(self.config['base'], self.config['serviceLocationOverrides'])
+        d=c.connectAnonymously(config.getBaseDN(),
+                               config.getServiceLocationOverrides())
 
-        def _search(proto, base, query):
+        def _search(proto, base, searchFilter):
             baseEntry = ldapsyntax.LDAPEntry(client=proto, dn=base)
-            d=baseEntry.search(filterObject=query)
+            d=baseEntry.search(filterObject=searchFilter)
             return d
 
-        d.addCallback(_search, self.config['base'], query)
-        d.addCallback(lambda results: {'query': query.asText(), 'results': results})
+        d.addCallback(_search, config.getBaseDN(), self.search)
         return d
 
-formSignature = formmethod.MethodSignature(
-    formmethod.String("search", allowNone=0, shortDesc="Search filter"),
-    )
+def LDAPFilterSerializer(original, context):
+    return original.asText()
 
-def main():
-    config = {
-        'base': distinguishedname.DistinguishedName('ou=People,dc=example,dc=com'),
-        'serviceLocationOverrides': {
-        distinguishedname.DistinguishedName('dc=example,dc=com'): ('localhost', 10389),
-        }
-        }
+# TODO need to make this pretty some day.
+for c in [
+    pureldap.LDAPFilter_and,
+    pureldap.LDAPFilter_or,
+    pureldap.LDAPFilter_not,
+    pureldap.LDAPFilter_substrings,
+    pureldap.LDAPFilter_equalityMatch,
+    pureldap.LDAPFilter_greaterOrEqual,
+    pureldap.LDAPFilter_lessOrEqual,
+    pureldap.LDAPFilter_approxMatch,
+    pureldap.LDAPFilter_present,
+    pureldap.LDAPFilter_extensibleMatch,
+    ]:
+    compy.registerAdapter(LDAPFilterSerializer,
+                          c,
+                          inevow.ISerializable)
 
-    site = server.Site(SearchForm(formSignature.method(Searcher(config).search)))
-    application = app.Application("LDAPressBook")
-    application.listenTCP(8088, site)
+class AddressBookResource(rend.Page):
+    docFactory = rend.htmlfile(
+        'searchform.xhtml',
+        templateDir=os.path.split(os.path.abspath(__file__))[0])
 
-    log.startLogging(sys.stdout, 0)
-    application.run(save=0)
+    def configurable_(self, context):
+        request = context.locate(inevow.IRequest)
+        i = request.session.getComponent(IAddressBookSearch)
+        if i is None:
+            i = CurrentSearch()
+            request.session.setComponent(IAddressBookSearch, i)
+        return i
 
-if __name__ == '__main__':
-    main()
+    def data_search(self, context, data):
+        configurable = self.locateConfigurable(context, '')
+        cur = configurable.original
+        return cur
+
+    def child_freeform_css(self, request):
+        from twisted.python import util
+        from twisted.web import static
+        from nevow import __file__ as nevow_file
+        return static.File(util.sibpath(nevow_file, 'freeform-default.css'))
+
+    def render_input(self, context, data):
+        return freeform.renderForms()
+
+    def render_haveSearch(self, context, data):
+        r=context.allPatterns(str(data.search is not None))
+        return context.tag.clear()[r]
+
+    def render_searchFilter(self, context, data):
+        return data.asText()
+
+class AddressBookRealm:
+    __implements__ = portal.IRealm,
+
+    def __init__(self, resource):
+        self.resource = resource
+
+    def requestAvatar(self, avatarId, mind, *interfaces):
+        if inevow.IResource not in interfaces:
+            raise NotImplementedError, "no interface"
+        return (inevow.IResource,
+                self.resource,
+                lambda: None)
+
+def getSite(config):
+    form = AddressBookResource()
+    form.remember(config, ILDAPConfig)
+    realm = AddressBookRealm(form)
+    site = appserver.NevowSite(
+        guard.SessionWrapper(
+        portal.Portal(realm, [checkers.AllowAnonymousAccess()])))
+    return site

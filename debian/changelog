@@ -1,3 +1,111 @@
+ldaptor (0.0.24) experimental; urgency=low
+
+  * Applications changes:
+    - Can now generate diffs of two LDAP entries, or even two full trees,
+      and use that either to modify LDAP entries at a server, or generate
+      LDIF modification commands. Can also parse LDIF modification files.
+      See ldaptor-ldifdiff, ldaptor-ldifpatch.
+
+  * Documentation changes:
+    - Addressbook example source:
+      - Bugfixes and cleanups.
+      - Rewrite addressbook examples to use nevow instead of woven
+        and make them runnable via .tac files.
+    - Modernize addressbook-slides:
+      - Remove htmldiff hack, use meld instead. Simplify things a bit.
+      - Add new addressbook-slides-server.tac that launches meld
+        automatically when you load that page, useful for presentations.
+      - Add CSS stylesheet.
+      - New DTD version, fix to conform to DTD.
+      - Split 01_repl into screen-size chunks.
+    - In addressbook slides, use smaller pictures to make sure they fit on
+      screen.
+    - In addressbook examples, let one user have a valid password and edit
+      access, so the same server can be used to demo ldaptor-webui.
+    - Note in ldap-intro documentation that OpenLDAP doesn't allow
+      changing objectClasses of existing objects.
+    - Fix typo in doc/examples/ldif2ldif.
+    - Docstring cleanup.
+    - Switch from graphviz to dia for figures. (Closes: #242147)
+    - In example LDIFs, rename Erkki Esim to Ample Exam, for i18n.
+
+  * API changes:
+    - First stages of LDIFTree work; initial support for storing LDIFs in a
+      tree form.
+    - Add inmemory data backend.
+    - Start using interfaces, abstract common LDAP entry things into
+      ldaptor.entry, ldaptor.attributeset.
+    - Add module ldaptor.delta.
+    - Add LDAPEntry.match().
+    - Add IConnectedLDAPEntry.lookup().
+    - The LDAP server prototype code has changed a lot, not summarizing
+      here.
+    - Rename ldifprotocol.LDIF.completed() to more specific
+      gotEntry(), so inmemory DB loading can have .gotDatabase() or
+      something, and .completed() won't look confusing there.
+    - Switch ldifprotocol into producing BaseLDAPEntries.
+    - Add ldaptor.entry.EditableLDAPEntry, make
+      ldapsyntax.LDAPEntryWithClient inherit EditableLDAPEntry.
+    - Make LDAPConnector accepts dns also as strings.
+    - LDAPConnector accepts overrides that are callable, and lets them
+      take control of the connecting. This is mostly meant for unit
+      testing.
+
+  * Internal refactorings:
+    - Refactor to remove client-specific details from LDAPAttributeSet and
+      to generalize the concept of a Modification so it can be used with
+      LDIF also.
+    - Refactor LDAPAttributeSet to interits Set.
+    - Switch BaseLDAPEntry to a be a new-style class.
+
+  * Bugfixes:
+    - Fix webui search basedn navilinks.
+    - In ldaptor-fetchschema, start logging so errors are reported to the
+      user.
+    - Ignore case in attributeType names.
+    - LDIF parsing:
+      - Support splitted lines in ldifprotocol.LDIF.
+      - Fix LDIF parsing when values have no leading space.
+      - Protect against "<" values (external URL) in LDIF parsing.
+      - Make ldifprotocol support versioned LDIF files.
+    - Make LDAPServer error handling to actually talk sane
+      things on the wire.
+    - Detect truncated LDIF files, raise
+      ldifprotocol.LDIFTruncatedError.
+    - Handle different capitalizations of 'objectClass' in
+      BaseLDAPEntry.
+    - Finish schema parsing.
+    - Fix bug where ldapserver raises an exception on non-anonymous
+      binds. It was missed in ldaperrors refactor, add unit tests so it
+      will not be missed again. (Closes: #244543)
+    - When LDAPServer receives unknown protocol requests, reply sanely and
+      do not close the connection. Thanks to Guido Trotter.
+      (Closes: #244861)
+    - Notice differences in attributeType when comparing
+      LDAPAttributeSets.
+    - In LDAPAttributeSet, override those parts of sets.Set which
+      assume class creation works without arguments (as we need the
+      key always).
+
+  * Cleanups:
+    - Start gathering unit tests for the server protocol.
+    - Stringify MutableStrings to simplify things. MutableStrings
+      shouldn't leak out of pureber and pureldap.
+    - Use the canonical way to write objectClass in
+      pureldap.LDAPFilterMatchAll; especially needed as the server code is
+      currently case-dependent.
+    - Nicer repr for LDAPAttributeSets.
+    - Make sure BaseLDAPEntry LDIFfication lists attribute values in
+      sorted order for reproducability.
+    - Add comparisons to RelativeDistingushedName in order to have
+      stable unit test results.
+
+  * Packaging:
+    - Build-depend on dia (new enough dia to not need X11 at build time)
+      => uploading to experimental.
+
+ -- Tommi Virtanen <tv@debian.org>  Mon, 17 May 2004 19:27:00 +0300
+
 ldaptor (0.0.23) unstable; urgency=low
 
   * Bugfixes:

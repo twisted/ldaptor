@@ -101,7 +101,7 @@ Section: %(extract-setup-var debian-section)s
 Priority: optional
 Maintainer: %(setup --contact)s <%(setup --contact-email)s>
 Standards-Version: 3.5.6
-Build-Depends-Indep: %(forpython python%s-dev)s, debhelper (>= 4.1.68), docbook-slides (>= 3.2.0), xsltproc, source-highlight, python2.3-epydoc
+Build-Depends-Indep: %(forpython python%s-dev)s, debhelper (>= 4.1.68), docbook-slides (>= 3.2.0), xsltproc, source-highlight, python2.3-epydoc, dia (>= 0.93-2)
 """ % CmdDict(filename)
     package=filename[len('setup-'):-len('.py')]
 

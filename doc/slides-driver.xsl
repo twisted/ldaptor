@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
 
-  <xsl:import href="/usr/share/sgml/docbook/custom/slides/3.2.0/xsl/xhtml/default.xsl"/>
+  <xsl:import href="/usr/share/xml/docbook/custom/slides/3.3.1/xsl/xhtml/default.xsl"/>
   <!-- xsl:import href="slides/xsl/default.xsl"/ -->
 
   <xsl:param name="keyboard.nav">1</xsl:param>
@@ -9,7 +9,9 @@
   <xsl:param name="output.indent">yes</xsl:param>
   <xsl:param name="graphics.dir">graphics</xsl:param>
   <xsl:param name="script.dir">browser</xsl:param>
-  <xsl:param name="css.stylesheet">browser/slides.css</xsl:param>
+  <xsl:param name="css.stylesheet.dir">.</xsl:param>
+  <xsl:param name="css.stylesheet">slide-style.css</xsl:param>
+  <xsl:param name="para.propagates.style">1</xsl:param>
 
 <xsl:template match="foil">
   <xsl:param name="thisfoil">

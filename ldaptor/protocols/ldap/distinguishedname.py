@@ -114,6 +114,24 @@ class LDAPAttributeTypeAndValue:
     def __ne__(self, other):
 	return not (self == other)
 
+    def __lt__(self, other):
+	if not isinstance(other, self.__class__):
+	    return False
+        if self.attributeType != other.attributeType:
+            return self.attributeType < other.attributeType
+        else:
+            return self.value < other.value
+
+    def __gt__(self, other):
+        return (self != other
+                and self > other)
+
+    def __le__(self, other):
+        return not self > other
+
+    def __ge__(self, other):
+        return not self < other
+
 class RelativeDistinguishedName:
     """LDAP Relative Distinguished Name."""
 
@@ -150,6 +168,21 @@ class RelativeDistinguishedName:
 
     def __ne__(self, other):
 	return not (self == other)
+
+    def __lt__(self, other):
+	if not isinstance(other, self.__class__):
+	    return False
+        return self.split() < other.split()
+
+    def __gt__(self, other):
+        return (self != other
+                and self > other)
+
+    def __le__(self, other):
+        return not self > other
+
+    def __ge__(self, other):
+        return not self < other
 
     def count(self):
 	return len(self.attributeTypesAndValues)

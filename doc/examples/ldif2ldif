@@ -10,8 +10,8 @@ class StandardIOAndShutdown(stdio.StandardIO):
 
 class PrintingLDIF(ldifprotocol.LDIF):
     l=[]
-    def completed(self, obj):
-        l.append(obj)
+    def gotEntry(self, obj):
+        self.l.append(obj)
         self.transport.write(str(obj))
 
 proto = PrintingLDIF()

@@ -4,10 +4,11 @@ from ldaptor.protocols.ldap import distinguishedname
 class LDAPConnector(utils.SRVConnector):
     def __init__(self, reactor, dn, factory,
 		 overrides=None):
-	assert isinstance(dn, distinguishedname.DistinguishedName)
+        if not isinstance(dn, distinguishedname.DistinguishedName):
+            dn = distinguishedname.DistinguishedName(stringValue=dn)
         if overrides is None:
             overrides={}
-	self.overriddenHost, self.overriddenPort = self._findOverRide(dn, overrides)
+        self.override = self._findOverRide(dn, overrides)
 
 	domain = dn.getDomainName()
 	utils.SRVConnector.__init__(self, reactor,
@@ -24,31 +25,52 @@ class LDAPConnector(utils.SRVConnector):
 	    if overrides.has_key(dn):
 		return overrides[dn]
 	    dn = dn.up()
-	return None, None
+	return None
+
+    def _isQueryNeeded(self):
+        """Is there both need and capability to do an SRV query."""
+        if self.domain is None:
+            # unable to query
+            return False
+
+        if self.override is None:
+            return True
+
+        assert not callable(self.override)
+        overriddenHost, overriddenPort = self.override
+        if overriddenHost is None:
+            return True
+        if overriddenPort is not None:
+            return False
+        return True
 
     def connect(self):
-	if (self.overriddenHost is not None
-	    and (self.overriddenPort is not None
-		 or self.domain is None)):
-	    # no need to query or unable to query
-	    self.factory.doStart()
-	    self.factory.startedConnecting(self)
-	    self._reallyConnect()
+        if callable(self.override):
+            self.override(self.factory)
+        elif not self._isQueryNeeded():
+            self.factory.doStart()
+            self.factory.startedConnecting(self)
+            self._reallyConnect()
 	else:
 	    utils.SRVConnector.connect(self)
 
     def pickServer(self):
-	if (self.overriddenHost is not None
-	    and (self.overriddenPort is not None
+        if self.override is None:
+            overriddenHost, overriddenPort = None, None
+        else:
+            overriddenHost, overriddenPort = self.override
+
+	if (overriddenHost is not None
+	    and (overriddenPort is not None
 		 or self.domain is None)):
-	    host = self.overriddenHost
-	    port = self.overriddenPort
+	    host = overriddenHost
+	    port = overriddenPort
 	else:
 	    host, port = utils.SRVConnector.pickServer(self)
-	    if self.overriddenHost is not None:
-		host = self.overriddenHost
-	    if self.overriddenPort is not None:
-		port = self.overriddenPort
+	    if overriddenHost is not None:
+		host = overriddenHost
+	    if overriddenPort is not None:
+		port = overriddenPort
 
         try:
             port = int(port)

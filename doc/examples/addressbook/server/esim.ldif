@@ -1,6 +1,0 @@
-dn: cn=Erkki Esim,ou=Sales,ou=People,dc=example,dc=com
-objectClass: addressbookPerson
-cn: Erkki Esim
-gn: Erkki
-sn: Esim
-

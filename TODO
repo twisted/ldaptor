@@ -106,3 +106,20 @@ TODO file for the Ldaptor project.
 * http://www.sitepoint.com/print/1273
 
   - add <label for="id-of-input-field">foo:</label> <input id="id-of-input-field" ... />
+
+* At same stage, ldaptor needs better user interface than what can be
+   reasonably built with HTML. Windows compatibility will sadly be of
+   utmost importance. Look at
+
+   - Trying to cope with HTML
+
+   - XUL
+
+   - LivePage/LiveEvil
+
+   - wxWindows
+
+   - glade, python-gtk
+
+* self-change password webui
+

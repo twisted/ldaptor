@@ -12,6 +12,10 @@ First, you need to start the LDAP server. Have OpenLDAP installed
 (apt-get install slapd), cd into the server directory and say "./run".
 You don't need to be root.
 
+Also, the examples use the Nevow programming library, which isn't
+exactly stable yet. You will probably need to do a CVS checkout of it,
+and add the directory to PYTHONPATH. For more information on Nevow,
+please see http://www.divmod.org/Home/Projects/Nevow/index.html
 
 The slides accompanying these data files are in directory
 "addressbook-slides" in the parent directory of the examples

@@ -1,9 +1,9 @@
 import base64
 
 from twisted.protocols import basic
-from twisted.internet import error
+from twisted.internet import protocol
 
-from ldaptor.protocols.ldap import ldapsyntax
+from ldaptor import entry
 
 class LDIFParseError(Exception):
     """Error parsing LDIF."""
@@ -11,45 +11,73 @@ class LDIFParseError(Exception):
     def __str__(self):
         s = self.__doc__
         if self[:]:
-            s = ': '.join([s]+self[:])
-        return s
+            s = ': '.join([s]+map(str, self[:]))
+        return s+'.'
 
-class LDIFLineWithoutSemicolonError(Exception):
-    """LDIF line without semicolon seen."""
+class LDIFLineWithoutSemicolonError(LDIFParseError):
+    """LDIF line without semicolon seen"""
     pass
 
-class LDIFEntryStartsWithNonDNError(Exception):
-    """LDIF entry starts with a non-DN line."""
+class LDIFEntryStartsWithNonDNError(LDIFParseError):
+    """LDIF entry starts with a non-DN line"""
     pass
 
-class LDIFBadValueError(Exception):
-    """Invalid LDIF value format."""
+class LDIFEntryStartsWithSpaceError(LDIFParseError):
+    """Invalid LDIF value format"""
     pass
 
+class LDIFVersionNotANumberError(LDIFParseError):
+    """Non-numeric LDIF version number"""
+    pass
+
+class LDIFUnsupportedVersionError(LDIFParseError):
+    """LDIF version not supported"""
+    pass
+
+class LDIFTruncatedError(LDIFParseError):
+    """LDIF appears to be truncated"""
+    pass
+
+HEADER = 'HEADER'
 WAIT_FOR_DN = 'WAIT_FOR_DN'
 IN_ENTRY = 'IN_ENTRY'
 
-class LDIF(basic.LineReceiver):
+class LDIF(object, basic.LineReceiver):
     delimiter='\n'
-    mode = WAIT_FOR_DN
+    mode = HEADER
 
     dn = None
     data = None
+    lastLine = None
 
-    def lineReceived(self, line):
+    version = None
+
+    def logicalLineReceived(self, line):
         if line.startswith('#'):
             # comments are allowed everywhere
             return
+        getattr(self, 'state_' + self.mode)(line)
 
-        return getattr(self, 'state_' + self.mode)(line)
+    def lineReceived(self, line):
+        if line.startswith(' '):
+            if self.lastLine is None:
+                raise LDIFEntryStartsWithSpaceError
+            self.lastLine = self.lastLine + line[1:]
+        else:
+            if self.lastLine is not None:
+                self.logicalLineReceived(self.lastLine)
+            self.lastLine = line
+            if line == '':
+                self.logicalLineReceived(line)
+                self.lastLine = None
 
     def parseValue(self, val):
-        if val.startswith(' '):
-            return val[1:]
-        elif val.startswith(': '):
-            return base64.decodestring(val[2:])
+        if val.startswith(':'):
+            return base64.decodestring(val[1:].lstrip(' '))
+        elif val.startswith('<'):
+            raise NotImplementedError
         else:
-            raise LDIFBadValueError, val
+            return val.lstrip(' ')
 
     def _parseLine(self, line):
         try:
@@ -60,6 +88,21 @@ class LDIF(basic.LineReceiver):
             raise LDIFLineWithoutSemicolonError, line
         val = self.parseValue(val)
         return key, val
+
+    def state_HEADER(self, line):
+        key, val = self._parseLine(line)
+        self.mode = WAIT_FOR_DN
+
+        if key != 'version':
+            self.logicalLineReceived(line)
+        else:
+            try:
+                version = int(val)
+            except ValueError:
+                raise LDIFVersionNotANumberError, val
+            self.version = version
+            if version > 1:
+                raise LDIFUnsupportedVersionError, version
 
     def state_WAIT_FOR_DN(self, line):
         assert self.dn is None, 'self.dn must not be set when waiting for DN'
@@ -84,13 +127,11 @@ class LDIF(basic.LineReceiver):
         if line == '':
             # end of entry
             self.mode = WAIT_FOR_DN
-            o = ldapsyntax.LDAPEntry(client=None,
-                                     dn=self.dn,
-                                     attributes=self.data,
-                                     complete=1)
+            o = entry.BaseLDAPEntry(dn=self.dn,
+                                    attributes=self.data)
             self.dn = None
             self.data = None
-            self.completed(o)
+            self.gotEntry(o)
             return
 
         key, val = self._parseLine(line)
@@ -100,5 +141,9 @@ class LDIF(basic.LineReceiver):
 
         self.data[key].append(val)
 
-    def completed(self, obj):
+    def gotEntry(self, obj):
         pass
+
+    def connectionLost(self, reason=protocol.connectionDone):
+        if self.mode != WAIT_FOR_DN:
+            raise LDIFTruncatedError, reason

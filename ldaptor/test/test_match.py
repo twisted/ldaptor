@@ -1,0 +1,344 @@
+"""
+Test cases for ldaptor.protocols.ldap.ldapserver module.
+"""
+
+from twisted.trial import unittest
+from ldaptor import inmemory
+from ldaptor.protocols import pureldap, pureber
+
+class TestEntryMatch(unittest.TestCase):
+    def TODOtest_matchAll(self):
+        # TODO must be case-independent
+	o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+	    'objectClass': ['a', 'b'],
+	    'aValue': ['a'],
+	    'bValue': ['b'],
+	    })
+        result = o.match(pureldap.LDAPFilterMatchAll)
+        self.assertEquals(result, True)
+
+    def test_present_match(self):
+	o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+	    'objectClass': ['a', 'b'],
+	    'aValue': ['a'],
+	    'bValue': ['b'],
+	    })
+        result = o.match(pureldap.LDAPFilter_present('aValue'))
+        self.assertEquals(result, True)
+
+
+    def test_present_noMatch(self):
+	o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+	    'objectClass': ['a', 'b'],
+	    'aValue': ['a'],
+	    'bValue': ['b'],
+	    })
+        result = o.match(pureldap.LDAPFilter_present('noSuchValue'))
+        self.assertEquals(result, False)
+
+    def test_and_match(self):
+	o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+	    'objectClass': ['a', 'b'],
+	    'aValue': ['a'],
+	    'bValue': ['b'],
+	    })
+        result = o.match(
+            pureldap.LDAPFilter_and([
+            pureldap.LDAPFilter_present('aValue'),
+            pureldap.LDAPFilter_present('bValue'),
+            ]))
+        self.assertEquals(result, True)
+
+    def test_and_noMatch(self):
+	o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+	    'objectClass': ['a', 'b'],
+	    'aValue': ['a'],
+	    'bValue': ['b'],
+	    })
+        result = o.match(
+            pureldap.LDAPFilter_and([
+            pureldap.LDAPFilter_present('cValue'),
+            pureldap.LDAPFilter_present('dValue'),
+            ]))
+        self.assertEquals(result, False)
+
+    def test_or_match(self):
+	o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+	    'objectClass': ['a', 'b'],
+	    'aValue': ['a'],
+	    'bValue': ['b'],
+	    })
+        result = o.match(
+            pureldap.LDAPFilter_or([
+            pureldap.LDAPFilter_present('cValue'),
+            pureldap.LDAPFilter_present('bValue'),
+            ]))
+        self.assertEquals(result, True)
+
+    def test_or_noMatch(self):
+	o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+	    'objectClass': ['a', 'b'],
+	    'aValue': ['a'],
+	    'bValue': ['b'],
+	    })
+        result = o.match(
+            pureldap.LDAPFilter_or([
+            pureldap.LDAPFilter_present('cValue'),
+            pureldap.LDAPFilter_present('dValue'),
+            ]))
+        self.assertEquals(result, False)
+
+    def test_not(self):
+	o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+	    'objectClass': ['a', 'b'],
+	    'aValue': ['a'],
+	    'bValue': ['b'],
+	    })
+        result = o.match(
+            pureldap.LDAPFilter_not(
+            pureldap.LDAPFilter_or([
+            pureldap.LDAPFilter_present('cValue'),
+            pureldap.LDAPFilter_present('dValue'),
+            ])))
+        self.assertEquals(result, True)
+
+    def test_equality_match(self):
+	o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+	    'objectClass': ['a', 'b'],
+	    'aValue': ['a'],
+	    'bValue': ['b'],
+	    })
+        result = o.match(pureldap.LDAPFilter_equalityMatch(
+            attributeDesc=pureber.BEROctetString('aValue'),
+            assertionValue=pureber.BEROctetString('a')))
+        self.assertEquals(result, True)
+
+
+    def test_equality_noMatch(self):
+	o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+	    'objectClass': ['a', 'b'],
+	    'aValue': ['a'],
+	    'bValue': ['b'],
+	    })
+        result = o.match(pureldap.LDAPFilter_equalityMatch(
+            attributeDesc=pureber.BEROctetString('aValue'),
+            assertionValue=pureber.BEROctetString('b')))
+        self.assertEquals(result, False)
+
+    def test_substrings_match(self):
+	o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+	    'objectClass': ['a', 'b'],
+	    'aValue': ['a'],
+	    'bValue': ['b'],
+	    })
+        result = o.match(pureldap.LDAPFilter_substrings(
+            type=pureldap.LDAPString('aValue'),
+            substrings=[
+            pureldap.LDAPFilter_substrings_initial('a'),
+            ]))
+        self.assertEquals(result, True)
+
+    def test_substrings_match2(self):
+	o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+	    'objectClass': ['a', 'b'],
+	    'aValue': ['abcde'],
+	    'bValue': ['b'],
+	    })
+        result = o.match(pureldap.LDAPFilter_substrings(
+            type=pureldap.LDAPString('aValue'),
+            substrings=[
+            pureldap.LDAPFilter_substrings_initial('a'),
+            pureldap.LDAPFilter_substrings_final('e'),
+            ]))
+        self.assertEquals(result, True)
+
+    def test_substrings_match3(self):
+	o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+	    'objectClass': ['a', 'b'],
+	    'aValue': ['abcde'],
+	    'bValue': ['b'],
+	    })
+        result = o.match(pureldap.LDAPFilter_substrings(
+            type=pureldap.LDAPString('aValue'),
+            substrings=[
+            pureldap.LDAPFilter_substrings_initial('a'),
+            pureldap.LDAPFilter_substrings_any('c'),
+            pureldap.LDAPFilter_substrings_final('e'),
+            ]))
+        self.assertEquals(result, True)
+
+    def test_substrings_match4(self):
+	o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+	    'objectClass': ['a', 'b'],
+	    'aValue': ['abcde'],
+	    'bValue': ['b'],
+	    })
+        result = o.match(pureldap.LDAPFilter_substrings(
+            type=pureldap.LDAPString('aValue'),
+            substrings=[
+            pureldap.LDAPFilter_substrings_initial('a'),
+            pureldap.LDAPFilter_substrings_any('b'),
+            pureldap.LDAPFilter_substrings_any('c'),
+            pureldap.LDAPFilter_substrings_any('d'),
+            pureldap.LDAPFilter_substrings_final('e'),
+            ]))
+        self.assertEquals(result, True)
+
+    def test_substrings_match5(self):
+	o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+	    'objectClass': ['a', 'b'],
+	    'aValue': ['aoeuboeucoeudoeue'],
+	    'bValue': ['b'],
+	    })
+        result = o.match(pureldap.LDAPFilter_substrings(
+            type=pureldap.LDAPString('aValue'),
+            substrings=[
+            pureldap.LDAPFilter_substrings_initial('a'),
+            pureldap.LDAPFilter_substrings_any('b'),
+            pureldap.LDAPFilter_substrings_any('c'),
+            pureldap.LDAPFilter_substrings_any('d'),
+            pureldap.LDAPFilter_substrings_final('e'),
+            ]))
+        self.assertEquals(result, True)
+
+    def test_substrings_noMatch(self):
+	o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+	    'objectClass': ['a', 'b'],
+	    'aValue': ['a'],
+	    'bValue': ['b'],
+	    })
+        result = o.match(pureldap.LDAPFilter_substrings(
+            type=pureldap.LDAPString('aValue'),
+            substrings=[
+            pureldap.LDAPFilter_substrings_initial('bad'),
+            pureldap.LDAPFilter_substrings_any('dog'),
+            pureldap.LDAPFilter_substrings_any('no'),
+            pureldap.LDAPFilter_substrings_final('bone'),
+            ]))
+        self.assertEquals(result, False)
+
+    def test_substrings_noMatch2(self):
+	o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+	    'objectClass': ['a', 'b'],
+	    'aValue': ['aoeuboeucoeudoeue'],
+	    'bValue': ['b'],
+	    })
+        result = o.match(pureldap.LDAPFilter_substrings(
+            type=pureldap.LDAPString('aValue'),
+            substrings=[
+            pureldap.LDAPFilter_substrings_initial('a'),
+            pureldap.LDAPFilter_substrings_any('b'),
+            pureldap.LDAPFilter_substrings_any('Z'),
+            pureldap.LDAPFilter_substrings_any('d'),
+            pureldap.LDAPFilter_substrings_final('e'),
+            ]))
+        self.assertEquals(result, False)
+
+    def test_greaterOrEqual_noMatch_nosuchattr(self):
+	o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+	    'objectClass': ['a', 'b'],
+	    'aValue': ['b'],
+	    'num': [4],
+	    })
+        result = o.match(pureldap.LDAPFilter_greaterOrEqual('foo',
+                                                         42))
+        self.assertEquals(result, False)
+
+    def test_greaterOrEqual_match_greater(self):
+	o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+	    'objectClass': ['a', 'b'],
+	    'aValue': ['b'],
+	    'num': [4],
+	    })
+        result = o.match(pureldap.LDAPFilter_greaterOrEqual('num',
+                                                            3))
+        self.assertEquals(result, True)
+
+    def test_greaterOrEqual_match_equal(self):
+	o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+	    'objectClass': ['a', 'b'],
+	    'aValue': ['b'],
+	    'num': [4],
+	    })
+        result = o.match(pureldap.LDAPFilter_greaterOrEqual('num',
+                                                            4))
+        self.assertEquals(result, True)
+
+    def test_greaterOrEqual_noMatch(self):
+	o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+	    'objectClass': ['a', 'b'],
+	    'aValue': ['b'],
+	    'bValue': [4],
+	    })
+        result = o.match(pureldap.LDAPFilter_greaterOrEqual('num',
+                                                            5))
+        self.assertEquals(result, False)
+
+
+    def test_lessOrEqual_noMatch_nosuchattr(self):
+	o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+	    'objectClass': ['a', 'b'],
+	    'aValue': ['b'],
+	    'num': [4],
+	    })
+        result = o.match(pureldap.LDAPFilter_lessOrEqual('foo',
+                                                         42))
+        self.assertEquals(result, False)
+
+    def test_lessOrEqual_match_less(self):
+	o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+	    'objectClass': ['a', 'b'],
+	    'aValue': ['b'],
+	    'num': [4],
+	    })
+        result = o.match(pureldap.LDAPFilter_lessOrEqual('num',
+                                                         5))
+        self.assertEquals(result, True)
+
+    def test_lessOrEqual_match_equal(self):
+	o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+	    'objectClass': ['a', 'b'],
+	    'aValue': ['b'],
+	    'num': [4],
+	    })
+        result = o.match(pureldap.LDAPFilter_lessOrEqual('num',
+                                                         4))
+        self.assertEquals(result, True)
+
+    def test_lessOrEqual_noMatch(self):
+	o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+	    'objectClass': ['a', 'b'],
+	    'aValue': ['b'],
+	    'num': [4],
+	    })
+        result = o.match(pureldap.LDAPFilter_lessOrEqual('num',
+                                                         3))
+        self.assertEquals(result, False)
+
+# TODO LDAPFilter_approxMatch
+# TODO LDAPFilter_extensibleMatch

@@ -3,7 +3,6 @@ Support for writing a set of directory entries as LDIF.
 You probably want to use this only indirectly, as in
 str(LDAPEntry(...)).
 
-TODO support reading directory entries
 TODO support writing modify operations
 TODO support reading modify operations
 

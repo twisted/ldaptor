@@ -69,6 +69,16 @@ class LDAPDistinguishedName_Escaping(TestCaseWithKnownValues):
 
 	(r'cn=bar\ ', [[('cn', r'bar ')]]),
 
+	(r'cn=bar,dc=example,dc=com', [[('cn', 'bar')],
+                                       [('dc', 'example')],
+                                       [('dc', 'com')]]),
+	(r'cn=bar, dc=example, dc=com', [[('cn', 'bar')],
+                                         [('dc', 'example')],
+                                         [('dc', 'com')]]),
+	(r'cn=bar,  dc=example,dc=com', [[('cn', 'bar')],
+                                         [('dc', 'example')],
+                                         [('dc', 'com')]]),
+
 	)
 
 class LDAPDistinguishedName_RFC2253_Examples(TestCaseWithKnownValues):

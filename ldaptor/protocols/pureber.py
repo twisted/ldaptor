@@ -199,7 +199,7 @@ class BEROctetString(BERBase):
 	e=e2[:l]
 	del e2[:l]
 	encoded.set(e2)
-	self.value=e
+	self.value=str(e)
 
     def __init__(self, value=None, encoded=None, berdecoder=None, tag=None):
 	BERBase.__init__(self, tag)

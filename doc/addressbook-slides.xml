@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
-<!DOCTYPE slides PUBLIC "-//Norman Walsh//DTD Slides XML V3.0b1//EN" "http://docbook.sourceforge.net/release/slides/3.0b1/slides.dtd" [
+<!DOCTYPE slides-full PUBLIC "-//Norman Walsh//DTD Slides Full V3.3.1//EN"
+ "http://docbook.sourceforge.net/release/slides/current/schema/dtd/slides-full.dtd" [
 
 <!ENTITY ldif1 SYSTEM "addressbook-ldif/doe.xml">
 <!ENTITY ldif2 SYSTEM "addressbook-ldif/smith.xml">
@@ -9,6 +10,9 @@
 <!ENTITY session_04 SYSTEM "addressbook-session/session-04.xml">
 <!ENTITY session_05 SYSTEM "addressbook-session/session-05.xml">
 <!ENTITY session_06 SYSTEM "addressbook-session/session-06.xml">
+<!ENTITY session_07 SYSTEM "addressbook-session/session-07.xml">
+<!ENTITY session_08 SYSTEM "addressbook-session/session-08.xml">
+<!ENTITY session_09 SYSTEM "addressbook-session/session-09.xml">
 <!ENTITY ldapentry_vs_oo SYSTEM "ldapentry-vs-oo.xml">
 <!ENTITY search_inputs SYSTEM "search-inputs.xml">
 ]>
@@ -32,7 +36,7 @@
     <title>LDAP presents a distributed tree of information</title>
     <mediaobject>
       <imageobject>
-	<imagedata format="PNG" align="center" fileref="ldap-is-a-tree.dot.eps.small.png"/>
+	<imagedata format="PNG" align="center" fileref="ldap-is-a-tree.dia.png"/>
       </imageobject>
     </mediaobject>
   </foil>
@@ -54,7 +58,9 @@
 
   <foil>
     <title>Python, an easy programming language</title>
-    <phrase>Batteries included!</phrase>
+    <para>
+      <phrase>Batteries included!</phrase>
+    </para>
 
     <para>Python combines remarkable power with very clear syntax.</para>
 
@@ -127,13 +133,28 @@
   </foil>
 
   <foil>
-    <title>Closing the connection</title>
+    <title>Results</title>
     <literallayout>&session_05;</literallayout>
   </foil>
 
   <foil>
-    <title>Access to entry details</title>
+    <title>Results one-by-one</title>
     <literallayout>&session_06;</literallayout>
+  </foil>
+
+  <foil>
+    <title>LDIF output</title>
+    <literallayout>&session_07;</literallayout>
+  </foil>
+
+  <foil>
+    <title>Closing the connection</title>
+    <literallayout>&session_08;</literallayout>
+  </foil>
+
+  <foil>
+    <title>Access to entry details</title>
+    <literallayout>&session_09;</literallayout>
   </foil>
 
   <foil>
@@ -155,7 +176,9 @@
 
   <foil>
     <title>Our first Python program</title>
-    <ulink url="addressbookpy-02_script.html">Click me!</ulink>
+    <para>
+      <ulink url="addressbookpy-02_script.html">Click me!</ulink>
+    </para>
   </foil>
 
   <foil>
@@ -177,7 +200,7 @@
     <title>Opening and binding</title>
     <mediaobject>
       <imageobject>
-	<imagedata format="PNG" align="center" fileref="chat-bind.dot.eps.png"/>
+	<imagedata format="PNG" align="center" fileref="chat-bind.dia.png"/>
       </imageobject>
     </mediaobject>
   </foil>
@@ -186,7 +209,7 @@
     <title>Doing a search</title>
     <mediaobject>
       <imageobject>
-	<imagedata format="PNG" align="center" fileref="chat-search.dot.eps.png"/>
+	<imagedata format="PNG" align="center" fileref="chat-search.dia.png"/>
       </imageobject>
     </mediaobject>
   </foil>
@@ -195,7 +218,7 @@
     <title>Doing multiple searches</title>
     <mediaobject>
       <imageobject>
-	<imagedata format="PNG" align="center" fileref="chat-search-pipeline.dot.eps.png"/>
+	<imagedata format="PNG" align="center" fileref="chat-search-pipeline.dia.png"/>
       </imageobject>
     </mediaobject>
   </foil>
@@ -204,38 +227,34 @@
     <title>Unbinding and closing</title>
     <mediaobject>
       <imageobject>
-	<imagedata format="PNG" align="center" fileref="chat-unbind.dot.eps.png"/>
+	<imagedata format="PNG" align="center" fileref="chat-unbind.dia.png"/>
       </imageobject>
     </mediaobject>
   </foil>
 
   <foil>
-    <title>Interlude</title>
-    <para>Break for 15 minutes</para>
-  </foil>
-
-  <foil>
     <title>A web application</title>
-    <ulink url="diffs/addressbook-02-03.html">Click me!</ulink>
+    <para role="speaker-instructions">
+      <ulink url="../diff/02_script/03_webapp">Please examine the differences between 02_script and 03_webapp.</ulink>
+    </para>
   </foil>
 
   <foil>
     <title>Taking input from the URL</title>
-    <ulink url="diffs/addressbook-03-04.html">Click me!</ulink>
+    <para role="speaker-instructions">
+      <ulink url="../diff/03_webapp/04_dynamic">Please examine the differences between 03_webapp and 04_dynamic.</ulink>
+    </para>
   </foil>
 
   <foil>
     <title>Using HTML forms</title>
-    <ulink url="diffs/addressbook-04-05.html">Click me!</ulink>
+    <para role="speaker-instructions">
+      <ulink url="../diff/04_dynamic/05_form">Please examine the differences between 04_dynamic and 05_form.</ulink>
+    </para>
   </foil>
 
   <foil>
-    <title>Using HTML forms, #2</title>
-    <ulink url="searchform-05_form.html">Click me!</ulink>
-  </foil>
-
-  <foil>
-    <title>Woven</title>
+    <title><ulink url="http://www.divmod.org/Home/Projects/Nevow/">Nevow</ulink></title>
     <itemizedlist>
       <listitem>
 	<para>A web application framework for building highly
@@ -254,12 +273,16 @@
 
   <foil>
     <title>Prettifying the output</title>
-    <ulink url="diffs/searchform-05-06.html">Click me!</ulink>
+    <para role="speaker-instructions">
+      <ulink url="../diff/05_form/06_pretty">Please examine the differences between 05_form and 06_pretty.</ulink>
+    </para>
   </foil>
 
   <foil>
     <title>Easier user input</title>
-    <ulink url="diffs/addressbook-06-07.html">Click me!</ulink>
+    <para role="speaker-instructions">
+      <ulink url="../diff/06_pretty/07_easy">Please examine the differences between 06_pretty and 07_easy.</ulink>
+    </para>
   </foil>
 
   <foil>
@@ -272,7 +295,7 @@
 
     <mediaobject>
       <imageobject>
-	<imagedata format="PNG" align="center" fileref="ldapfilter-as-tree.dot.eps.png"/>
+	<imagedata format="PNG" align="center" fileref="ldapfilter-as-tree.dia.png"/>
       </imageobject>
     </mediaobject>
 
@@ -380,24 +403,25 @@ objectclass ( 2.5.6.6 NAME 'person'
   <foil>
     <title>Where to go from here?</title>
 
-    <para>Install <ulink
-    src="http://www.openldap.org/">OpenLDAP</ulink>.</para>
+    <para>Install <ulink 
+    url="http://www.openldap.org/">OpenLDAP</ulink>.</para>
 
     <para>Install <ulink
-    src="http://tv.debian.net/software/ldaptor/">Ldaptor</ulink>, play
+    url="http://tv.debian.net/software/ldaptor/">Ldaptor</ulink>, play
     around with ldaptor-webui.</para>
 
-    <para>Learn <ulink src="http://www.python.org/">Python</ulink>.</para>
+    <para>Learn <ulink url="http://www.python.org/">Python</ulink>.</para>
 
     <para>Learn Twisted. Write a client application for a simple
     protocol. Read <ulink
-    src="http://twistedmatrix.com/documents/howto/clients">the
+    url="http://twistedmatrix.com/documents/howto/clients">the
     HOWTOs</ulink>.</para>
 
   </foil>
 
   <foil>
     <title>Thank You</title>
+    <para></para>
   </foil>
 
 <!--

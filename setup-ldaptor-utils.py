@@ -38,6 +38,12 @@ ldaptor-ldap2pdns -- pdns pipe backend.
 
 ldaptor-fetchschema -- Fetch schema from a server.
 
+ldaptor-ldifdiff -- Read two LDIF files and output LDIF modifications
+that modify entries in first file to look like entries in second file.
+
+ldaptor-ldifpatch -- Read an LDIF file and LDIF modifications and
+output LDIF with the modifications.
+
 """.strip(),
 	  author="Tommi Virtanen",
 	  author_email="tv@debian.org",

@@ -17,14 +17,14 @@ class Search(ldapclient.LDAPClient):
 
         something = False
         for at in attributeTypes:
-            print at
+            print 'attributetype', at
             something = True
 
         if something:
             print
 
         for oc in objectClasses:
-            print oc
+            print 'objectclass', oc
 
     def _handle_bind_success(self, x):
 	matchedDN, serverSaslCreds = x
@@ -66,6 +66,10 @@ class MyOptions(usage.Options, usage.Options_service_location, usage.Options_bas
     """LDAPtor command line schema fetching utility"""
 
 if __name__ == "__main__":
+    import sys
+    from twisted.python import log
+    log.startLogging(sys.stderr, setStdout=0)
+
     try:
 	config = MyOptions()
 	config.parseOptions()

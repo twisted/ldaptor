@@ -5,22 +5,29 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <title>Address book search</title>
+    <link href="/freeform_css" rel="stylesheet" />
   </head>
   <body>
     <h1>Address book search</h1>
 
-    <form action="" method="POST">
-      <p>Search filter:
-        <input type="text" name="search" view="previousSearch" />
-      </p>
-      <input type="submit"/>
+    <form nevow:render="input" action="post">
+      <p nevow:render="Remove">Search form will be here.</p>
     </form>
 
-    <p>Results:</p>
-    <div model="results" view="List">
-      <pre pattern="listItem" view="Text" />
+    <div nevow:render="haveSearch" nevow:data="search">
+      <p nevow:pattern="False">No search given.</p>
+      <div nevow:pattern="True">
+	<div nevow:render="sequence" nevow:data="results">
+	  <p nevow:pattern="empty">No entries found.</p>
+	  <pre nevow:pattern="item" nevow:render="string">
+	    LDIF output goes here.
+	  </pre>
+	</div>
+	<p>
+	  Used search filter:
+	  <span nevow:render="searchFilter" nevow:data="searchFilter"/>
+	</p>
+      </div>
     </div>
-
-    <p>Used query: <span model="query" view="Text" /></p>
   </body>
 </html>

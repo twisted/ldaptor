@@ -5,44 +5,38 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <title>Address book search</title>
+    <link href="/freeform_css" rel="stylesheet" />
   </head>
   <body>
     <h1>Address book search</h1>
 
-    <form action="" method="POST">
-      <p>Search filter:
-        <input type="text" name="search" view="previousSearch" />
-      </p>
-      <input type="submit"/>
+    <form nevow:render="input" action="post">
+      <p nevow:render="Remove">Search form will be here.</p>
     </form>
 
-    <p>Results:</p>
-    <div model="results" view="List">
-      <ol>
-        <li pattern="listItem">
-          <dl>
-            <dt>Last name:</dt>
-            <div view="List" model="sn">
-	      <dd pattern="listItem" view="Text"/>
-	    </div>
-            <dt>First name:</dt>
-	    <div view="List" model="givenName">
-	      <dd pattern="listItem" view="Text"/>
-            </div>
-            <dt>Phone:</dt>
-            <div view="List" model="telephoneNumber">
-	      <dd pattern="listItem" view="Text"/>
-            </div>
-            <dt>Description:</dt>
-            <div view="List" model="description">
-	      <dd pattern="listItem" view="Text"/>
-            </div>
-          </dl>
-        </li>
-      </ol>
-      <p pattern="emptyList">No entries matched or no search given.</p>
+    <div nevow:render="haveSearch" nevow:data="search">
+      <p nevow:pattern="False">No search given.</p>
+      <div nevow:pattern="True">
+	<ol nevow:render="sequence" nevow:data="results">
+	  <p nevow:pattern="empty">No entries found.</p>
+	  <li nevow:pattern="item" style="margin-bottom: 2em;">
+	    <dl nevow:render="iterateMapping">
+	      <dt nevow:pattern="key" nevow:render="string">
+		Attribute type goes here
+	      </dt>
+	      <div nevow:pattern="value" nevow:render="sequence">
+		<dd nevow:pattern="item" nevow:render="string">
+		  Attribute value goes here
+		</dd>
+	      </div>
+	    </dl>
+	  </li>
+	</ol>
+	<p>
+	  Used search filter:
+	  <span nevow:render="searchFilter" nevow:data="searchFilter"/>
+	</p>
+      </div>
     </div>
-
-    <p>Used query: <span model="query" view="Text" /></p>
   </body>
 </html>

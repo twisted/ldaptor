@@ -1,12 +1,25 @@
+def extractWord(text):
+    if not text:
+        return None
+    l = text.split(None, 1)
+    word = l[0]
+    try:
+        text = l[1]
+    except IndexError:
+        text = ''
+    return word, text
+
+def peekWord(text):
+    if not text:
+        return None
+    return text.split(None, 1)[0]
+
 class ASN1ParserThingie:
     def _to_list(self, text):
 	"""Split text into $-separated list."""
 	r=[]
 	for x in text.split("$"):
-	    while x.startswith(" "):
-		x=x[1:]
-	    while x.endswith(" "):
-		x=x[:-1]
+            x = x.strip()
 	    assert x
 	    r.append(x)
 	return tuple(r)
@@ -15,8 +28,7 @@ class ASN1ParserThingie:
 	"""Split ''-quoted strings into list."""
 	r=[]
 	while text:
-	    while text.startswith(" "):
-		text=text[1:]
+            text = text.lstrip()
 	    if not text:
 		break
 	    assert text[0]=="'", "Text %s must start with a single quote."%repr(text)
@@ -25,6 +37,21 @@ class ASN1ParserThingie:
 	    r.append(text[:end])
 	    text=text[end+1:]
 	return tuple(r)
+
+    def _str_list(self, l):
+        s = ' '.join([self._str(x) for x in l])
+        if len(l) > 1:
+            s = '( %s )' % s
+        return s
+
+    def _list(self, l):
+        s = ' $ '.join([x for x in l])
+        if len(l) > 1:
+            s = '( %s )' % s
+        return s
+
+    def _str(self, s):
+        return "'%s'" % s
 
 class ObjectClassDescription(ASN1ParserThingie):
     """
@@ -87,24 +114,23 @@ class ObjectClassDescription(ASN1ParserThingie):
 	self.must=[]
 	self.may=[]
 
+        if text is not None:
+            self._parse(text)
+
+    def _parse(self, text):
 	assert text[0]=='(', "Text %s must be in parentheses."%repr(text)
 	assert text[-1]==')', "Text %s must be in parentheses."%repr(text)
 	text=text[1:-1]
-	while text.startswith(" "):
-	    text=text[1:]
+        text = text.lstrip()
 
 	# oid
-	end=text.index(" ")
-	self.oid=text[:end]
-	text=text[end+1:]
+        self.oid, text = extractWord(text)
 
-	while text.startswith(" "):
-	    text=text[1:]
+        text = text.lstrip()
 
-	if text.startswith("NAME "):
+	if peekWord(text) == "NAME":
 	    text=text[len("NAME "):]
-	    while text.startswith(" "):
-		text=text[1:]
+            text = text.lstrip()
 	    if text[0]=="'":
 		text=text[1:]
 		end=text.index("'")
@@ -112,8 +138,7 @@ class ObjectClassDescription(ASN1ParserThingie):
 		text=text[end+1:]
 	    elif text[0]=="(":
 		text=text[1:]
-		while text.startswith(" "):
-		    text=text[1:]
+                text = text.lstrip()
 		end=text.index(")")
 		self.name=self._strings_to_list(text[:end])
 		text=text[end+1:]
@@ -121,109 +146,90 @@ class ObjectClassDescription(ASN1ParserThingie):
 		raise "TODO"
 
 
-	while text.startswith(" "):
-	    text=text[1:]
+        text = text.lstrip()
 
-	if text.startswith("DESC "):
+	if peekWord(text) == "DESC":
 	    text=text[len("DESC "):]
-	    while text.startswith(" "):
-		text=text[1:]
+            text = text.lstrip()
 	    assert text[0]=="'"
 	    text=text[1:]
 	    end=text.index("'")
 	    self.desc=text[:end]
 	    text=text[end+1:]
 
-	while text.startswith(" "):
-	    text=text[1:]
+        text = text.lstrip()
 
-	if text.startswith("OBSOLETE "):
+	if peekWord(text) == "OBSOLETE":
 	    self.obsolete=1
 	    text=text[len("OBSOLETE "):]
 
-	while text.startswith(" "):
-	    text=text[1:]
+        text = text.lstrip()
 
-	if text.startswith("SUP "):
+	if peekWord(text) == "SUP":
 	    text=text[len("SUP "):]
-	    while text.startswith(" "):
-		text=text[1:]
+            text = text.lstrip()
 	    if text[0]=="(":
 		text=text[1:]
-		while text.startswith(" "):
-		    text=text[1:]
+                text = text.lstrip()
 		end=text.index(")")
 		self.sup=self._to_list(text[:end])
 		text=text[end+1:]
 	    else:
-		end=text.index(" ")
-		self.sup=[text[:end]]
-		text=text[end+1:]
+                s, text = extractWord(text)
+		self.sup=[s]
 
-	while text.startswith(" "):
-	    text=text[1:]
+        text = text.lstrip()
 
-	if text.startswith("ABSTRACT "):
+	if peekWord(text) == "ABSTRACT":
 	    assert self.type is None
 	    self.type="ABSTRACT"
 	    text=text[len("ABSTRACT "):]
 
-	while text.startswith(" "):
-	    text=text[1:]
+        text = text.lstrip()
 
-	if text.startswith("STRUCTURAL "):
+	if peekWord(text) == "STRUCTURAL":
 	    assert self.type is None
 	    self.type="STRUCTURAL"
 	    text=text[len("STRUCTURAL "):]
 
-	while text.startswith(" "):
-	    text=text[1:]
+        text = text.lstrip()
 
-	if text.startswith("AUXILIARY "):
+	if peekWord(text) == "AUXILIARY":
 	    assert self.type is None
 	    self.type="AUXILIARY"
 	    text=text[len("AUXILIARY "):]
 
-	while text.startswith(" "):
-	    text=text[1:]
+        text = text.lstrip()
 
-	if text.startswith("MUST "):
+	if peekWord(text) == "MUST":
 	    text=text[len("MUST "):]
-	    while text.startswith(" "):
-		text=text[1:]
+            text = text.lstrip()
 	    if text[0]=="(":
 		text=text[1:]
-		while text.startswith(" "):
-		    text=text[1:]
+                text = text.lstrip()
 		end=text.index(")")
-		self.must=self._to_list(text[:end])
+		self.must.extend(self._to_list(text[:end]))
 		text=text[end+1:]
 	    else:
-		end=text.index(" ")
-		self.must.append(text[:end])
-		text=text[end+1:]
+                s, text = extractWord(text)
+		self.must.append(s)
 
-	while text.startswith(" "):
-	    text=text[1:]
+        text = text.lstrip()
 
-	if text.startswith("MAY "):
+	if peekWord(text) == "MAY":
 	    text=text[len("MAY "):]
-	    while text.startswith(" "):
-		text=text[1:]
+            text = text.lstrip()
 	    if text[0]=="(":
 		text=text[1:]
-		while text.startswith(" "):
-		    text=text[1:]
+                text = text.lstrip()
 		end=text.index(")")
-		self.may=self._to_list(text[:end])
+		self.may.extend(self._to_list(text[:end]))
 		text=text[end+1:]
 	    else:
-		end=text.index(" ")
-		self.may.append(text[:end])
-		text=text[end+1:]
+                s, text = extractWord(text)
+		self.may.append(s)
 
-	while text.startswith(" "):
-	    text=text[1:]
+        text = text.lstrip()
 
 	assert text=="", "Text was not empty: %s"%repr(text)
 
@@ -244,6 +250,25 @@ class ObjectClassDescription(ASN1ParserThingie):
 		+(" oid=%(oid)s name=%(name)s desc=%(desc)s"
 		  +" obsolete=%(obsolete)s sup=%(sup)s type=%(type)s"
 		  +" must=%(must)s may=%(may)s>")%nice)
+
+    def __str__(self):
+        r=[]
+        if self.name is not None:
+            r.append('NAME %s' % self._str_list(self.name))
+        if self.desc is not None:
+            r.append('DESC %s' % self._str(self.desc))
+        if self.obsolete:
+            r.append('OBSOLETE')
+        if self.sup:
+            r.append('SUP %s' % self._list(self.sup))
+        r.append('%s' % self.type)
+        if self.must:
+            r.append('MUST %s' % self._list(self.must))
+        if self.may:
+            r.append('MAY %s' % self._list(self.may))
+        return ('( %s ' % self.oid
+                + '\n        '.join(r)
+                + ' )')
 
 
 class AttributeTypeDescription(ASN1ParserThingie):
@@ -282,7 +307,7 @@ class AttributeTypeDescription(ASN1ParserThingie):
 	self.name=None
 	self.desc=None
 	self.obsolete=0
-	self.sup=[]
+	self.sup=None
 	self.equality=None
 	self.ordering=None
 	self.substr=None
@@ -292,24 +317,23 @@ class AttributeTypeDescription(ASN1ParserThingie):
 	self.no_user_modification=None
 	self.usage=None
 
+        if text is not None:
+            self._parse(text)
+
+    def _parse(self, text):
 	assert text[0]=='(', "Text %s must be in parentheses."%repr(text)
 	assert text[-1]==')', "Text %s must be in parentheses."%repr(text)
 	text=text[1:-1]
-	while text.startswith(" "):
-	    text=text[1:]
+        text = text.lstrip()
 
 	# oid
-	end=text.index(" ")
-	self.oid=text[:end]
-	text=text[end+1:]
+        self.oid, text = extractWord(text)
 
-	while text.startswith(" "):
-	    text=text[1:]
+        text = text.lstrip()
 
-	if text.startswith("NAME "):
+	if peekWord(text) == "NAME":
 	    text=text[len("NAME "):]
-	    while text.startswith(" "):
-		text=text[1:]
+            text = text.lstrip()
 	    if text[0]=="'":
 		text=text[1:]
 		end=text.index("'")
@@ -317,8 +341,7 @@ class AttributeTypeDescription(ASN1ParserThingie):
 		text=text[end+1:]
 	    elif text[0]=="(":
 		text=text[1:]
-		while text.startswith(" "):
-		    text=text[1:]
+                text = text.lstrip()
 		end=text.index(")")
 		self.name=self._strings_to_list(text[:end])
 		text=text[end+1:]
@@ -326,119 +349,88 @@ class AttributeTypeDescription(ASN1ParserThingie):
 		raise "TODO"
 
 
-	while text.startswith(" "):
-	    text=text[1:]
+        text = text.lstrip()
 
-	if text.startswith("DESC "):
+	if peekWord(text) == "DESC":
 	    text=text[len("DESC "):]
-	    while text.startswith(" "):
-		text=text[1:]
+            text = text.lstrip()
 	    assert text[0]=="'"
 	    text=text[1:]
 	    end=text.index("'")
 	    self.desc=text[:end]
 	    text=text[end+1:]
 
-	while text.startswith(" "):
-	    text=text[1:]
+        text = text.lstrip()
 
-	if text.startswith("OBSOLETE "):
+	if peekWord(text) == "OBSOLETE":
 	    self.obsolete=1
 	    text=text[len("OBSOLETE "):]
 
-	while text.startswith(" "):
-	    text=text[1:]
+        text = text.lstrip()
 
-	if text.startswith("SUP "):
+	if peekWord(text) == "SUP":
 	    text=text[len("SUP "):]
-	    while text.startswith(" "):
-		text=text[1:]
-	    end=text.index(" ")
-	    self.sup=text[:end]
-	    text=text[end+1:]
+            text = text.lstrip()
+	    self.sup, text = extractWord(text)
 
-	while text.startswith(" "):
-	    text=text[1:]
+        text = text.lstrip()
 
-	if text.startswith("EQUALITY "):
+	if peekWord(text) == "EQUALITY":
 	    text=text[len("EQUALITY "):]
-	    while text.startswith(" "):
-		text=text[1:]
-	    end=text.index(" ")
-	    self.equality=text[:end]
-	    text=text[end+1:]
+            text = text.lstrip()
+	    self.equality, text = extractWord(text)
 
-	while text.startswith(" "):
-	    text=text[1:]
+        text = text.lstrip()
 
-	if text.startswith("ORDERING "):
+	if peekWord(text) == "ORDERING":
 	    text=text[len("ORDERING "):]
-	    while text.startswith(" "):
-		text=text[1:]
-	    end=text.index(" ")
-	    self.ordering=text[:end]
-	    text=text[end+1:]
+            text = text.lstrip()
+	    self.ordering, text = extractWord(text)
 
-	while text.startswith(" "):
-	    text=text[1:]
+        text = text.lstrip()
 
-	if text.startswith("SUBSTR "):
+	if peekWord(text) == "SUBSTR":
 	    text=text[len("SUBSTR "):]
-	    while text.startswith(" "):
-		text=text[1:]
-	    end=text.index(" ")
-	    self.substr=text[:end]
-	    text=text[end+1:]
+            text = text.lstrip()
+	    self.substr, text = extractWord(text)
 
-	while text.startswith(" "):
-	    text=text[1:]
+        text = text.lstrip()
 
-	if text.startswith("SYNTAX "):
+	if peekWord(text) == "SYNTAX":
 	    text=text[len("SYNTAX "):]
-	    while text.startswith(" "):
-		text=text[1:]
-	    end=text.index(" ")
-	    self.syntax=text[:end]
-	    text=text[end+1:]
+            text = text.lstrip()
+	    self.syntax, text = extractWord(text)
 
-	while text.startswith(" "):
-	    text=text[1:]
+        text = text.lstrip()
 
-	if text.startswith("SINGLE-VALUE "):
+	if peekWord(text) == "SINGLE-VALUE":
 	    assert self.single_value is None
 	    self.single_value=1
 	    text=text[len("SINGLE-VALUE "):]
 
-	while text.startswith(" "):
-	    text=text[1:]
+        text = text.lstrip()
 
-	if text.startswith("COLLECTIVE "):
+	if peekWord(text) == "COLLECTIVE":
 	    assert self.collective is None
 	    self.collective=1
 	    text=text[len("COLLECTIVE "):]
 
-	while text.startswith(" "):
-	    text=text[1:]
+	text = text.lstrip()
 
-	if text.startswith("NO-USER-MODIFICATION "):
+	if peekWord(text) == "NO-USER-MODIFICATION":
 	    assert self.no_user_modification is None
 	    self.no_user_modification=1
 	    text=text[len("NO-USER-MODIFICATION "):]
 
-	while text.startswith(" "):
-	    text=text[1:]
+	text = text.lstrip()
 
-	if text.startswith("USAGE "):
+	if peekWord(text) == "USAGE":
 	    assert self.usage is None
 	    text=text[len("USAGE "):]
-	    while text.startswith(" "):
-		text=text[1:]
-	    end=text.index(" ")
-	    self.usage=text[:end]
-	    text=text[end+1:]
+            text = text.lstrip()
+	    self.usage, text = extractWord(text)
 
-	while text.startswith(" "):
-	    text=text[1:]
+	text = text.lstrip()
 
 	assert text=="", "Text was not empty: %s"%repr(text)
 
@@ -476,6 +468,35 @@ class AttributeTypeDescription(ASN1ParserThingie):
 		  +" no_user_modification=%(no_user_modification)s"
 		  +" usage=%(usage)s>")%nice)
 
+    def __str__(self):
+        r=[]
+        if self.name is not None:
+            r.append('NAME %s' % self._str_list(self.name))
+        if self.desc is not None:
+            r.append('DESC %s' % self._str(self.desc))
+        if self.obsolete:
+            r.append('OBSOLETE')
+        if self.sup is not None:
+            r.append('SUP %s' % self.sup)
+        if self.equality is not None:
+            r.append('EQUALITY %s' % self.equality)
+        if self.ordering is not None:
+            r.append('ORDERING %s' % self.ordering)
+        if self.substr is not None:
+            r.append('SUBSTR %s' % self.substr)
+        if self.syntax is not None:
+            r.append('SYNTAX %s' % self.syntax)
+        if self.single_value:
+            r.append('SINGLE-VALUE')
+        if self.collective:
+            r.append('COLLECTIVE')
+        if self.no_user_modification:
+            r.append('NO-USER-MODIFICATION')
+        if self.usage is not None:
+            r.append('USAGE %s' % self.usage)
+        return ('( %s ' % self.oid
+                + '\n        '.join(r)
+                + ' )')
 
 class SyntaxDescription(ASN1ParserThingie):
     """
@@ -494,55 +515,45 @@ class SyntaxDescription(ASN1ParserThingie):
 	assert text[0]=='('
 	assert text[-1]==')'
 	text=text[1:-1]
-	while text.startswith(" "):
-	    text=text[1:]
+	text = text.lstrip()
 
 	# oid
-	end=text.index(" ")
-	self.oid=text[:end]
-	text=text[end+1:]
+        self.oid, text = extractWord(text)
 
-	while text.startswith(" "):
-	    text=text[1:]
+	text = text.lstrip()
 
-	if text.startswith("DESC "):
+	if peekWord(text) == "DESC":
 	    text=text[len("DESC "):]
-	    while text.startswith(" "):
-		text=text[1:]
+            text = text.lstrip()
 	    assert text[0]=="'"
 	    text=text[1:]
 	    end=text.index("'")
 	    self.desc=text[:end]
 	    text=text[end+1:]
 
-	while text.startswith(" "):
-	    text=text[1:]
+	text = text.lstrip()
 
-	if text.startswith("X-BINARY-TRANSFER-REQUIRED "):
+	if peekWord(text) == "X-BINARY-TRANSFER-REQUIRED":
 	    text=text[len("X-BINARY-TRANSFER-REQUIRED "):]
-	    while text.startswith(" "):
-		text=text[1:]
+            text = text.lstrip()
 	    assert text[0]=="'"
 	    text=text[1:]
 	    end=text.index("'")
 	    self.desc=text[:end]
 	    text=text[end+1:]
 
-	while text.startswith(" "):
-	    text=text[1:]
+	text = text.lstrip()
 
-	if text.startswith("X-NOT-HUMAN-READABLE "):
+	if peekWord(text) == "X-NOT-HUMAN-READABLE":
 	    text=text[len("X-NOT-HUMAN-READABLE "):]
-	    while text.startswith(" "):
-		text=text[1:]
+            text = text.lstrip()
 	    assert text[0]=="'"
 	    text=text[1:]
 	    end=text.index("'")
 	    self.desc=text[:end]
 	    text=text[end+1:]
 
-	while text.startswith(" "):
-	    text=text[1:]
+	text = text.lstrip()
 
 	assert text=="", "Text was not empty: %s"%repr(text)
 
@@ -582,21 +593,16 @@ class MatchingRuleDescription(ASN1ParserThingie):
 	assert text[0]=='('
 	assert text[-1]==')'
 	text=text[1:-1]
-	while text.startswith(" "):
-	    text=text[1:]
+	text = text.lstrip()
 
 	# oid
-	end=text.index(" ")
-	self.oid=text[:end]
-	text=text[end+1:]
+        self.oid, text = extractWord(text)
 
-	while text.startswith(" "):
-	    text=text[1:]
+	text = text.lstrip()
 
-	if text.startswith("NAME "):
+	if peekWord(text) == "NAME":
 	    text=text[len("NAME "):]
-	    while text.startswith(" "):
-		text=text[1:]
+            text = text.lstrip()
 	    if text[0]=="'":
 		text=text[1:]
 		end=text.index("'")
@@ -604,47 +610,38 @@ class MatchingRuleDescription(ASN1ParserThingie):
 		text=text[end+1:]
 	    elif text[0]=="(":
 		text=text[1:]
-		while text.startswith(" "):
-		    text=text[1:]
+                text = text.lstrip()
 		end=text.index(")")
 		self.name=self._strings_to_list(text[:end])
 		text=text[end+1:]
 	    else:
 		raise "TODO"
 
-	while text.startswith(" "):
-	    text=text[1:]
+	text = text.lstrip()
 
-	if text.startswith("DESC "):
+	if peekWord(text) == "DESC":
 	    text=text[len("DESC "):]
-	    while text.startswith(" "):
-		text=text[1:]
+            text = text.lstrip()
 	    assert text[0]=="'"
 	    text=text[1:]
 	    end=text.index("'")
 	    self.desc=text[:end]
 	    text=text[end+1:]
 
-	while text.startswith(" "):
-	    text=text[1:]
+	text = text.lstrip()
 
-	if text.startswith("OBSOLETE "):
+	if peekWord(text) == "OBSOLETE":
 	    self.obsolete=1
 	    text=text[len("OBSOLETE "):]
 
-	while text.startswith(" "):
-	    text=text[1:]
+	text = text.lstrip()
 
-	if text.startswith("SYNTAX "):
+	if peekWord(text) == "SYNTAX":
 	    text=text[len("SYNTAX "):]
-	    while text.startswith(" "):
-		text=text[1:]
-	    end=text.index(" ")
-	    self.syntax=text[:end]
-	    text=text[end+1:]
+            text = text.lstrip()
+	    self.syntax, text = extractWord(text)
 
-	while text.startswith(" "):
-	    text=text[1:]
+	text = text.lstrip()
 
 	assert text=="", "Text was not empty: %s"%repr(text)
 

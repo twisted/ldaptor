@@ -216,6 +216,33 @@ class LDAPSyntaxAttributesModificationOnWire(unittest.TestCase):
 	    'objectClass': ['a', 'b'],
 	    'aValue': ['a'],
 	    })
+	o['aValue'].update(['newValue', 'anotherNewValue'])
+
+	d=o.commit()
+        val = deferredResult(d)
+
+        client.assertSent(pureldap.LDAPModifyRequest(
+	    object='cn=foo,dc=example,dc=com',
+	    modification=[
+	    pureldap.LDAPModification_add(attributeType='aValue',
+                                          vals=['newValue', 'anotherNewValue']),
+	    ]))
+
+    def testAddSeparate(self):
+	"""Modify & commit should write the right data to the server."""
+
+        client = LDAPClientTestDriver(
+            [	pureldap.LDAPModifyResponse(resultCode=0,
+                                            matchedDN='',
+                                            errorMessage=''),
+                ])
+
+	o=ldapsyntax.LDAPEntry(client=client,
+                               dn='cn=foo,dc=example,dc=com',
+                               attributes={
+	    'objectClass': ['a', 'b'],
+	    'aValue': ['a'],
+	    })
 	o['aValue'].add('newValue')
 	o['aValue'].add('anotherNewValue')
 
@@ -225,10 +252,10 @@ class LDAPSyntaxAttributesModificationOnWire(unittest.TestCase):
         client.assertSent(pureldap.LDAPModifyRequest(
 	    object='cn=foo,dc=example,dc=com',
 	    modification=[
-	    pureldap.LDAPModification_add(vals=(('aValue',
-						 ['newValue']),)),
-	    pureldap.LDAPModification_add(vals=(('aValue',
-						 ['anotherNewValue']),)),
+	    pureldap.LDAPModification_add(attributeType='aValue',
+                                          vals=['newValue']),
+	    pureldap.LDAPModification_add(attributeType='aValue',
+                                          vals=['anotherNewValue']),
 	    ]))
 
     def testDeleteAttribute(self):
@@ -254,8 +281,8 @@ class LDAPSyntaxAttributesModificationOnWire(unittest.TestCase):
 	client.assertSent(pureldap.LDAPModifyRequest(
 	    object='cn=foo,dc=example,dc=com',
 	    modification=[
-	    pureldap.LDAPModification_delete(vals=(('aValue',
-						    ['a']),)),
+	    pureldap.LDAPModification_delete(attributeType='aValue',
+                                             vals=['a']),
 	    ]))
 
     def testDeleteAllAttribute(self):
@@ -283,8 +310,8 @@ class LDAPSyntaxAttributesModificationOnWire(unittest.TestCase):
 	client.assertSent(pureldap.LDAPModifyRequest(
 	    object='cn=foo,dc=example,dc=com',
 	    modification=[
-	    pureldap.LDAPModification_delete(vals=(('aValue',),)),
-	    pureldap.LDAPModification_delete(vals=(('bValue',),)),
+	    pureldap.LDAPModification_delete('aValue'),
+	    pureldap.LDAPModification_delete('bValue'),
 	    ]))
 
 
@@ -311,8 +338,8 @@ class LDAPSyntaxAttributesModificationOnWire(unittest.TestCase):
         client.assertSent(pureldap.LDAPModifyRequest(
 	    object='cn=foo,dc=example,dc=com',
 	    modification=[
-	    pureldap.LDAPModification_replace(vals=(('aValue',
-						     ['foo', 'bar']),)),
+	    pureldap.LDAPModification_replace(attributeType='aValue',
+                                              vals=['foo', 'bar']),
 	    ]))
 
 
@@ -602,10 +629,10 @@ class LDAPSyntaxPasswords(unittest.TestCase):
 	client.assertSent(pureldap.LDAPModifyRequest(
 	    object='cn=foo,dc=example,dc=com',
 	    modification=[
-	    pureldap.LDAPModification_replace(vals=(('ntPassword',
-                                                     ['89963F5042E5041A59C249282387A622']),)),
-	    pureldap.LDAPModification_replace(vals=(('lmPassword',
-                                                     ['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),)),
+	    pureldap.LDAPModification_replace(attributeType='ntPassword',
+                                              vals=['89963F5042E5041A59C249282387A622']),
+	    pureldap.LDAPModification_replace(attributeType='lmPassword',
+                                              vals=['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
             ]))
 
     def testPasswordSettingAll_noSamba(self):
@@ -657,10 +684,10 @@ class LDAPSyntaxPasswords(unittest.TestCase):
                           pureldap.LDAPModifyRequest(
 	    object='cn=foo,dc=example,dc=com',
 	    modification=[
-	    pureldap.LDAPModification_replace(vals=(('ntPassword',
-                                                     ['89963F5042E5041A59C249282387A622']),)),
-	    pureldap.LDAPModification_replace(vals=(('lmPassword',
-                                                     ['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),)),
+	    pureldap.LDAPModification_replace(attributeType='ntPassword',
+                                              vals=['89963F5042E5041A59C249282387A622']),
+	    pureldap.LDAPModification_replace(attributeType='lmPassword',
+                                              vals=['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
             ]))
 
 
@@ -702,10 +729,10 @@ class LDAPSyntaxPasswords(unittest.TestCase):
                                        attributes=('objectClass',)),
             pureldap.LDAPModifyRequest(object='cn=foo,dc=example,dc=com',
                                        modification=[
-	    pureldap.LDAPModification_replace(vals=(('ntPassword',
-                                                     ['89963F5042E5041A59C249282387A622']),)),
-	    pureldap.LDAPModification_replace(vals=(('lmPassword',
-                                                     ['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),)),
+	    pureldap.LDAPModification_replace(attributeType='ntPassword',
+                                              vals=['89963F5042E5041A59C249282387A622']),
+	    pureldap.LDAPModification_replace(attributeType='lmPassword',
+                                              vals=['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
             ]),
             )
 

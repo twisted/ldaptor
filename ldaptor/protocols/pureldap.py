@@ -588,7 +588,7 @@ LDAP_DEREF_derefInSearching=1
 LDAP_DEREF_derefFindingBaseObj=2
 LDAP_DEREF_derefAlways=3
 
-LDAPFilterMatchAll = LDAPFilter_present('objectclass')
+LDAPFilterMatchAll = LDAPFilter_present('objectClass')
 
 class LDAPSearchRequest(LDAPProtocolRequest, BERSequence):
     tag=CLASS_APPLICATION|0x03
@@ -764,17 +764,25 @@ class LDAPModification(BERSequence):
 
     def decode(self, encoded, berdecoder):
 	BERSequence.decode(self, encoded, berdecoder)
+        assert len(self.data) == 2
 	self.op=self.data[0].value
-	self.vals=map(lambda x: x.value, self.data[1:])
+        assert len(list(self.data[1])) == 2
+	self.type=self.data[1][0].value
+	self.vals=map(lambda x: x.value, self.data[1][1])
+        del self.data
 
-    def __init__(self, vals=None, op=None, encoded=None, berdecoder=None, tag=None):
+    def __init__(self, attributeType=None, vals=None, op=None, encoded=None, berdecoder=None, tag=None):
 	BERSequence.__init__(self, [], tag=tag)
 	if encoded is not None:
+	    assert attributeType is None
 	    assert vals is None
 	    assert op is None
 	    assert berdecoder
 	    self.decode(encoded, berdecoder)
-	elif vals is not None:
+	elif attributeType is not None:
+            if vals is None:
+                vals = []
+	    self.type=attributeType
 	    self.vals=vals
 	    if op:
 		self.op=op
@@ -784,23 +792,21 @@ class LDAPModification(BERSequence):
 
     def __str__(self):
 	assert self.op is not None
-	r=[]
-	for x in self.vals:
-	    type=x[0]
-	    try:
-		v=x[1]
-	    except IndexError:
-		v=()
-	    r.append(BERSequence([LDAPAttributeDescription(type), BERSet(map(LDAPString, v))]))
-	return str(BERSequence([BEREnumerated(self.op)]+r))
+	return str(BERSequence([ BEREnumerated(self.op),
+                                 BERSequence([ LDAPAttributeDescription(self.type),
+                                               BERSet(map(LDAPString, self.vals)),
+                                               ]),
+                                 ]))
+
 
     def __repr__(self):
-	if self.tag==self.__class__.tag:
-	    return self.__class__.__name__+"(vals=%s, op=%d)"\
-		   %(repr(self.vals), self.op)
-	else:
-	    return self.__class__.__name__+"(vals=%s, op=%d, tag=%d)" \
-		   %(repr(self.vals), self.op, self.tag)
+        l=[]
+        l.append('attributeType=%r' % self.type)
+        l.append('vals=%r' % self.vals)
+        l.append('op=%d' % self.op)
+	if self.tag!=self.__class__.tag:
+            l.append('tag=%d' % self.tag)
+        return self.__class__.__name__+'('+', '.join(l)+')'
 
 
 
@@ -823,8 +829,9 @@ class LDAPModifyRequest(LDAPProtocolRequest, BERSequence):
 
     def decode(self, encoded, berdecoder):
 	BERSequence.decode(self, encoded, berdecoder) #TODO use special decoder with LDAPModification_*.
+        assert len(self.data) == 2
 	self.object=self.data[0].value
-	self.modification=self.data[1]
+        self.modification=self.data[1].data
 
     def __init__(self, object=None, modification=None, encoded=None, berdecoder=None, tag=None):
 	"""
@@ -833,9 +840,9 @@ class LDAPModifyRequest(LDAPProtocolRequest, BERSequence):
 	Example usage::
 
 		l=LDAPModifyRequest(object='cn=foo,dc=example,dc=com',
-		    modification=(LDAPModification_add('attr1', ('value1', 'value2')),
-				 (LDAPModification_delete('attr2'))))
-"""
+		    modification=[LDAPModification_add('attr1', ['value1', 'value2']),
+				  LDAPModification_delete('attr2')])
+        """
 
 	LDAPProtocolRequest.__init__(self)
 	BERSequence.__init__(self, [], tag=tag)

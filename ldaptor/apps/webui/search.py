@@ -150,7 +150,7 @@ class SearchPage(page.Page):
 	r=[]
 	while dn!=distinguishedname.DistinguishedName(stringValue=''):
 	    firstPart=dn.split()[0]
-	    r.append('<a href="../%s">%s</a>' % (uriQuote(str(dn)), str(firstPart)))
+	    r.append('<a href="../../%s">%s</a>' % (uriQuote(str(dn)), str(firstPart)))
 	    dn=dn.up()
 
 	return ','.join(r)

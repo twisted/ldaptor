@@ -27,6 +27,7 @@
 	<literal>MUST</literal> attribute types, and no attribute
 	types outside of the ones that are <literal>MUST</literal> or
 	<literal>MAY</literal>.</para>
+	<para>Note that e.g. OpenLDAP doesn't implement this.</para>
       </listitem>
       <listitem>
 	<para>Attributes of an entry closely match attributes of

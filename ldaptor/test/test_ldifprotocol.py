@@ -3,19 +3,18 @@ Test cases for ldaptor.protocols.ldap.ldif module.
 """
 
 from twisted.trial import unittest
-from ldaptor.protocols.ldap import ldifprotocol
-from ldaptor.testutil import LDAPClientTestDriver
+import sets
+from ldaptor.protocols.ldap import ldifprotocol, distinguishedname
+
+class LDIFDriver(ldifprotocol.LDIF):
+    def __init__(self):
+        self.listOfCompleted = []
+    def gotEntry(self, obj):
+        self.listOfCompleted.append(obj)
 
 class TestLDIFParsing(unittest.TestCase):
-    class LDIFDriver(ldifprotocol.LDIF):
-        def __init__(self):
-            self.listOfCompleted = []
-        def completed(self, obj):
-            self.listOfCompleted.append(obj)
-
     def testFromLDIF(self):
-        client = LDAPClientTestDriver()
-        proto = self.LDIFDriver()
+        proto = LDIFDriver()
         for line in (
 
             "dn: cn=foo,dc=example,dc=com",
@@ -49,8 +48,420 @@ class TestLDIFParsing(unittest.TestCase):
 	self.failUnlessEqual(o['objectClass'], ['c'])
 	self.failUnlessEqual(o['aValue'], [' FOO!', 'b'])
 	self.failUnlessEqual(o['bValue'], ['C'])
-        client.assertNothingSent()
 
         self.failUnlessEqual(proto.listOfCompleted, [])
 
-        client.assertNothingSent()
+    def testSplitLines(self):
+        proto = LDIFDriver()
+        for line in (
+
+            "dn: cn=foo,dc=ex",
+            " ample,dc=com",
+            "objectClass: a",
+            "ob",
+            " jectClass: b",
+            "",
+
+            ):
+            proto.lineReceived(line)
+
+        self.failUnlessEqual(len(proto.listOfCompleted), 1)
+
+        o = proto.listOfCompleted.pop(0)
+        self.failUnlessEqual(str(o.dn), 'cn=foo,dc=example,dc=com')
+	self.failUnlessEqual(o['objectClass'], ['a', 'b'])
+
+        self.failUnlessEqual(proto.listOfCompleted, [])
+
+    def testCaseInsensitiveAttributeTypes(self):
+        proto = LDIFDriver()
+        proto.dataReceived("""\
+dn: cn=foo,dc=example,dc=com
+objectClass: a
+obJeCtClass: b
+cn: foo
+avalue: a
+aValUe: b
+
+""")
+
+        self.failUnlessEqual(len(proto.listOfCompleted), 1)
+
+        o = proto.listOfCompleted.pop(0)
+        self.failUnlessEqual(str(o.dn), 'cn=foo,dc=example,dc=com')
+	self.failUnlessEqual(o['objectClass'], ['a', 'b'])
+	self.failUnlessEqual(o['CN'], ['foo'])
+	self.failUnlessEqual(o['aValue'], ['a', 'b'])
+
+        self.failUnlessEqual(proto.listOfCompleted, [])
+
+    def testVersion1(self):
+        proto = LDIFDriver()
+        proto.dataReceived("""\
+version: 1
+dn: cn=foo,dc=example,dc=com
+objectClass: a
+objectClass: b
+aValue: a
+aValue: b
+bValue: c
+
+""")
+
+        self.failUnlessEqual(len(proto.listOfCompleted), 1)
+
+        o = proto.listOfCompleted.pop(0)
+        self.failUnlessEqual(str(o.dn), 'cn=foo,dc=example,dc=com')
+	self.failUnlessEqual(o['objectClass'], ['a', 'b'])
+	self.failUnlessEqual(o['aValue'], ['a', 'b'])
+	self.failUnlessEqual(o['bValue'], ['c'])
+
+    def testVersionInvalid(self):
+        proto = LDIFDriver()
+        self.assertRaises(ldifprotocol.LDIFVersionNotANumberError,
+                          proto.dataReceived,
+                          """\
+version: junk
+dn: cn=foo,dc=example,dc=com
+objectClass: a
+objectClass: b
+aValue: a
+aValue: b
+bValue: c
+
+""")
+
+    def testVersion2(self):
+        proto = LDIFDriver()
+        self.assertRaises(ldifprotocol.LDIFUnsupportedVersionError,
+                          proto.dataReceived,
+                          """\
+version: 2
+dn: cn=foo,dc=example,dc=com
+objectClass: a
+objectClass: b
+aValue: a
+aValue: b
+bValue: c
+
+""")
+
+    def testNoSpaces(self):
+        proto = LDIFDriver()
+        proto.dataReceived("""\
+dn:cn=foo,dc=example,dc=com
+objectClass:a
+obJeCtClass:b
+cn:foo
+avalue:a
+aValUe:b
+
+""")
+
+        self.failUnlessEqual(len(proto.listOfCompleted), 1)
+
+        o = proto.listOfCompleted.pop(0)
+        self.failUnlessEqual(str(o.dn), 'cn=foo,dc=example,dc=com')
+	self.failUnlessEqual(o['objectClass'], ['a', 'b'])
+	self.failUnlessEqual(o['CN'], ['foo'])
+	self.failUnlessEqual(o['aValue'], ['a', 'b'])
+
+        self.failUnlessEqual(proto.listOfCompleted, [])
+
+    def testTruncatedFailure(self):
+        proto = LDIFDriver()
+        proto.dataReceived("""\
+version: 1
+dn: cn=foo,dc=example,dc=com
+objectClass: a
+objectClass: b
+aValue: a
+aValue: b
+bValue: c
+""")
+
+        self.failUnlessEqual(len(proto.listOfCompleted), 0)
+
+        self.assertRaises(ldifprotocol.LDIFTruncatedError,
+                          proto.connectionLost)
+
+class RFC2849_Examples(unittest.TestCase):
+    examples = [
+        ( """Example 1: An simple LDAP file with two entries""",
+          """\
+version: 1
+dn: cn=Barbara Jensen, ou=Product Development, dc=airius, dc=com
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+cn: Barbara Jensen
+cn: Barbara J Jensen
+cn: Babs Jensen
+sn: Jensen
+uid: bjensen
+telephonenumber: +1 408 555 1212
+description: A big sailing fan.
+
+dn: cn=Bjorn Jensen, ou=Accounting, dc=airius, dc=com
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+cn: Bjorn Jensen
+sn: Jensen
+telephonenumber: +1 408 555 1212
+
+""",
+          [ ( 'cn=Barbara Jensen,ou=Product Development,dc=airius,dc=com',
+              { 'objectClass': ['top', 'person', 'organizationalPerson'],
+                'cn': ['Barbara Jensen',
+                       'Barbara J Jensen',
+                       'Babs Jensen'],
+                'sn': ['Jensen'],
+                'uid': ['bjensen'],
+                'telephonenumber': ['+1 408 555 1212'],
+                'description': ['A big sailing fan.'],
+                }),
+
+            ( 'cn=Bjorn Jensen,ou=Accounting,dc=airius,dc=com',
+              {  'objectClass': ['top', 'person', 'organizationalPerson'],
+                 'cn': ['Bjorn Jensen'],
+                 'sn': ['Jensen'],
+                 'telephonenumber': ['+1 408 555 1212'],
+                 }),
+            ]),
+
+        ( """Example 2: A file containing an entry with a folded attribute value""",
+          """\
+version: 1
+dn:cn=Barbara Jensen, ou=Product Development, dc=airius, dc=com
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+cn:Barbara Jensen
+cn:Barbara J Jensen
+cn:Babs Jensen
+sn:Jensen
+uid:bjensen
+telephonenumber:+1 408 555 1212
+description:Babs is a big sailing fan, and travels extensively in sea
+ rch of perfect sailing conditions.
+title:Product Manager, Rod and Reel Division
+
+""",
+          [ ( 'cn=Barbara Jensen, ou=Product Development, dc=airius, dc=com',
+              { 'objectclass': ['top', 'person', 'organizationalPerson'],
+                'cn': ['Barbara Jensen', 'Barbara J Jensen', 'Babs Jensen'],
+                'sn': ['Jensen'],
+                'uid': ['bjensen'],
+                'telephonenumber': ['+1 408 555 1212'],
+                'description': ['Babs is a big sailing fan, and travels extensively in search of perfect sailing conditions.'],
+                'title': ['Product Manager, Rod and Reel Division'],
+                }),
+            ]),
+
+        ( """Example 3: A file containing a base-64-encoded value""",
+          """\
+version: 1
+dn: cn=Gern Jensen, ou=Product Testing, dc=airius, dc=com
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+cn: Gern Jensen
+cn: Gern O Jensen
+sn: Jensen
+uid: gernj
+telephonenumber: +1 408 555 1212
+description:: V2hhdCBhIGNhcmVmdWwgcmVhZGVyIHlvdSBhcmUhICBUaGlzIHZhbHVlIGlzIGJhc2UtNjQtZW5jb2RlZCBiZWNhdXNlIGl0IGhhcyBhIGNvbnRyb2wgY2hhcmFjdGVyIGluIGl0IChhIENSKS4NICBCeSB0aGUgd2F5LCB5b3Ugc2hvdWxkIHJlYWxseSBnZXQgb3V0IG1vcmUu
+
+""",
+          [ ( 'cn=Gern Jensen, ou=Product Testing, dc=airius, dc=com',
+              { 'objectclass': ['top', 'person', 'organizationalPerson'],
+                'cn': ['Gern Jensen', 'Gern O Jensen'],
+                'sn': ['Jensen'],
+                'uid': ['gernj'],
+                'telephonenumber': ['+1 408 555 1212'],
+                'description': ['What a careful reader you are!  This value is base-64-encoded because it has a control character in it (a CR).\r  By the way, you should really get out more.'],
+                }),
+            ]),
+                
+        ]
+
+    def testExamples(self):
+        for name, data, expected in self.examples:
+            proto = LDIFDriver()
+            proto.dataReceived(data)
+
+            self.failUnlessEqual(len(proto.listOfCompleted), len(expected))
+
+            for dn, attr in expected:
+                o = proto.listOfCompleted.pop(0)
+                self.failUnlessEqual(o.dn, distinguishedname.DistinguishedName(dn))
+
+                got = sets.Set([x.lower() for x in o.keys()])
+                want = sets.Set([x.lower() for x in attr.keys()])
+                self.failUnlessEqual(got, want)
+
+                for k, v in attr.items():
+                    self.failUnlessEqual(o[k], v)
+
+            self.failUnlessEqual(proto.listOfCompleted, [])
+
+"""
+TODO more tests from RFC2849:
+
+Example 4: A file containing an entries with UTF-8-encoded attribute
+values, including language tags.  Comments indicate the contents
+of UTF-8-encoded attributes and distinguished names.
+
+version: 1
+dn:: b3U95Za25qWt6YOoLG89QWlyaXVz
+# dn:: ou=<JapaneseOU>,o=Airius
+objectclass: top
+objectclass: organizationalUnit
+ou:: 5Za25qWt6YOo
+# ou:: <JapaneseOU>
+ou;lang-ja:: 5Za25qWt6YOo
+# ou;lang-ja:: <JapaneseOU>
+ou;lang-ja;phonetic:: 44GI44GE44GO44KH44GG44G2
+
+# ou;lang-ja:: <JapaneseOU_in_phonetic_representation>
+ou;lang-en: Sales
+description: Japanese office
+
+dn:: dWlkPXJvZ2FzYXdhcmEsb3U95Za25qWt6YOoLG89QWlyaXVz
+# dn:: uid=<uid>,ou=<JapaneseOU>,o=Airius
+userpassword: {SHA}O3HSv1MusyL4kTjP+HKI5uxuNoM=
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+uid: rogasawara
+mail: rogasawara@airius.co.jp
+givenname;lang-ja:: 44Ot44OJ44OL44O8
+# givenname;lang-ja:: <JapaneseGivenname>
+sn;lang-ja:: 5bCP56yg5Y6f
+# sn;lang-ja:: <JapaneseSn>
+cn;lang-ja:: 5bCP56yg5Y6fIOODreODieODi+ODvA==
+# cn;lang-ja:: <JapaneseCn>
+title;lang-ja:: 5Za25qWt6YOoIOmDqOmVtw==
+# title;lang-ja:: <JapaneseTitle>
+preferredlanguage: ja
+givenname:: 44Ot44OJ44OL44O8
+# givenname:: <JapaneseGivenname>
+sn:: 5bCP56yg5Y6f
+# sn:: <JapaneseSn>
+cn:: 5bCP56yg5Y6fIOODreODieODi+ODvA==
+# cn:: <JapaneseCn>
+title:: 5Za25qWt6YOoIOmDqOmVtw==
+# title:: <JapaneseTitle>
+givenname;lang-ja;phonetic:: 44KN44Gp44Gr44O8
+# givenname;lang-ja;phonetic::
+<JapaneseGivenname_in_phonetic_representation_kana>
+sn;lang-ja;phonetic:: 44GK44GM44GV44KP44KJ
+# sn;lang-ja;phonetic:: <JapaneseSn_in_phonetic_representation_kana>
+cn;lang-ja;phonetic:: 44GK44GM44GV44KP44KJIOOCjeOBqeOBq+ODvA==
+# cn;lang-ja;phonetic:: <JapaneseCn_in_phonetic_representation_kana>
+title;lang-ja;phonetic:: 44GI44GE44GO44KH44GG44G2IOOBtuOBoeOCh+OBhg==
+# title;lang-ja;phonetic::
+# <JapaneseTitle_in_phonetic_representation_kana>
+givenname;lang-en: Rodney
+sn;lang-en: Ogasawara
+cn;lang-en: Rodney Ogasawara
+title;lang-en: Sales, Director
+"""
+
+"""
+Example 5: A file containing a reference to an external file
+
+version: 1
+dn: cn=Horatio Jensen, ou=Product Testing, dc=airius, dc=com
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+cn: Horatio Jensen
+
+cn: Horatio N Jensen
+sn: Jensen
+uid: hjensen
+telephonenumber: +1 408 555 1212
+jpegphoto:< file:///usr/local/directory/photos/hjensen.jpg
+"""
+
+"""
+Example 6: A file containing a series of change records and comments
+
+version: 1
+# Add a new entry
+dn: cn=Fiona Jensen, ou=Marketing, dc=airius, dc=com
+changetype: add
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+cn: Fiona Jensen
+sn: Jensen
+uid: fiona
+telephonenumber: +1 408 555 1212
+jpegphoto:< file:///usr/local/directory/photos/fiona.jpg
+
+# Delete an existing entry
+dn: cn=Robert Jensen, ou=Marketing, dc=airius, dc=com
+changetype: delete
+
+# Modify an entry's relative distinguished name
+dn: cn=Paul Jensen, ou=Product Development, dc=airius, dc=com
+changetype: modrdn
+newrdn: cn=Paula Jensen
+deleteoldrdn: 1
+
+# Rename an entry and move all of its children to a new location in
+# the directory tree (only implemented by LDAPv3 servers).
+dn: ou=PD Accountants, ou=Product Development, dc=airius, dc=com
+changetype: modrdn
+newrdn: ou=Product Development Accountants
+deleteoldrdn: 0
+newsuperior: ou=Accounting, dc=airius, dc=com
+
+# Modify an entry: add an additional value to the postaladdress
+# attribute, completely delete the description attribute, replace
+# the telephonenumber attribute with two values, and delete a specific
+# value from the facsimiletelephonenumber attribute
+dn: cn=Paula Jensen, ou=Product Development, dc=airius, dc=com
+changetype: modify
+add: postaladdress
+postaladdress: 123 Anystreet $ Sunnyvale, CA $ 94086
+-
+delete: description
+-
+replace: telephonenumber
+telephonenumber: +1 408 555 1234
+telephonenumber: +1 408 555 5678
+-
+delete: facsimiletelephonenumber
+facsimiletelephonenumber: +1 408 555 9876
+-
+
+# Modify an entry: replace the postaladdress attribute with an empty
+# set of values (which will cause the attribute to be removed), and
+# delete the entire description attribute. Note that the first will
+# always succeed, while the second will only succeed if at least
+# one value for the description attribute is present.
+dn: cn=Ingrid Jensen, ou=Product Support, dc=airius, dc=com
+changetype: modify
+replace: postaladdress
+-
+delete: description
+-
+"""
+
+"""
+Example 7: An LDIF file containing a change record with a control
+version: 1
+# Delete an entry. The operation will attach the LDAPv3
+# Tree Delete Control defined in [9]. The criticality
+# field is "true" and the controlValue field is
+# absent, as required by [9].
+dn: ou=Product Development, dc=airius, dc=com
+control: 1.2.840.113556.1.4.805 true
+changetype: delete
+
+"""

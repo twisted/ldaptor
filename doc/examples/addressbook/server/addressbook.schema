@@ -21,4 +21,5 @@ objectclass ( AddressBookObjectClass:1
 	MAY ( 	cn $ description $
 		telephoneNumber $ facsimileTelephoneNumber $
 		street $ postOfficeBox $ postalCode $
-		postalAddress $ physicalDeliveryOfficeName $ st $ l $ c ) )
+		postalAddress $ physicalDeliveryOfficeName $ st $ l $ c
+		$ userPassword ) )

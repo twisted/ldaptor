@@ -1,0 +1,56 @@
+#!/usr/bin/python
+
+import sys
+from ldaptor.protocols.ldap import ldif, ldifdelta
+from ldaptor import usage, inmemory
+from twisted.internet import protocol, reactor, defer
+
+
+exitStatus=0
+
+def error(fail):
+    print >>sys.stderr, 'fail:', fail.getErrorMessage()
+    global exitStatus
+    exitStatus=1
+
+def output(tree, outputFile):
+    outputFile.write(ldif.header())
+    def _write(node):
+        outputFile.write(str(node))
+    tree.subtree(callback=_write)
+
+def main(dataFile, patchFile, outputFile):
+    d = inmemory.fromLDIFFile(dataFile)
+
+    def _gotDB(db, patchFile):
+        patches = ldifdelta.fromLDIFFile(patchFile)
+
+        # find the right entry to patch
+        for p in patches:
+            p.patch(db)
+        return db
+    d.addCallback(_gotDB, patchFile)
+
+    d.addCallback(output, outputFile)
+    d.addErrback(error)
+    d.addBoth(lambda x: reactor.stop())
+
+    reactor.run()
+    sys.exit(exitStatus)
+
+class MyOptions(usage.Options):
+    """LDAPtor LDIF patching utility"""
+
+    def parseArgs(self, data):
+        self['data'] = data
+
+if __name__ == "__main__":
+    try:
+	config = MyOptions()
+	config.parseOptions()
+    except usage.UsageError, ue:
+	sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
+	sys.exit(1)
+
+    data = open(config['data'])
+    main(data, sys.stdin, sys.stdout)

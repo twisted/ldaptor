@@ -39,10 +39,20 @@ def l(s):
 class KnownValues(unittest.TestCase):
     knownValues=( # class, args, kwargs, expected_result
 
+	(pureldap.LDAPModification_delete,
+	 [],
+         { "attributeType": 'bar',
+	   },
+	 [0x30, 0x0c]
+	 + [0x0a, 0x01, 0x01]
+         + [0x30, 0x07]
+	 + [0x04, 0x03] + l("bar")
+	 + [0x31, 0x00]),
+
 	(pureldap.LDAPModifyRequest,
 	 [],
 	 { "object": 'cn=foo, dc=example, dc=com',
-	   "modification": [pureldap.LDAPModification_delete([('bar',)])]
+	   "modification": [pureldap.LDAPModification_delete('bar')]
 	   },
 	 [0x66, 0x2c]
 	 + [0x04, 0x1a]
@@ -116,7 +126,7 @@ class KnownValues(unittest.TestCase):
          # typesOnly
          + [0x01, 1, 0]
          # filter
-         + [135, 11, 111, 98, 106, 101, 99, 116, 99, 108, 97, 115, 115]
+         + [135, 11] + l('objectClass')
          # attributes
          + [48, 0]
          ),
@@ -250,6 +260,6 @@ class KnownValues(unittest.TestCase):
 
     def testPartialLDAPModifyRequestEncodings_old(self):
 	"""LDAPModifyRequest(encoded="...") with too short input should throw BERExceptionInsufficientData"""
-	m=str(pureldap.LDAPModifyRequest(object='foo', modification=[pureldap.LDAPModification_delete(['bar'])]))
+	m=str(pureldap.LDAPModifyRequest(object='foo', modification=[pureldap.LDAPModification_delete('bar')]))
 	for i in xrange(len(m)):
 	    self.assertRaises(pureber.BERExceptionInsufficientData, pureldap.LDAPModifyRequest, encoded=m[:i], berdecoder=pureber.BERDecoderContext())

@@ -46,7 +46,7 @@
 
     <figure>
       <title>Tree-like, distributed nature of data stored in LDAP</title>
-      <graphic fileref="ldap-is-a-tree.dot.eps.png"/>
+      <graphic fileref="ldap-is-a-tree.dia.png"/>
     </figure>
 
     <para>An organization normally uses their DNS domain name as the
@@ -290,7 +290,7 @@ title:Product Manager, Rod and Reel Division
 
     <figure>
       <title>Visualizing an LDAP search filter</title>
-      <graphic fileref="ldapfilter-as-tree.dot.eps.png"/>
+      <graphic fileref="ldapfilter-as-tree.dia.png"/>
     </figure>
 
   </chapter>
@@ -326,7 +326,7 @@ title:Product Manager, Rod and Reel Division
 
     <figure>
       <title>Beginning of an LDAP protocol chat</title>
-      <graphic fileref="chat-bind.dot.eps.png"/>
+      <graphic fileref="chat-bind.dia.png"/>
     </figure>
 
     <para>Next, the client sends a search request, containing the base
@@ -342,7 +342,7 @@ title:Product Manager, Rod and Reel Division
 
     <figure>
       <title>A sample LDAP search operation</title>
-      <graphic fileref="chat-search.dot.eps.png"/>
+      <graphic fileref="chat-search.dia.png"/>
     </figure>
 
     <para>Note that the client could have sent another search request
@@ -352,7 +352,7 @@ title:Product Manager, Rod and Reel Division
 
     <figure>
       <title>Multiple search operations pipelined</title>
-      <graphic fileref="chat-search-pipeline.dot.eps.png"/>
+      <graphic fileref="chat-search-pipeline.dia.png"/>
     </figure>
 
     <para>One important detail we have skimmed over so far is how the
@@ -381,7 +381,7 @@ title:Product Manager, Rod and Reel Division
 
     <figure>
       <title>End of an LDAP protocol chat</title>
-      <graphic fileref="chat-unbind.dot.eps.png"/>
+      <graphic fileref="chat-unbind.dia.png"/>
     </figure>
 
     <para>Please understand that these were just examples, and in

@@ -1,0 +1,7 @@
+dn: cn=Ample Exam,ou=Sales,ou=People,dc=example,dc=com
+objectClass: addressbookPerson
+cn: Ample Exam
+gn: Ample
+sn: Exam
+# The password is "foo"
+userPassword: {crypt}12o7559gAGYWY
