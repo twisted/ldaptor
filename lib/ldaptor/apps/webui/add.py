@@ -96,7 +96,7 @@ class AddForm(widgets.Form):
 
 
             for attr_alias in objclass.must:
-                if not dn_attribute:
+                if not dn_attribute and attr_alias != 'objectClass':
                     dn_attribute = attr_alias
                 real_attr = self._get_attrtype(str(attr_alias))
 

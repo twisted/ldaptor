@@ -33,7 +33,7 @@
 
 
 import string
-from twisted.python.mutablestring import MutableString
+from ldaptor.mutablestring import MutableString
 
 # xxxxxxxx
 # |/|\.../

@@ -32,7 +32,7 @@ class PasswordChangeForm(widgets.Form):
         self.format(self.getFormFields(request, dn), io.write, request)
 
         if generate:
-            deferred=generate_password.generate()
+            deferred=generate_password.generate(reactor)
             deferred.addCallbacks(
                 callback=self._got_password,
                 callbackArgs=(dn, request),

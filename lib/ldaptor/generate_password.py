@@ -30,10 +30,11 @@ class ReadPassword(protocol.ProcessProtocol):
         else:
             self.deferred.errback(failure.Failure(PwgenException('')))
 
-def generate(n=1):
+def generate(reactor, n=1):
+    assert n>0
     d=defer.Deferred()
     proto=ReadPassword(d, n)
-    process.Process('pwgen', ('pwgen', '-cn1', '-N', '%d'%n), {}, None, proto)
+    process.Process(reactor, 'pwgen', ('pwgen', '-cn1', '-N', '%d'%n), {}, None, proto)
     return d
 
 if __name__=='__main__':
@@ -52,7 +53,7 @@ if __name__=='__main__':
     # on purpose.
     l=[]
     for i in range(5):
-        d=generate(5)
+        d=generate(reactor, 5)
         d.addCallbacks(say, err)
         l.append(d)
 

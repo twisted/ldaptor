@@ -30,7 +30,7 @@ class PasswdClient(ldapclient.LDAPClient):
             pwd=getpass.getpass('NEW Password for %s: ' % dn)
             return defer.succeed(pwd)
         else:
-            return generate_password.generate()
+            return generate_password.generate(reactor)
 
     def _handle_bind_success(self, x):
         l=[]

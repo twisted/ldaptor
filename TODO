@@ -1,18 +1,19 @@
 TODO file for the Ldaptor project.
 
-* ldaptor-webui, ldaptor-utils: creating a new group
+* ldaptor-webui: twisted.web.widgets.Form.tryAgain()
+
+* ldaptor-webui: edit: adding attributes in schema MAY that didn't
+   exist earlier
+
+* ldaptor-webui: edit: adding objectClasses
+
+* ldaptor-webui: editing hierarchical things
 
 * ldaptor-webui, ldaptor-utils: editing a users groups
    - for ldaptor-webui, a multiselection with a list of existing
       groups to choose from
 
-* ldaptor-webui: changing a users password
-
 * ldaptor-webui, maybe others: non-ASCII chars
-
-* ldaptor-webui: batch password changes; for all entries in the
-   search results, show checkbox. For each checked, change
-   password.
 
 * changing the dn attribute
 

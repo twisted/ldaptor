@@ -19,7 +19,8 @@
 from ldaptor.protocols import pureldap, pureber
 from ldaptor.protocols.ldap import ldaperrors
 
-from twisted.python import mutablestring, log
+from ldaptor.mutablestring import MutableString
+from twisted.python import log
 from twisted.python.failure import Failure
 from twisted.internet import protocol, defer
 from ldaptor.samba import smbpassword
@@ -32,7 +33,7 @@ class LDAPClient(protocol.Protocol):
 
     def __init__(self):
         self.onwire = {}
-        self.buffer = mutablestring.MutableString()
+        self.buffer = MutableString()
         self.connected = None
 
     berdecoder = pureldap.LDAPBERDecoderContext_LDAPMessage(

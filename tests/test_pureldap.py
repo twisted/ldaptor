@@ -22,7 +22,7 @@ Test cases for ldaptor.protocols.pureldap module.
 
 import unittest
 from ldaptor.protocols import pureldap, pureber
-from twisted.python.mutablestring import MutableString
+from ldaptor.mutablestring import MutableString
 import types
 
 def s(*l):

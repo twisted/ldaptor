@@ -1,3 +1,18 @@
+ldaptor (0.0.9) unstable; urgency=low
+
+  * Copy over my MutableString implementation from Twisted, they
+    are deprecating it. The one in UserString has very different
+    behaviour. Closes: #163772.
+  * Twisted Process wants the reactor.. Let's play along.
+  * Handle no change -case better in ldaptor-webui mass password
+    change.
+  * Update TODO to reflect current situation.
+  * Lots of places refer to ldaperrors.other, provide that.
+  * Work on ldaptor-ldap2dhcpconf, ldaptor-ldap2maradns.
+  * Bug fix in ldaptor-webui add.
+
+ -- Tommi Virtanen <tv@debian.org>  Sun, 27 Oct 2002 12:28:14 +0200
+
 ldaptor (0.0.8) unstable; urgency=low
 
   * Take out the python2.3 support, Twisted doesn't support 2.3

@@ -7,14 +7,30 @@ from socket import inet_aton, inet_ntoa
 import sys
 from twisted.internet import protocol, defer, reactor
 
-def my_aton(ip):
+def my_aton_octets(ip):
     s=inet_aton(ip)
     octets=map(None, s)
-    n=0
+    n=0L
     for o in octets:
         n=n<<8
         n+=ord(o)
     return n
+
+def my_aton_numbits(num):
+    n=0L
+    while num>0:
+        n>>=1
+        n |= 2**31
+        num-=1
+    return n
+
+def my_aton(ip):
+    try:
+        i=int(ip)
+    except ValueError:
+        return my_aton_octets(ip)
+    else:
+        return my_aton_numbits(i)
 
 def my_ntoa(n):
     s=(
@@ -35,18 +51,36 @@ def printPTR(name, ip):
     octets.append('in-addr.arpa.')
     print 'P'+('.'.join(octets))+'|86400|'+name+'.%'
     
+class HostIPAddress:
+    def __init__(self, host, ipAddress):
+        self.host=host
+        self.ipAddress=ipAddress
+
+    def printZone(self, domain):
+        print '#  '+self.host.dn
+        printIPAddress(self.host.name+'.'+domain, self.ipAddress)
+        printPTR(self.host.name+'.'+domain, self.ipAddress)
+
+    def __repr__(self):
+        return (self.__class__.__name__
+                +'('
+                +'host=%s, ' % id(self.host)
+                +'ipAddress=%s' % repr(self.ipAddress)
+                +')')
 
 class Host:
     def __init__(self, dn, name, ipAddresses):
         self.dn=dn
         self.name=name
-        self.ipAddresses=ipAddresses
+        self.ipAddresses=[HostIPAddress(self, ip) for ip in ipAddresses]
 
-    def printZone(self, domain):
-        print '#  '+self.dn
-        for ip in self.ipAddresses:
-            printIPAddress(self.name+'.'+domain, ip)
-            printPTR(self.name+'.'+domain, ip)
+    def __repr__(self):
+        return (self.__class__.__name__
+                +'('
+                +'dn=%s, ' % repr(self.dn)
+                +'name=%s, ' % repr(self.name)
+                +'ipAddresses=%s' % repr(self.ipAddresses)
+                +')')
 
 class Net:
     def __init__(self, dn, name, address, mask):
@@ -56,17 +90,16 @@ class Net:
         self.mask=mask
         self.hosts=[]
 
-    def isInNet(self, host):
+    def isInNet(self, ipAddress):
         net = my_aton(self.address)
         mask = my_aton(self.mask)
-        for ipA in host.ipAddresses:
-            ip = my_aton(ipA)
-            if ip&mask == net:
-                return 1
+        ip = my_aton(ipAddress)
+        if ip&mask == net:
+            return 1
         return 0
 
     def addHost(self, host):
-        assert self.isInNet(host)
+        assert self.isInNet(host.ipAddress)
         self.hosts.append(host)
 
     def printZone(self):
@@ -86,6 +119,14 @@ class Net:
         print '# hosts end'
         print
 
+    def __repr__(self):
+        return (self.__class__.__name__
+                +'('
+                +'dn=%s, ' % repr(self.dn)
+                +'name=%s, ' % repr(self.name)
+                +'address=%s, ' % repr(self.address)
+                +'mask=%s' % repr(self.mask)
+                +')')
 
 class SearchHosts(ldapclient.LDAPSearch):
     def __init__(self, deferred, client, base, filter):
@@ -165,39 +206,37 @@ class Search(ldapclient.LDAPClient):
     def connectionMade(self):
         d=self.bind()
         d.addCallback(self._handle_bind_success)
+        d.addErrback(defer.logError)
+        d.chainDeferred(self.factory.deferred)
 
     def _handle_bind_success(self, x):
-        matchedDN, serverSaslCreds = x
         d1=defer.Deferred()
         SearchNets(d1, self, self.factory.base, self.factory.filt)
         d1.addCallbacks(callback=self.haveNets,
-                        errback=lambda x: x)
-
-        d2=defer.Deferred()
-        SearchHosts(d2, self, self.factory.base, self.factory.filt)
-        d2.addCallbacks(callback=self.haveHosts,
-                        errback=lambda x: x)
-
-        dl=defer.DeferredList((d1, d2))
-        dl.chainDeferred(self.factory.deferred)
+                        errback=defer.logError)
+        return d1
 
     def haveNets(self, nets):
         self.nets = nets
         d=defer.Deferred()
-        d.addCallbacks(self.haveHosts, self.searchFailed)
-        
+        SearchHosts(d, self, self.factory.base, self.factory.filt)
+        d.addCallbacks(callback=self.haveHosts,
+                       errback=defer.logError)
+        return d
+
     def haveHosts(self, hosts):
         for host in hosts:
-            parent=None
-            for net in self.nets:
-                if net.isInNet(host):
-                    parent=net
-                    break
+            for hostIP in host.ipAddresses:
+                parent=None
+                for net in self.nets:
+                    if net.isInNet(hostIP.ipAddress):
+                        parent=net
+                        break
 
-            if parent:
-                parent.addHost(host)
-            else:
-                sys.stderr.write("host %s is in no net, discarding.\n" % host)
+                if parent:
+                    parent.addHost(hostIP)
+                else:
+                    sys.stderr.write("IP address %s is in no net, discarding.\n" % hostIP)
 
         for net in self.nets:
             net.printZone()

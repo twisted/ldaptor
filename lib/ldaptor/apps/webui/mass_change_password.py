@@ -90,7 +90,9 @@ class MassPasswordChangeForm(widgets.Form):
     def process(self, write, request, submit, **kw):
         dnlist=kw.get('masspass', ())
 
-        deferred=generate_password.generate(len(dnlist))
+        if not dnlist:
+            return ['<p>No passwords to change.']
+        deferred=generate_password.generate(reactor, len(dnlist))
         deferred.addCallbacks(
             callback=self._got_passwords,
             callbackArgs=(dnlist, request),

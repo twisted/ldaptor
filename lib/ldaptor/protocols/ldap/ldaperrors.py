@@ -91,3 +91,5 @@ errors = BidirDict(
     other=80,
     # 81-90 reserved for APIs
     )
+
+other=errors['other']

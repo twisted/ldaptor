@@ -7,7 +7,7 @@ Test cases for ldaptor.protocols.ldap.ldapfilter module.
 """
 
 import unittest
-from twisted.python.mutablestring import MutableString
+from ldaptor.mutablestring import MutableString
 from ldaptor.protocols import pureldap, pureber
 from ldaptor.protocols.ldap import ldapfilter
 import types
