@@ -648,6 +648,11 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 		d.addCallback(lambda dummy: results)
 	return d
 
+    def lookup(self, dn):
+        e = self.__class__(self.client, dn)
+        d = e.fetch('1.1')
+        return d
+
     # end IConnectedLDAPEntry
 
     def __repr__(self):
