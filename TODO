@@ -1,0 +1,24 @@
+TODO file for the Ldaptor project.
+
+* /delete final page, navi links missing
+
+* /add/foo result page, add navi links to search/edit of created object
+
+* creating a new group
+
+* editing a users groups, multiselection with a list of existing
+   groups to choose from
+
+* changing a users password
+
+* non-ASCII chars
+
+* batch password changes; for all entries in the search results, show
+   checkbox. For each checked, change password.
+
+* changing the dn attribute
+
+* duplicate canonnames/mails/uids/uidNumbers/gidNumbers/homes
+
+* suggest mails/uids/uidNumbers/gidNumbers/homes
+

@@ -1,0 +1,4 @@
+include MANIFEST.in
+include TODO
+recursive-include lib *.dot
+recursive-include debian *

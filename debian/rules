@@ -1,0 +1,60 @@
+#!/usr/bin/make -f
+
+PACKAGE := ldaptor-webui
+DEBTMP := debian/tmp.$(PACKAGE)
+PYTHONBIN := /usr/bin/python2.1
+
+build:
+	test -e debian/control
+	$(PYTHONBIN) setup.py build
+
+clean:
+	test -e debian/control
+	test root = "`whoami`" || (echo need root priviledges; exit 1)
+	-$(PYTHONBIN) setup.py clean --all
+	find . -type f -name '*.pyc' -print0 \
+	| xargs -0 --no-run-if-empty rm --
+	rm -f MANIFEST
+	rm -rf debian/substvars debian/files $(DEBTMP)
+
+install:
+	test -e debian/control
+	test root = "`whoami`" || (echo need root priviledges; exit 1)
+	rm -rf debian/substvars $(DEBTMP)
+	install -d $(DEBTMP)
+	chmod 0755 $(DEBTMP) # make sure no sgid dir is playing tricks
+	$(PYTHONBIN) setup.py install --prefix=$(DEBTMP)/usr
+	chmod -R go-w $(DEBTMP)
+
+binary-indep: build install
+
+binary-arch: build install binary-arch-webui
+
+binary-arch-webui: build install
+	test -e debian/control
+	test root = "`whoami`" || (echo need root priviledges; exit 1)
+
+	install -d --mode=0755 "$(DEBTMP)/usr/share/doc/$(PACKAGE)/examples"
+	install --mode=0644 README TODO \
+		"$(DEBTMP)/usr/share/doc/$(PACKAGE)"
+	install --mode=0644 examples/ldap_parallelsearch.py \
+		"$(DEBTMP)/usr/share/doc/$(PACKAGE)/examples"
+	gzip -9 "$(DEBTMP)/usr/share/doc/$(PACKAGE)/README" \
+		"$(DEBTMP)/usr/share/doc/$(PACKAGE)/TODO" \
+		"$(DEBTMP)/usr/share/doc/$(PACKAGE)/examples/ldap_parallelsearch.py"
+	install --mode=0644 debian/copyright \
+		"$(DEBTMP)/usr/share/doc/$(PACKAGE)"
+#	gzip -9 $(DEBTMP)/usr/share/man/man1/*
+	install --mode=0644 debian/changelog \
+		"$(DEBTMP)/usr/share/doc/$(PACKAGE)/changelog"
+	gzip -9 "$(DEBTMP)/usr/share/doc/$(PACKAGE)/changelog"
+	install -d "$(DEBTMP)/usr/share/man/man1"
+	ln -sf ../man7/undocumented.7.gz "$(DEBTMP)/usr/share/man/man1/ldaptor-webui.1.gz"
+	install -d --mode=0755 $(DEBTMP)/DEBIAN
+	install --mode=0755 debian/postinst debian/prerm \
+		$(DEBTMP)/DEBIAN
+	dpkg-gencontrol -isp -P"$(DEBTMP)"
+	dpkg --build $(DEBTMP) ..
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary
