@@ -6,6 +6,8 @@ PYTHON_VERSION_DEFAULT:=2.3
 docdir=debian/install/$(1)/usr/share/doc/$(1)
 
 build:
+	make -C doc
+
 install: $(foreach p,$(PYTHON_VERSIONS),install-python-$(p))
 binary: binary-indep binary-arch
 binary-indep: binary-indep-dummy \

@@ -1,3 +1,13 @@
+ldaptor (0.0.25) experimental; urgency=low
+
+  * Pre-generate documentation in build target, don't wait until
+    install target. Makes dia work with dpkg-buildpackage
+    -rfakeroot, because "debian/rules build" is run without
+    fakeroot, and then dia can scribble in the home directory of
+    the real user, not /root/.dia. Ungh. I'm filing a bug on dia.
+
+ -- Tommi Virtanen <tv@debian.org>  Mon, 17 May 2004 19:51:11 +0300
+
 ldaptor (0.0.24) experimental; urgency=low
 
   * Applications changes:
