@@ -58,7 +58,18 @@ class LDAPServerTest(unittest.TestCase):
                                       matchedDN='cn=thingie,ou=stuff,dc=example,dc=com'),
             id=4)))
 
-    def test_bind_invalidCredentials(self):
+    def test_bind_invalidCredentials_badPassword(self):
+        self.server.dataReceived(str(pureldap.LDAPMessage(
+            pureldap.LDAPBindRequest(dn='cn=thingie,ou=stuff,dc=example,dc=com',
+                                     auth='invalid'),
+            id=734)))
+        self.assertEquals(self.server.transport.value(),
+                          str(pureldap.LDAPMessage(
+            pureldap.LDAPBindResponse(
+            resultCode=ldaperrors.LDAPInvalidCredentials.resultCode),
+            id=734)))
+
+    def test_bind_invalidCredentials_nonExisting(self):
         self.server.dataReceived(str(pureldap.LDAPMessage(
             pureldap.LDAPBindRequest(dn='cn=non-existing,dc=example,dc=com',
                                      auth='invalid'),

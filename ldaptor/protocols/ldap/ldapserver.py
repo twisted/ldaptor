@@ -156,14 +156,17 @@ class LDAPServer(BaseLDAPServer):
             d.addErrback(_noEntry)
 
             def _gotEntry(entry, auth):
-                if entry is not None and entry.bind(auth):
+                if entry is None:
+                    raise ldaperrors.LDAPInvalidCredentials
+
+                d = entry.bind(auth)
+                def _cb(entry):
                     msg = pureldap.LDAPBindResponse(
                         resultCode=ldaperrors.Success.resultCode,
                         matchedDN=str(entry.dn))
-                else:
-                    msg = pureldap.LDAPBindResponse(
-                        resultCode=ldaperrors.LDAPInvalidCredentials.resultCode)
-                return msg
+                    return msg
+                d.addCallback(_cb)
+                return d
             d.addCallback(_gotEntry, request.auth)
 
             return d
