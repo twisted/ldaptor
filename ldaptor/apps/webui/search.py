@@ -103,8 +103,9 @@ class SearchForm(configurable.Configurable):
                             default=pureldap.LDAP_SCOPE_wholeSubtree)))
 
         return annotate.MethodBinding(
-            'search',
-            annotate.Method(arguments=l))
+            name='search',
+            action="Search",
+            typeValue=annotate.Method(arguments=l))
 
     def search(self, scope, searchfilter, **kw):
 	filt=[]
