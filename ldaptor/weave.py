@@ -128,11 +128,15 @@ def entrySerializer(original, context):
 flat.registerFlattener(entrySerializer,
                        interfaces.ILDAPEntry)
 
-def zebra(colors=['zebra-even', 'zebra-odd']):
+class IZebraStyle(compy.Interface):
+    """Marker interface for zebra."""
+    pass
+
+def zebra(styles=['zebra-odd', 'zebra-even']):
     """
     Provide alternating background colors for e.g. zebra tables.
 
-    @param colors: Two or more color strings to iterate.
+    @param styles: Two or more CSS class names to iterate.
 
     Use like this::
 
@@ -144,11 +148,12 @@ def zebra(colors=['zebra-even', 'zebra-odd']):
         <tr nevow:render="zebra"><td>baz</td></tr>
       </table>
     """
-    # TODO with a list of odd length, every reload
-    # reverses colors, because state is remembered
-    # in the render_zebra attribute.
-    colors = list(colors)
+    styles = list(styles)
     def f(self, ctx, data):
-        colors[:] = colors[1:]+colors[:1]
-        return ctx.tag(class_="%s" % colors[-1])
+        request = inevow.IRequest(ctx)
+        state = IZebraStyle(request, styles)
+        r = ctx.tag(class_="%s" % state[0])
+        request.setComponent(IZebraStyle, state[1:]+state[:1])
+
+        return r
     return f
