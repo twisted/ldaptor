@@ -271,7 +271,7 @@ class SearchPage(rend.Page):
             return obj
 
     def render_if(self, context, data):
-        r=context.allPatterns(str(bool(data)))
+        r=context.tag.allPatterns(str(bool(data)))
         return context.tag.clear()[r]
 
     def configurable_(self, context):

@@ -49,26 +49,26 @@ def keyvalue(context, data):
     </table>
 
     """
-    headers = context.allPatterns('header')
-    item = context.patternGenerator('item')
-    divider = context.patternGenerator('divider', default=tags.invisible)
+    headers = context.tag.allPatterns('header')
+    item = context.tag.patternGenerator('item')
+    divider = context.tag.patternGenerator('divider', default=tags.invisible)
     content = []
     for key, value in data.items():
         content.append(item(data=(key, value)))
         content.append(divider(data=(key, value)))
     if not content:
-        content = context.allPatterns('empty')
+        content = context.tag.allPatterns('empty')
     else:
         ## No divider after the last thing.
         del content[-1]
-    footers = context.allPatterns('footer')
+    footers = context.tag.allPatterns('footer')
     return context.tag.clear()[ headers, content, footers ]
 
 def keyvalue_item(context, data):
     key, value = data
 
-    k = context.patternGenerator('key')
-    v = context.patternGenerator('value')
+    k = context.tag.patternGenerator('key')
+    v = context.tag.patternGenerator('value')
 
     return context.tag.clear()[ k(data=key), v(data=value) ]
 
