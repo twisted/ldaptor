@@ -1,3 +1,13 @@
+ldaptor (0.0.10) unstable; urgency=low
+
+  * ldaptor-ldap2dhcp bugfixes, cleanup, and support for
+    per-subnet DNS and WINS servers.
+  * Be more careful about the Debian section information.
+  * In ldaptor-webui, allow editing missing optional fields of
+    objects.
+
+ -- Tommi Virtanen <tv@debian.org>  Thu, 31 Oct 2002 20:14:36 +0200
+
 ldaptor (0.0.9) unstable; urgency=low
 
   * Copy over my MutableString implementation from Twisted, they

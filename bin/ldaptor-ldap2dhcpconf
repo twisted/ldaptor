@@ -72,9 +72,9 @@ class HostIPAddress:
                ]
            + [          
             '\tfixed-address %s;' % self.ipAddress,
-            '}\n'
+            '}'
             ])
-        print '\n'.join([prefix+line for line in r])+'\n'
+        print '\n'.join([prefix+line for line in r])
 
     def __repr__(self):
         return (self.__class__.__name__
@@ -101,13 +101,19 @@ class Host:
 
 class Net:
     def __init__(self, dn, name, address, mask,
-                 routers=(), dhcpRanges=()):
+                 routers=(),
+                 dhcpRanges=(),
+                 winsServers=(),
+                 domainNameServers=(),
+                 ):
         self.dn=dn
         self.name=name
         self.address=address
         self.mask=mask
         self.routers=routers
         self.dhcpRanges=dhcpRanges
+        self.winsServers=winsServers
+        self.domainNameServers=domainNameServers
         self.hosts=[]
 
     def isInNet(self, ipAddress):
@@ -133,9 +139,13 @@ class Net:
             r.append('\toption routers %s;' % (', '.join(self.routers)))
         for dhcpRange in self.dhcpRanges:
             r.append('\trange %s;' % dhcpRange)
+        if self.winsServers:
+            r.append('\toption netbios-name-servers %s;' % (', '.join(self.winsServers)))
+        if self.domainNameServers:
+            r.append('\toption domain-name-servers %s;' % (', '.join(self.domainNameServers)))
         r.append('}')
 
-        print '\n'.join([prefix+line for line in r])+'\n'
+        print '\n'.join([prefix+line for line in r])
 
         seen = {}
         for host in self.hosts:
@@ -166,6 +176,7 @@ class SharedNet:
         for net in self.nets:
             net.printDHCP(domain, prefix='\t')
         print '}'
+        print
 
 class SearchHosts(ldapclient.LDAPSearch):
     def __init__(self, deferred, client, base, filter):
@@ -220,6 +231,8 @@ class SearchNets(ldapclient.LDAPSearch):
                                                    'ipNetmaskNumber',
                                                    'router',
                                                    'dhcpRange',
+                                                   'winsServer',
+                                                   'domainNameServer',
                                                    'sharedNetworkName'])
         deferred.addCallback(lambda x: (x.entries, x.sharedNetworks))
 
@@ -243,8 +256,10 @@ class SearchNets(ldapclient.LDAPSearch):
         ipNetmaskNumber=args['ipNetmaskNumber'][0]
         net = Net(objectName, cn,
                   ipNetworkNumber, ipNetmaskNumber,
-                  args.get('routers', ()),
-                  args.get('dhcpRange', ()),
+                  routers=args.get('router', ()),
+                  dhcpRanges=args.get('dhcpRange', ()),
+                  winsServers=args.get('winsServer', ()),
+                  domainNameServers=args.get('domainNameServer', ()),
                   )
         if args.has_key('sharedNetworkName'):
             assert len(args['sharedNetworkName'])==1, \
@@ -252,8 +267,8 @@ class SearchNets(ldapclient.LDAPSearch):
                    % (objectName, args['sharedNetworkName'])
             name = args['sharedNetworkName'][0]
             if not self.sharedNetworks.has_key(name):
-                self.sharedNetworks[name]=[]
-            self.sharedNetworks[name].append(net)
+                self.sharedNetworks[name]=SharedNet(name)
+            self.sharedNetworks[name].addNet(net)
         else:
             self.entries.append(net)
 
@@ -289,7 +304,8 @@ class Search(ldapclient.LDAPClient):
         for host in hosts:
             for hostIP in host.ipAddresses:
                 parent=None
-                for net in self.nets+self.sharedNets.items():
+                for net in self.nets + reduce(lambda x,y: x+y,
+                                              [x.nets for x in self.sharedNets.values()]):
                     if net.isInNet(hostIP.ipAddress):
                         parent=net
                         break
@@ -299,7 +315,7 @@ class Search(ldapclient.LDAPClient):
                 else:
                     sys.stderr.write("IP address %s is in no net, discarding.\n" % hostIP)
 
-        for net in self.sharedNets.items():
+        for net in self.sharedNets.values():
             net.printDHCP(self.factory.dnsDomain)
         for net in self.nets:
             net.printDHCP(self.factory.dnsDomain)

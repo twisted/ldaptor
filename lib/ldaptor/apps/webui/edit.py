@@ -153,13 +153,27 @@ class EditForm(widgets.Form):
                 if not found_one:
                     raise "Object doesn't have required attribute %s: %s"%(attr, self.attributes)
 
-            for attr in objclass.may:
-                attr=str(attr)
-                if process.has_key(attr.upper()) \
-                   and process[attr.upper()]!=None:
-                    self._one_formfield(attr, self.attributes[process[attr.upper()]],
+            for attr_alias in objclass.may:
+                found_one=0
+                real_attr = self._get_attrtype(str(attr_alias))
+                for attr in real_attr.name:
+                    if process.has_key(attr.upper()):
+                        found_one=1
+                        if process[attr.upper()]!=None:
+                            self._one_formfield(attr,
+                                                self.attributes[process[attr.upper()]],
+                                                result=r)
+
+                if not found_one:
+                    # a MAY attributetype not currently present in
+                    # object, but user is of course free to add it.
+                    attr=str(real_attr.name[0])
+                    self._one_formfield(attr,
+                                        ('',),
                                         result=r)
-                    process[attr.upper()]=None
+
+                for name in real_attr.name:
+                    process[name.upper()]=None
 
         assert [v==None for k,v in process.items()], "All attributes must be in objectClasses MUST or MAY: %s"%process
         return r
@@ -237,6 +251,8 @@ class EditForm(widgets.Form):
             mod=[]
             for attr,old,new in changes:
                 if new:
+                    if not self.attributes.has_key(attr):
+                        self.attributes[attr]=[]
                     self.attributes[attr].extend(new)
                     mod.append(pureldap.LDAPModification_add(vals=((attr, new),)))
                 if old:

@@ -39,7 +39,20 @@ class CmdDict:
     def handle_setup(self, cmd):
         assert self.setup
         return self.handle_shell('python %s %s'%(self.setup, cmd))
-        
+
+    def handle_extract_setup_var(self, var):
+        """Extract a variable from a comment inside the setup file."""
+        assert self.setup
+        f=open(self.setup)
+        start="#%s:" % var
+        for line in f.xreadlines():
+            line=line.strip()
+            if line.startswith(start):
+                line=line[len(start):].strip()
+                return line
+        raise 'No special variable %s in setup file %s' \
+              % (repr(var), self.setup)
+
     def handle_shell(self, cmd):
         status, output = commands.getstatusoutput(cmd)
         if status:
@@ -55,11 +68,12 @@ class CmdDict:
 
     def __getitem__(self, s):
         first, rest = s.split(None, 1)
-        f=getattr(self, 'handle_'+first)
+        f=getattr(self, 'handle_'+first.replace('-', '_'))
         return f(rest)
 
 otherpackage = """
 Package: %(var package)s
+Section: %(extract-setup-var debian-section)s
 Architecture: all
 Depends: python (>= %(var PYTHON_VERSION_DEFAULT)s), python (<< %(var PYTHON_VERSION_TOOBIG)s), python%(var PYTHON_VERSION_DEFAULT)s-ldaptor
 Description: %(setup --description)s
@@ -67,6 +81,7 @@ Description: %(setup --description)s
 
 pypackage = """
 Package: %(var package)s
+Section: %(extract-setup-var debian-section)s
 Architecture: all
 Depends: python%(var python_version)s, python%(var python_version)s-twisted, pwgen%(var extra_depends)s
 Description: %(setup --description)s
@@ -80,7 +95,7 @@ for filename in os.listdir('.'):
         printed_source=1
         print """\
 Source: %(shell dpkg-parsechangelog|sed -n 's/^Source: //p')s
-Section: admin
+Section: %(extract-setup-var debian-section)s
 Priority: optional
 Maintainer: %(setup --contact)s <%(setup --contact-email)s>
 Standards-Version: 3.5.6

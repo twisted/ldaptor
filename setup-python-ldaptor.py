@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+#debian-section: interpreters
+
 from distutils.core import setup, Extension
 
 if __name__=='__main__':
