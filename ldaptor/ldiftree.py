@@ -519,6 +519,17 @@ class LDIFTreeEntry(entry.EditableLDAPEntry):
             
         return d
 
+    def __repr__(self):
+        return '%s(%r, %r)' % (self.__class__.__name__,
+                               self.path,
+                               str(self.dn))
+
+    def __cmp__(self, other):
+        if not isinstance(other, LDIFTreeEntry):
+            return NotImplemented
+        return cmp(self.dn, other.dn)
+
+
 if __name__ == '__main__':
     """
     Demonstration LDAP server; serves an LDIFTree from given directory

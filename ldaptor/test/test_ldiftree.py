@@ -405,6 +405,8 @@ cn: theChild
             self.bar,
             self.foo,
             ]
+        got.sort()
+        want.sort()
         self.assertEquals(got, want)
 
     def test_subtree_many_cb(self):
@@ -422,6 +424,8 @@ cn: theChild
             self.bar,
             self.foo,
             ]
+        got.sort()
+        want.sort()
         self.assertEquals(got, want)
 
     def test_lookup_fail(self):
