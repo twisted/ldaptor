@@ -22,14 +22,17 @@ class LdaptorWebUIGadget(widgets.Gadget):
     def __init__(self, editService,
                  baseObject,
                  ldaphost,
-                 ldapport):
+                 ldapport,
+                 searchFields=(),
+                 ):
         widgets.Gadget.__init__(self)
 
         siblings = {
             'search':
             search.SearchPage(baseObject=baseObject,
                               ldaphost=ldaphost,
-                              ldapport=ldapport),
+                              ldapport=ldapport,
+                              searchFields=searchFields),
 
             'edit':
             guard.ResourceGuard(edit.EditPage(),

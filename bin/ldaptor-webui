@@ -328,6 +328,10 @@ class LDAPService(Service):
 class MyOptions(usage.Options, usage.Options_hostport, usage.Options_base):
     """LDAPtor Web User Interface"""
 
+    def __init__(self, *args, **kwargs):
+        usage.Options.__init__(self, *args, **kwargs)
+        self.opts['search-field']=None
+
     optParameters = (
         ('http-port', None, '38980', # think "ldap and http"
          "listen on this port"),
@@ -335,6 +339,26 @@ class MyOptions(usage.Options, usage.Options_hostport, usage.Options_base):
          '(|(cn=%(name)s)(uid=%(name)s))',
          "unknown identities are searched with this filter"),
         )
+
+    def opt_search_field(self, s):
+        """
+        Add extra search fields to search page. Value is of type
+        fieldname=ldapfilter, where ldapfilter is expanded according
+        to Python %(var)s convention, e.g. name=(cn=%(input)s).
+        """
+
+        try:
+            field, filter = s.split('=', 1)
+        except ValueError:
+            raise usage.UsageError, 'search-field value must be of form field=filter'
+
+        if self.opts['search-field'] is None:
+            self.opts['search-field']=[]
+        self.opts['search-field'].append((field, filter))
+
+    def postOptions_search_field(self):
+        if self.opts['search-field'] is None:
+            self.opts['search-field']=()
 
     def postOptions_httpport(self):
         try:
@@ -362,6 +386,7 @@ if __name__ == '__main__':
                                      baseObject=config.opts['base'],
                                      ldaphost=config.opts['ldap-host'],
                                      ldapport=config.opts['ldap-port'],
+                                     searchFields=config.opts['search-field'],
                                      )
     
     sit = server.Site(gdgt)

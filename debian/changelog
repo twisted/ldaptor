@@ -1,3 +1,12 @@
+ldaptor (0.0.11) unstable; urgency=low
+
+  * New options-based, changeable search fields. To get the old
+    behaviour, use --search-field=Name='(cn=%(input)s)'
+    --search-field=UserID='(uid=%(input)s)'
+    --search-field=Email='(mail=%(input)s)'.
+
+ -- Tommi Virtanen <tv@debian.org>  Sun, 24 Nov 2002 21:16:23 +0200
+
 ldaptor (0.0.10) unstable; urgency=low
 
   * ldaptor-ldap2dhcp bugfixes, cleanup, and support for

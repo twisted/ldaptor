@@ -103,16 +103,16 @@ class DoSearchFactory(protocol.ClientFactory):
 
 class SearchForm(widgets.Form):
     formFields = [
-        ('string', 'Name', 'search_cn', ''),
-        ('string', 'UserID', 'search_uid', ''),
-        ('string', 'Email', 'search_mail', ''),
         ('string', 'Advanced', 'ldapfilter', ''),
         ]
 
-    def __init__(self, baseObject, ldaphost, ldapport):
+    def __init__(self, baseObject, ldaphost, ldapport,
+                 searchFields=(),
+                 ):
         self.baseObject = baseObject
         self.ldaphost = ldaphost
         self.ldapport = ldapport
+        self.searchFields = searchFields
 
     def getFormFields(self, request, kws=None):
         #TODO widgets.Form.getFormFields would be nicer
@@ -122,10 +122,21 @@ class SearchForm(widgets.Form):
         if kws==None:
             kws={}
         r=[]
+
+        for (displayName, filter) in self.searchFields:
+            inputType='string'
+            inputName='search_'+displayName
+            if kws.has_key(inputName):
+                inputValue=kws[inputName]
+            else:
+                inputValue=''
+            r.append((inputType, displayName, inputName, inputValue))
+
         for (inputType, displayName, inputName, inputValue) in self.formFields:
             if kws.has_key(inputName):
                 inputValue=kws[inputName]
             r.append((inputType, displayName, inputName, inputValue))
+
         return r
 
     def process(self, write, request, submit, **kw):
@@ -139,7 +150,15 @@ class SearchForm(widgets.Form):
                 v=string.strip(v)
                 if v=='':
                     continue
-                filt.append(ldapfilter.parseItem('%s=%s' % (k,v)))
+
+                filter = None
+                for (displayName, searchFilter) in self.searchFields:
+                    if k == displayName:
+                        filter = searchFilter
+                # TODO handle not filter right (old form open in browser etc)
+                assert filter
+                # TODO escape ) in v
+                filt.append(ldapfilter.parseFilter(filter % {'input': v}))
             elif k=='ldapfilter' and v:
                 filt.append(ldapfilter.parseFilter(v))
         if filt:
@@ -167,11 +186,14 @@ class SearchPage(template.BasicPage):
     title = "Ldaptor Search Page"
     isLeaf = 1
 
-    def __init__(self, baseObject, ldaphost, ldapport):
+    def __init__(self, baseObject, ldaphost, ldapport,
+                 searchFields=(),
+                 ):
         template.BasicPage.__init__(self)
         self.baseObject = baseObject
         self.ldaphost = ldaphost
         self.ldapport = ldapport
+        self.searchFields = searchFields
 
     def _header(self, request):
         l=[]
@@ -184,4 +206,5 @@ class SearchPage(template.BasicPage):
         return [self._header(request)] \
                + SearchForm(baseObject=self.baseObject,
                             ldaphost=self.ldaphost,
-                            ldapport=self.ldapport).display(request)
+                            ldapport=self.ldapport,
+                            searchFields=self.searchFields).display(request)
