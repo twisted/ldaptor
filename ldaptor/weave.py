@@ -128,7 +128,7 @@ def entrySerializer(original, context):
 flat.registerFlattener(entrySerializer,
                        interfaces.ILDAPEntry)
 
-def zebra(colors=['#edf3fe', '#ffffff']):
+def zebra(colors=['zebra-even', 'zebra-odd']):
     """
     Provide alternating background colors for e.g. zebra tables.
 
@@ -147,5 +147,5 @@ def zebra(colors=['#edf3fe', '#ffffff']):
     colors = list(colors)
     def f(self, ctx, data):
         colors[:] = colors[1:]+colors[:1]
-        return ctx.tag(style="background-color: %s;" % colors[-1])
+        return ctx.tag(class_="%s" % colors[-1])
     return f

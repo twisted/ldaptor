@@ -40,3 +40,11 @@ fieldset,
  border-style: groove; border-width: 2px; border-color: #F7F7F8;
  padding: 0.5em;
 }
+
+.zebra-even {
+ background-color: #edf3fe;
+}
+
+.zebra-odd {
+ background-color: #ffffff;
+}
