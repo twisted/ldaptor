@@ -25,7 +25,8 @@ all:: $(GENERATED)
 clean:
 	rm -rf \
 		$(GENERATED) \
-		ldap-intro
+		ldap-intro \
+		$(DIAPNG:%=%.tmp)
 
 rsync: $(GENERATED)
 	rsync -a $(DOCBOOK:%.xml=%.html) $(SLIDES:%.xml=%) $(DIAPNG) pyramid.twistedmatrix.com:public_html/ldap-intro/
