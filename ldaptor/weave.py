@@ -91,9 +91,8 @@ compy.registerAdapter(LDAPEntryContainer, ldapsyntax.LDAPEntryWithClient, inevow
 def dnSerializer(original, context):
     return flat.serialize(str(original), context)
 
-compy.registerAdapter(dnSerializer,
-                      distinguishedname.DistinguishedName,
-                      inevow.ISerializable)
+flat.registerFlattener(dnSerializer,
+                       distinguishedname.DistinguishedName)
 
 def entrySerializer(original, context):
     ul = tags.ul()
@@ -114,6 +113,5 @@ def entrySerializer(original, context):
 		liul[tags.li[i]]
     return flat.serialize(ul, context)
 
-compy.registerAdapter(entrySerializer,
-                      interfaces.ILDAPEntry,
-                      inevow.ISerializable)
+flat.registerFlattener(entrySerializer,
+                       interfaces.ILDAPEntry)
