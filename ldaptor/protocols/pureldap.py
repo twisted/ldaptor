@@ -1285,6 +1285,31 @@ class LDAPExtendedResponse(LDAPResult):
             l.append(BEROctetString(self.response, tag=CLASS_CONTEXT|0x0b))
 	return str(BERSequence(l, tag=self.tag))
 
+class LDAPStartTLSRequest(LDAPExtendedRequest):
+    """
+    Request to start Transport Layer Security.
+
+    See RFC 2830 for details.
+    """
+    oid = LDAPOID('1.3.6.1.4.1.1466.20037', tag=CLASS_CONTEXT|0)
+
+    def __init__(self, requestName=None, tag=None):
+        assert (requestName is None
+                or requestName == self.oid), \
+                '%s requestName was %s instead of %s' \
+                % (self.__class__.__name__, requestName, self.oid)
+
+        LDAPExtendedRequest.__init__(
+            self,
+            requestName=self.oid,
+            tag=tag)
+
+    def __repr__(self):
+	l=[]
+	if self.tag!=self.__class__.tag:
+	    l.append('tag=%d' % self.tag)
+	return self.__class__.__name__+'('+', '.join(l)+')'
+
 class LDAPBERDecoderContext(BERDecoderContext):
     Identities = {
 	LDAPBindResponse.tag: LDAPBindResponse,

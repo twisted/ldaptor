@@ -21,11 +21,19 @@ from ldaptor.protocols.ldap import ldaperrors
 
 from twisted.python import log
 from twisted.python.failure import Failure
-from twisted.internet import protocol, defer
+from twisted.internet import protocol, defer, ssl, reactor
 
 class LDAPClientConnectionLostException(ldaperrors.LDAPException):
     def __str__(self):
         return 'Connection lost'
+
+class LDAPStartTLSBusyError(ldaperrors.LDAPOperationsError):
+    def __init__(self, onwire, message=None):
+        self.onwire = onwire
+        ldaperrors.LDAPOperationsError.__init__(self, message=message)
+
+    def __str__(self):
+        return 'Cannot STARTTLS while operations on wire: %r' % self.onwire
 
 class LDAPClient(protocol.Protocol):
     """An LDAP client"""
@@ -122,6 +130,48 @@ class LDAPClient(protocol.Protocol):
 	r=pureldap.LDAPUnbindRequest()
 	self.queue(r)
 	self.transport.loseConnection()
+
+    def _cbStartTLS(self, msg, ctx, d):
+	assert isinstance(msg, pureldap.LDAPExtendedResponse)
+	assert msg.referral is None #TODO
+	if msg.resultCode==ldaperrors.Success.resultCode:
+            self.transport.startTLS(ctx)
+	    d.callback(self)
+	else:
+            d.errback(ldaperrors.get(msg.resultCode, msg.errorMessage))
+        return True
+
+    def startTLS(self, ctx=None):
+        """
+        Start Transport Layer Security.
+
+        It is the callers responsibility to make sure other things
+        are not happening at the same time.
+
+        @todo: server hostname check, see rfc2830 section 3.6.
+
+        """
+        if ctx is None:
+            ctx = ssl.ClientContextFactory()
+        # we always delay by one event loop iteration to make
+        # sure the previous handler has exited and self.onwire
+        # has been cleaned up
+	d=defer.Deferred()
+        d.addCallback(self._startTLS)
+        reactor.callLater(0, d.callback, ctx)
+        return d
+
+    def _startTLS(self, ctx):
+	if not self.connected:
+            raise LDAPClientConnectionLostException
+        elif self.onwire:
+            raise LDAPStartTLSBusyError, self.onwire
+        else:
+	    op=pureldap.LDAPStartTLSRequest()
+            d=defer.Deferred()
+	    self.queue(op, self._cbStartTLS, ctx, d)
+            return d
+        
 
 class LDAPOperation:
     def __init__(self, client):
