@@ -279,53 +279,43 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             self._attributes[k] = self.buildAttributeSet(k, vs)
 	self._journal=[]
 
-    def _commit_success(self, data):
-        self._remoteData = entry.BaseLDAPEntry(self.dn, self)
-	self._journal=[]
-        return data
-
-    def _cbCommit(self, msg, d):
+    def _commit_success(self, msg):
 	assert isinstance(msg, pureldap.LDAPModifyResponse)
 	assert msg.referral is None #TODO
-	if msg.resultCode==ldaperrors.Success.resultCode:
-	    assert msg.matchedDN==''
-	    d.callback(self)
-	else:
-	    d.errback(ldaperrors.get(msg.resultCode, msg.errorMessage))
-	return 1
+	if msg.resultCode!=ldaperrors.Success.resultCode:
+	    raise ldaperrors.get(msg.resultCode, msg.errorMessage)
+
+        assert msg.matchedDN==''
+
+        self._remoteData = entry.BaseLDAPEntry(self.dn, self)
+	self._journal=[]
+        return self
 
     def commit(self):
         self._checkState()
         if not self._journal:
             return defer.succeed(self)
-	d=defer.Deferred()
 
-        try:
-            op=pureldap.LDAPModifyRequest(
-                object=str(self.dn),
-                modification=[x.asLDAP() for x in self._journal])
-            self.client.queue(op, self._cbCommit, d)
-	except ldapclient.LDAPClientConnectionLostException:
-	    d.errback(Failure())
-        else:
-            d.addCallback(self._commit_success)
+        op=pureldap.LDAPModifyRequest(
+            object=str(self.dn),
+            modification=[x.asLDAP() for x in self._journal])
+	d = defer.maybeDeferred(self.client.send, op)
+        d.addCallback(self._commit_success)
 	return d
 
-    def _cbMoveDone(self, msg, d, newDN):
+    def _cbMoveDone(self, msg, newDN):
 	assert isinstance(msg, pureldap.LDAPModifyDNResponse)
 	assert msg.referral is None #TODO
-	if msg.resultCode==ldaperrors.Success.resultCode:
-	    assert msg.matchedDN==''
-            self.dn = newDN
-	    d.callback(self)
-	else:
-	    d.errback(ldaperrors.get(msg.resultCode, msg.errorMessage))
-	return 1
+	if msg.resultCode!=ldaperrors.Success.resultCode:
+	    raise ldaperrors.get(msg.resultCode, msg.errorMessage)
+
+        assert msg.matchedDN==''
+        self.dn = newDN
+        return self
 
     def move(self, newDN):
         self._checkState()
         newDN = distinguishedname.DistinguishedName(newDN)
-	d = defer.Deferred()
 
 	newrdn=newDN.split()[0]
 	newSuperior=distinguishedname.DistinguishedName(listOfRDNs=newDN.split()[1:])
@@ -334,46 +324,43 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 					  newrdn=str(newrdn),
 					  deleteoldrdn=1,
 					  newSuperior=str(newSuperior))
-	self.client.queue(op, self._cbMoveDone, d, newDN)
+	d = self.client.send(op)
+        d.addCallback(self._cbMoveDone, newDN)
 	return d
 
-    def _cbDeleteDone(self, msg, d):
+    def _cbDeleteDone(self, msg):
 	assert isinstance(msg, pureldap.LDAPResult)
         if not isinstance(msg, pureldap.LDAPDelResponse):
-            d.errback(ldaperrors.get(msg.resultCode,
-                                     msg.errorMessage))
-            return 1
+            raise ldaperrors.get(msg.resultCode,
+                                 msg.errorMessage)
 	assert msg.referral is None #TODO
-	if msg.resultCode==ldaperrors.Success.resultCode:
-	    assert msg.matchedDN==''
-	    d.callback(self)
-	else:
-            d.errback(ldaperrors.get(msg.resultCode, msg.errorMessage))
-        return 1
+	if msg.resultCode!=ldaperrors.Success.resultCode:
+            raise ldaperrors.get(msg.resultCode, msg.errorMessage)
+
+        assert msg.matchedDN==''
+        return self
 
     def delete(self):
         self._checkState()
-	d = defer.Deferred()
 
 	op = pureldap.LDAPDelRequest(entry=str(self.dn))
-	self.client.queue(op, self._cbDeleteDone, d)
+	d = self.client.send(op)
+        d.addCallback(self._cbDeleteDone)
         self._state = 'deleted'
 	return d
 
-    def _cbAddDone(self, msg, d, dn):
+    def _cbAddDone(self, msg, dn):
 	assert isinstance(msg, pureldap.LDAPAddResponse)
 	assert msg.referral is None #TODO
-	if msg.resultCode==ldaperrors.Success.resultCode:
-	    assert msg.matchedDN==''
-            e = self.__class__(dn=dn, client=self.client)
-	    d.callback(e)
-	else:
-            d.errback(ldaperrors.get(msg.resultCode, msg.errorMessage))
-        return 1
+	if msg.resultCode!=ldaperrors.Success.resultCode:
+            raise ldaperrors.get(msg.resultCode, msg.errorMessage)
+
+        assert msg.matchedDN==''
+        e = self.__class__(dn=dn, client=self.client)
+        return e
 
     def addChild(self, rdn, attributes):
         self._checkState()
-	d = defer.Deferred()
 
         rdn = distinguishedname.RelativeDistinguishedName(rdn)
         dn = distinguishedname.DistinguishedName(
@@ -390,18 +377,18 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             ldapAttrs.append((ldapAttrType, ldapValues))
 	op=pureldap.LDAPAddRequest(entry=str(dn),
                                    attributes=ldapAttrs)
-	self.client.queue(op, self._cbAddDone, d, dn)
+	d = self.client.send(op)
+	d.addCallback(self._cbAddDone, dn)
 	return d
 
-    def _cbSetPassword_ExtendedOperation(self, msg, d):
+    def _cbSetPassword_ExtendedOperation(self, msg):
 	assert isinstance(msg, pureldap.LDAPExtendedResponse)
 	assert msg.referral is None #TODO
-	if msg.resultCode==ldaperrors.Success.resultCode:
-	    assert msg.matchedDN==''
-	    d.callback(self)
-	else:
-            d.errback(ldaperrors.get(msg.resultCode, msg.errorMessage))
-        return 1
+	if msg.resultCode!=ldaperrors.Success.resultCode:
+            raise ldaperrors.get(msg.resultCode, msg.errorMessage)
+
+        assert msg.matchedDN==''
+        return self
 
     def setPassword_ExtendedOperation(self, newPasswd):
         """
@@ -416,10 +403,10 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         """
 
         self._checkState()
-	d = defer.Deferred()
 
 	op = pureldap.LDAPPasswordModifyRequest(userIdentity=str(self.dn), newPasswd=newPasswd)
-	self.client.queue(op, self._cbSetPassword_ExtendedOperation, d)
+	d = self.client.send(op)
+        d.addCallback(self._cbSetPassword_ExtendedOperation)
 	return d
 
     _setPasswordPriority_ExtendedOperation=0
@@ -590,16 +577,16 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
                         pass
 		except:
 		    d.errback(Failure())
-                    return 1
+                    return True
 
             # search ended successfully
             assert msg.matchedDN==''
             d.callback(None)
-	    return 1
+	    return True
         elif isinstance(msg, pureldap.LDAPSearchResultEntry):
 	    self._cbSearchEntry(callback, msg.objectName, msg.attributes,
                                 complete=complete)
-	    return 0
+	    return False
         else:
             raise ldaperrors.LDAPProtocolError, \
                   'bad search response: %r' % msg
@@ -650,9 +637,10 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 		typesOnly=typesOnly,
 		filter=filterObject,
 		attributes=attributes)
-	    self.client.queue(op, self._cbSearchMsg,
-                              d, cb, complete=not attributes,
-                              sizeLimitIsNonFatal=sizeLimitIsNonFatal)
+	    self.client.send_multiResponse(
+                op, self._cbSearchMsg,
+                d, cb, complete=not attributes,
+                sizeLimitIsNonFatal=sizeLimitIsNonFatal)
 	except ldapclient.LDAPClientConnectionLostException:
 	    d.errback(Failure())
 	else:

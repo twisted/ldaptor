@@ -1,6 +1,6 @@
 """Utilities for writing Twistedy unit tests and debugging."""
 
-from twisted.internet import reactor
+from twisted.internet import reactor, defer
 from twisted.test import proto_helpers
 
 def calltrace():
@@ -37,24 +37,34 @@ class LDAPClientTestDriver:
         self.responses=list(responses)
         self.connected = None
         self.transport = FakeTransport(self)
-    def queue(self, x, callback=None, *args, **kwargs):
-        self.sent.append(x)
-        assert self.responses, 'Ran out of responses at %r' % x
+    def send(self, op):
+        self.sent.append(op)
+        l = self._response()
+        assert len(l) == 1, \
+               "got %d responses for a .send()" % len(l)
+        return defer.succeed(l[0])
+    def send_multiResponse(self, op, handler, *args, **kwargs):
+        self.sent.append(op)
+        responses = self._response()
+        while responses:
+            r = responses.pop(0)
+            ret = handler(r, *args, **kwargs)
+            if responses:
+                assert not ret, \
+                       "got %d responses still to give, but handler wants none (got %r)." % (len(responses), ret)
+            else:
+                assert ret, \
+                       "no more responses to give, but handler still wants more (got %r)." % ret
+
+    def send_noResponse(self, op):
         responses = self.responses.pop(0)
-        if callback is None:
-            assert not args
-            assert not kwargs
-            assert not responses
-        else:
-            while responses:
-                r = responses.pop(0)
-                ret = callback(r, *args, **kwargs)
-                if responses:
-                    assert not ret, \
-                           "got %d responses still to give, but handler wants none (got %r)." % (len(responses), ret)
-                else:
-                    assert ret, \
-                           "no more responses to give, but handler still wants more (got %r)." % ret
+        assert not responses
+        self.sent.append(op)
+
+    def _response(self):
+        assert self.responses, 'Ran out of responses'
+        responses = self.responses.pop(0)
+        return responses
 
     def assertNothingSent(self):
         # just a bit more explicit
@@ -81,13 +91,14 @@ class LDAPClientTestDriver:
 
     def connectionLost(self, reason=None):
         """Called when TCP connection has been lost"""
-        assert not self.responses
+        assert not self.responses, \
+               "connectionLost called even when have responses left: %r" % self.responses
         self.connected = 0
 
     def unbind(self):
         assert self.connected
         r='fake-unbind-by-LDAPClientTestDriver'
-        self.queue(r)
+        self.send_noResponse(r)
         self.transport.loseConnection()
 
 def createServer(proto, *responses):

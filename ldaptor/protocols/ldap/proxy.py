@@ -33,9 +33,10 @@ class Proxy(ldapserver.BaseLDAPServer):
     def _clientQueue(self, request, controls, reply):
         # TODO controls
         if request.needs_answer:
-            self.client.queue(request, self._gotResponse, reply)
+            d = self.client.send_multiResponse(request, self._gotResponse, reply)
+            # TODO handle d errbacks
         else:
-            self.client.queue(request)
+            self.client.send_noResponse(request)
 
     def _gotResponse(self, response, reply):
         reply(response)
