@@ -1,5 +1,4 @@
 from twisted.python import components
-from nevow import compy
 
 class ILDAPEntry(components.Interface):
     """
@@ -326,7 +325,7 @@ class IConnectedLDAPEntry(components.Interface):
 
         """
 
-class ILDAPConfig(compy.Interface):
+class ILDAPConfig(components.Interface):
     """Generic LDAP configuration retrieval."""
 
     def getBaseDN(self):

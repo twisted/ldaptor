@@ -1,3 +1,12 @@
+ldaptor (0.0.29) unstable; urgency=low
+
+  * Brown paper bag time; 0.0.28 was never uploaded.
+  * Remove nevow dependency from ILDAPConfig, it seems to work just fine
+    as just a components.Interface. This is the real fix, I
+    promise. Closes: #264179.
+
+ -- Tommi Virtanen <tv@debian.org>  Tue, 17 Aug 2004 16:48:42 +0300
+
 ldaptor (0.0.28) unstable; urgency=low
 
   * Applications changes:
