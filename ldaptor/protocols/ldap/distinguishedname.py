@@ -138,6 +138,8 @@ class LDAPAttributeTypeAndValue:
 class RelativeDistinguishedName:
     """LDAP Relative Distinguished Name."""
 
+    attributeTypesAndValues = None
+
     def __init__(self, magic=None, stringValue=None, attributeTypesAndValues=None):
         if magic is not None:
             assert stringValue is None
