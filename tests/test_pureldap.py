@@ -64,6 +64,41 @@ class KnownValues(unittest.TestCase):
          + [0x87]
          + [len("foo")]
          + l("foo")),
+
+        (pureldap.LDAPModifyDNRequest,
+         [],
+         {'entry': 'cn=foo,dc=example,dc=com',
+          'newrdn': 'uid=bar',
+          'deleteoldrdn': 0,
+          },
+         [0x6c, 0x26]
+         + [0x04]
+         + [len("cn=foo,dc=example,dc=com")]
+         + l("cn=foo,dc=example,dc=com")
+         + [0x04]
+         + [len("uid=bar")]
+         + l("uid=bar")
+         + [0x01, 0x01, 0x00]),
+
+        (pureldap.LDAPModifyDNRequest,
+         [],
+         {'entry': 'cn=aoue,dc=example,dc=com',
+          'newrdn': 'canonname=aoue',
+          'deleteoldrdn': 0,
+          'newSuperior': 'ou=People,dc=example,dc=com',
+          },
+         [0x6c, 0x4b]
+         + [0x04]
+         + [len("cn=aoue,dc=example,dc=com")]
+         + l("cn=aoue,dc=example,dc=com")
+         + [0x04]
+         + [len("canonname=aoue")]
+         + l("canonname=aoue")
+         + [0x01, 0x01, 0x00]
+         + [0x80]
+         + [len("ou=People,dc=example,dc=com")]
+         + l("ou=People,dc=example,dc=com")),
+
         )
 
     def testToLDAP(self):
@@ -72,8 +107,12 @@ class KnownValues(unittest.TestCase):
             result = apply(klass, args, kwargs)
             result = str(result)
             result = map(ord, result)
-            if encoded!=result:
-                raise AssertionError(encoded, result)
+            if result!=encoded:
+                raise AssertionError, \
+                      "Class %s(*%s, **%s) doesn't encode properly: " \
+                      "%s != %s" % (klass.__name__,
+                                    repr(args), repr(kwargs),
+                                    repr(result), repr(encoded))
 
     def testFromLDAP(self):
         """LDAPClass(encoded="...") should give known result with known input"""
@@ -85,7 +124,11 @@ class KnownValues(unittest.TestCase):
 
             shouldBe = apply(klass, args, kwargs)
             #TODO shouldn't use str below
-            assert str(result)==str(shouldBe), 'result is %s, should be %s' % (repr(result), repr(shouldBe))
+            assert str(result)==str(shouldBe), \
+                   "Class %s(*%s, **%s) doesn't decode properly: " \
+                   "%s != %s" % (klass.__name__,
+                                 repr(args), repr(kwargs),
+                                 repr(result), repr(shouldBe))
 
     def testPartial(self):
         """LDAPClass(encoded="...") with too short input should throw BERExceptionInsufficientData"""

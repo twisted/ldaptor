@@ -1,38 +1,32 @@
 #!/usr/bin/python
 
 import sys
-from ldaptor.protocols.ldap import ldapclient, ldapfilter, ldif
+from ldaptor.protocols.ldap import ldapclient, ldapfilter, ldif, ldapsyntax, distinguishedname, ldapconnector
 from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage
 from twisted.internet import protocol, reactor, defer
-
-class SearchWithFilter(ldapclient.LDAPSearch):
-    def __init__(self, deferred, client, base, filt, attributes=()):
-        ldapclient.LDAPSearch.__init__(self, deferred, client,
-                                       baseObject=base,
-                                       filter=filt,
-                                       attributes=attributes)
-
-    def handle_entry(self, objectName, attributes):
-        sys.stdout.write(ldif.asLDIF(objectName,
-                                     (map(lambda (a,l):
-                                          (str(a),
-                                           map(lambda i: str(i), l)),
-                                          attributes))))
 
 class Search(ldapclient.LDAPClient):
     def connectionMade(self):
         d=self.bind()
         d.addCallback(self._handle_bind_success)
+        d.addErrback(self.factory.deferred.errback)
+
+    def _printResults(self, o):
+        sys.stdout.write(str(o))
 
     def _handle_bind_success(self, x):
         matchedDN, serverSaslCreds = x
-        SearchWithFilter(self.factory.deferred, self,
-                         self.factory.base, self.factory.filt,
-                         self.factory.attributes)
+        o=ldapsyntax.LDAPObject(client=self,
+                                dn=self.factory.base)
+        d=o.search(filterText=self.factory.filt,
+                   attributes=self.factory.attributes,
+                   callback=self._printResults)
+        d.chainDeferred(self.factory.deferred)
 
 class SearchFactory(protocol.ClientFactory):
     protocol = Search
+
     def __init__(self, deferred, base, filt, attributes):
         self.deferred=deferred
         self.base=base
@@ -49,17 +43,20 @@ def error(fail):
     global exitStatus
     exitStatus=1
 
-def main(host, port, base, filter_text, attributes):
-    filt = ldapfilter.parseFilter(filter_text)
+def main(base, serviceLocationOverride, filter_text, attributes):
     d=defer.Deferred()
-    s=SearchFactory(d, base, filt, attributes)
+    s=SearchFactory(d, base, filter_text, attributes)
     d.addErrback(error)
     d.addBoth(lambda x: reactor.stop())
-    reactor.connectTCP(host, port, s)
+
+    dn = distinguishedname.DistinguishedName(stringValue=base)
+    c = ldapconnector.LDAPConnector(reactor, dn, s, overrides=serviceLocationOverride)
+    c.connect()
+
     reactor.run()
     sys.exit(exitStatus)
 
-class MyOptions(usage.Options, usage.Options_hostport, usage.Options_base):
+class MyOptions(usage.Options, usage.Options_service_location, usage.Options_base):
     """LDAPtor command line search utility"""
 
     def parseArgs(self, filter, *attributes):
@@ -74,8 +71,7 @@ if __name__ == "__main__":
         sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
         sys.exit(1)
 
-    main(config.opts['ldap-host'],
-         config.opts['ldap-port'],
-         config.opts['base'],
+    main(config.opts['base'],
+         config.opts['service-location'],
          config.opts['filter'],
          config.opts['attributes'])

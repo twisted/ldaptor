@@ -48,3 +48,38 @@ TODO file for the Ldaptor project.
 
 * move the Deferred handling from LDAPModifySambaPassword to
    LDAPModifyAttributes
+
+* ldaptor-ldap2dhcpconf: data validity
+
+* ldaptor-webui: forms accesskey, fieldset & legend, disabled,
+   readonly in http://www.w3.org/TR/html401/interact/forms.html
+
+* ldaptor-webui: choosing the right dn key for users? Prefer
+   uid?
+
+* ldaptor-webui: subtrees, creating objects in them, etc..
+
+* ldaptor-webui: samba fields.
+
+* ldaptor-webui: shadow field defaults
+
+* referrals
+
+* SASL
+
+* renaming objects
+
+* search requested attributes: +, *, + -, and 1.1 support.
+
+* ldaptor-search: twisted support for --base=''
+
+* SRV records
+
+* Samba rid=2*uid+1000, primaryGroupID=2*gid+1001
+
+* Samba pwdLastSet, logonTime, logoffTime, pwdCanChange, pwdMustChange
+   = seconds since 1970.
+
+* Samba ntpassword, lmpassword equal clear text passwords: keep
+   secret.
+

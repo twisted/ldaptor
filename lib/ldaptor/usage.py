@@ -1,6 +1,7 @@
 from twisted.python.usage import UsageError
 from twisted.python import usage, reflect
 from ldaptor.protocols import pureldap
+from ldaptor.protocols.ldap import distinguishedname
 
 class Options(usage.Options):
     optParameters = ()
@@ -11,26 +12,35 @@ class Options(usage.Options):
             method = getattr(self, 'postOptions_'+name)
             method()
 
-class Options_hostport(Options):
-    optParameters = (
-        ('ldap-host', None, None,
-         "LDAP server hostname"),
-        ('ldap-port', None, '389',
-         "LDAP server port"),
-        )
+class Options_service_location(Options):
+    def opt_service_location(self, value):
+        """Service location, in the form BASEDN:HOST[:PORT]"""
 
-    def postOptions_ldap_port_numeric(self):
-        # check that some things are numeric
-        try:
-            val = int(self.opts['ldap-port'])
-        except ValueError:
-            raise usage.UsageError, "%s value must be numeric" % 'ldap-port'
-        self.opts['ldap-port'] = val
+        if not self.opts.has_key('service-location'):
+            self.opts['service-location']={}
 
-    def postOptions_host_given(self):
-        # check that some things are given
-        if not self.opts['ldap-host']:
-            raise usage.UsageError, "%s must be given" % 'ldap-host'
+        base, location = value.split(':', 1)
+
+        if not location:
+            raise usage.UsageError, "service-location must specify host"
+
+        if ':' in location:
+            host, port = location.split(':', 1)
+        else:
+            host, port = location, None
+
+        if not host:
+            host = None
+
+        if not port:
+            port = None
+
+        dn = distinguishedname.DistinguishedName(base)
+        self.opts['service-location'][dn] = (host, port)
+
+    def postOptions_service_location(self):
+        if not self.opts.has_key('service-location'):
+            self.opts['service-location']={}
 
 class Options_base(Options):
     optParameters = (
@@ -40,7 +50,7 @@ class Options_base(Options):
 
     def postOptions_base(self):
         # check that some things are given
-        if not self.opts['base']:
+        if self.opts['base'] is None:
             raise usage.UsageError, "%s must be given" % 'base'
 
 class Options_scope(Options):

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import sys
-from ldaptor.protocols.ldap import ldapclient
+from ldaptor.protocols.ldap import ldapclient, ldapsyntax, distinguishedname, ldapconnector
 from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage, numberalloc
 from twisted.internet import protocol, reactor, defer
@@ -14,8 +14,10 @@ class Search(ldapclient.LDAPClient):
 
     def _handle_bind_success(self, x):
         matchedDN, serverSaslCreds = x
-        return numberalloc.getFreeNumber('uidNumber', self,
-                                         self.factory.base,
+        o=ldapsyntax.LDAPObject(client=self,
+                                dn=self.factory.base)
+        return numberalloc.getFreeNumber(o,
+                                         'uidNumber',
                                          min=1000)
 
 class SearchFactory(protocol.ClientFactory):
@@ -35,17 +37,21 @@ def error(fail):
     global exitStatus
     exitStatus=1
 
-def main(host, port, base):
+def main(base, serviceLocationOverride):
     d=defer.Deferred()
     s=SearchFactory(d, base)
     d.addCallback(lambda num: sys.stdout.write('%s\n' % repr(num)))
     d.addErrback(error)
     d.addBoth(lambda x: reactor.stop())
-    reactor.connectTCP(host, port, s)
+
+    dn = distinguishedname.DistinguishedName(stringValue=base)
+    c = ldapconnector.LDAPConnector(reactor, dn, s, overrides=serviceLocationOverride)
+    c.connect()
+
     reactor.run()
     sys.exit(exitStatus)
 
-class MyOptions(usage.Options, usage.Options_hostport, usage.Options_base):
+class MyOptions(usage.Options, usage.Options_service_location, usage.Options_base):
     """LDAPtor command line search utility"""
 
 if __name__ == "__main__":
@@ -56,6 +62,4 @@ if __name__ == "__main__":
         sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
         sys.exit(1)
 
-    main(config.opts['ldap-host'],
-         config.opts['ldap-port'],
-         config.opts['base'])
+    main(config.opts['base'], config.opts['service-location'])

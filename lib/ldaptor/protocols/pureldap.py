@@ -907,9 +907,85 @@ class LDAPDelResponse(LDAPResult):
     pass
 
 
-#class LDAPModifyRDNResponse(LDAPProtocolResponse):
+class LDAPModifyDNResponse_newSuperior(LDAPString):
+    tag = CLASS_CONTEXT|0x00
+
+    pass
+
+class LDAPBERDecoderContext_ModifyDNRequest(BERDecoderContext):
+    Identities = {
+        LDAPModifyDNResponse_newSuperior.tag: LDAPModifyDNResponse_newSuperior,
+        }
+
+class LDAPModifyDNRequest(LDAPProtocolRequest, BERSequence):
+    tag=CLASS_APPLICATION|12
+
+    def decode(self, encoded, berdecoder):
+        BERSequence.decode(self, encoded, LDAPBERDecoderContext_ModifyDNRequest(fallback=berdecoder))
+        self.entry=str(self.data[0].value)
+        self.newrdn=str(self.data[1].value)
+        self.deleteoldrdn=self.data[2].value
+        try:
+            self.newSuperior=str(self.data[3].value)
+        except IndexError:
+            self.newSuperior=None
+
+    def __init__(self, entry=None, newrdn=None, deleteoldrdn=None, newSuperior=None,
+                 encoded=None, berdecoder=None, tag=None):
+        """
+        Initialize the object
+
+        Example usage::
+
+		l=LDAPModifyDNRequest(entry='cn=foo,dc=example,dc=com',
+                                      newrdn='someAttr=value',
+                                      deleteoldrdn=0)
+	"""
+
+        LDAPProtocolRequest.__init__(self)
+        BERSequence.__init__(self, [], tag=tag)
+        if encoded!=None:
+            assert entry==None
+            assert newrdn==None
+            assert deleteoldrdn==None
+            assert newSuperior==None
+            assert berdecoder
+            self.decode(encoded, berdecoder)
+        else:
+            assert entry is not None
+            assert newrdn is not None
+            assert deleteoldrdn is not None
+            self.entry=entry
+            self.newrdn=newrdn
+            self.deleteoldrdn=deleteoldrdn
+            self.newSuperior=newSuperior
+
+    def __str__(self):
+        l=[
+            LDAPString(self.entry),
+            LDAPString(self.newrdn),
+            BERBoolean(self.deleteoldrdn),
+            ]
+        if self.newSuperior is not None:
+            l.append(LDAPString(self.newSuperior, tag=CLASS_CONTEXT|0))
+        return str(BERSequence(l, tag=self.tag))
+
+    def __repr__(self):
+        l = [
+            "entry=%s" % repr(self.entry),
+            "newrdn=%s" % repr(self.newrdn),
+            "deleteoldrdn=%s" % repr(self.deleteoldrdn),
+            ]
+        if self.newSuperior is not None:
+            l.append("newSuperior=%s" % repr(self.newSuperior))
+        if self.tag!=self.__class__.tag:
+            l.append("tag=%d" % self.tag)
+        return self.__class__.__name__ + "(" + ', '.join(l) + ")"
+
+class LDAPModifyDNResponse(LDAPResult):
+    tag=CLASS_APPLICATION|13
+
 #class LDAPCompareResponse(LDAPProtocolResponse):
-#class LDAPModifyRDNRequest(LDAPProtocolRequest):
 #class LDAPCompareRequest(LDAPProtocolRequest):
 #class LDAPAbandonRequest(LDAPProtocolRequest):
 #    needs_answer=0
@@ -1048,4 +1124,6 @@ class LDAPBERDecoderContext(BERDecoderContext):
         LDAPDelRequest.tag: LDAPDelRequest,
         LDAPDelResponse.tag: LDAPDelResponse,
         LDAPExtendedResponse.tag: LDAPExtendedResponse,
+        LDAPModifyDNRequest.tag: LDAPModifyDNRequest,
+        LDAPModifyDNResponse.tag: LDAPModifyDNResponse,
     }

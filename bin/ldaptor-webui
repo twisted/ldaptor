@@ -11,10 +11,11 @@ from twisted.cred.authorizer import Authorizer
 import twisted.internet.defer
 from twisted.internet import defer, reactor
 from twisted.python.failure import Failure
-from ldaptor.protocols.ldap import ldapclient, ldapfilter
+from ldaptor.protocols.ldap import ldapclient, ldapfilter, distinguishedname, ldapconnector
 from ldaptor.protocols import pureldap
 from twisted.web import server, guard
 from ldaptor import usage
+from twisted.python import log
 
 class LDAPAuth(ldapclient.LDAPClient):
     def connectionMade(self):
@@ -54,13 +55,13 @@ class LDAPAuthFactory(protocol.ClientFactory):
 
 class LDAPIdentity(Identity):
     def __init__(self, name, dn, authorizer,
-                 ldapClientFactoryFactory, ldaphost, ldapport=389):
+                 ldapClientFactoryFactory,
+                 serviceLocationOverride):
         Identity.__init__(self, name, authorizer)
         self.dn=dn
         self.ldapClientFactoryFactory=ldapClientFactoryFactory
         self.ldapClientFactory=None
-        self.ldaphost=ldaphost
-        self.ldapport=ldapport
+        self.serviceLocationOverride=serviceLocationOverride
         self.notify_on_connectionLost = []
 
     def setPassword(self, plaintext):
@@ -88,8 +89,11 @@ class LDAPIdentity(Identity):
         pwrq = defer.Deferred()
         self.ldapClientFactory = self.ldapClientFactoryFactory(
             pwrq, self.dn, plaintext, self.connectionLost)
-        reactor.connectTCP(self.ldaphost, self.ldapport,
-                          self.ldapClientFactory)
+
+        dn = distinguishedname.DistinguishedName(stringValue=self.dn)
+        c = ldapconnector.LDAPConnector(reactor, dn, self.ldapClientFactory,
+                                        overrides=self.serviceLocationOverride)
+        c.connect()
         return pwrq
 
     def connectionLost(self, reason):
@@ -235,31 +239,32 @@ class FetchIdentities(ldapclient.LDAPClient):
     def _gotIdentityDN(self, dn, name):
         ident = LDAPIdentity(name, dn, self.factory.authorizer,
                              LDAPAuthFactory,
-                             self.factory.ldaphost, self.factory.ldapport)
+                             self.factory.serviceLocationOverride)
         #TODO I don't want to enumerate them here!
         ident.addKeyByString("edit", name)
         return ident
 
-class FetchIdentitiesFactory(protocol.ClientFactory):
+class FetchIdentitiesFactory(protocol.ReconnectingClientFactory):
     protocol = FetchIdentities
+    maxDelay = 60
+
     def __init__(self,
-                 ldaphost=None,
-                 ldapport=389,
-                 ldapbase='',
+                 ldapbase,
+                 serviceLocationOverride,
                  ldapFilterTemplate=None,
                  ldapFilterBase=None,
                  authorizer=None):
         assert authorizer
         self.authorizer = authorizer
-        self.ldaphost = ldaphost
-        self.ldapport = ldapport
         self.ldapbase = ldapbase
+        self.serviceLocationOverride = serviceLocationOverride
         self.ldapFilterTemplate = ldapFilterTemplate
         self.ldapFilterBase = ldapFilterBase
         self.requests = []
         self.proto = None
 
     def buildProtocol(self, addr):
+        self.resetDelay()
         assert not self.proto
         self.proto=protocol.ClientFactory.buildProtocol(self, addr)
         self._wakeup_protocol()
@@ -280,32 +285,37 @@ class FetchIdentitiesFactory(protocol.ClientFactory):
 
     def clientConnectionFailed(self, connector, reason):
         self.proto = None
-        connector.connect()
+        protocol.ReconnectingClientFactory.clientConnectionFailed(self, connector, reason)
 
     def clientConnectionLost(self, connector, reason):
         self.proto = None
-        connector.connect()
+        protocol.ReconnectingClientFactory.clientConnectionLost(self, connector, reason)
+
+    def stopFactory(self):
+        self.stopTrying()
 
 class LDAPAuthorizer(Authorizer):
-    def __init__(self, ldaphost, ldapport, ldapbase,
+    def __init__(self, ldapbase, serviceLocationOverride,
                  ldapFilterTemplate=None,
                  ldapFilterBase=None,
                  ):
-        self.ldaphost = ldaphost
-        self.ldapport = ldapport
         self.ldapbase = ldapbase
+        self.serviceLocationOverride = serviceLocationOverride
         self.ldapFilterTemplate = ldapFilterTemplate
         self.ldapFilterBase = ldapFilterBase
         self.pendingIdentityRequests = {}
         self.fetcher = FetchIdentitiesFactory(
-            ldaphost=self.ldaphost,
-            ldapport=self.ldapport,
             ldapbase=self.ldapbase,
+            serviceLocationOverride=self.serviceLocationOverride,
             ldapFilterTemplate=self.ldapFilterTemplate,
             ldapFilterBase=self.ldapFilterBase,
             authorizer=self,
             )
-        reactor.connectTCP(self.ldaphost, self.ldapport, self.fetcher)
+
+        dn = distinguishedname.DistinguishedName(stringValue=ldapbase)
+        c = ldapconnector.LDAPConnector(reactor, dn, self.fetcher,
+                                        overrides=serviceLocationOverride)
+        c.connect()
 
     def setApplication(self, application):
         Authorizer.setApplication(self, application)
@@ -346,7 +356,7 @@ class LDAPService(Service):
             return defer.succeed(p)
 
 
-class MyOptions(usage.Options, usage.Options_hostport, usage.Options_base):
+class MyOptions(usage.Options, usage.Options_service_location, usage.Options_base):
     """LDAPtor Web User Interface"""
 
     def __init__(self, *args, **kwargs):
@@ -399,21 +409,22 @@ if __name__ == '__main__':
     except usage.UsageError, ue:
         sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
         sys.exit(1)
-    auth = LDAPAuthorizer(ldaphost=config.opts['ldap-host'],
-                          ldapport=config.opts['ldap-port'],
-                          ldapbase=config.opts['base'],
-                          ldapFilterTemplate=config.opts['identity-search'],
-                          ldapFilterBase=config.opts['identity-base'],
-                          )
+    log.startLogging(sys.stderr, setStdout=0)
+    auth = LDAPAuthorizer(
+        ldapbase=config.opts['base'],
+        serviceLocationOverride=config.opts['service-location'],
+        ldapFilterTemplate=config.opts['identity-search'],
+        ldapFilterBase=config.opts['identity-base'],
+        )
     application = app.Application('ldaptor-webui', authorizer=auth)
     svc = LDAPService("edit", serviceParent=application, authorizer=auth)
     svc.perspectiveClass = LDAPPerspective
-    gdgt = gadget.LdaptorWebUIGadget(svc,
-                                     baseObject=config.opts['base'],
-                                     ldaphost=config.opts['ldap-host'],
-                                     ldapport=config.opts['ldap-port'],
-                                     searchFields=config.opts['search-field'],
-                                     )
+    gdgt = gadget.LdaptorWebUIGadget(
+        svc,
+        baseObject=config.opts['base'],
+        serviceLocationOverride=config.opts['service-location'],
+        searchFields=config.opts['search-field'],
+        )
     
     sit = server.Site(gdgt)
     sit.application = application

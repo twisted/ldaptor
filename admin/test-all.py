@@ -1,14 +1,10 @@
 #!/usr/bin/python
-import unittest, os, os.path
+import unittest, os, os.path, sys
 
 def getTestDir():
-    import sys
-    if sys.argv[0]:
-        file=sys.argv[0]
-    else:
-        import all
-        file=all.__file__
-    return os.path.dirname(file)
+    assert sys.argv[0]
+    file=sys.argv[0]
+    return os.path.join(os.path.dirname(file), '..', 'tests')
 
 def getTestSuites():
     dir=getTestDir()
@@ -21,4 +17,6 @@ def getTestSuites():
     return alltests
 
 if __name__ == '__main__':
+    sys.path.insert(0, 'tests')
+    sys.path.insert(0, 'lib')
     unittest.main(defaultTest='getTestSuites')

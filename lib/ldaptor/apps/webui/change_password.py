@@ -6,7 +6,8 @@ from ldaptor.protocols import pureber, pureldap
 from ldaptor.apps.webui.htmlify import htmlify_attributes
 from ldaptor import generate_password
 from twisted.internet import reactor
-import string, urllib
+from ldaptor.apps.webui.uriquote import uriQuote, uriUnquote
+import string
 
 import template
 
@@ -90,19 +91,19 @@ class PasswordChangePage(template.BasicPage):
         
         if request.postpath and request.postpath!=['']:
             l.append('<a href="%s">edit</a>' \
-                     % request.sibLink("edit/" + '/'.join(request.postpath)))
+                     % request.sibLink("edit/" + uriUnquote(request.postpath[0])))
             l.append('<a href="%s">delete</a>' \
-                     % request.sibLink("delete/" + '/'.join(request.postpath)))
+                     % request.sibLink("delete/" + uriUnquote(request.postpath[0])))
             
         return '[' + '|'.join(l) + ']'
 
     def getContent(self, request):
         if not request.postpath or request.postpath==['']:
             dn=request.getSession().LdaptorIdentity.name
-            url=request.childLink(urllib.quote(dn))
+            url=request.childLink(uriQuote(dn))
             return [static.redirectTo(url, request)]
         else:
-            dn='/'.join(request.postpath)
+            dn=uriUnquote(request.postpath[0])
 
             return [self._header(request)] \
                    + PasswordChangeForm(dn=dn).display(request)

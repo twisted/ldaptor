@@ -5,9 +5,9 @@ from ldaptor.protocols import pureldap, pureber
 from ldaptor.protocols.ldap import ldapclient, ldaperrors
 from ldaptor.protocols.ldap import schema
 from ldaptor import numberalloc
+from ldaptor.apps.webui.uriquote import uriQuote, uriUnquote
 
 from cStringIO import StringIO
-import urllib
 
 import template
 
@@ -265,11 +265,11 @@ class AddPage(template.BasicPage):
             if request.args.get('add_'+dnattr):
                 dn=dnattr+'='+request.args.get('add_'+dnattr)[0]+','+self.baseObject
                 l.append('<a href="%s">edit</a>' \
-                         % request.sibLink('edit/%s' % urllib.quote(dn)))
+                         % request.sibLink('edit/%s' % uriQuote(dn)))
                 l.append('<a href="%s">delete</a>' \
-                         % request.sibLink('delete/%s' % urllib.quote(dn)))
+                         % request.sibLink('delete/%s' % uriQuote(dn)))
                 l.append('<a href="%s">change password</a>' \
-                         % request.sibLink('change_password/%s' % urllib.quote(dn)))
+                         % request.sibLink('change_password/%s' % uriQuote(dn)))
             
         return '[' + '|'.join(l) + ']'
 

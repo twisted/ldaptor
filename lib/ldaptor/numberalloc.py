@@ -4,11 +4,6 @@ from twisted.internet import defer, reactor
 from ldaptor.protocols import pureldap
 from ldaptor.protocols.ldap import ldapclient
 
-minimum = {
-    'uidNumber': 1000,
-    'gidNumber': 1000,
-    }
-
 class freeNumberGuesser:
     def __init__(self, makeAGuess, min=None, max=None):
         self.makeAGuess=makeAGuess
@@ -41,34 +36,21 @@ class freeNumberGuesser:
         d.addCallback(self._nextGuess, guess)
         return d
 
-class IsTaken(ldapclient.LDAPSearch):
-    def __init__(self, deferred, client, base, numberType, num):
-        filt=pureldap.LDAPFilter_equalityMatch(
-            attributeDesc=pureldap.LDAPAttributeDescription(value=numberType),
-            assertionValue=pureldap.LDAPAssertionValue(value=str(num)))
-        ldapclient.LDAPSearch.__init__(self, deferred, client,
-                                       baseObject=base,
-                                       filter=filt,
-                                       sizeLimit=1,
-                                       attributes=[])
-        self.found=0
-        deferred.addCallback(lambda dummy, self=self: self.found)
-
-    def handle_entry(self, objectName, attributes):
-        self.found=1
-
 class ldapGuesser:
-    def __init__(self, numberType, ldapClient, baseObject):
+    def __init__(self, ldapObject, numberType):
         self.numberType=numberType
-        self.ldapClient=ldapClient
-        self.baseObject=baseObject
+        self.ldapObject=ldapObject
 
     def guess(self, num):
-        d=defer.Deferred()
-        IsTaken(d, self.ldapClient, self.baseObject, self.numberType, num)
+        d=self.ldapObject.search(
+            filterObject=pureldap.LDAPFilter_equalityMatch(
+            attributeDesc=pureldap.LDAPAttributeDescription(value=self.numberType),
+            assertionValue=pureldap.LDAPAssertionValue(value=str(num))),
+            sizeLimit=1)
+        d.addCallback(lambda results: len(results))
         return d
 
-def getFreeNumber(numberType, ldapClient, baseObject, min=None, max=None):
-    g=freeNumberGuesser(ldapGuesser(numberType, ldapClient, baseObject).guess,
+def getFreeNumber(ldapObject, numberType, min=None, max=None):
+    g=freeNumberGuesser(ldapGuesser(ldapObject, numberType).guess,
                         min=min, max=max)
     return g.startGuessing()

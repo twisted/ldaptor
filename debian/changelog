@@ -1,3 +1,47 @@
+ldaptor (0.0.13) unstable; urgency=low
+
+  * Bring test suite up to date.
+  * Beginnings of a more Pythonic LDAP API.
+  * Make ldapclient.LDAPModifyAttributes use Deferreds.
+  * Pass ldapclient when creating LDAPObject, not at every use.
+  * Simplify filter handling in ldaptor-search.
+  * Add comparison functions for LDAPObjects.
+  * LDAPObject.search now supports kwarg callback, which allows
+    processing search results one by one.
+  * Support creating API docs with epydoc.
+  * Add bin/ldaptor-ldap2pdns
+  * Docs and TODO update.
+  * Allow empty base setting.
+  * Support for parsing and generating string representations of
+    LDAP Distinguished Names (DNs).
+  * Display usage to stderr in ldaptor-namingcontexts.
+  * Support for finding the domain name, and via DNS SRV, the
+    server, related to an LDAP DN.
+  * ldaptor-webui SRV support: options --host and --port are gone,
+    finds LDAP servers for domainComponent-style DNs via DNS SRV
+    records. If you don't have them, and don't want to fix that,
+    use --service-location='dc=example,dc=com:ldap.example.com'.
+  * Increase DNS timeout to 5 seconds.
+  * Add DistinguishedName.contains()
+  * Make DistinguishedName hashable.
+  * Use the client for this session to fetch the attributes, don't
+    open up a new connection.
+  * Enable log to stderr in ldaptor-webui.
+  * Runtime-changeable base DN support in ldaptor-webui: the base
+    DN is now the first path segment in the URL, and you can
+    navigate in the tree freely.
+  * Bugfix for ldaptor-ldap2dhcpconf, used to assert when there
+    were no sharedNets.
+  * Fix an uninterruptible infinite loop in ldaptor-webui
+    shutdown.
+  * In ldaptor-webui, support search scopes.
+  * In ldaptor-webui, show base object when no search has been
+    done.
+  * LDAP DN renaming support.
+  * Various minor bugfixes.
+
+ -- Tommi Virtanen <tv@debian.org>  Sun, 19 Jan 2003 17:32:03 +0200
+
 ldaptor (0.0.12) unstable; urgency=low
 
   * Be epydoc-friendly in docstrings.

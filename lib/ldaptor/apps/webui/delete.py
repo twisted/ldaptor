@@ -3,6 +3,7 @@ from twisted.internet import defer
 
 from ldaptor.protocols import pureldap
 from ldaptor.protocols.ldap import ldapclient, ldaperrors
+from ldaptor.apps.webui.uriquote import uriQuote, uriUnquote
 
 from cStringIO import StringIO
 
@@ -82,7 +83,7 @@ class DeleteForm(widgets.Form):
         defe=defer.Deferred()
         DoDelete(client, self.dn, defe.callback)
 
-        return ["<P>Submitting del as user %s.."%user, defe]
+        return ["<P>Submitting delete as user %s.."%user, defe]
 
 class CreateDeleteForm:
     def __init__(self, defe, dn, request):
@@ -129,7 +130,7 @@ class DeletePage(template.BasicPage):
         if not request.postpath or request.postpath==['']:
             return NeedDNError()
         else:
-            dn='/'.join(request.postpath)
+            dn=uriUnquote(request.postpath[0])
 
             d=defer.Deferred()
 

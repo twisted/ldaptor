@@ -5,8 +5,9 @@ from ldaptor.protocols.ldap import ldapclient, ldapfilter, ldaperrors
 from ldaptor.protocols import pureber, pureldap
 from ldaptor.apps.webui.htmlify import htmlify_attributes
 from ldaptor import generate_password
+from ldaptor.apps.webui.uriquote import uriQuote, uriUnquote
 from twisted.internet import reactor
-import string, urllib
+import string
 
 import template
 
@@ -23,54 +24,13 @@ class LDAPSearchEntry(ldapclient.LDAPSearch):
                                        filter=filter,
                                        sizeLimit=20,
                                        )
+        deferred.addCallback(self._ok)
+
+    def _ok(self, me):
+        return me.ldapObjects
+
     def handle_entry(self, objectName, attributes):
         self.ldapObjects.append((objectName, attributes))
-
-class DoSearch(ldapclient.LDAPClient):
-    factory=None
-
-    def __init__(self):
-        ldapclient.LDAPClient.__init__(self)
-
-    def connectionMade(self):
-        d=self.bind()
-        d.addCallbacks(self._handle_bind_success,
-                       self._handle_bind_fail)
-
-    def _handle_bind_fail(self, fail):
-        self.unbind()
-        self.factory.errback(fail)
-
-    def _handle_bind_success(self, x):
-        matchedDN, serverSaslCreds = x
-        LDAPSearchEntry(self.factory.deferred,
-                        self,
-                        baseObject=self.factory.baseObject,
-                        filter=self.factory.ldapFilter)
-        self.factory.deferred.addCallbacks(self._unbind, lambda x:x)
-
-    def _unbind(self, x):
-        self.unbind()
-        return x
-
-class DoSearchFactory(protocol.ClientFactory):
-    protocol=DoSearch
-
-    def __init__(self, deferred, baseObject, ldapFilter):
-        self.deferred=deferred
-        self.baseObject=baseObject
-        self.ldapFilter=ldapFilter
-        deferred.addCallbacks(self._ok, errback=lambda x:x)
-
-    def _ok(self, dummy):
-        return dummy.ldapObjects
-
-    def clientConnectionFailed(self, connector, reason):
-        self.deferred.errback(reason)
-
-    def clientConnectionLost(self, connector, reason):
-        if not self.deferred.called:
-            self.deferred.errback(reason)
 
 class MassPasswordChangeForm(widgets.Form):
     def __init__(self, ldapObjects):
@@ -131,17 +91,15 @@ class CreateError:
 
     def __call__(self, fail):
         self.request.args['incomplete']=['true']
-        self.deferred.callback(["Trouble while fetching objects from LDAP: %s.\n<HR>"%fail.getErrorMessage])
+        self.deferred.callback(["Trouble while fetching objects from LDAP: %s.\n<HR>"%fail.getErrorMessage()])
 
 class MassPasswordChangePage(template.BasicPage):
     title = "Ldaptor Mass Password Change Page"
     isLeaf = 1
 
-    def __init__(self, baseObject, ldaphost, ldapport):
+    def __init__(self, baseObject):
         template.BasicPage.__init__(self)
         self.baseObject = baseObject
-        self.ldaphost = ldaphost
-        self.ldapport = ldapport
 
     def _header(self, request):
         l=[]
@@ -154,15 +112,17 @@ class MassPasswordChangePage(template.BasicPage):
         if not request.postpath or request.postpath==['']:
             return NeedFilterError()
         else:
-            filtText='/'.join(request.postpath)
+            filtText=uriUnquote(request.postpath[0])
             filt=ldapfilter.parseFilter(filtText)
 
             d=defer.Deferred()
             client = request.getSession().LdaptorIdentity.getLDAPClient()
             if client:
                 deferred=defer.Deferred()
-                s=DoSearchFactory(deferred, self.baseObject, filt)
-                reactor.connectTCP(self.ldaphost, self.ldapport, s)
+                LDAPSearchEntry(deferred,
+                                client,
+                                baseObject=self.baseObject,
+                                filter=filt)
                 deferred.addCallbacks(
                     callback=self._getContent_2,
                     callbackArgs=(d, request),

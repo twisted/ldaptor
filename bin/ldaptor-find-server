@@ -1,0 +1,50 @@
+#!/usr/bin/python
+
+import sys
+from ldaptor.protocols.ldap.distinguishedname import DistinguishedName
+from twisted.internet.defer import DeferredList
+from twisted.internet import reactor
+from twisted.protocols import dns
+from twisted.names import client
+
+def printAnswer(answers, dn):
+    for rr in answers:
+        assert isinstance(rr.payload, dns.Record_SRV)
+        print '%s\tpri=%d weight=%d %s:%d' % (dn,
+                                              rr.payload.priority,
+                                              rr.payload.weight,
+                                              rr.payload.target,
+                                              rr.payload.port,
+                                              )
+    return answers
+
+exitStatus = 0
+
+def errback(data):
+    print "ERROR:", data.getErrorMessage()
+    global exitStatus
+    exitStatus=1
+
+def main(dns):
+    l = []
+    resolver = client.Resolver('/etc/resolv.conf')
+
+    for dnString in dns:
+        dn=DistinguishedName(stringValue=dnString)
+        domain=dn.getDomainName()
+
+        d = resolver.lookupService('_ldap._tcp.%s' % domain, 5)
+        l.append(d)
+        d.addCallback(printAnswer, dnString)
+        d.addErrback(errback)
+    dl = DeferredList(l)
+    dl.addBoth(lambda dummy: reactor.callLater(0, reactor.stop))
+    reactor.run()
+    sys.exit(exitStatus)
+
+if __name__ == "__main__":
+    if not sys.argv[1:]:
+        print >>sys.stderr, '%s: usage:' % sys.argv[0]
+        print >>sys.stderr, '  %s DN..' % sys.argv[0]
+    else:
+        main(sys.argv[1:])

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import sys, getpass
-from ldaptor.protocols.ldap import ldapclient, ldaperrors
+from ldaptor.protocols.ldap import ldapclient, ldaperrors, distinguishedname, ldapconnector
 from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage, generate_password
 from twisted.internet import defer, reactor, protocol
@@ -97,9 +97,10 @@ class PasswdClientFactory(protocol.ClientFactory):
 exitStatus=0
 
 class MyOptions(usage.Options,
-                usage.Options_hostport,
+                usage.Options_service_location,
                 usage.Options_bind_mandatory):
     """LDAPtor command line password change utility"""
+    synopsis = "Usage: %s --binddn=DN [OPTION..] [DN..]"
     optFlags = [
         ('generate', None, 'Generate random passwords'),
         ('samba', None, 'Change Samba password also'),
@@ -112,7 +113,8 @@ class MyOptions(usage.Options,
 if __name__ == "__main__":
     import sys, os
     from twisted.python import log
-    log.logfile=sys.stderr
+    log.startLogging(sys.stderr, setStdout=0)
+
     try:
         config = MyOptions()
         config.parseOptions()
@@ -134,6 +136,8 @@ if __name__ == "__main__":
                           generatePasswords=config.opts['generate'],
                           sambaAlso=config.opts['samba'],
                           )
-    reactor.connectTCP(config.opts['ldap-host'], config.opts['ldap-port'], s)
+    dn = distinguishedname.DistinguishedName(stringValue=config.opts['binddn'])
+    c=ldapconnector.LDAPConnector(reactor, dn, s, overrides=config.opts['service-location'])
+    c.connect()
     reactor.run()
     sys.exit(exitStatus)

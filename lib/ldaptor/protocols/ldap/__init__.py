@@ -22,4 +22,6 @@ __all__ = [
     "schema",
     "ldapfilter",
     "ldif",
+    "ldapsyntax",
+    "distinguishedname",
     ]

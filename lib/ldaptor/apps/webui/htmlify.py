@@ -3,8 +3,9 @@
 def htmlify_attributes(attributes):
     result='<ul>\n'
     for a,l in attributes:
-        assert len(l)>0
-        if len(l)==1:
+        if len(l)==0:
+            result=result+"  <li>%s: <i>none</i>\n"%a
+        elif len(l)==1:
             result=result+"  <li>%s: %s\n"%(a, l[0])
         else:
             result=result+"  <li>%s:\n    <ul>\n"%a

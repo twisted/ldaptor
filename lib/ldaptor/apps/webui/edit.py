@@ -5,6 +5,7 @@ from twisted.python import failure
 from ldaptor.protocols import pureldap
 from ldaptor.protocols.ldap import ldapclient, ldaperrors
 from ldaptor.protocols.ldap import schema
+from ldaptor.apps.webui.uriquote import uriQuote, uriUnquote
 
 from cStringIO import StringIO
 
@@ -41,15 +42,9 @@ class LDAPSearch_FetchByDN(ldapclient.LDAPSearch):
         self.attributes=attributes
 
 class DoModify(ldapclient.LDAPModifyAttributes):
-    def __init__(self, client, object, modification, callback):
-        ldapclient.LDAPModifyAttributes.__init__(self, client, object, modification)
-        self.callback=callback
-
-    def handle_success(self):
-        self.callback("<p>Success.")
-
-    def handle_fail(self, fail):
-        self.callback("<p><strong>Failed</strong>: %s."%fail.getErrorMessage())
+    def __init__(self, client, object, modification, deferred):
+        ldapclient.LDAPModifyAttributes.__init__(self, deferred, client, object, modification)
+        
 
 multiLineAttributeTypes = {
     'description': 1,
@@ -266,7 +261,12 @@ class EditForm(widgets.Form):
             if not mod:
                 defe.callback([""])
             else:
-                DoModify(client, self.dn, mod, defe.callback)
+                DoModify(client, self.dn, mod, defe)
+                defe.addCallbacks(
+                    callback=lambda x: "<p>Success.",
+                    errback=(lambda fail:
+                             "<p><strong>Failed</strong>: %s" \
+                             %fail.getErrorMessage()))
 
         return self._output_status_and_form(
             request, kw,
@@ -316,7 +316,7 @@ class EditPage(template.BasicPage):
 
         if request.postpath and request.postpath!=['']:
             l.append('<a href="%s">delete</a>' \
-                     % request.sibLink("delete/" + '/'.join(request.postpath)))
+                     % request.sibLink("delete/" + uriUnquote(request.postpath[0])))
             l.append('<a href="%s">change password</a>' \
                      % request.sibLink("change_password/" + '/'.join(request.postpath)))
         
@@ -326,7 +326,7 @@ class EditPage(template.BasicPage):
         if not request.postpath or request.postpath==['']:
             return NeedDNError()
         else:
-            dn='/'.join(request.postpath)
+            dn=uriUnquote(request.postpath[0])
 
             d=defer.Deferred()
 

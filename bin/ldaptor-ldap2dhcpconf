@@ -15,7 +15,7 @@
 #shared-network "foo" {
 #}
 
-from ldaptor.protocols.ldap import ldapclient, ldapfilter
+from ldaptor.protocols.ldap import ldapclient, ldapfilter, distinguishedname, ldapconnector
 from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage
 from twisted.internet import protocol, reactor, defer
@@ -305,7 +305,8 @@ class Search(ldapclient.LDAPClient):
             for hostIP in host.ipAddresses:
                 parent=None
                 for net in self.nets + reduce(lambda x,y: x+y,
-                                              [x.nets for x in self.sharedNets.values()]):
+                                              [x.nets for x in self.sharedNets.values()],
+                                              []):
                     if net.isInNet(hostIP.ipAddress):
                         parent=net
                         break
@@ -339,11 +340,9 @@ def error(fail):
     global exitStatus
     exitStatus=1
 
-def main(host, port, base, filter_text, dnsDomain):
-    # TODO horrible, ugly hack to work around twisted's ugly logging
+def main(base, serviceLocationOverride, filter_text, dnsDomain):
     from twisted.python import log
-    log.startLogging(sys.stderr)
-    sys.stdout=sys.__stdout__
+    log.startLogging(sys.stderr, setStdout=0)
 
     if filter_text is not None:
         filt = ldapfilter.parseFilter(filter_text)
@@ -354,11 +353,13 @@ def main(host, port, base, filter_text, dnsDomain):
     s=SearchFactory(d, base, filt, dnsDomain)
     d.addErrback(error)
     d.addBoth(lambda x: reactor.stop())
-    reactor.connectTCP(host, port, s)
+    dn = distinguishedname.DistinguishedName(stringValue=base)
+    c=ldapconnector.LDAPConnector(reactor, dn, s, overrides=serviceLocationOverride)
+    c.connect()
     reactor.run()
     sys.exit(exitStatus)
 
-class MyOptions(usage.Options, usage.Options_hostport, usage.Options_base):
+class MyOptions(usage.Options, usage.Options_service_location, usage.Options_base):
     """LDAPtor dhcpd config file exporter"""
 
     optParameters = (
@@ -378,9 +379,8 @@ if __name__ == "__main__":
         sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
         sys.exit(1)
 
-    main(config.opts['ldap-host'],
-         config.opts['ldap-port'],
-         config.opts['base'],
+    main(config.opts['base'],
+         config.opts['service-location'],
          config.opts['filter'],
          config.opts['dns-domain'],
          )

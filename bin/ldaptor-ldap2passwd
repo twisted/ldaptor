@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import sys
-from ldaptor.protocols.ldap import ldapclient, ldapfilter, ldif
+from ldaptor.protocols.ldap import ldapclient, ldapfilter, ldif, distinguishedname, ldapconnector
 from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage
 from twisted.internet import protocol, reactor, defer
@@ -58,7 +58,7 @@ def error(fail):
     global exitStatus
     exitStatus=1
 
-def main(host, port, base, filter_text, attributes):
+def main(base, serviceLocationOverride, filter_text, attributes):
     filt = ldapfilter.parseFilter('(objectClass=posixAccount)')
     if filter_text is not None:
         filt = pureldap.LDAPFilter_and([
@@ -68,11 +68,14 @@ def main(host, port, base, filter_text, attributes):
     s=SearchFactory(d, base, filt, attributes)
     d.addErrback(error)
     d.addBoth(lambda x: reactor.stop())
-    reactor.connectTCP(host, port, s)
+
+    dn = distinguishedname.DistinguishedName(stringValue=base)
+    c=ldapconnector.LDAPConnector(reactor, dn, s, overrides=serviceLocationOverride)
+    c.connect()
     reactor.run()
     sys.exit(exitStatus)
 
-class MyOptions(usage.Options, usage.Options_hostport, usage.Options_base):
+class MyOptions(usage.Options, usage.Options_service_location, usage.Options_base):
     """LDAPtor command line search utility"""
 
     def parseArgs(self, filter=None, *attributes):
@@ -87,8 +90,7 @@ if __name__ == "__main__":
         sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
         sys.exit(1)
 
-    main(config.opts['ldap-host'],
-         config.opts['ldap-port'],
-         config.opts['base'],
+    main(config.opts['base'],
+         config.opts['service-location'],
          config.opts['filter'],
          config.opts['attributes'])

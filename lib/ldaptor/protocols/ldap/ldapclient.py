@@ -61,7 +61,7 @@ class LDAPClient(protocol.Protocol):
 
     def queue(self, op, handler=None):
         if not self.connected:
-            raise "Not connected (TODO)" #TODO make this a real object
+            raise LDAPClientConnectionLostException()
         msg=pureldap.LDAPMessage(op)
         #log.msg('-> %s' % repr(msg))
         assert not self.onwire.has_key(msg.id)
@@ -92,7 +92,7 @@ class LDAPClient(protocol.Protocol):
         d=defer.Deferred()
         if not self.connected:
             d.errback(Failure(
-                ldaperrors.LDAPClientConnectionLostException()))
+                LDAPClientConnectionLostException()))
         else:
             r=pureldap.LDAPBindRequest(dn=dn, auth=auth)
             self.queue(r, d.callback) #TODO queue needs info back from callback!!!
@@ -115,10 +115,6 @@ class LDAPClient(protocol.Protocol):
         r=pureldap.LDAPUnbindRequest()
         self.queue(r)
         self.transport.loseConnection()
-
-
-    ##Search is externalized into class LDAPSearch
-        
 
 class LDAPOperation:
     def __init__(self, client):
@@ -156,8 +152,10 @@ class LDAPSearch(LDAPOperation):
                 assert msg.matchedDN==''
                 self.deferred.callback(self)
             else:
-                self.deferred.errback(Failure(
-                    ldaperrors.get(msg.resultCode, msg.errorMessage)))
+                try:
+                    raise ldaperrors.get(msg.resultCode, msg.errorMessage)
+                except:
+                    self.deferred.errback(Failure())
             return 1
         else:
             assert isinstance(msg, pureldap.LDAPSearchResultEntry)
@@ -169,6 +167,7 @@ class LDAPSearch(LDAPOperation):
 
 class LDAPModifyAttributes(LDAPOperation):
     def __init__(self,
+                 deferred,
                  client,
                  object,
                  modification):
@@ -181,6 +180,7 @@ class LDAPModifyAttributes(LDAPOperation):
         """
 
         LDAPOperation.__init__(self, client)
+        self.deferred=deferred
         r=pureldap.LDAPModifyRequest(object=object,
                                      modification=modification)
         self.client.queue(r, self.handle_msg)
@@ -190,22 +190,16 @@ class LDAPModifyAttributes(LDAPOperation):
         assert msg.referral==None #TODO
         if msg.resultCode==0: #TODO ldap.errors.success
             assert msg.matchedDN==''
-            self.handle_success()
+            self.deferred.callback(self)
             return 1
         else:
-            self.handle_fail(Failure(
+            self.deferred.errback(Failure(
                 ldaperrors.get(msg.resultCode, msg.errorMessage)))
             return 1
-            
-    def handle_success(self):
-        pass
-
-    def handle_fail(self, fail):
-        pass
-
 
 class LDAPDeleteAttributes(LDAPModifyAttributes):
     def __init__(self,
+                 deferred,
                  client,
                  object,
                  vals):
@@ -223,7 +217,7 @@ class LDAPDeleteAttributes(LDAPModifyAttributes):
         values. """
 
         mod = pureldap.LDAPModification_delete(vals=vals)
-        LDAPModifyAttributes.__init__(self, client,
+        LDAPModifyAttributes.__init__(self, deferred, client,
                                       object, [mod])
 
 
@@ -345,7 +339,7 @@ class LDAPModifySambaPassword(LDAPModifyAttributes):
         self.object=object
 
         LDAPModifyAttributes.__init__(
-            self, client, object,
+            self, deferred, client, object,
             modification=pureldap.LDAPModification_replace(vals=(
             ('ntPassword', (nthash,)),
             ('lmPassword', (lmhash,)))))
