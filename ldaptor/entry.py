@@ -176,6 +176,11 @@ class BaseLDAPEntry(object):
                     return True
         return False
         
+    def hasMember(self, dn):
+        for memberDN in self.get('member', []):
+            if memberDN == dn:
+                return True
+        return False
 
 class EditableLDAPEntry(BaseLDAPEntry):
     __implements__ = (interfaces.IEditableLDAPEntry,)
