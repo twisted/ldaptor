@@ -1,0 +1,251 @@
+#!/usr/bin/python
+
+from ldaptor.protocols.ldap import ldapclient, ldapfilter
+from ldaptor.protocols import pureber, pureldap
+from ldaptor import usage
+from socket import inet_aton, inet_ntoa
+import sys
+
+
+def my_aton(ip):
+    s=inet_aton(ip)
+    octets=map(None, s)
+    n=0
+    for o in octets:
+        n=n<<8
+        n+=ord(o)
+    return n
+
+def my_ntoa(n):
+    s=(
+        chr((n>>24)&0xFF)
+        + chr((n>>16)&0xFF)
+        + chr((n>>8)&0xFF)
+        + chr(n&0xFF)
+       )
+    ip=inet_ntoa(s)
+    return ip
+
+def printIPAddress(name, ip):
+    print 'A'+name+'.%|86400|'+ip
+
+def printPTR(name, ip):
+    octets = ip.split('.')
+    octets.reverse()
+    octets.append('in-addr.arpa.')
+    print 'P'+('.'.join(octets))+'|86400|'+name+'.%'
+    
+
+class Host:
+    def __init__(self, dn, name, ipAddresses):
+        self.dn=dn
+        self.name=name
+        self.ipAddresses=ipAddresses
+
+    def printZone(self, domain):
+        print '#  '+self.dn
+        for ip in self.ipAddresses:
+            printIPAddress(self.name+'.'+domain, ip)
+            printPTR(self.name+'.'+domain, ip)
+
+class Net:
+    def __init__(self, dn, name, address, mask):
+        self.dn=dn
+        self.name=name
+        self.address=address
+        self.mask=mask
+        self.hosts=[]
+
+    def isInNet(self, host):
+        net = my_aton(self.address)
+        mask = my_aton(self.mask)
+        for ipA in host.ipAddresses:
+            ip = my_aton(ipA)
+            if ip&mask == net:
+                return 1
+        return 0
+
+    def addHost(self, host):
+        assert self.isInNet(host)
+        self.hosts.append(host)
+
+    def printZone(self):
+        print '#'+self.dn
+        printIPAddress(self.name, self.address)
+        printPTR(self.name, self.address)
+        printIPAddress('netmask.'+self.name, self.mask)
+        ip = my_aton(self.address)
+        mask = my_aton(self.mask)
+        broadcast = my_ntoa(ip|~mask)
+        printIPAddress('broadcast.'+self.name, broadcast)
+        printPTR('broadcast.'+self.name, broadcast)
+
+        print '# hosts begin'
+        for host in self.hosts:
+            host.printZone(self.name)
+        print '# hosts end'
+        print
+
+
+class SearchHosts(ldapclient.LDAPSearch):
+    def __init__(self, client, base, filter):
+        self.entries = []
+        filt=pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('objectClass'),
+                                               assertionValue=pureber.BEROctetString('ipHost'))
+        if filter:
+            filt = pureldap.LDAPFilter_and(value=(filter, filt))
+        ldapclient.LDAPSearch.__init__(self, client,
+                                       baseObject=base,
+                                       filter=filt,
+                                       attributes=['ipHostNumber',
+                                                   'cn'])
+
+    def handle_success(self):
+        self.client.haveHosts(self.entries)
+
+    def handle_entry(self, objectName, attributes):
+        args = {}
+        for k,vs in attributes:
+            k=str(k)
+            args[k]=vs
+
+        assert len(args['cn'])==1, \
+               "object %s attribute 'cn' has multiple values: %s" \
+               % (objectName, args['cn'])
+
+        self.entries.append(Host(str(objectName),
+                                 str(args['cn'][0]),
+                                 map(str, args['ipHostNumber'])))
+
+    def handle_fail(self, resultCode, errorMessage):
+        self.client.searchFailed(resultCode, errorMessage)
+
+class SearchNets(ldapclient.LDAPSearch):
+    def __init__(self, client, base, filter):
+        self.entries = []
+        filt=pureldap.LDAPFilter_and(value=(
+            pureldap.LDAPFilter_present('cn'),
+            pureldap.LDAPFilter_present('ipNetworkNumber'),
+            pureldap.LDAPFilter_present('ipNetmaskNumber'),
+            ))
+        if filter:
+            filt = pureldap.LDAPFilter_and(value=(filter, filt))
+        ldapclient.LDAPSearch.__init__(self, client,
+                                       baseObject=base,
+                                       filter=filt,
+                                       attributes=['cn',
+                                                   'ipNetworkNumber',
+                                                   'ipNetmaskNumber',
+                                                   ])
+
+    def handle_success(self):
+        self.client.haveNets(self.entries)
+
+    def handle_entry(self, objectName, attributes):
+        args = {}
+        for k,vs in attributes:
+            k=str(k)
+            args[k]=map(str, vs)
+
+        assert len(args['cn'])==1, \
+               "object %s attribute 'cn' has multiple values: %s" \
+               % (objectName, args['cn'])
+        assert len(args['ipNetworkNumber'])==1, \
+               "object %s attribute 'ipNetworkNumber' has multiple values: %s" \
+               % (objectName, args['ipNetworkNumber'])
+        assert len(args['ipNetmaskNumber'])==1, \
+               "object %s attribute 'ipNetmaskNumber' has multiple values: %s" \
+               % (objectName, args['ipNetmaskNumber'])
+
+        self.entries.append(Net(str(objectName),
+                                str(args['cn'][0]),
+                                str(args['ipNetworkNumber'][0]),
+                                str(args['ipNetmaskNumber'][0])))
+
+    def handle_fail(self, resultCode, errorMessage):
+        self.client.searchFailed(resultCode, errorMessage)
+
+
+class Search(ldapclient.LDAPClient):
+    def __init__(self, base, filt, callback, errback):
+        ldapclient.LDAPClient.__init__(self)
+        self.base=base
+        self.filter=filt
+        self.callback = callback
+        self.errback = errback
+    
+    def connectionMade(self):
+        self.bind()
+
+    def handle_bind_success(self, matchedDN, serverSaslCreds):
+        SearchNets(self, self.base, self.filter)
+
+    def searchFailed(self, resultCode, errorMessage):
+        sys.stderr.write("fail: %d: %s\n"%(resultCode, errorMessage or "Unknown error"))
+        self.errback()
+
+    def haveNets(self, nets):
+        self.nets = nets
+        SearchHosts(self, self.base, self.filter)
+
+    def haveHosts(self, hosts):
+        for host in hosts:
+            parent=None
+            for net in self.nets:
+                if net.isInNet(host):
+                    parent=net
+                    break
+
+            if parent:
+                parent.addHost(host)
+            else:
+                sys.stderr.write("host %s is in no net, discarding.\n" % host)
+
+        for net in self.nets:
+            net.printZone()
+
+        self.callback()
+
+def callback():
+    from twisted.internet import main
+    main.shutDown()
+
+def errback():
+    from twisted.internet import main
+    main.shutDown()
+    sys.exit(1)
+
+def main(host, port, base, filter_text):
+    from twisted.internet import tcp, main
+    from twisted.python import log
+
+    # TODO horrible, ugly hack to work around twisted's ugly logging
+    log.startLogging(sys.stderr)
+    sys.stdout=sys.__stdout__
+
+    if filter_text is not None:
+        filt = ldapfilter.parseFilter(filter_text)
+    else:
+        filt = None
+    s=Search(base, filt, callback, errback)
+    tcp.Client(host, port, s)
+    main.run()
+
+class MyOptions(usage.Options, usage.Options_hostport, usage.Options_base):
+    """LDAPtor maradns zone file exporter"""
+    def parseArgs(self, filter=None):
+        self.opts['filter'] = filter
+
+if __name__ == "__main__":
+    import sys
+    try:
+        config = MyOptions()
+        config.parseOptions()
+    except usage.UsageError, ue:
+        sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
+        sys.exit(1)
+
+    main(config.opts['ldap-host'],
+         config.opts['ldap-port'],
+         config.opts['base'],
+         config.opts['filter'])

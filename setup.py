@@ -1,28 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 
-from distutils.core import setup, Extension
+"""You really want to call all the setup-*.py's separately."""
 
-setup(name="ldaptor",
-      version="0.0.0.20020526.1",
-      description="TODO",
-      long_description="""
-Ldaptor is TODO
-""",
-      author="Tommi Virtanen",
-      author_email="tv@debian.org",
-      #url="TODO",
-      licence="GNU LGPL",
-      
-      package_dir={"": "lib"},
-      packages=[
-    "ldaptor",
-
-    "ldaptor.protocols", "ldaptor.protocols.ldap",
-
-    "ldaptor.twisted",
-
-    "ldaptor.apps",
-    "ldaptor.apps.webui",
-    ],
-      scripts=["bin/ldaptor-webui"],
-      )
+__import__('setup-python-ldaptor')

@@ -1,5 +1,6 @@
+#!/usr/bin/python
 
-# Twisted, the Framework of Your Internet
+# Ldaptor -- TODO
 # Copyright (C) 2001 Matthew W. Lefkowitz
 # 
 # This library is free software; you can redistribute it and/or
@@ -19,7 +20,7 @@
 Test cases for ldaptor.protocols.pureber module.
 """
 
-from pyunit import unittest
+import unittest
 from ldaptor.protocols import pureber
 from twisted.python.mutablestring import MutableString
 import types
@@ -371,10 +372,5 @@ class BERSequenceKnownValues(unittest.TestCase):
 # TODO BERSequenceOf
 # TODO BERSet
 
-testCases = [
-    BERIntegerKnownValues, BERIntegerSanityCheck,
-    BEROctetStringKnownValues, BEROctetStringSanityCheck,
-    BERNullKnownValues, BERBooleanKnownValues,
-    BEREnumeratedKnownValues, BEREnumeratedSanityCheck,
-    BERSequenceKnownValues, BERBaseEquality,
-    ]
+if __name__ == '__main__':
+    unittest.main()

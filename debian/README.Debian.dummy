@@ -1,0 +1,4 @@
+This is a dummy package that only depends on the version of
+python-ldaptor matching the current default Python package in
+Debian. That is, while the Debian package 'python' depends
+on pythonX.Y, this package will depend on pythonX.Y-ldaptor.

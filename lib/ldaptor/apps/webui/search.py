@@ -1,6 +1,6 @@
 from twisted.web import widgets
-from twisted.python import defer
-from ldaptor.protocols.ldap import ldapclient
+from twisted.internet import defer
+from ldaptor.protocols.ldap import ldapclient, ldapfilter
 from ldaptor.protocols import pureber, pureldap
 from twisted.internet import tcp
 import string, urllib
@@ -54,11 +54,12 @@ class LDAPSearchEntry(ldapclient.LDAPSearch):
         self.callback(["fail: %d: %s"%(resultCode, errorMessage or "Unknown error")])
 
 class DoSearch(ldapclient.LDAPClient):
-    def __init__(self, callback, baseObject, searchFor=[]):
+    def __init__(self, callback, baseObject, searchFor=[], ldapFilter=None):
         ldapclient.LDAPClient.__init__(self)
         self.callback=callback
         self.baseObject=baseObject
         self.searchFor=searchFor
+        self.ldapFilter=ldapFilter
 
     def connectionMade(self):
         self.bind()
@@ -80,29 +81,10 @@ class DoSearch(ldapclient.LDAPClient):
         for k,v in self.searchFor:
             v=string.strip(v)
             if v=='':
-                pass
-            elif v=='*':
-                filt.append(pureldap.LDAPFilter_present(k))
-            elif v[0]=='*' and v[-1]=='*':
-                filt.append(
-                    pureldap.LDAPFilter_substrings(
-                    type=k,
-                    substrings=[pureldap.LDAPFilter_substrings_any(v[1:-1])]))
-            elif v[0]=='*':
-                filt.append(
-                    pureldap.LDAPFilter_substrings(
-                    type=k,
-                    substrings=[pureldap.LDAPFilter_substrings_final(v[1:])]))
-            elif v[-1]=='*':
-                filt.append(
-                    pureldap.LDAPFilter_substrings(
-                    type=k,
-                    substrings=[pureldap.LDAPFilter_substrings_initial(v[:-1])]))
-            else:
-                filt.append(
-                    pureldap.LDAPFilter_equalityMatch(
-                    attributeDesc=pureldap.LDAPAttributeDescription(k),
-                    assertionValue=pureldap.LDAPAssertionValue(v)))
+                continue
+            filt.append(ldapfilter.parseItem('%s=%s' % (k,v)))
+        if self.ldapFilter:
+            filt.append(ldapfilter.parseFilter(self.ldapFilter))
         if filt:
             if len(filt)==1:
                 filt=filt[0]
@@ -119,10 +101,10 @@ class SearchForm(widgets.Form):
         ('string', 'Name', 'search_cn', ''),
         ('string', 'UserID', 'search_uid', ''),
         ('string', 'Email', 'search_mail', ''),
-        #('string', 'Advanced', 'ldapfilter', ''),
+        ('string', 'Advanced', 'ldapfilter', ''),
         ]
 
-    def __init__(self, baseObject, ldaphost='localhost', ldapport=389):
+    def __init__(self, baseObject, ldaphost, ldapport):
         self.baseObject = baseObject
         self.ldaphost = ldaphost
         self.ldapport = ldapport
@@ -147,37 +129,39 @@ class SearchForm(widgets.Form):
         self.format(self.getFormFields(request, kw), io.write, request)
         d=defer.Deferred()
         searchFields=[]
+        ldapFilter=None
         for k,v in kw.items():
             if k[:len("search_")]=="search_":
                 searchFields.append((k[len("search_"):], v))
+            elif k=='ldapfilter':
+                ldapFilter=v
         tcp.Client(self.ldaphost, self.ldapport,
                    DoSearch(d.callback,
                             baseObject=self.baseObject,
-                            searchFor=searchFields))
-        return [self._header(request), io.getvalue(), d]
-
-    def _header(self, request):
-        return ('[<a href="%s">Search</a>'%request.sibLink("search")
-                +'|<a href="%s">add new entry</a>'%request.sibLink("add")
-                +']')
-
-    def stream(self, write, request):
-        write(self._header(request))
-        write("<P>")
-        return widgets.Form.stream(self, write, request)
+                            searchFor=searchFields,
+                            ldapFilter=ldapFilter))
+        return [io.getvalue(), d]
 
 class SearchPage(template.BasicPage):
     title = "Ldaptor Search Page"
     isLeaf = 1
 
-    def __init__(self, baseObject, ldaphost='localhost', ldapport=389):
+    def __init__(self, baseObject, ldaphost, ldapport):
         template.BasicPage.__init__(self)
         self.baseObject = baseObject
         self.ldaphost = ldaphost
         self.ldapport = ldapport
 
+    def _header(self, request):
+        l=[]
+        l.append('<a href="%s">Search</a>'%request.sibLink("search"))
+        l.append('<a href="%s">add new entry</a>'%request.sibLink("add"))
+        
+        return '[' + '|'.join(l) + ']'
+
     def getContent(self, request):
-        return SearchForm(baseObject=self.baseObject,
-                          ldaphost=self.ldaphost,
-                          ldapport=self.ldapport)
+        return [self._header(request),
+                SearchForm(baseObject=self.baseObject,
+                           ldaphost=self.ldaphost,
+                           ldapport=self.ldapport)]
 

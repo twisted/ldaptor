@@ -39,8 +39,8 @@ class IndexPage(template.BasicPage):
 class LdaptorWebUIGadget(widgets.Gadget):
     def __init__(self, editService,
                  baseObject,
-                 ldaphost='localhost',
-                 ldapport=389):
+                 ldaphost,
+                 ldapport):
         widgets.Gadget.__init__(self)
 
         siblings = {

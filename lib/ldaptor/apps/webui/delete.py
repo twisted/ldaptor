@@ -1,5 +1,5 @@
 from twisted.web import widgets
-from twisted.python import defer
+from twisted.internet import defer
 
 from ldaptor.protocols import pureldap
 from ldaptor.protocols.ldap import ldapclient, ldaperrors
@@ -92,17 +92,6 @@ class DeleteForm(widgets.Form):
 
         return ["<P>Submitting del as user %s.."%user, defe]
 
-    def _header(self, request):
-        return ('[<a href="%s">Search</a>'%request.sibLink("search")
-                +'|<a href="%s">add new entry</a>'%request.sibLink("add")
-                +']')
-
-    def stream(self, write, request):
-        write(self._header(request))
-        write("<P>")
-        return widgets.Form.stream(self, write, request)
-
-
 class CreateDeleteForm:
     def __init__(self, defe, dn, request):
         self.deferred=defe
@@ -134,6 +123,17 @@ class DeletePage(template.BasicPage):
     title = "Ldaptor Del Page"
     isLeaf = 1
 
+    def _header(self, request):
+        l=[]
+        l.append('<a href="%s">Search</a>'%request.sibLink("search"))
+        l.append('<a href="%s">add new entry</a>'%request.sibLink("add"))
+        
+        if request.postpath and request.postpath!=['']:
+            l.append('<a href="%s">edit this entry</a>' \
+                     % request.sibLink("edit/" + '/'.join(request.postpath)))
+            
+        return '[' + '|'.join(l) + ']'
+
     def getContent(self, request):
         if not request.postpath or request.postpath==['']:
             return NeedDNError()
@@ -150,4 +150,4 @@ class DeletePage(template.BasicPage):
             else:
                 CreateError(d, dn, request)(errorMessage="connection lost")
 
-            return [d]
+            return [self._header(request), d]

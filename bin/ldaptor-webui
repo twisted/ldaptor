@@ -8,14 +8,14 @@ from twisted.cred.service import Service
 from twisted.cred.identity import Identity
 from twisted.cred.perspective import Perspective
 from twisted.cred.authorizer import Authorizer
-from twisted.python.defer import Deferred
-from twisted.python import defer
+from twisted.internet.defer import Deferred
+from twisted.internet import defer
 from twisted.internet import tcp
-from twisted.protocols.protocol import ClientFactory
+from twisted.internet.protocol import ClientFactory
 from ldaptor.protocols.ldap import ldapclient
 from ldaptor.protocols import pureldap
 from twisted.web import server, guard
-from twisted.python import usage
+from ldaptor import usage
 
 class LDAPAuth(ldapclient.LDAPClient):
     def __init__(self, defe, dn, auth, cb_connectionLost):
@@ -225,7 +225,7 @@ class LDAPAuthorizer(Authorizer):
     def getIdentityRequest(self, name):
         """Get a Deferred callback registration object.
 
-        I return a deferred (twisted.python.defer.Deferred) which will
+        I return a deferred (twisted.internet.defer.Deferred) which will
         be called back to when an identity is discovered to be available
         (or errback for unavailable).  It will be returned unarmed, so
         you must arm it yourself.
@@ -262,37 +262,21 @@ class LDAPService(Service):
             return defer.succeed(p)
 
 
-class MyOptions(usage.Options):
+class MyOptions(usage.Options, usage.Options_hostport, usage.Options_base):
     """LDAPtor Web User Interface"""
 
     optParameters = (
-        ('ldap-host', None, 'localhost',
-         "LDAP server hostname"),
-        ('ldap-port', None, '389',
-         "LDAP server port"),
-        ('port', None, '8080',
+        ('http-port', None, '8080',
          "listen on this port"),
-        ('base', None, None,
-         "LDAP base dn"),
         )
 
-    def __init__(self):
-        usage.Options.__init__(self)
-
-    def postOptions(self):
-        # check that some things are numeric
-        for name in ('ldap-port', 'port'):
-            try:
-                val = int(self.opts[name])
-            except ValueError:
-                raise usage.UsageError, "%s value must be numeric" % name
-            self.opts[name] = val
-
-        # check that some things are given
-        for name in ('base',):
-            if not self.opts['base']:
-                raise usage.UsageError, "%s must be given" % name
-
+    def postOptions_httpport(self):
+        try:
+            val = int(self.opts['http-port'])
+        except ValueError:
+            raise usage.UsageError, "%s value must be numeric" % 'http-port'
+        self.opts['http-port'] = val
+        
 if __name__ == '__main__':
     import sys
     try:
@@ -315,5 +299,5 @@ if __name__ == '__main__':
     
     sit = server.Site(gdgt)
     sit.application = application
-    application.listenTCP(config.opts['port'], sit)
+    application.listenTCP(config.opts['http-port'], sit)
     application.run(save=0)

@@ -1,15 +1,11 @@
 TODO file for the Ldaptor project.
 
-* /delete final page, navi links missing
-
-* /add/foo result page, add navi links to search/edit of created object
-
 * creating a new group
 
 * editing a users groups, multiselection with a list of existing
    groups to choose from
 
-* changing a users password
+* changing a users password with ldaptor-webui
 
 * non-ASCII chars
 
@@ -22,3 +18,12 @@ TODO file for the Ldaptor project.
 
 * suggest mails/uids/uidNumbers/gidNumbers/homes
 
+* study array.array as a replacement for MutableString
+
+* SSHA password verify:
+   pwd='dYH8JoKo5t1kG4Szd7SJhXoGqySj3k1r'
+   p=base64.decodestring(pwd)
+   s=sha.sha()
+   s.update('foo')
+   s.update(p[20:])
+   assert pwd==base64.encodestring(s.digest())

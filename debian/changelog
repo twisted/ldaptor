@@ -1,3 +1,38 @@
+ldaptor (0.0.2) unstable; urgency=low
+
+  * NOTE: Requires a CVS version of twisted!
+  * NOTE: Upgrade from 0.0.1 can fail.
+  * Split package into library, ldaptor-webui and
+    ldaptor-utils. Support multiple python versions in library.
+  * Added new command line utilities:
+    - ldaptor-namingcontexts to list naming contexts of a server.
+    - ldaptor-ldap2dhcpconf is the start of a tool to export host
+      entries from LDAP in a format suitable for a DHCP server.
+    - ldaptor-ldap2maradns does pretty much the same for DNS, in
+      (partial) maradns zone format; it was just so much easier.
+    - note that the ldaptor-ldap2{dhcpconf,maradns} input format
+      will change as I try to cram in a few more features
+      (separate physical network location from DNS domain -- they
+      are currently bound together).
+    - ldaptor-search aims to be a full replacement for ldapsearch.
+    - ldaptor-passwd allows changing passwords (as per RFC3062).
+  * ldaptor-webui:
+    - added support for "Advanced" searching with raw LDAP filter
+      strings.
+    - change parameter --port to --http-port, for clarity.
+    - fix navi links.
+  * Make all LDAP server, port and base settings explicit.
+  * Add ldapfilter and ldif modules.
+  * Create ldaptor.usage to store common option processing.
+  * Change twisted.python.defer to twisted.internet.defer and
+    twisted.protocols.protocol to twisted.internet.protocol.
+  * Handle unsolicited LDAP notifications.
+  * New test subsystem.
+  * Rewrite LDAP protocol error number storage to be
+    bi-directional; you can resolve a number to a string.
+
+ -- Tommi Virtanen <tv@debian.org>  Sun, 28 Jul 2002 20:30:06 +0300
+
 ldaptor (0.0.1) unstable; urgency=low
 
   * Initial Release.

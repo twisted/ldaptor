@@ -695,10 +695,10 @@ l=LDAPModifyRequest(object='cn=foo,dc=example,dc=com',
             self.modification=modification
 
     def __str__(self):
-        return str(BERSequence([
-            LDAPString(self.object),
-            BERSequence(self.modification)
-            ], tag=self.tag))
+        l=[LDAPString(self.object)]
+        if self.modification is not None:
+            l.append(BERSequence(self.modification))
+        return str(BERSequence(l, tag=self.tag))
 
     def __repr__(self):
         if self.tag==self.__class__.tag:
@@ -806,6 +806,116 @@ class LDAPDelResponse(LDAPResult):
 #    needs_answer=0
 
 
+class LDAPOID(BEROctetString):
+    pass
+
+class LDAPResponseName(LDAPOID):
+    tag = CLASS_CONTEXT|10
+
+class LDAPResponse(BEROctetString):
+    tag = CLASS_CONTEXT|11
+
+
+class LDAPExtendedRequest(LDAPProtocolRequest, BERSequence):
+    tag = CLASS_APPLICATION|23
+
+    def decode(self, encoded, berdecoder):
+        BERSequence.decode(self, encoded, berdecoder)
+        self.requestName = self.data[0].value
+        del self.data[0]
+        try:
+            self.requestValue=self.data[0]
+        except IndexError:
+            self.requestValue=None
+
+    def __init__(self, requestName=None, requestValue=None,
+                 encoded=None, berdecoder=None, tag=None):
+        LDAPProtocolRequest.__init__(self)
+        BERSequence.__init__(self, [])
+        if encoded!=None:
+            assert requestName==None
+            assert requestValue==None
+            assert berdecoder
+            self.decode(encoded, berdecoder)
+        else:
+            assert requestName is not None
+            self.requestName=requestName
+            self.requestValue=requestValue
+
+    def __str__(self):
+        l=[self.requestName]
+        if self.requestValue is not None:
+            l.append(self.requestValue)
+        return str(BERSequence(l, tag=self.tag))
+
+class LDAPPasswordModifyRequest_userIdentity(BEROctetString):
+    tag=CLASS_CONTEXT|0
+class LDAPPasswordModifyRequest_oldPasswd(BEROctetString):
+    tag=CLASS_CONTEXT|1
+class LDAPPasswordModifyRequest_newPasswd(BEROctetString):
+    tag=CLASS_CONTEXT|2
+
+class LDAPBERDecoderContext_LDAPPasswordModifyRequest(BERDecoderContext):
+    Identities = {
+        LDAPPasswordModifyRequest_userIdentity.tag:
+        LDAPPasswordModifyRequest_userIdentity,
+
+        LDAPPasswordModifyRequest_oldPasswd.tag:
+        LDAPPasswordModifyRequest_oldPasswd,
+        
+        LDAPPasswordModifyRequest_newPasswd.tag:
+        LDAPPasswordModifyRequest_newPasswd,
+        }
+
+class LDAPPasswordModifyRequest(LDAPExtendedRequest):
+    oid = LDAPOID('1.3.6.1.4.1.4203.1.11.1', tag=CLASS_CONTEXT|0)
+    def decode(self, encoded, berdecoder):
+        LDAPExtendedRequest.decode(self, encoded, berdecoder)
+        assert self.requestName == self.oid, \
+               '%s requestName was %s instead of %s' \
+               % (self.__class__.__name__, self.requestName, self.oid)
+        #TODO genPasswd
+        
+    def __init__(self, userIdentity=None, oldPasswd=None, newPasswd=None,
+                 encoded=None, berdecoder=None, tag=None):
+        if encoded!=None:
+            assert userIdentity==None
+            assert oldPasswd==None
+            assert newPasswd==None
+            assert berdecoder
+            LDAPExtendedRequest.__init__(self, encoded=encoded, berdecoder=berdecoder)
+        else:
+            l=[]
+            if userIdentity is not None:
+                l.append(LDAPPasswordModifyRequest_userIdentity(userIdentity))
+            if oldPasswd is not None:
+                l.append(LDAPPasswordModifyRequest_oldPasswd(oldPasswd))
+            if newPasswd is not None:
+                l.append(LDAPPasswordModifyRequest_newPasswd(newPasswd))
+            LDAPExtendedRequest.__init__(
+                self,
+                requestName=self.oid,
+                requestValue=BEROctetString(str(BERSequence(l)),
+                                            tag=CLASS_CONTEXT|1))
+
+
+class LDAPBERDecoderContext_LDAPExtendedResponse(BERDecoderContext):
+    Identities = {
+        LDAPResponseName.tag: LDAPResponseName,
+        LDAPResponse.tag: LDAPResponse,
+        }
+
+class LDAPExtendedResponse(LDAPResult):
+    tag = CLASS_APPLICATION|0x18
+
+    def decode(self, encoded, berdecoder):
+        LDAPResult.decode(self, encoded, LDAPBERDecoderContext_LDAPExtendedResponse(fallback=berdecoder))
+
+    #TODO LDAPResult plus the following:
+    # COMPONENTS OF LDAPResult,
+    # responseName     [10] LDAPOID OPTIONAL,
+    # response         [11] OCTET STRING OPTIONAL }
+
 
 
 class LDAPBERDecoderContext(BERDecoderContext):
@@ -820,10 +930,12 @@ class LDAPBERDecoderContext(BERDecoderContext):
         LDAPAddResponse.tag: LDAPAddResponse,
         LDAPDelRequest.tag: LDAPDelRequest,
         LDAPDelResponse.tag: LDAPDelResponse,
+        LDAPExtendedResponse.tag: LDAPExtendedResponse,
     }
 
 
 class LDAPBERDecoderContext_LDAPMessage(BERDecoderContext):
     Identities = {
-        BERSequence.tag: LDAPMessage
+        BERSequence.tag: LDAPMessage,
         }
+

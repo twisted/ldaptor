@@ -1,0 +1,80 @@
+#!/usr/bin/python
+
+import sys
+from ldaptor.protocols.ldap import ldapclient, ldapfilter, ldif
+from ldaptor.protocols import pureber, pureldap
+from twisted.internet.defer import Deferred, DeferredList
+
+class SearchNamingContexts(ldapclient.LDAPSearch):
+    def __init__(self, client, host):
+        ldapclient.LDAPSearch.__init__(
+            self, client,
+            baseObject='',
+            scope=pureldap.LDAP_SCOPE_baseObject,
+            filter=pureldap.LDAPFilter_present('objectClass'),
+            attributes=['namingContexts'])
+        self.host=host
+
+    def handle_success(self):
+        self.client.search_done()
+
+    def handle_entry(self, objectName, attributes):
+        for a,vs in attributes:
+            a=str(a)
+            if a=='namingContexts':
+                for v in vs:
+                    v=str(v)
+                    print '%s\t%s' % (self.host, v)
+
+    def handle_fail(self, resultCode, errorMessage):
+        sys.stderr.write("fail: %d: %s\n"%(resultCode, errorMessage or "Unknown error"))
+        self.client.search_fail(self)
+
+class Search(ldapclient.LDAPClient):
+    def __init__(self, host, deferred):
+        ldapclient.LDAPClient.__init__(self)
+        self.host = host
+        self.deferred = deferred
+    
+    def connectionMade(self):
+        self.bind()
+
+    def handle_bind_success(self, matchedDN, serverSaslCreds):
+        SearchNamingContexts(self, self.host)
+
+    def search_done(self):
+        self.deferred.callback(None)
+
+    def search_fail(self, search):
+        self.deferred.errback(None)
+
+def callback(data):
+    from twisted.internet import main
+    main.shutDown()
+
+def errback(data):
+    print "ERROR:", data
+    from twisted.internet import main
+    main.shutDown()
+    sys.exit(1)
+
+def main(servers):
+    from twisted.internet import tcp, main
+    l = []
+    for server in servers:
+        d=Deferred()
+        l.append(d)
+        s=Search(server, d)
+        tcp.Client(server, 389, s)
+    dl = DeferredList(l)
+    dl.addCallback(callback)
+    dl.addErrback(errback)
+    
+    main.run()
+
+if __name__ == "__main__":
+    if not sys.argv[1:]:
+        print '%s: usage:' % sys.argv[0]
+        print '  %s HOST..' % sys.argv[0]
+    else:
+        main(sys.argv[1:])

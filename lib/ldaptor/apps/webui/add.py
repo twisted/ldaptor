@@ -1,11 +1,12 @@
 from twisted.web import widgets
-from twisted.python import defer
+from twisted.internet import defer
 
 from ldaptor.protocols import pureldap, pureber
 from ldaptor.protocols.ldap import ldapclient, ldaperrors
 from ldaptor.protocols.ldap import schema
 
 from cStringIO import StringIO
+import urllib
 
 import template
 
@@ -125,7 +126,7 @@ class AddForm(widgets.Form):
     def _output_status_and_form(self, request, kw, *status):
         io=StringIO()
         self.format(self.getFormFields(request, kw), io.write, request)
-        return [self._header(request)]+list(status)+["<P>", io.getvalue()]
+        return list(status)+["<P>", io.getvalue()]
 
     def process(self, write, request, submit, **kw):
         user = request.getSession().LdaptorPerspective.getPerspectiveName()
@@ -185,16 +186,6 @@ class AddForm(widgets.Form):
             changes_desc,
             defe)
 
-    def _header(self, request):
-        return ('[<a href="%s">Search</a>'%request.sibLink("search")
-                +'|<a href="%s">add new entry</a>'%request.sibLink("add")
-                +']')
-
-    def stream(self, write, request):
-        write(self._header(request))
-        write("<P>")
-        return widgets.Form.stream(self, write, request)
-
 class AddError:
     def __init__(self, defe, request):
         self.deferred=defe
@@ -212,14 +203,8 @@ class ChooseObjectClass(widgets.Widget):
     def __init__(self, allowedObjectClasses):
         self.allowedObjectClasses = allowedObjectClasses
 
-    def _header(self, request):
-        return ('[<a href="%s">Search</a>'%request.sibLink("search")
-                +'|<a href="%s">add new entry</a>'%request.sibLink("add")
-                +']')
-
     def display(self, request):
-        r=[self._header(request),
-           '<P>Please choose an object class:\n',
+        r=['<P>Please choose an object class:\n',
            '<ul>\n']
         for oc in self.allowedObjectClasses:
             r.append('  <li><a href="%s">%s</a></li>\n'%(request.childLink(oc), oc))
@@ -235,6 +220,21 @@ class AddPage(template.BasicPage):
     def __init__(self, baseObject):
         template.BasicPage.__init__(self)
         self.baseObject = baseObject
+
+    def _header(self, request):
+        l=[]
+        l.append('<a href="%s">Search</a>'%request.sibLink("search"))
+        l.append('<a href="%s">add new entry</a>'%request.sibLink("add"))
+        
+        if request.args.get('dn') \
+           and request.args.get('dn')[0]:
+            dnattr=request.args['dn'][0]
+            if request.args.get('add_'+dnattr):
+                dn=dnattr+'='+request.args.get('add_'+dnattr)[0]+','+self.baseObject
+                l.append('<a href="%s">edit this entry</a>' \
+                         % request.sibLink('edit/%s' % urllib.quote(dn)))
+            
+        return '[' + '|'.join(l) + ']'
 
     def getContent(self, request):
         d=defer.Deferred()
@@ -253,7 +253,7 @@ class AddPage(template.BasicPage):
         else:
             self._getContent_real(request, d)
 
-        return [d]
+        return [self._header(request), d]
 
     def _getContent_have_subschemaSubentry(self, dn, subschemaSubentry,
                                            request, client, d):

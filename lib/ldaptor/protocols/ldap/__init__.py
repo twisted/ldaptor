@@ -16,4 +16,10 @@
 
 """LDAP protocol logic"""
 
-__all__ = ["ldapclient", "ldaperrors", "schema"]
+__all__ = [
+    "ldapclient",
+    "ldaperrors",
+    "schema",
+    "ldapfilter",
+    "ldif",
+    ]

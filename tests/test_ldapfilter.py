@@ -1,28 +1,15 @@
 #!/usr/bin/python
 
 # Ldaptor -- TODO
-# Copyright (C) 2001 Matthew W. Lefkowitz
-# 
-# This library is free software; you can redistribute it and/or
-# modify it under the terms of version 2.1 of the GNU Lesser General Public
-# License as published by the Free Software Foundation.
-# 
-# This library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# Lesser General Public License for more details.
-# 
-# You should have received a copy of the GNU Lesser General Public
-# License along with this library; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
-Test cases for ldaptor.protocols.pureldap module.
+Test cases for ldaptor.protocols.ldap.ldapfilter module.
 """
 
 import unittest
-from ldaptor.protocols import pureldap, pureber
 from twisted.python.mutablestring import MutableString
+from ldaptor.protocols import pureldap, pureber
+from ldaptor.protocols.ldap import ldapfilter
 import types
 
 def s(*l):
@@ -38,7 +25,7 @@ def l(s):
     """Split a string to ord's of chars."""
     return map(lambda x: ord(x), s)
 
-class LDAPModifyRequestKnownValues(unittest.TestCase):
+class LDAPFilter(unittest.TestCase):
     knownValues=( # args, kwargs, expected_result
         ([],
          { "object": 'cn=foo, dc=example, dc=com',

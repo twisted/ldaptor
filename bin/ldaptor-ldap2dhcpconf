@@ -1,0 +1,189 @@
+#!/usr/bin/python
+
+#host fantasia {
+#  dhcp-client-identifier
+#  hardware ethernet 08:00:07:26:c0:a5;
+#  fixed-address fantasia.fugue.com;
+#}
+
+#subnet 1.2.3.0 netmask 255.255.255.0 {
+#  option routers 1.2.3.4;
+#  range 1.2.3.100 1.2.3.200;
+#  option domain-name "foo.bar.example.com";
+#}
+
+#shared-network "foo" {
+#}
+
+from ldaptor.protocols.ldap import ldapclient, ldapfilter
+from ldaptor.protocols import pureber, pureldap
+from ldaptor import usage
+
+
+class SearchHosts(ldapclient.LDAPSearch):
+    def __init__(self, client, base, filter):
+        filt=pureldap.LDAPFilter_and(value=(
+            pureldap.LDAPFilter_present('cn'),
+            pureldap.LDAPFilter_present('ipHostNumber'),
+            pureldap.LDAPFilter_present('macAddress'),
+            ))
+        if filter:
+            filt = pureldap.LDAPFilter_and(value=(filter, filt))
+        ldapclient.LDAPSearch.__init__(self, client,
+                                       baseObject=base,
+                                       filter=filt,
+                                       attributes=['cn',
+                                                   'ipHostNumber',
+                                                   'macAddress',
+                                                   ])
+
+    def handle_success(self):
+        self.client.search_done(self)
+
+    def handle_entry(self, objectName, attributes):
+        args = {}
+        for k,vs in attributes:
+            k=str(k)
+            args[k]=vs
+
+        assert len(args['cn'])==1, \
+               "object %s attribute 'cn' has multiple values: %s" \
+               % (objectName, args['cn'])
+
+        print '# %s' % objectName
+        print 'host "%s" {' % args['cn'][0]
+        print '\thostname "%s";' % args['cn'][0]
+        for mac in args.get('macAddress', ()):
+            print '\thardware ethernet %s;' % mac
+        for ip in args.get('ipHostNumber', ()):
+            print '\tfixed-address %s;' % ip
+        print '}\n'
+
+    def handle_fail(self, resultCode, errorMessage):
+        sys.stderr.write("fail: %d: %s\n"%(resultCode, errorMessage or "Unknown error"))
+        self.client.search_done(self)
+
+
+
+class SearchNets(ldapclient.LDAPSearch):
+    def __init__(self, client, base, filter):
+        self.sharedNetworks = {}
+
+        filt=pureldap.LDAPFilter_and(value=(
+            pureldap.LDAPFilter_present('cn'),
+            pureldap.LDAPFilter_present('ipNetworkNumber'),
+            pureldap.LDAPFilter_present('ipNetmaskNumber'),
+            ))
+        if filter:
+            filt = pureldap.LDAPFilter_and(value=(filter, filt))
+        ldapclient.LDAPSearch.__init__(self, client,
+                                       baseObject=base,
+                                       filter=filt,
+                                       attributes=['cn',
+                                                   'ipNetworkNumber',
+                                                   'ipNetmaskNumber',
+                                                   'router',
+                                                   'dhcpRange',
+                                                   'sharedNetworkName'])
+
+    def handle_success(self):
+        for name, entries in self.sharedNetworks.items():
+            print 'shared-network "%s" {' % name
+            for objectName, args in entries:
+                self._print_entry(objectName, args, prefix='\t')
+            print '}'
+        self.client.search_done(self)
+
+    def _print_entry(self, objectName, args, prefix=''):
+        r = ['# %s' % objectName,
+             'subnet %s netmask %s {' % (args['ipNetworkNumber'][0],
+                                          args['ipNetmaskNumber'][0]),
+             '\toption domain-name "%s";' % args['cn'][0]]
+        
+        if args.has_key('router'):
+            r.append('\toption routers %s;' % (', '.join(args['router'])))
+        for dhcpRange in args.get('dhcpRange', ()):
+            r.append('\trange %s;' % dhcpRange)
+        r.append('}')
+
+        print '\n'.join([prefix+line for line in r])+'\n'
+
+    def handle_entry(self, objectName, attributes):
+        args = {}
+        for k,vs in attributes:
+            k=str(k)
+            args[k]=map(str, vs)
+
+        assert len(args['cn'])==1, \
+               "object %s attribute 'cn' has multiple values: %s" \
+               % (objectName, args['cn'])
+
+        if args.has_key('sharedNetworkName'):
+            assert len(args['sharedNetworkName'])==1, \
+                   "object %s attribute 'sharedNetworkName' has multiple values: %s" \
+                   % (objectName, args['sharedNetworkName'])
+            name = args['sharedNetworkName'][0]
+            if not self.sharedNetworks.has_key(name):
+                self.sharedNetworks[name]=[]
+            self.sharedNetworks[name].append((objectName, args))
+        else:
+            self._print_entry(objectName, args)
+
+    def handle_fail(self, resultCode, errorMessage):
+        sys.stderr.write("fail: %d: %s\n"%(resultCode, errorMessage or "Unknown error"))
+        self.client.search_done(self)
+
+
+class Search(ldapclient.LDAPClient):
+    def __init__(self, callback, base, filt):
+        ldapclient.LDAPClient.__init__(self)
+        self.base=base
+        self.filter=filt
+        self.callback = callback
+        self.searches = []
+    
+    def connectionMade(self):
+        self.bind()
+
+    def handle_bind_success(self, matchedDN, serverSaslCreds):
+        self.searches.extend((SearchNets(self, self.base, self.filter),
+                              SearchHosts(self, self.base, self.filter)))
+
+    def search_done(self, search):
+        self.searches.remove(search)
+        if not self.searches:
+            self.callback(self)
+
+
+def callback(searchalot):
+    from twisted.internet import main
+    main.shutDown()
+
+def main(host, port, base, filter_text):
+    from twisted.internet import tcp, main
+    if filter_text is not None:
+        filt = ldapfilter.parseFilter(filter_text)
+    else:
+        filt = None
+    s=Search(callback, base, filt)
+    tcp.Client(host, port, s)
+    main.run()
+
+class MyOptions(usage.Options, usage.Options_hostport, usage.Options_base):
+    """LDAPtor dhchd config file exporter"""
+    def parseArgs(self, filter=None):
+        self.opts['filter'] = filter
+
+if __name__ == "__main__":
+    import sys
+    try:
+        config = MyOptions()
+        config.parseOptions()
+    except usage.UsageError, ue:
+        sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
+        sys.exit(1)
+
+    main(config.opts['ldap-host'],
+         config.opts['ldap-port'],
+         config.opts['base'],
+         config.opts['filter'])

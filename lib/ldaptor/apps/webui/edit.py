@@ -1,5 +1,5 @@
 from twisted.web import widgets
-from twisted.python import defer
+from twisted.internet import defer
 
 from ldaptor.protocols import pureldap
 from ldaptor.protocols.ldap import ldapclient, ldaperrors
@@ -191,7 +191,7 @@ class EditForm(widgets.Form):
     def _output_status_and_form(self, request, kw, *status):
         io=StringIO()
         self.format(self.getFormFields(request, kw), io.write, request)
-        return [self._header(request)]+list(status)+["<P>", io.getvalue()]
+        return list(status)+["<P>", io.getvalue()]
 
     def process(self, write, request, submit, **kw):
         user = request.getSession().LdaptorPerspective.getPerspectiveName()
@@ -252,17 +252,6 @@ class EditForm(widgets.Form):
             changes_desc,
             defe)
 
-    def _header(self, request):
-        return ('[<a href="%s">Search</a>'%request.sibLink("search")
-                +'|<a href="%s">add new entry</a>'%request.sibLink("add")
-                +']')
-
-    def stream(self, write, request):
-        write(self._header(request))
-        write("<P>")
-        return widgets.Form.stream(self, write, request)
-
-
 class CreateEditForm:
     def __init__(self, defe, dn, request, attributeTypes, objectClasses):
         self.deferred=defe
@@ -296,6 +285,17 @@ class EditPage(template.BasicPage):
     title = "Ldaptor Edit Page"
     isLeaf = 1
 
+    def _header(self, request):
+        l=[]
+        l.append('<a href="%s">Search</a>'%request.sibLink("search"))
+        l.append('<a href="%s">add new entry</a>'%request.sibLink("add"))
+
+        if request.postpath and request.postpath!=['']:
+            l.append('<a href="%s">delete this entry</a>' \
+                     % request.sibLink("delete/" + '/'.join(request.postpath)))
+        
+        return '[' + '|'.join(l) + ']'
+
     def getContent(self, request):
         if not request.postpath or request.postpath==['']:
             return NeedDNError()
@@ -315,7 +315,7 @@ class EditPage(template.BasicPage):
             else:
                 CreateError(d, dn, request)(errorMessage="connection lost")
 
-            return [d]
+            return [self._header(request), d]
 
     def _getContent_2(self, dn, subschemaSubentry, request, client, d):
         schema.LDAPGetSchema(

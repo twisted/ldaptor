@@ -1,0 +1,97 @@
+#!/usr/bin/python
+
+import sys, getpass
+from ldaptor.protocols.ldap import ldapclient, ldaperrors
+from ldaptor.protocols import pureber, pureldap
+from ldaptor import usage
+from twisted.internet import defer
+from twisted.internet import default
+default.install()
+from twisted.internet import reactor
+
+class ModifyPasswd(ldapclient.LDAPModifyPassword):
+    def __init__(self, client, deferred,
+                 userIdentity=None, oldPasswd=None, newPasswd=None):
+        ldapclient.LDAPModifyPassword.__init__(self, client,
+                                               userIdentity=userIdentity,
+                                               oldPasswd=oldPasswd,
+                                               newPasswd=newPasswd)
+        self.deferred=deferred
+
+    def handle_success(self):
+        self.deferred.callback(None)
+
+    def handle_fail(self, resultCode, errorMessage):
+        self.deferred.errback((resultCode, errorMessage))
+
+class PasswdClient(ldapclient.LDAPClient):
+    def __init__(self, binddn, dnlist):
+        ldapclient.LDAPClient.__init__(self)
+        self.binddn = binddn
+        self.dnlist = dnlist
+    
+    def connectionMade(self):
+        if self.binddn:
+            self.bind(self.binddn,
+                      getpass.getpass('Password for %s: ' % self.binddn))
+        else:
+            self.bind()
+
+    def _report_error(self, x):
+        resultCode, errorMessage = x
+        sys.stderr.write("fail: %s: %s\n"%(ldaperrors.errors.reverse.get(
+            resultCode, str(resultCode)),
+                                           errorMessage or "Unknown error"))
+        global exitStatus
+        exitStatus=1
+
+    def handle_bind_success(self, matchedDN, serverSaslCreds):
+        l=[]
+        for dn in self.dnlist:
+            pwd=getpass.getpass('NEW Password for %s: ' % dn)
+            d=defer.Deferred()
+            d.addErrback(self._report_error)
+            ModifyPasswd(self, d, userIdentity=dn, newPasswd=pwd)
+            l.append(d)
+        dl=defer.DeferredList(l)
+        dl.addBoth(lambda x, f=self.transport.loseConnection: f())
+        dl.addBoth(lambda x, f=reactor.stop: f())
+
+    def handle_bind_fail(self, resultCode, errorMessage):
+        self._report_error((resultCode, errorMessage))
+        self.transport.loseConnection()
+        reactor.stop()
+
+exitStatus=0
+
+
+def main(host, port, binddn, dnlist):
+    s=PasswdClient(binddn, dnlist)
+    reactor.clientTCP(host, port, s)
+    reactor.run()
+
+class MyOptions(usage.Options,
+                usage.Options_hostport,
+                usage.Options_bind_mandatory):
+    """LDAPtor command line password change utility"""
+
+    def parseArgs(self, dn, *dnlist):
+        dnlist = (dn,)+dnlist
+        self.opts['dnlist'] = dnlist
+
+
+      
+if __name__ == "__main__":
+    import sys
+    try:
+        config = MyOptions()
+        config.parseOptions()
+    except usage.UsageError, ue:
+        sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
+        sys.exit(1)
+
+    main(config.opts['ldap-host'],
+         config.opts['ldap-port'],
+         config.opts['binddn'],
+         config.opts['dnlist'])
+    sys.exit(exitStatus)

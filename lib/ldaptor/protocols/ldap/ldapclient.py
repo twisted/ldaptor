@@ -20,7 +20,7 @@ from ldaptor.protocols import pureldap, pureber
 
 from twisted.python import mutablestring
 
-from twisted.protocols import protocol
+from twisted.internet import protocol
 
 class LDAPClient(protocol.Protocol):
     """An LDAP client"""
@@ -57,19 +57,28 @@ class LDAPClient(protocol.Protocol):
         if not self.connected:
             raise "Not connected (TODO)" #TODO make this a real object
         msg=pureldap.LDAPMessage(op)
+        print '->', repr(msg)
         assert not self.onwire.has_key(msg.id)
         assert op.needs_answer or not handler
         if op.needs_answer:
             self.onwire[msg.id]=handler
         self.transport.write(str(msg))
 
+    def unsolicitedNotification(self, msg):
+        print "Got unsolicited notification:", repr(msg)
+
     def handle(self, msg):
         assert isinstance(msg.value, pureldap.LDAPProtocolResponse)
-        handler=self.onwire[msg.id]
+        print '<-', repr(msg)
 
-        # Return true to mark request as fully handled
-        if handler==None or handler(msg.value):
-            del self.onwire[msg.id]
+        if msg.id==0:
+            self.unsolicitedNotification(msg.value)
+        else:
+            handler = self.onwire[msg.id]
+            
+            # Return true to mark request as fully handled
+            if handler==None or handler(msg.value):
+                del self.onwire[msg.id]
 
 
     ##Bind
@@ -97,7 +106,7 @@ class LDAPClient(protocol.Protocol):
         # maybe retry with other methods?
         # SASL has something relevent here
         #self.transport.loseConnection()
-        raise
+        raise 'TODO'
 
     ##Unbind
     def unbind(self):
@@ -277,6 +286,36 @@ class LDAPDelEntry(LDAPOperation):
 
     def handle_msg(self, msg):
         assert isinstance(msg, pureldap.LDAPDelResponse)
+        assert msg.referral==None #TODO
+        if msg.resultCode==0: #TODO ldap.errors.success
+            assert msg.matchedDN==''
+            self.handle_success()
+            return 1
+        else:
+            self.handle_fail(msg.resultCode,
+                             msg.errorMessage)
+            return 1
+            
+    def handle_success(self):
+        pass
+
+    def handle_fail(self, resultCode, errorMessage):
+        pass
+
+class LDAPModifyPassword(LDAPOperation):
+    def __init__(self,
+                 client,
+                 userIdentity=None,
+                 oldPasswd=None,
+                 newPasswd=None):
+        LDAPOperation.__init__(self, client)
+        r=pureldap.LDAPPasswordModifyRequest(userIdentity=userIdentity,
+                                             oldPasswd=oldPasswd,
+                                             newPasswd=newPasswd)
+        self.client.queue(r, self.handle_msg)
+
+    def handle_msg(self, msg):
+        assert isinstance(msg, pureldap.LDAPExtendedResponse)
         assert msg.referral==None #TODO
         if msg.resultCode==0: #TODO ldap.errors.success
             assert msg.matchedDN==''

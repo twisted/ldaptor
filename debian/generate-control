@@ -1,0 +1,118 @@
+#!/usr/bin/python
+import os, os.path, commands
+import formatter, StringIO
+
+PYTHON_VERSIONS=['2.1', '2.2']
+PYTHON_VERSION_DEFAULT='2.1'
+PYTHON_VERSION_TOOBIG='2.2'
+
+def reflow(s):
+    out=StringIO.StringIO()
+    w=formatter.DumbWriter(out)
+    for para in s.split('\n\n'):
+        w.send_flowing_data(para)
+        w.send_paragraph(1)
+
+    l=[]
+    for line in out.getvalue().split('\n'):
+        if line=='':
+            l.append(' .')
+        else:
+            l.append(' '+line)
+    while l and l[-1]==' .':
+        del l[-1]
+    return '\n'.join(l)
+            
+
+class CmdDict:
+    def __init__(self, setup=None, **kwargs):
+        self.setup=setup
+        self.vars=kwargs
+
+    def handle_var(self, var):
+        return self.vars[var]
+        
+    def handle_setup(self, cmd):
+        assert self.setup
+        return self.handle_shell('python %s %s'%(self.setup, cmd))
+        
+    def handle_shell(self, cmd):
+        status, output = commands.getstatusoutput(cmd)
+        if status:
+            raise 'Command %s failed with exit status %d.' \
+                  % (repr(cmd), status)
+        return output
+    
+    def handle_forpython(self, s):
+        l=[]
+        for pyver in PYTHON_VERSIONS:
+            l.append(s % pyver)
+        return ', '.join(l)
+
+    def __getitem__(self, s):
+        first, rest = s.split(None, 1)
+        f=getattr(self, 'handle_'+first)
+        return f(rest)
+
+otherpackage = """
+Package: %(var package)s
+Architecture: all
+Depends: python (>= %(var PYTHON_VERSION_DEFAULT)s), python (<< %(var PYTHON_VERSION_TOOBIG)s), python%(var PYTHON_VERSION_DEFAULT)s-ldaptor
+Description: %(setup --description)s
+"""
+
+pypackage = """
+Package: %(var package)s
+Architecture: all
+Depends: python%(var python_version)s, python%(var python_version)s-twisted
+Description: %(setup --description)s
+"""
+printed_source=0
+for filename in os.listdir('.'):
+    if not filename.startswith('setup-') \
+       or not filename.endswith('.py'):
+        continue
+    if not printed_source:
+        printed_source=1
+        print """\
+Source: %(shell dpkg-parsechangelog|sed -n 's/^Source: //p')s
+Section: admin
+Priority: optional
+Maintainer: %(setup --contact)s <%(setup --contact-email)s>
+Standards-Version: 3.5.6
+Build-Depends-Indep: %(forpython python%s-dev)s
+""" % CmdDict(filename)
+    package=filename[len('setup-'):-len('.py')]
+
+    if package.startswith('python-'):
+        c = CmdDict(filename, python_version='', package=package)
+        print pypackage.strip() % c
+        print reflow('%(setup --long-description)s' % c)
+        print ' .'
+        print '''\
+ This is a dummy package that depends on the correct version of
+ %s for the default version of Python.
+'''.rstrip() % package
+        print
+
+        for pyver in PYTHON_VERSIONS:
+            pkgname='python'+pyver+'-'+package[len('python-'):]
+            c=CmdDict(
+                filename,
+                package=pkgname,
+                python_version=pyver,
+                )
+            print pypackage.strip() % c
+            print reflow('%(setup --long-description)s' % c)
+            print ' .'
+            print ' This version is usable with python%s' % pyver
+            print
+
+    else:
+        c=CmdDict(filename, package=package,
+                  PYTHON_VERSION_DEFAULT=PYTHON_VERSION_DEFAULT,
+                  PYTHON_VERSION_TOOBIG=PYTHON_VERSION_TOOBIG,
+                  )
+        print otherpackage.strip() % c
+        print reflow('%(setup --long-description)s' % c)
+        print
