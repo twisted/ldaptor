@@ -2,7 +2,7 @@ from ldaptor.protocols.ldap import proxy
 from ldaptor.protocols.ldap import ldapsyntax, ldaperrors
 from ldaptor.protocols import pureldap
 from ldaptor.entry import sshaDigest
-import base64
+import base64, datetime
 
 class ServiceBindingProxy(proxy.Proxy):
     """
@@ -72,11 +72,16 @@ class ServiceBindingProxy(proxy.Proxy):
                 resultCode=ldaperrors.LDAPInvalidCredentials.resultCode)
             return msg
 
+    def timestamp(self):
+        now = datetime.datetime.now()
+        return now.strftime('%Y%m%d%H%M%SZ')
+
     def _tryService(self, services, baseEntry, request, controls, reply):
         try:
             serviceName = services.pop(0)
         except IndexError:
             return None
+        timestamp = self.timestamp()
         d = baseEntry.search(filterObject=pureldap.LDAPFilter_and([
             pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('objectClass'),
                                               assertionValue=pureldap.LDAPAssertionValue('serviceSecurityObject')),
@@ -84,6 +89,23 @@ class ServiceBindingProxy(proxy.Proxy):
                                               assertionValue=pureldap.LDAPAssertionValue(request.dn)),
             pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('cn'),
                                               assertionValue=pureldap.LDAPAssertionValue(serviceName)),
+
+            pureldap.LDAPFilter_or([
+            # no time
+            pureldap.LDAPFilter_not(pureldap.LDAPFilter_present('validFrom')),
+            # or already valid
+            pureldap.LDAPFilter_lessOrEqual(attributeDesc=pureldap.LDAPAttributeDescription('validFrom'),
+                                            assertionValue=pureldap.LDAPAssertionValue(timestamp)),
+            ]),
+
+            pureldap.LDAPFilter_or([
+            # no time
+            pureldap.LDAPFilter_not(pureldap.LDAPFilter_present('validUntil')),
+            # or still valid
+            pureldap.LDAPFilter_greaterOrEqual(attributeDesc=pureldap.LDAPAttributeDescription('validUntil'),
+                                               assertionValue=pureldap.LDAPAssertionValue(timestamp)),
+            ]),
+
             ]),
                              attributes=('1.1',))
 
