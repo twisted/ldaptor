@@ -1,4 +1,4 @@
-from twisted.internet import utils
+from twisted.internet import utils, protocol, defer
 from ldaptor.protocols.ldap import distinguishedname
 
 class LDAPConnector(utils.SRVConnector):
@@ -21,8 +21,8 @@ class LDAPConnector(utils.SRVConnector):
 
     def _findOverRide(self, dn, overrides):
 	while dn != distinguishedname.DistinguishedName(stringValue=''):
-	    if overrides.has_key(dn):
-		return overrides[dn]
+	    if overrides.has_key(str(dn)):
+		return overrides[str(dn)]
 	    dn = dn.up()
 	return None, None
 
@@ -54,3 +54,12 @@ class LDAPConnector(utils.SRVConnector):
 	if port is None:
 	    port = 389
 	return host, port
+
+class LDAPClientCreator(protocol.ClientCreator):
+    def connect(self, dn, overrides=None):
+        """Connect to remote host, return Deferred of resulting protocol instance."""
+        d = defer.Deferred()
+        f = protocol._InstanceFactory(self.reactor, self.protocolClass(*self.args, **self.kwargs), d)
+        c = LDAPConnector(self.reactor, dn, f, overrides=overrides)
+        c.connect()
+        return d

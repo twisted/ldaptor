@@ -15,9 +15,9 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-from ldaptor.protocols.ldap import ldapclient, ldapsyntax
+from ldaptor.protocols.ldap import ldapclient, ldapsyntax, ldapconnector, distinguishedname
 from ldaptor.protocols import pureber
-from twisted.internet import protocol, defer, reactor
+from twisted.internet import defer, reactor
 from twisted.python import log
 import sys
 
@@ -50,13 +50,12 @@ def _search(proto, base, connection, numOfSearches):
     dl=defer.DeferredList(l)
     return dl
 
-def main(base, numOfConnections=3, numOfSearches=3):
+def main(base, serviceLocationOverrides, numOfConnections=3, numOfSearches=3):
     log.startLogging(sys.stderr, setStdout=0)
     l=[]
     for connection in xrange(0, numOfConnections):
-        c=protocol.ClientCreator(reactor, ldapclient.LDAPClient)
-        d=c.connectTCP("localhost", 389)
-
+        c=ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
+        d=c.connect(base, serviceLocationOverrides)
 
         d.addCallback(_bind)
         d.addCallback(_search, base, connection, numOfSearches)
@@ -68,6 +67,8 @@ def main(base, numOfConnections=3, numOfSearches=3):
     sys.exit(exitStatus)
 
 if __name__ == "__main__":
-    main(base='dc=example,dc=com',
+    base='dc=example,dc=com'
+    main(base=distinguishedname.DistinguishedName(base),
+         serviceLocationOverrides={base: ('localhost', None)},
          numOfConnections=5,
          numOfSearches=10)
