@@ -15,33 +15,15 @@ SLIDES:=addressbook-slides.xml
 GENERATED:=\
 	$(DOCBOOK:%.xml=%.html) \
 	$(SLIDES:%.xml=%/index.html) \
-	$(DIAPNG)
+	$(DIAPNG) \
+	api
 
 XMLIFY:=sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g'
 
 all:: $(GENERATED)
 
-install: api $(GENERATED)
-	@[ -n '$(DESTDIR)' ] || { echo 'Please provide variable DESTDIR pointing to desired location of documents.' 1>&2; exit 1; }
-	install -d -m0755 '$(DESTDIR)'
-	cp -ar api addressbook-slides '$(DESTDIR)/'
-	install -d -m0755 '$(DESTDIR)/ldap-intro'
-	install -m0644 ldap-intro.html '$(DESTDIR)/ldap-intro/index.html'
-	install -m0644 $(DIAPNG) '$(DESTDIR)/ldap-intro'
-	find examples -name SCCS -prune -o -type f -exec \
-		install -D -m0644 '{}' '$(DESTDIR)/{}' \;
-
-install-%:
-	@[ -n '$(DESTDIR)' ] || { echo 'Please provide variable DESTDIR pointing to desired location of documents.' 1>&2; exit 1; }
-	install -d -m0755 '$(DESTDIR)'
-	set -e; if [ -d 'examples.$*' ]; then \
-		find 'examples.$*' -name SCCS -prune -o -type f -printf '%P\0' \
-		| xargs -0 --replace -- \
-			install -D -m0644 'examples.$*/{}' '$(DESTDIR)/examples/{}' ;\
-	fi
-
 clean:
-	rm -f $(GENERATED)
+	rm -rf $(GENERATED)
 
 rsync: $(GENERATED)
 	rsync -a $(DOCBOOK:%.xml=%.html) $(SLIDES:%.xml=%) $(DIAPNG) pyramid.twistedmatrix.com:public_html/ldap-intro/

@@ -1,146 +1,31 @@
 #!/usr/bin/make -f
+# -*- mode: makefile; coding: utf-8 -*-
 
-PYTHON_VERSIONS:=2.3
-PYTHON_VERSION_DEFAULT:=2.3
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/class/python-distutils.mk
 
-docdir=debian/install/$(1)/usr/share/doc/$(1)
+DEB_COMPRESS_EXCLUDE := .py .js
+DEB_DH_INSTALL_SOURCEDIR := debian/python2.3-ldaptor
+DEB_DH_ALWAYS_EXCLUDE := .svn
 
-build:
+build/ldaptor-doc::
 	make -C doc
 
-install: $(foreach p,$(PYTHON_VERSIONS),install-python-$(p))
-binary: binary-indep binary-arch
-binary-indep: binary-indep-dummy \
-	$(foreach p,$(PYTHON_VERSIONS),binary-indep-python-$(p)) \
-	binary-indep-ldaptor-webui \
-	binary-indep-ldaptor-utils \
-	binary-indep-ldaptor-doc
-binary-arch:
+binary-post-install/ldaptor-doc::
+	mv -i \
+		debian/ldaptor-doc/usr/share/doc/ldaptor-doc/ldap-intro/ldap-intro.html \
+		debian/ldaptor-doc/usr/share/doc/ldaptor-doc/ldap-intro/index.html
 
-clean:
-	test -e debian/control
-	test root = "`whoami`" || (echo need root priviledges; exit 1)
-	rm -rf build debian/install
-	dh_clean
+binary-post-install/ldaptor-utils::
+	rm -rf debian/ldaptor-utils/usr/bin/ldaptor-webui
+
+binary-post-install/python2.3-ldaptor:: binary-install/ldaptor-utils binary-install/ldaptor-webui
+	rm -rf \
+		debian/python2.3-ldaptor/usr/bin \
+		debian/python2.3-ldaptor/usr/lib/python2.3/site-packages/ldaptor/apps/webui
+
+clean::
 	find . -type f -name '*.pyc' -print0 \
 	| xargs -0 --no-run-if-empty rm --
-	rm -rf debian/substvars debian/files
-
-
-
-DUMMY_INSTDIR:=debian/install/python-ldaptor
-binary-indep-dummy:
-	test -e debian/control
-	test root = "`whoami`" || (echo need root priviledges; exit 1)
-
-	install -d --mode=0755 \
-		'$(DUMMY_INSTDIR)/DEBIAN' \
-		'$(call docdir,python-ldaptor)'
-	install --mode=0644 \
-		debian/copyright \
-		'$(call docdir,python-ldaptor)'
-	install --mode=0644 \
-		debian/changelog \
-		'$(call docdir,python-ldaptor)/changelog'
-	install --mode=0644 \
-		debian/README.Debian.dummy \
-		'$(call docdir,python-ldaptor)/README.Debian'
-	gzip -9f \
-		'$(call docdir,python-ldaptor)/README.Debian' \
-		'$(call docdir,python-ldaptor)/changelog'
-	dh_python -p'python-ldaptor' -P'$(DUMMY_INSTDIR)'
-	dpkg-gencontrol -isp -p'python-ldaptor' -P'$(DUMMY_INSTDIR)'
-	dpkg --build '$(DUMMY_INSTDIR)' ..
-
-
-install-python-%:
-	test -e debian/control
-	test root = "`whoami`" || (echo need root priviledges; exit 1)
-	rm -rf debian/substvars
-	install -d -m0755 'debian/install/python$*-ldaptor'
-	/usr/bin/python$* setup-python-ldaptor.py install --root='debian/install/python$*-ldaptor'
-	rm -rf build
-	chmod -R go-w 'debian/install/python$*-ldaptor'
-
-	install -d --mode=0755 '$(call docdir,python$*-ldaptor)'
-	install --mode=0644 \
-		README \
-		TODO \
-		debian/copyright \
-		'$(call docdir,python$*-ldaptor)'
-	install --mode=0644 \
-		debian/changelog \
-		'$(call docdir,python$*-ldaptor)/changelog'
-	gzip -9f \
-		'$(call docdir,python$*-ldaptor)/README' \
-		'$(call docdir,python$*-ldaptor)/changelog'
-
-
-install-ldaptor-%:
-	test -e debian/control
-	test root = "`whoami`" || (echo need root priviledges; exit 1)
-	rm -rf debian/substvars
-	install -d -m0755 'debian/install/ldaptor-$*'
-	/usr/bin/python$(PYTHON_VERSION_DEFAULT) \
-		setup-ldaptor-$*.py install --root='debian/install/ldaptor-$*'
-	rm -rf build
-	chmod -R go-w 'debian/install/ldaptor-$*'
-
-	install -d --mode=0755 '$(call docdir,ldaptor-$*)'
-	install --mode=0644 \
-		README \
-		TODO \
-		debian/copyright \
-		'$(call docdir,ldaptor-$*)'
-	make -C doc 'install-$*' DESTDIR='$(PWD)/$(call docdir,ldaptor-$*)'
-	install --mode=0644 \
-		debian/changelog \
-		'$(call docdir,ldaptor-$*)/changelog'
-	gzip -9f \
-		'$(call docdir,ldaptor-$*)/README' \
-		'$(call docdir,ldaptor-$*)/changelog'
-
-install-ldaptor-doc:
-	test -e debian/control
-	test root = "`whoami`" || (echo need root priviledges; exit 1)
-	rm -rf debian/substvars
-	install -d -m0755 'debian/install/ldaptor-doc'
-	make -C doc install DESTDIR='$(PWD)/$(call docdir,ldaptor-doc)'
-	install --mode=0644 \
-		README \
-		TODO \
-		debian/copyright \
-		'$(call docdir,ldaptor-doc)'
-	install --mode=0644 \
-		debian/changelog \
-		'$(call docdir,ldaptor-doc)/changelog'
-	gzip -9f \
-		'$(call docdir,ldaptor-doc)/README' \
-		'$(call docdir,ldaptor-doc)/changelog'
-
-binary-indep-python-%: install-python-%
-	test -e debian/control
-	test root = "`whoami`" || (echo need root priviledges; exit 1)
-
-	install -d --mode=0755 'debian/install/python$*-ldaptor/DEBIAN'
-	dh_python -p'python$*-ldaptor' -P'debian/install/python$*-ldaptor'
-	dpkg-gencontrol \
-		-isp -p'python$*-ldaptor' -P'debian/install/python$*-ldaptor'
-	dpkg --build 'debian/install/python$*-ldaptor' ..
-
-binary-indep-ldaptor-%: \
-	install-ldaptor-webui \
-	install-ldaptor-utils \
-	install-ldaptor-doc
-	test -e debian/control
-	test root = "`whoami`" || (echo need root priviledges; exit 1)
-
-	install -d --mode=0755 'debian/install/ldaptor-$*/DEBIAN'
-	dh_python -p'ldaptor-$*' -P'debian/install/ldaptor-$*'
-	dpkg-gencontrol \
-		-isp -p'ldaptor-$*' -P'debian/install/ldaptor-$*'
-	dpkg --build 'debian/install/ldaptor-$*' ..
-
-.PHONY: build clean binary-indep binary-arch binary \
-	binary-indep-dummy \
-	binary-arch-python-% install-python-%
+	make -C doc clean
+	rm -rf _trial_temp
