@@ -127,7 +127,7 @@ $(SLIDES:%.xml=%/index.html): %/index.html: %.xml \
 		'$(@D)'/foil*.html
 
 %.dia.png: %.dia
-	dia --export-to-format=png --export=$@.tmp $<
+	dia --export-to-format=png-libart --export=$@.tmp $<
 	mv $@.tmp $@
 
 api:
