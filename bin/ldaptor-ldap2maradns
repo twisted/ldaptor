@@ -3,7 +3,6 @@
 from ldaptor.protocols.ldap import distinguishedname, ldapconnector, ldapsyntax, ldapclient
 from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage, ldapfilter, config, dns
-from socket import inet_aton, inet_ntoa
 import sys
 from twisted.internet import protocol, defer, reactor
 
@@ -29,7 +28,7 @@ class HostIPAddress:
     def __repr__(self):
 	return (self.__class__.__name__
 		+'('
-		+'host=%s, ' % id(self.host)
+		+'host=%r, ' % self.host.name
 		+'ipAddress=%s' % repr(self.ipAddress)
 		+')')
 
