@@ -6,7 +6,7 @@ from twisted.trial import unittest
 from twisted.internet import reactor
 from ldaptor.protocols.ldap import svcbindproxy, ldaperrors
 from ldaptor.protocols import pureldap, pureber
-from ldaptor import config, ldapfilter, testutil
+from ldaptor import ldapfilter, testutil
 
 class ServiceBindingProxy(unittest.TestCase):
     berdecoder = pureldap.LDAPBERDecoderContext_TopLevel(
@@ -14,19 +14,13 @@ class ServiceBindingProxy(unittest.TestCase):
         fallback=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext()),
         inherit=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext())))
 
-    def setUp(self):
-        self.cfg = config.loadConfig(
-            configFiles=[],
-            reload=True)
-        self.config = config.LDAPConfig(baseDN='dc=example,dc=com')
-
     def createServer(self, services, fallback=None, responses=[]):
-        return testutil.createServer(lambda overrides: svcbindproxy.ServiceBindingProxy(
-            config=self.config,
+        return testutil.createServer(lambda config: svcbindproxy.ServiceBindingProxy(
+            config=config,
             services=services,
             fallback=fallback,
-            overrides=overrides,
             ),
+                                     baseDN='dc=example,dc=com',
                                      *responses)
     
     def test_bind_noMatchingServicesFound_noFallback(self):

@@ -30,16 +30,12 @@ class ServiceBindingProxy(proxy.Proxy):
     fallback = False
 
     def __init__(self,
-                 config,
                  services=None,
                  fallback=None,
                  *a,
                  **kw):
         """
         Initialize the object.
-
-        @param config: The configuration.
-        @type config: ldaptor.interfaces.ILDAPConfig
 
         @param services: List of service names to try to bind against.
 
@@ -49,7 +45,6 @@ class ServiceBindingProxy(proxy.Proxy):
         """
 
         proxy.Proxy.__init__(self, *a, **kw)
-        self.config = config
         if services is not None:
             self.services = list(services)
         if fallback is not None:
@@ -147,11 +142,13 @@ if __name__ == '__main__':
     from twisted.python import log
     import sys
     log.startLogging(sys.stderr)
+    from ldaptor import config
 
     factory = protocol.ServerFactory()
-    factory.protocol = lambda : ServiceBindingProxy(overrides={
+    cfg = config.LDAPConfig(serviceLocationOverrides={
         '': ('localhost', 389),
-        },
+        })
+    factory.protocol = lambda : ServiceBindingProxy(config=cfg,
                                                     services=[
         'svc1',
         'svc2',

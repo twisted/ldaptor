@@ -2,6 +2,7 @@
 
 from twisted.internet import reactor, defer
 from twisted.test import proto_helpers
+from ldaptor import config
 
 def calltrace():
     """Print out all function calls. For debug use only."""
@@ -101,16 +102,19 @@ class LDAPClientTestDriver:
         self.send_noResponse(r)
         self.transport.loseConnection()
 
-def createServer(proto, *responses):
+def createServer(proto, *responses, **kw):
     def createClient(factory):
         factory.doStart()
         #TODO factory.startedConnecting(c)
         proto = factory.buildProtocol(addr=None)
         proto.connectionMade()
-    overrides = {
-        '': createClient,
-        }
-    server = proto(overrides)
+    cfg = config.loadConfig(
+        configFiles=[],
+        reload=True)
+    overrides = kw.setdefault('serviceLocationOverrides', {})
+    overrides.setdefault('', createClient)
+    conf = config.LDAPConfig(**kw)
+    server = proto(conf)
     server.protocol = lambda : LDAPClientTestDriver(*responses)
     server.transport = proto_helpers.StringTransport()
     server.connectionMade()

@@ -11,9 +11,15 @@ class Proxy(ldapserver.BaseLDAPServer):
     waitingConnect = []
     unbound = False
 
-    def __init__(self, overrides):
+    def __init__(self, config):
+        """
+        Initialize the object.
+
+        @param config: The configuration.
+        @type config: ldaptor.interfaces.ILDAPConfig
+        """
         ldapserver.BaseLDAPServer.__init__(self)
-        self.overrides=overrides
+        self.config = config
 
     def _whenConnected(self, fn, *a, **kw):
         if self.client is None:
@@ -54,7 +60,9 @@ class Proxy(ldapserver.BaseLDAPServer):
     def connectionMade(self):
         clientCreator = ldapconnector.LDAPClientCreator(
             reactor, self.protocol)
-        d = clientCreator.connect(dn='', overrides=self.overrides)
+        d = clientCreator.connect(
+            dn='',
+            overrides=self.config.getServiceLocationOverrides())
         d.addCallback(self._cbConnectionMade)
         d.addErrback(self._failConnection)
 
