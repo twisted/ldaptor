@@ -1,3 +1,63 @@
+ldaptor (0.0.32) unstable; urgency=low
+
+  * Conceptual changes:
+    - Client-side STARTTLS support. Closes: ldaptor#1.
+
+  * Applications changes:
+    - The following now use the configuration, making --base optional:
+      - ldaptor-ldap2maradns
+      - ldaptor-search
+      - ldaptor-ldap2pdns
+      - ldaptor-ldap2passwd
+      - ldaptor-ldap2dhcpconf
+    - ldaptor-ldap2pdns now reconnects when needed.
+    - WebUI:
+    - Server:
+
+  * API changes:
+    - Remove ldapclient.LDAPSearch in favor of e.search().
+    - Switch from LDAPClient.queue() to one of the following. Needed to
+      notify in flight operations of lost connection, and all around
+      prettier.
+      - d=c.send(op)
+      - d=c.send_multiResponse(op, fn, ..)
+      - c.send_noResponse(op)
+    - Add LDAPEntryWithClient.lookup() that was accidentally left out.
+    - Add BaseLDAPEntry.hasMember().
+
+  * Refactorings to adapt to Ldaptor APIs:
+    - Refactor to avoid LDAPSearch, use ldapsyntax, config and
+      ldapconnector:
+      - ldaptor-ldap2maradns
+      - ldaptor-search
+      - ldaptor-ldap2pdns
+      - ldaptor-ldap2dhcpconf
+      - ldaptor-ldap2passwd
+      - ldaptor-rename
+
+  * Bugfixes:
+    - In ldaptor-ldap2maradns, make sure the netmask.* A record is in
+      octet format (and not as number of bits).
+    - Refactor LDAPClient.bind() so it acknowledges completion of the
+      request, removing it from onwire message tracking.
+    - Fix cut-paste code: ldaptor-ldap2passwd took attributes arguments,
+      which only made it break.
+    - Make LDAPConnector fail nicely on DNs with no equivalent DNS domain,
+      and no override.
+    - Make .commit() not break the ldapsyntax entry journal.
+    - Nicer error handling in LDAPBindingChecker; now passes
+      LDAPInvalidCredentials to the caller as UnauthorizedLogin.
+
+  * Cleanups:
+    - Avoid buffering results in ldaptor-ldap2maradns.
+    - Extract common DNS utility functions to ldaptor.dns.
+
+  * Administrivia:
+    - Make non-script executable files have mode 0644, not 0755.
+    - Clean up generated files in doc/.
+
+ -- Tommi Virtanen <tv@debian.org>  Wed, 12 Jan 2005 00:02:56 +0200
+
 ldaptor (0.0.31) unstable; urgency=low
 
   * Conceptual changes:
