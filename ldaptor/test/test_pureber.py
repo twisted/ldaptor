@@ -56,7 +56,7 @@ class BERBaseEquality(unittest.TestCase):
 	    assert x==y
 
     def testBERBaseInEquality(self):
-	"""BER objects and not equal to BER objects with different type or content"""
+	"""BER objects do not equal BER objects with different type or content"""
 	for i in xrange(len(self.valuesToTest)):
 	    for j in xrange(len(self.valuesToTest)):
 		if i!=j:

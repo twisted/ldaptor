@@ -25,6 +25,14 @@ def alloc_ldap_message_id():
     next_ldap_message_id=next_ldap_message_id+1
     return r
 
+def escape(s):
+    s = s.replace('\\', r'\5c')
+    s = s.replace('*', r'\2a')
+    s = s.replace('(', r'\28')
+    s = s.replace(')', r'\29')
+    s = s.replace('\0', r'\00')
+    return s
+
 class LDAPString(BEROctetString):
     pass
 
@@ -354,26 +362,26 @@ class LDAPFilter_equalityMatch(LDAPAttributeValueAssertion):
 
     def asText(self):
 	return '('+self.attributeDesc.value+'=' \
-	       +self.assertionValue.value+')'
+	       +escape(self.assertionValue.value)+')'
 
 class LDAPFilter_substrings_initial(LDAPString):
     tag = CLASS_CONTEXT|0x00
 
     def asText(self):
-	return self.value
+	return escape(self.value)
 
 
 class LDAPFilter_substrings_any(LDAPString):
     tag = CLASS_CONTEXT|0x01
 
     def asText(self):
-	return self.value
+	return escape(self.value)
 
 class LDAPFilter_substrings_final(LDAPString):
     tag = CLASS_CONTEXT|0x02
 
     def asText(self):
-	return self.value
+	return escape(self.value)
 
 class LDAPBERDecoderContext_Filter_substrings(BERDecoderContext):
     Identities = {
@@ -454,14 +462,14 @@ class LDAPFilter_greaterOrEqual(LDAPAttributeValueAssertion):
 
     def asText(self):
 	return '('+self.attributeDesc.value+'>=' \
-	       +self.assertionValue.value+')'
+	       +escape(self.assertionValue.value)+')'
 
 class LDAPFilter_lessOrEqual(LDAPAttributeValueAssertion):
     tag = CLASS_CONTEXT|0x06
 
     def asText(self):
 	return '('+self.attributeDesc.value+'<=' \
-	       +self.assertionValue.value+')'
+	       +escape(self.assertionValue.value)+')'
 
 class LDAPFilter_present(LDAPAttributeDescription):
     tag = CLASS_CONTEXT|0x07
@@ -475,7 +483,7 @@ class LDAPFilter_approxMatch(LDAPAttributeValueAssertion):
 
     def asText(self):
 	return '('+self.attributeDesc.value+'~=' \
-	       +self.assertionValue.value+')'
+	       +escape(self.assertionValue.value)+')'
 
 class LDAPMatchingRuleId(LDAPString):
     pass
@@ -559,6 +567,16 @@ class LDAPMatchingRuleAssertion(BERSequence):
     def __str__(self):
 	return str(BERSequence(
 	    filter(lambda x: x is not None, [self.matchingRule, self.type, self.matchValue, self.dnAttributes]), tag=self.tag))
+
+    def __repr__(self):
+	l=[]
+	l.append('matchingRule=%s' % repr(self.matchingRule))
+	l.append('type=%s' % repr(self.type))
+	l.append('matchValue=%s' % repr(self.matchValue))
+	l.append('dnAttributes=%s' % repr(self.dnAttributes))
+	if self.tag!=self.__class__.tag:
+	    l.append('tag=%d' % self.tag)
+	return self.__class__.__name__+'('+', '.join(l)+')'
 
 class LDAPFilter_extensibleMatch(LDAPMatchingRuleAssertion):
     tag = CLASS_CONTEXT|0x09

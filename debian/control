@@ -37,6 +37,12 @@ Description: Command-line LDAP utilities
  ldaptor-ldap2pdns -- pdns pipe backend.
  .
  ldaptor-fetchschema -- Fetch schema from a server.
+ .
+ ldaptor-ldifdiff -- Read two LDIF files and output LDIF modifications
+ that modify entries in first file to look like entries in second file.
+ .
+ ldaptor-ldifpatch -- Read an LDIF file and LDIF modifications and output
+ LDIF with the modifications.
 
 Package: ldaptor-webui
 Section: admin
@@ -49,7 +55,7 @@ Description: Web user interface for editing LDAP directories
 Package: python-ldaptor
 Section: python
 Architecture: all
-Depends: python-twisted (>= 1.1.1), pwgen, python (>= 2.3), python (<< 2.4), python2.3-ldaptor
+Depends: python-twisted (>= 1.1.1), python-pyparsing, pwgen, python (>= 2.3), python (<< 2.4), python2.3-ldaptor
 Description: Pure-Python library for LDAP
  Ldaptor is a pure-Python library that implements
  .
@@ -70,7 +76,7 @@ Description: Pure-Python library for LDAP
 Package: python2.2-ldaptor
 Section: python
 Architecture: all
-Depends: python2.2-twisted (>= 1.1.1), pwgen, python2.2
+Depends: python2.2-twisted (>= 1.1.1), python2.2-pyparsing, pwgen, python2.2
 Description: Pure-Python library for LDAP
  Ldaptor is a pure-Python library that implements
  .
@@ -90,7 +96,7 @@ Description: Pure-Python library for LDAP
 Package: python2.3-ldaptor
 Section: python
 Architecture: all
-Depends: python2.3-twisted (>= 1.1.1), pwgen, python2.3
+Depends: python2.3-twisted (>= 1.1.1), python2.3-pyparsing, pwgen, python2.3
 Description: Pure-Python library for LDAP
  Ldaptor is a pure-Python library that implements
  .

@@ -32,149 +32,141 @@ RFC2254:
 """
 
 class InvalidLDAPFilter(Exception):
-    def __init__(self, syntax, value):
+    def __init__(self, msg, loc, text):
 	Exception.__init__(self)
-	self.syntax=syntax
-	self.value=value
+	self.msg=msg
+	self.loc=loc
+	self.text=text
 
     def __str__(self):
-	return "Invalid LDAP filter, syntax type %s, value %s" \
-	       % (self.syntax, repr(self.value))
-
-"""
-
-	extensible = attr [":dn"] [":" matchingrule] ":=" value
-		     / [":dn"] ":" matchingrule ":=" value
-
-	substring  = attr "=" [initial] any [final]
-	initial    = value
-	any        = "*" *(value "*")
-	final      = value
-
-	attr       = AttributeDescription from Section 4.1.5 of [1]
-	matchingrule = MatchingRuleId from Section 4.1.9 of [1]
-	value      = AttributeValue from Section 4.1.6 of [1]
-"""
-
-def parseEqual(attr, s):
-    return pureldap.LDAPFilter_equalityMatch(
-	attributeDesc=pureldap.LDAPAttributeDescription(attr),
-	assertionValue=pureldap.LDAPAssertionValue(s))
+	return "Invalid LDAP filter: %s at point %d in %r" \
+	       % (self.msg, self.loc, self.text)
 
 def parseExtensible(attr, s):
     raise NotImplementedError
 
-def parsePresent(attr):
-    return pureldap.LDAPFilter_present(attr)
+from pyparsing import Word, Literal, Optional, ZeroOrMore, Suppress, \
+                       Group, Forward, OneOrMore, ParseException, \
+                       CharsNotIn, Combine, empty, StringStart, \
+                       StringEnd
 
-def parseSubstring(attr, s):
-    # TODO this most likely isn't correct
-    l=[]
-    substrings = s.split('*')
-    first=substrings[0]
-    del substrings[0]
-    last=substrings[-1]
-    del substrings[-1]
+import copy, string
 
-    if first!='':
-	l.append(pureldap.LDAPFilter_substrings_initial(first))
-
-    for x in substrings:
-	l.append(pureldap.LDAPFilter_substrings_any(x))
-
-    if last!='':
-	l.append(pureldap.LDAPFilter_substrings_final(last))
-
+filter_ = Forward()
+attr = Word('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
+            'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789;-',)
+attr.leaveWhitespace()
+escaped = Suppress(Literal('\\'))+Word(string.hexdigits, exact=2)
+def _p_escaped(s,l,t):
+    text=t[0]
+    return chr(int(text, 16))
+escaped.setParseAction(_p_escaped)
+value = Combine(OneOrMore(CharsNotIn('*()\\\0') | escaped))
+equal = Literal("=")
+equal.setParseAction(lambda s,l,t: pureldap.LDAPFilter_equalityMatch)
+approx = Literal("~=")
+approx.setParseAction(lambda s,l,t: pureldap.LDAPFilter_approxMatch)
+greater = Literal(">=")
+greater.setParseAction(lambda s,l,t: pureldap.LDAPFilter_greaterOrEqual)
+less = Literal("<=")
+less.setParseAction(lambda s,l,t: pureldap.LDAPFilter_lessOrEqual)
+filtertype = equal | approx | greater | less
+simple = attr + filtertype + value
+simple.leaveWhitespace()
+def _p_simple(s,l,t):
+    attr, filtertype, value = t
+    return filtertype(attributeDesc=pureldap.LDAPAttributeDescription(attr),
+                      assertionValue=pureldap.LDAPAssertionValue(value))
+simple.setParseAction(_p_simple)
+present = attr + "=*"
+present.setParseAction(lambda s,l,t: pureldap.LDAPFilter_present(t[0]))
+initial = copy.copy(value)
+initial.setParseAction(lambda s,l,t: pureldap.LDAPFilter_substrings_initial(t[0]))
+any_value = value + Suppress(Literal("*"))
+any_value.setParseAction(lambda s,l,t: pureldap.LDAPFilter_substrings_any(t[0]))
+any = Suppress(Literal("*")) + ZeroOrMore(any_value)
+final = copy.copy(value)
+final.setParseAction(lambda s,l,t: pureldap.LDAPFilter_substrings_final(t[0]))
+substring = attr + Suppress(Literal("=")) + Group(Optional(initial) + any + Optional(final))
+def _p_substring(s,l,t):
+    attrtype, substrings = t
     return pureldap.LDAPFilter_substrings(
-	type=attr,
-	substrings=l)
+        type=attrtype,
+        substrings=substrings)
+substring.setParseAction(_p_substring)
 
-def parseApprox(attr, s):
-    return pureldap.LDAPFilter_approxMatch(
-	attributeDesc=pureldap.LDAPAttributeDescription(attr),
-	assertionValue=pureldap.LDAPAssertionValue(s))
+keystring = Word('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
+                 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789;-')
+numericoid = Combine(Word('0123456789') + ZeroOrMore(Literal('.') + Word('0123456789')))
+oid = numericoid | keystring
+matchingrule = copy.copy(oid)
 
-def parseGreater(attr, s):
-    return pureldap.LDAPFilter_greaterOrEqual(
-	attributeDesc=pureldap.LDAPAttributeDescription(attr),
-	assertionValue=pureldap.LDAPAssertionValue(s))
+extensible_dn = Optional(":dn")
+def _p_extensible_dn(s,l,t):
+    return not not t
+extensible_dn.setParseAction(_p_extensible_dn)
 
-def parseLess(attr, s):
-    return pureldap.LDAPFilter_lessOrEqual(
-	attributeDesc=pureldap.LDAPAttributeDescription(attr),
-	assertionValue=pureldap.LDAPAssertionValue(s))
-
-def parseMaybeSubstring(attr, s):
-    if s=="*":
-        return parsePresent(attr)
-    elif "*" in s:
-        return parseSubstring(attr, s)
+matchingrule_or_none = Optional(Suppress(":") + matchingrule)
+def _p_matchingrule_or_none(s,l,t):
+    if not t:
+        return [None]
     else:
-        return parseEqual(attr, s)
+        return t[0]
+matchingrule_or_none.setParseAction(_p_matchingrule_or_none)
 
-def parseItem(s):
-    i=0
-    while i<len(s):
-	#TODO what chars can attributes contain?
-	if s[i] not in \
-	   "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ":
-	    break
-	i+=1
-
-    attr=s[:i]
-    s=s[i:]
-
-    if s.startswith("="):
-        return parseMaybeSubstring(attr, s[1:])
-    elif s.startswith("~="):
-	return parseApprox(attr, s[2:])
-    elif s.startswith(">="):
-	return parseGreater(attr, s[2:])
-    elif s.startswith("<="):
-	return parseLess(attr, s[2:])
-    elif s.startswith(":"):
-	return parseExtensible(attr, s[1:])
-    else:
-	raise InvalidLDAPFilter, ("item", attr+s)
+extensible_attr = attr + extensible_dn + matchingrule_or_none + Suppress(":=") + value
+def _p_extensible_attr(s,l,t):
+    return list(t)
+extensible_attr.setParseAction(_p_extensible_attr)
 
 
-def parseFilterlist(s):
-    r=[]
-    while s:
-	if not s.startswith('(') or not s.endswith(')'):
-	    raise InvalidLDAPFilter, ("filterlist", s)
-	level=0
-	i=0
-	while i<len(s):
-	    c=s[i]
-	    i+=1
-	    if c=='(':
-		level+=1
-	    elif c==')':
-		level-=1
-	    if level==0:
-		r.append(parseFilter(s[:i]))
-		s=s[i:]
-		break
-    return r
+extensible_noattr = extensible_dn + Suppress(":") + matchingrule + Suppress(":=") + value
+def _p_extensible_noattr(s,l,t):
+    return [None]+list(t)
+extensible_noattr.setParseAction(_p_extensible_noattr)
 
+extensible = extensible_attr | extensible_noattr
+def _p_extensible(s,l,t):
+    attr, dn, matchingRule, value = t
+    return pureldap.LDAPFilter_extensibleMatch(
+        matchingRule=matchingRule,
+        type=attr,
+        matchValue=value,
+        dnAttributes=dn)
+extensible.setParseAction(_p_extensible)
+item = simple ^ present ^ substring ^ extensible
+item.leaveWhitespace()
+not_ = Suppress(Literal('!')) + filter_
+not_.setParseAction(lambda s,l,t: pureldap.LDAPFilter_not(t[0]))
+filterlist = OneOrMore(filter_)
+or_ = Suppress(Literal('|')) + filterlist
+or_.setParseAction(lambda s,l,t: pureldap.LDAPFilter_or(t))
+and_ = Suppress(Literal('&')) + filterlist
+and_.setParseAction(lambda s,l,t: pureldap.LDAPFilter_and(t))
+filtercomp = and_ | or_ | not_ | item
+filter_ << (Suppress(Literal('(').leaveWhitespace())
+            + filtercomp
+            + Suppress(Literal(')').leaveWhitespace()))
+filtercomp.leaveWhitespace()
+filter_.leaveWhitespace()
 
-def parseFiltercomp(s):
-    if s.startswith('&'):
-	return pureldap.LDAPFilter_and(parseFilterlist(s[1:]))
-    elif s.startswith('|'):
-	return pureldap.LDAPFilter_or(parseFilterlist(s[1:]))
-    elif s.startswith('!'):
-	return pureldap.LDAPFilter_not(parseFilter(s[1:]))
-    else:
-	return parseItem(s)
+toplevel = (StringStart().leaveWhitespace()
+            + filter_
+            + StringEnd().leaveWhitespace())
+toplevel.leaveWhitespace()
 
 def parseFilter(s):
-    if not s.startswith('(') or not s.endswith(')'):
-	raise InvalidLDAPFilter, ("filtercomp", s)
-    return parseFiltercomp(s[1:-1])
+    try:
+        x=toplevel.parseString(s)
+    except ParseException, e:
+        raise InvalidLDAPFilter, (e.msg,
+                                  e.loc,
+                                  e.line)
+    assert len(x)==1
+    return x[0]
 
 if __name__=='__main__':
     import sys
     for filt in sys.argv[1:]:
 	print repr(parseFilter(filt))
+        print

@@ -1,3 +1,31 @@
+ldaptor (0.0.26) unstable; urgency=low
+
+  * Documentation changes:
+    - Archive sketch of the interfaces (with no explanation :).
+
+  * Bugfixes:
+    - Override __eq__ and __ne__ in pureber.BERBase too, otherwise
+      UserList's implementation of those overrode BERBase.__cmp__ and
+      caused false equalities.
+    - Reimplement ldapfilter, with Unit Test flavor. Use pyparsing
+      to make it really handle extra data and backslash escaping.
+    - When calling filt.asText() for LDAP filters, make sure to
+      backslash escape special characters.
+
+  * Cleanups:
+    - Typo in docstring.
+    - Add nicer repr of pureldap.LDAPMatchingRuleAssertion, to make the
+      problem easier to spot.
+
+  * Packaging:
+    - Depend on pythonX.Y-pyparsing.
+    - New enough dia is in unstable, so upload to unstable again.
+
+  * Administrivia:
+    - Add TODO notes.
+
+ -- Tommi Virtanen <tv@debian.org>  Sat, 26 Jun 2004 14:34:06 +0300
+
 ldaptor (0.0.25) experimental; urgency=low
 
   * Pre-generate documentation in build target, don't wait until

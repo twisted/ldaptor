@@ -127,6 +127,18 @@ class BERBase:
 	else:
 	    return -1
 
+    def __eq__(self, other):
+	if isinstance(other, BERBase):
+	    return str(self) == str(other)
+	else:
+	    return False
+
+    def __ne__(self, other):
+	if isinstance(other, BERBase):
+	    return str(self) != str(other)
+	else:
+	    return False
+
 class BERStructured(BERBase):
     def identification(self):
 	return STRUCTURED|self.tag

@@ -123,3 +123,4 @@ TODO file for the Ldaptor project.
 
 * self-change password webui
 
+* ldaptor-getfreenumber take minimum as command line option

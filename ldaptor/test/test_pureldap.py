@@ -263,3 +263,35 @@ class KnownValues(unittest.TestCase):
 	m=str(pureldap.LDAPModifyRequest(object='foo', modification=[pureldap.LDAPModification_delete('bar')]))
 	for i in xrange(len(m)):
 	    self.assertRaises(pureber.BERExceptionInsufficientData, pureldap.LDAPModifyRequest, encoded=m[:i], berdecoder=pureber.BERDecoderContext())
+
+class TestEquality(unittest.TestCase):
+    valuesToTest=(
+        (pureldap.LDAPFilter_equalityMatch,
+         [ pureldap.LDAPAttributeDescription(value='cn'),
+           pureldap.LDAPAssertionValue(value='foo'),
+           ]),
+        (pureldap.LDAPFilter_equalityMatch,
+         [ pureldap.LDAPAttributeDescription(value='cn'),
+           pureldap.LDAPAssertionValue(value='bar'),
+           ]),
+	(pureber.BERInteger, [0]),
+	)
+
+    def testEquality(self):
+	"""LDAP objects equal LDAP objects with same type and content"""
+	for class_, args in self.valuesToTest:
+	    x=class_(*args)
+	    y=class_(*args)
+	    self.assertEquals(x, x)
+	    self.assertEquals(x, y)
+
+    def testInEquality(self):
+	"""LDAP objects do not equal LDAP objects with different type or content"""
+	for i in xrange(len(self.valuesToTest)):
+	    for j in xrange(len(self.valuesToTest)):
+		if i!=j:
+		    i_class, i_args = self.valuesToTest[i]
+		    j_class, j_args = self.valuesToTest[j]
+		    x=i_class(*i_args)
+		    y=j_class(*j_args)
+		    self.assertNotEquals(x, y)

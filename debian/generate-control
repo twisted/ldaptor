@@ -83,7 +83,7 @@ pypackage = """
 Package: %(var package)s
 Section: %(extract-setup-var debian-section)s
 Architecture: all
-Depends: python%(var python_version)s-twisted (>= 1.1.1), pwgen%(var extra_depends)s
+Depends: python%(var python_version)s-twisted (>= 1.1.1), python%(var python_version)s-pyparsing, pwgen%(var extra_depends)s
 Description: %(setup --description)s
 """
 printed_source=0
