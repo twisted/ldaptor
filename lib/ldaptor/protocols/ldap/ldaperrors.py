@@ -16,6 +16,32 @@
 
 from bidirdict import BidirDict
 
+def get(resultCode, errorMessage):
+    """Get an instance of the correct exception for this resultCode."""
+    #TODO
+    return LDAPUnknownError(resultCode, errorMessage)
+
+class LDAPException(Exception):
+    resultCode=None
+
+class LDAPOperationsError(LDAPException):
+    resultCode=1
+
+class LDAPProtocolError(LDAPException):
+    resultCode=2
+
+class LDAPUnknownError(LDAPException):
+    resultCode=None
+
+    def __str__(self):
+        code=self.args[0]
+        codeName=errors.reverse[code] or 'unknownError(%d)'%code
+        message=self.args[1]
+        if message:
+            return '%s: %s' % (codeName, message)
+        else:
+            return codeName
+
 errors = BidirDict(
     success=0,
     operationsError=1,

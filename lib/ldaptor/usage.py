@@ -68,7 +68,18 @@ class Options_bind:
     optParameters = (
         ('binddn', None, None,
          "use Distinguished Name to bind to the directory"),
+        ('bind-auth-fd', None, None,
+         "read bind password from filedescriptor"),
         )
+
+    def postOptions_bind_auth_fd_numeric(self):
+        val=self.opts['bind-auth-fd']
+        if val is not None:
+            try:
+                val = int(val)
+            except ValueError:
+                raise usage.UsageError, "%s value must be numeric" % 'bind-auth-fd'
+            self.opts['bind-auth-fd'] = val
 
 class Options_bind_mandatory(Options_bind):
     def postOptions_bind_mandatory(self):

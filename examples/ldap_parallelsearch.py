@@ -17,19 +17,18 @@
 
 from ldaptor.protocols.ldap import ldapclient
 from ldaptor.protocols import pureber
-
+from twisted.internet import protocol, defer
+from twisted.internet import reactor
+import sys
 
 CONNECTIONS=5
 SEARCHES=10
 
 class LDAPSearchAndPrint(ldapclient.LDAPSearch):
-    def __init__(self, client, prefix):
-        ldapclient.LDAPSearch.__init__(self, client,
+    def __init__(self, deferred, client, prefix):
+        ldapclient.LDAPSearch.__init__(self, deferred, client,
                                        baseObject='dc=example, dc=com')
         self.prefix=prefix
-
-    def handle_success(self):
-        self.client.search_done(self.prefix)
 
     def handle_entry(self, objectName, attributes):
         print "%s: %s %s"%(self.prefix, objectName,
@@ -38,46 +37,53 @@ class LDAPSearchAndPrint(ldapclient.LDAPSearch):
                                      map(lambda i: str(i), l)),
                                     attributes)))
 
-    def handle_fail(self, resultCode, errorMessage):
-        print "%s: fail: %d: %s"%(self.prefix, resultCode, errorMessage or "Unknown error")
-        self.client.search_done(self.prefix)
-
 class SearchALot(ldapclient.LDAPClient):
-    def __init__(self, callback, prefix):
+    def __init__(self):
         ldapclient.LDAPClient.__init__(self)
-        self.clients = map(lambda x, prefix=prefix: prefix+x, map(str, xrange(0,SEARCHES)))
-        self.callback = callback
-        self.prefix = prefix
     
     def connectionMade(self):
         self.bind()
 
     def handle_bind_success(self, matchedDN, serverSaslCreds):
-        for k in self.clients:
-            LDAPSearchAndPrint(self, k)
+        l=[]
+        for prefix in [self.factory.prefix+x
+                       for x
+                       in map(str, range(0,SEARCHES))]:
+            d=defer.Deferred()
+            l.append(d)
+            LDAPSearchAndPrint(d, self, prefix)
 
-    def search_done(self, prefix):
-        self.clients.remove(prefix)
-        if self.clients==[]:
-            self.callback(self)
+        dl=defer.DeferredList(l)
+        dl.chainDeferred(self.factory.deferred)
 
+class SearchALotFactory(protocol.ClientFactory):
+    protocol = SearchALot
+    def __init__(self, deferred, prefix):
+        self.deferred=deferred
+        self.prefix=prefix
+        
+    def connectionFailed(self, connector, reason):
+        self.deferred.errback(reason)
 
+exitStatus=0
 
-conns = []
-
-def callback(searchalot):
-    conns.remove(searchalot)
-    if not conns:
-        from twisted.install import reactor
-        reactor.stop()
+def error(fail):
+    print >>sys.stderr, 'fail:', fail.getErrorMessage()
+    global exitStatus
+    exitStatus=1
 
 def main():
-    from twisted.internet import tcp, main
+    l=[]
     for x in xrange(0,CONNECTIONS):
-        s=SearchALot(callback, str(x)+'.')
-        conns.append(s)
-        tcp.Client("localhost", 389, s)
-    main.run()
+        d=defer.Deferred()
+        l.append(d)
+        d.addErrback(error)
+        s=SearchALotFactory(d, str(x)+'.')
+        reactor.connectTCP("localhost", 389, s)
+    dl=defer.DeferredList(l)
+    dl.addBoth(lambda x: reactor.stop())
+    reactor.run()
+    sys.exit(exitStatus)
 
 if __name__ == "__main__":
     main()

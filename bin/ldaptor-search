@@ -4,16 +4,14 @@ import sys
 from ldaptor.protocols.ldap import ldapclient, ldapfilter, ldif
 from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage
+from twisted.internet import protocol, reactor, defer
 
 class SearchWithFilter(ldapclient.LDAPSearch):
-    def __init__(self, client, base, filt, attributes=()):
-        ldapclient.LDAPSearch.__init__(self, client,
+    def __init__(self, deferred, client, base, filt, attributes=()):
+        ldapclient.LDAPSearch.__init__(self, deferred, client,
                                        baseObject=base,
                                        filter=filt,
                                        attributes=attributes)
-
-    def handle_success(self):
-        self.client.search_done()
 
     def handle_entry(self, objectName, attributes):
         sys.stdout.write(ldif.asLDIF(objectName,
@@ -22,46 +20,42 @@ class SearchWithFilter(ldapclient.LDAPSearch):
                                            map(lambda i: str(i), l)),
                                           attributes))))
 
-    def handle_fail(self, resultCode, errorMessage):
-        sys.stderr.write("fail: %d: %s\n"%(resultCode, errorMessage or "Unknown error"))
-        self.client.search_fail(self)
-
 class Search(ldapclient.LDAPClient):
-    def __init__(self, base, filt, attributes, callback, errback):
-        ldapclient.LDAPClient.__init__(self)
-        self.base = base
-        self.filter = filt
-        self.attributes = attributes
-        self.callback = callback
-        self.errback = errback
-    
     def connectionMade(self):
         self.bind()
 
     def handle_bind_success(self, matchedDN, serverSaslCreds):
-        SearchWithFilter(self, self.base, self.filter, self.attributes)
+        SearchWithFilter(self.factory.deferred, self,
+                         self.factory.base, self.factory.filt,
+                         self.factory.attributes)
 
-    def search_done(self):
-        self.callback()
+class SearchFactory(protocol.ClientFactory):
+    protocol = Search
+    def __init__(self, deferred, base, filt, attributes):
+        self.deferred=deferred
+        self.base=base
+        self.filt=filt
+        self.attributes=attributes
 
-    def search_fail(self, search):
-        self.errback()
+    def connectionFailed(self, connector, reason):
+        self.deferred.errback(reason)
 
-def callback():
-    from twisted.internet import main
-    main.shutDown()
+exitStatus=0
 
-def errback():
-    from twisted.internet import main
-    main.shutDown()
-    sys.exit(1)
+def error(fail):
+    print >>sys.stderr, 'fail:', fail.getErrorMessage()
+    global exitStatus
+    exitStatus=1
 
 def main(host, port, base, filter_text, attributes):
-    from twisted.internet import tcp, main
     filt = ldapfilter.parseFilter(filter_text)
-    s=Search(base, filt, attributes, callback, errback)
-    tcp.Client(host, port, s)
-    main.run()
+    d=defer.Deferred()
+    s=SearchFactory(d, base, filt, attributes)
+    d.addErrback(error)
+    d.addBoth(lambda x: reactor.stop())
+    reactor.connectTCP(host, port, s)
+    reactor.run()
+    sys.exit(exitStatus)
 
 class MyOptions(usage.Options, usage.Options_hostport, usage.Options_base):
     """LDAPtor command line search utility"""
@@ -71,7 +65,6 @@ class MyOptions(usage.Options, usage.Options_hostport, usage.Options_base):
         self.opts['attributes'] = attributes
       
 if __name__ == "__main__":
-    import sys
     try:
         config = MyOptions()
         config.parseOptions()

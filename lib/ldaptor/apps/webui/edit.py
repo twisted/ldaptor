@@ -10,35 +10,34 @@ from cStringIO import StringIO
 import template
 
 class LDAPSearch_FetchByDN(ldapclient.LDAPSearch):
-    def __init__(self, client, dn, callback, errback):
-        ldapclient.LDAPSearch.__init__(self, client,
+    def __init__(self, deferred, client, dn):
+        ldapclient.LDAPSearch.__init__(self, deferred, client,
                                        baseObject=dn,
                                        scope=pureldap.LDAP_SCOPE_baseObject,
                                        sizeLimit=1,
                                        )
-        self.callback=callback
-        self.errback=errback
         self.dn=dn
 
         self.found=0
         self.dn=None
         self.attributes=None
+        deferred.addCallbacks(callback=self._ok,
+                              errback=lambda x: x)
 
-    def handle_success(self):
+
+    def _ok(self, dummy):
         if self.found==0:
-            self.errback(ldaperrors.other, "No such DN")
+            raise LDAPUnknownError(ldaperrors.other, "No such DN")
         elif self.found==1:
-            self.callback(self.dn, self.attributes)
+            return self.attributes
         else:
-            self.errback(ldaperrors.other, "DN matched multiple entries")
+            raise LDAPUnknownError(ldaperrors.other,
+                                   "DN matched multiple entries")
 
     def handle_entry(self, objectName, attributes):
         self.found=self.found+1
         self.dn=objectName
         self.attributes=attributes
-
-    def handle_fail(self, resultCode, errorMessage):
-        self.errback(resultCode, errorMessage)
 
 class DoModify(ldapclient.LDAPModifyAttributes):
     def __init__(self, client, object, modification, callback):
@@ -54,6 +53,16 @@ class DoModify(ldapclient.LDAPModifyAttributes):
         else:
             msg=""
         self.callback("<p><strong>Failed</strong>: %s%s."%(resultCode, msg))
+
+multiLineAttributeTypes = {
+    'description': 1,
+    }
+def isAttributeTypeMultiLine(attributeType):
+    for name in attributeType.name:
+        if multiLineAttributeTypes.has_key(name):
+            assert not attributeType.single_value
+            return multiLineAttributeTypes[name]
+    return 0
 
 class EditForm(widgets.Form):
     nonEditableAttributes = {
@@ -76,7 +85,7 @@ class EditForm(widgets.Form):
     def _get_attrtype(self, name):
         for a in self.attributeTypes:
             if name in a.name:
-                a.uiHint_multiline=0 #TODO
+                a.uiHint_multiline=isAttributeTypeMultiLine(a)
                 return a
         print "attribute type %s not known"%name
         return None
@@ -195,7 +204,7 @@ class EditForm(widgets.Form):
 
     def process(self, write, request, submit, **kw):
         user = request.getSession().LdaptorPerspective.getPerspectiveName()
-        client = request.getSession().LdaptorIdentity.ldapclient
+        client = request.getSession().LdaptorIdentity.getLDAPClient()
 
         if not client:
             return self._output_status_and_form(
@@ -253,15 +262,20 @@ class EditForm(widgets.Form):
             defe)
 
 class CreateEditForm:
-    def __init__(self, defe, dn, request, attributeTypes, objectClasses):
+    def __init__(self, defe, dn, request,
+                 attributeTypes, objectClasses):
         self.deferred=defe
         self.dn=dn
         self.request=request
         self.attributeTypes=attributeTypes
         self.objectClasses=objectClasses
 
-    def __call__(self, dn, attributes):
-        self.deferred.callback(EditForm(self.dn, attributes, self.attributeTypes, self.objectClasses).display(self.request))
+    def __call__(self, attributes):
+        self.deferred.callback(
+            EditForm(self.dn, attributes,
+                     self.attributeTypes,
+                     self.objectClasses).display(self.request))
+        return attributes
 
 class CreateError:
     def __init__(self, defe, dn, request):
@@ -269,13 +283,9 @@ class CreateError:
         self.dn=dn
         self.request=request
 
-    def __call__(self, resultCode=None, errorMessage=""):
+    def __call__(self, fail):
         self.request.args['incomplete']=['true']
-        if errorMessage:
-            errorMessage=": "+errorMessage
-        if resultCode!=None:
-            errorMessage = str(resultCode)+errorMessage
-        self.deferred.callback(["Trouble while fetching %s, got error%s.\n<HR>"%(repr(self.dn), errorMessage)])
+        self.deferred.callback(["Trouble while fetching %s: %s.\n<HR>"%(repr(self.dn), fail.getErrorMessage)])
 
 class NeedDNError(widgets.Widget):
     def display(self, request):
@@ -304,28 +314,41 @@ class EditPage(template.BasicPage):
 
             d=defer.Deferred()
 
-            client = request.getSession().LdaptorIdentity.ldapclient
+            client = request.getSession().LdaptorIdentity.getLDAPClient()
             if client:
-                schema.LDAPGet_subschemaSubentry(
-                    client, dn,
+                deferred=defer.Deferred()
+                schema.LDAPGet_subschemaSubentry(deferred, client, dn)
+                deferred.addCallbacks(
                     callback=self._getContent_2,
-                    callbackArgs=(request, client, d),
+                    callbackArgs=(dn, request, client, d),
                     errback=CreateError(d, dn, request),
                     )
+                deferred.addErrback(defer.logError)
             else:
-                CreateError(d, dn, request)(errorMessage="connection lost")
+                CreateError(d, dn, request)(
+                    Failure(LDAPUnknownError(ldaperrors.other,
+                                             "connection lost")))
 
             return [self._header(request), d]
 
-    def _getContent_2(self, dn, subschemaSubentry, request, client, d):
+    def _getContent_2(self, subschemaSubentry, dn, request, client, d):
+        deferred=defer.Deferred()
+
         schema.LDAPGetSchema(
+            deferred,
             client, subschemaSubentry,
+            )
+        deferred.addCallbacks(
             callback=self._getContent_3,
             callbackArgs=(dn, request, client, d),
             errback=CreateError(d, dn, request),
             )
-        
-    def _getContent_3(self, attributeTypes, objectClasses, dn, request, client, d):
-        LDAPSearch_FetchByDN(client, dn,
-                             CreateEditForm(d, dn, request, attributeTypes, objectClasses),
-                             CreateError(d, dn, request))
+
+    def _getContent_3(self, x, dn, request, client, d):
+        attributeTypes, objectClasses = x
+        deferred=defer.Deferred()
+        LDAPSearch_FetchByDN(deferred, client, dn)
+        deferred.addCallbacks(
+            callback=CreateEditForm(d, dn, request,
+                                    attributeTypes, objectClasses),
+            errback=CreateError(d, dn, request))

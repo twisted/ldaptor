@@ -1,3 +1,25 @@
+ldaptor (0.0.3) unstable; urgency=low
+
+  * NOTE: Requires a CVS version of twisted!
+  * New upstream version.
+  * tcp.Client -> reactor.clientTCP
+  * Removed old code in ldaptor.twisted that got in the way of
+    imports.
+  * Added options --generate and --bind-auth-fd
+  * Fix widget in ldaptor-webui search page.
+  * Twisted Connector refactor.
+  * Add hint that 'description' attributetype is always multiline.
+  * Starting to use Deferreds everywhere.
+  * Exception-based errors.
+  * Add asText() methods to LDAPFilter*-classes, convert objects
+    to textual filter representation.
+  * Implement LDAPFilter_not.
+  * Add mass_password_change to ldaptor-webui.
+  * Added utility to generate debian/changelog automatically from
+    BitKeeper.
+
+ -- Tommi Virtanen <tv@debian.org>  Sat,  3 Aug 2002 15:55:09 +0300
+
 ldaptor (0.0.2) unstable; urgency=low
 
   * NOTE: Requires a CVS version of twisted!

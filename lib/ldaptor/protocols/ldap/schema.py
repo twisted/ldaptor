@@ -2,30 +2,26 @@ from ldaptor.protocols.ldap import ldapclient
 from ldaptor.protocols import pureldap
 
 class LDAPGet_subschemaSubentry(ldapclient.LDAPSearch):
-    def __init__(self, client, dn, callback, errback, callbackArgs=()):
-        ldapclient.LDAPSearch.__init__(self, client,
+    def __init__(self, deferred, client, dn):
+        ldapclient.LDAPSearch.__init__(self, deferred, client,
                                        baseObject=dn,
                                        scope=pureldap.LDAP_SCOPE_baseObject,
                                        sizeLimit=1,
                                        attributes=["subschemaSubentry"],
                                        )
-        self.callback=callback
-        self.callbackArgs=callbackArgs
-        self.errback=errback
-        self.dn=dn
-
         self.found=0
         self.dn=None
         self.subschemaSubentry=None
-
-    def handle_success(self):
+        deferred.addCallbacks(self._ok, lambda x: x)
+            
+    def _ok(self, dummy):
         if self.found==0:
-            self.errback(ldaperrors.other, "No such DN")
+            raise LDAPUnknownError(ldaperrors.other, "No such DN")
         elif self.found==1:
-            apply(self.callback,
-                  (self.dn, self.subschemaSubentry)+self.callbackArgs)
+            return self.subschemaSubentry
         else:
-            self.errback(ldaperrors.other, "DN matched multiple entries")
+            raise LDAPUnknownError(ldaperrors.other,
+                                   "DN matched multiple entries")
 
     def handle_entry(self, objectName, attributes):
         self.found=self.found+1
@@ -36,36 +32,30 @@ class LDAPGet_subschemaSubentry(ldapclient.LDAPSearch):
                 self.subschemaSubentry=v[0]
         assert self.subschemaSubentry, "LDAP server doesn't support subschemaSubentry, dn=%s"%self.dn
 
-    def handle_fail(self, resultCode, errorMessage):
-        self.errback(resultCode, errorMessage)
-
 class LDAPGetSchema(ldapclient.LDAPSearch):
-    def __init__(self, client, dn, callback, errback, callbackArgs=()):
-        ldapclient.LDAPSearch.__init__(self, client,
+    def __init__(self, deferred, client, dn):
+        ldapclient.LDAPSearch.__init__(self, deferred, client,
                                        baseObject=dn,
                                        scope=pureldap.LDAP_SCOPE_baseObject,
                                        sizeLimit=1,
                                        attributes=["attributeTypes",
                                                    "objectClasses"],
                                        )
-        self.callback=callback
-        self.callbackArgs=callbackArgs
-        self.errback=errback
-        self.dn=dn
-
         self.found=0
         self.dn=None
         self.attributeTypes=[]
         self.objectClasses=[]
-
-    def handle_success(self):
+        deferred.addCallbacks(self._ok, lambda x: x)
+            
+    def _ok(self, dummy):
         if self.found==0:
-            self.errback(ldaperrors.other, "No such DN")
+            raise LDAPUnknownError(ldaperrors.other, "No such DN")
         elif self.found==1:
-            apply(self.callback,
-                  (self.attributeTypes,self.objectClasses)+self.callbackArgs)
+            return (self.attributeTypes, self.objectClasses)
         else:
-            self.errback(ldaperrors.other, "DN matched multiple entries")
+            raise LDAPUnknownError(ldaperrors.other,
+                                   "DN matched multiple entries")
+
 
     def handle_entry(self, objectName, attributes):
         self.found=self.found+1
@@ -78,11 +68,6 @@ class LDAPGetSchema(ldapclient.LDAPSearch):
                 for text in v:
                     self.objectClasses.append(ObjectClassDescription(str(text)))
         assert self.attributeTypes, "LDAP server doesn't give attributeTypes for subschemaSubentry dn=%s"%self.dn
-
-    def handle_fail(self, resultCode, errorMessage):
-        self.errback(resultCode, errorMessage)
-
-        
 
 class ASN1ParserThingie:
     def _to_list(self, text):

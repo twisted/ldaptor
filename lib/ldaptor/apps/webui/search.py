@@ -1,100 +1,90 @@
 from twisted.web import widgets
-from twisted.internet import defer
+from twisted.internet import defer, protocol
+from twisted.python.failure import Failure
 from ldaptor.protocols.ldap import ldapclient, ldapfilter
 from ldaptor.protocols import pureber, pureldap
-from twisted.internet import tcp
+from twisted.internet import reactor
+from ldaptor.apps.webui.htmlify import htmlify_attributes
 import string, urllib
 
 import template
 
 class LDAPSearchEntry(ldapclient.LDAPSearch):
+
+    # I ended up separating the deferred that signifies when the
+    # search is complete and whether it failed from the deferred that
+    # generates web content. Maybe they should be combined some day.
+
     def __init__(self,
+                 deferred,
+                 contentDeferred,
                  client,
-                 callback,
                  baseObject,
                  filter=pureldap.LDAPFilterMatchAll):
-        ldapclient.LDAPSearch.__init__(self, client,
+        ldapclient.LDAPSearch.__init__(self, deferred, client,
                                        baseObject=baseObject,
                                        filter=filter,
                                        sizeLimit=20,
                                        )
+        self.contentDeferred=contentDeferred
         self.result=""
-        self.callback=callback
         self.count=0
+        deferred.addCallbacks(self._ok, errback=self._fail)
 
-    def handle_success(self):
-        self.callback(["<p>%d entries matched."%self.count])
+    def _ok(self, dummy):
+        self.contentDeferred.callback(
+            ["<p>%d entries matched."%self.count])
+        return dummy
+
+    def _fail(self, fail):
+        self.contentDeferred.callback(["fail: %s"%fail.getErrorMessage()])
+        return fail
 
     def handle_entry(self, objectName, attributes):
         result = ('<p>%s\n'%objectName
                   + ' [<a href="edit/%s">edit</a>\n'%urllib.quote(objectName)
                   + ' |<a href="delete/%s">delete</a>]\n'%urllib.quote(objectName)
-                  + '<ul>\n'
+                  + htmlify_attributes(attributes)
                   )
 
-        for a,l in attributes:
-            assert len(l)>0
-            if len(l)==1:
-                result=result+"  <li>%s: %s\n"%(a, l[0])
-            else:
-                result=result+"  <li>%s:\n    <ul>\n"%a
-                for i in l:
-                    result=result+"      <li>%s\n"%i
-                result=result+"    </ul>\n"
 
-        result=result+"</ul>\n"
-
-        c=self.callback
         d=defer.Deferred()
-        self.callback=d.callback
-        c([result, d])
+        self.contentDeferred.callback([result, d])
+        self.contentDeferred=d
         self.count=self.count+1
 
-    def handle_fail(self, resultCode, errorMessage):
-        self.callback(["fail: %d: %s"%(resultCode, errorMessage or "Unknown error")])
-
 class DoSearch(ldapclient.LDAPClient):
-    def __init__(self, callback, baseObject, searchFor=[], ldapFilter=None):
+    def __init__(self):
         ldapclient.LDAPClient.__init__(self)
-        self.callback=callback
-        self.baseObject=baseObject
-        self.searchFor=searchFor
-        self.ldapFilter=ldapFilter
 
     def connectionMade(self):
         self.bind()
 
-    def connectionFailed(self):
-        self.callback(["establishing connection to LDAP server failed."])
-
-    def connectionLost(self):
-        print "DoSearch.connectionLost()"
-        # TODO test before adding this one?
-        #    self.callback(["connection to LDAP server lost."])
-
     def handle_bind_fail(self, resultCode, errorMessage):
-        self.callback(["establishing connection to LDAP server failed in bind."])
-        sulf.unbind()
+        self.unbind()
+        self.factory.errback(Failure(Exception("establishing connection to LDAP server failed in bind.")))
 
     def handle_bind_success(self, matchedDN, serverSaslCreds):
-        filt=[]
-        for k,v in self.searchFor:
-            v=string.strip(v)
-            if v=='':
-                continue
-            filt.append(ldapfilter.parseItem('%s=%s' % (k,v)))
-        if self.ldapFilter:
-            filt.append(ldapfilter.parseFilter(self.ldapFilter))
-        if filt:
-            if len(filt)==1:
-                filt=filt[0]
-            else:
-                filt=pureldap.LDAPFilter_and(filt)
-        else:
-            filt=pureldap.LDAPFilterMatchAll
-        LDAPSearchEntry(self, self.callback,
-                        baseObject=self.baseObject,
-                        filter=filt)
+        LDAPSearchEntry(self.factory.deferred,
+                        self.factory.contentDeferred,
+                        self,
+                        baseObject=self.factory.baseObject,
+                        filter=self.factory.ldapFilter)
+
+class DoSearchFactory(protocol.ClientFactory):
+    protocol=DoSearch
+
+    def __init__(self, deferred, contentDeferred, baseObject, ldapFilter=None):
+        self.deferred=deferred
+        self.contentDeferred=contentDeferred
+        self.baseObject=baseObject
+        self.ldapFilter=ldapFilter
+
+    def connectionFailed(self, connector, reason):
+        self.deferred.errback(reason)
+
+    def connectionLost(self, connector):
+        self.deferred.errback(Failure(Exception('connection was lost')))
 
 class SearchForm(widgets.Form):
     formFields = [
@@ -127,20 +117,37 @@ class SearchForm(widgets.Form):
         from cStringIO import StringIO
         io=StringIO()
         self.format(self.getFormFields(request, kw), io.write, request)
-        d=defer.Deferred()
-        searchFields=[]
-        ldapFilter=None
+        filt=[]
         for k,v in kw.items():
             if k[:len("search_")]=="search_":
-                searchFields.append((k[len("search_"):], v))
-            elif k=='ldapfilter':
-                ldapFilter=v
-        tcp.Client(self.ldaphost, self.ldapport,
-                   DoSearch(d.callback,
-                            baseObject=self.baseObject,
-                            searchFor=searchFields,
-                            ldapFilter=ldapFilter))
-        return [io.getvalue(), d]
+                k=k[len("search_"):]
+                v=string.strip(v)
+                if v=='':
+                    continue
+                filt.append(ldapfilter.parseItem('%s=%s' % (k,v)))
+            elif k=='ldapfilter' and v:
+                filt.append(ldapfilter.parseFilter(v))
+        if filt:
+            if len(filt)==1:
+                filt=filt[0]
+            else:
+                filt=pureldap.LDAPFilter_and(filt)
+        else:
+            filt=pureldap.LDAPFilterMatchAll
+        deferred=defer.Deferred()
+        contentDeferred=defer.Deferred()
+        reactor.connectTCP(self.ldaphost, self.ldapport,
+                           DoSearchFactory(deferred,
+                                           contentDeferred,
+                                           baseObject=self.baseObject,
+                                           ldapFilter=filt))
+        filtText=filt.asText()
+        return [io.getvalue(),
+                contentDeferred,
+                '<P>Used filter %s' % filtText,
+                '<P><a href="mass_password_change/%s">Mass password change</a>\n'%urllib.quote(filtText)
+
+                ]
 
 class SearchPage(template.BasicPage):
     title = "Ldaptor Search Page"
@@ -160,8 +167,7 @@ class SearchPage(template.BasicPage):
         return '[' + '|'.join(l) + ']'
 
     def getContent(self, request):
-        return [self._header(request),
-                SearchForm(baseObject=self.baseObject,
-                           ldaphost=self.ldaphost,
-                           ldapport=self.ldapport)]
-
+        return [self._header(request)] \
+               + SearchForm(baseObject=self.baseObject,
+                            ldaphost=self.ldaphost,
+                            ldapport=self.ldapport).display(request)

@@ -9,35 +9,31 @@ from cStringIO import StringIO
 from ldaptor.apps.webui import template
 
 class LDAPSearch_FetchByDN(ldapclient.LDAPSearch):
-    def __init__(self, client, dn, callback, errback):
-        ldapclient.LDAPSearch.__init__(self, client,
+    def __init__(self, deferred, client, dn):
+        ldapclient.LDAPSearch.__init__(self, deferred, client,
                                        baseObject=dn,
                                        scope=pureldap.LDAP_SCOPE_baseObject,
                                        sizeLimit=1,
                                        )
-        self.callback=callback
-        self.errback=errback
-        self.dn=dn
-
         self.found=0
         self.dn=None
         self.attributes=None
+        deferred.addCallbacks(callback=self._ok,
+                              errback=lambda x: x)
 
-    def handle_success(self):
+    def _ok(self, dummy):
         if self.found==0:
-            self.errback(ldaperrors.other, "No such DN")
+            raise LDAPUnknownError(ldaperrors.other, "No such DN")
         elif self.found==1:
-            self.callback(self.dn, self.attributes)
+            return self.attributes
         else:
-            self.errback(ldaperrors.other, "DN matched multiple entries")
+            raise LDAPUnknownError(ldaperrors.other,
+                                   "DN matched multiple entries")
 
     def handle_entry(self, objectName, attributes):
         self.found=self.found+1
         self.dn=objectName
         self.attributes=attributes
-
-    def handle_fail(self, resultCode, errorMessage):
-        self.errback(resultCode, errorMessage)
 
 class DoDelete(ldapclient.LDAPDelEntry):
     def __init__(self, client, object, callback):
@@ -82,7 +78,7 @@ class DeleteForm(widgets.Form):
 
     def process(self, write, request, submit, **kw):
         user = request.getSession().LdaptorPerspective.getPerspectiveName()
-        client = request.getSession().LdaptorIdentity.ldapclient
+        client = request.getSession().LdaptorIdentity.getLDAPClient()
 
         if not client:
             return ["<P>Del failed: connection lost."]
@@ -98,8 +94,9 @@ class CreateDeleteForm:
         self.dn=dn
         self.request=request
 
-    def __call__(self, dn, attributes):
-        self.deferred.callback(DeleteForm(dn, attributes).display(self.request))
+    def __call__(self, attributes):
+        self.deferred.callback(
+            DeleteForm(self.dn, attributes).display(self.request))
 
 class CreateError:
     def __init__(self, defe, dn, request):
@@ -107,13 +104,9 @@ class CreateError:
         self.dn=dn
         self.request=request
 
-    def __call__(self, resultCode=None, errorMessage=""):
+    def __call__(self, fail):
         self.request.args['incomplete']=['true']
-        if errorMessage:
-            errorMessage=": "+errorMessage
-        if resultCode!=None:
-            errorMessage = str(resultCode)+errorMessage
-        self.deferred.callback(["Trouble while fetching %s, got error%s.\n<HR>"%(repr(self.dn), errorMessage)])
+        self.deferred.callback(["Trouble while fetching %s: %s.\n<HR>"%(repr(self.dn), fail.getErrorMessage)])
 
 class NeedDNError(widgets.Widget):
     def display(self, request):
@@ -142,11 +135,13 @@ class DeletePage(template.BasicPage):
 
             d=defer.Deferred()
 
-            client = request.getSession().LdaptorIdentity.ldapclient
+            client = request.getSession().LdaptorIdentity.getLDAPClient()
             if client:
-                LDAPSearch_FetchByDN(client, dn,
-                                     CreateDeleteForm(d, dn, request),
-                                     CreateError(d, dn, request))
+                deferred=defer.Deferred()
+                LDAPSearch_FetchByDN(deferred, client, dn)
+                deferred.addCallbacks(
+                    CreateDeleteForm(d, dn, request),
+                    CreateError(d, dn, request))
             else:
                 CreateError(d, dn, request)(errorMessage="connection lost")
 

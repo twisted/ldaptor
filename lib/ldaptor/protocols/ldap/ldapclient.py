@@ -17,9 +17,10 @@
 """LDAP protocol client"""
 
 from ldaptor.protocols import pureldap, pureber
+from ldaptor.protocols.ldap import ldaperrors
 
-from twisted.python import mutablestring
-
+from twisted.python import mutablestring, log
+from twisted.python.failure import Failure
 from twisted.internet import protocol
 
 class LDAPClient(protocol.Protocol):
@@ -57,7 +58,7 @@ class LDAPClient(protocol.Protocol):
         if not self.connected:
             raise "Not connected (TODO)" #TODO make this a real object
         msg=pureldap.LDAPMessage(op)
-        print '->', repr(msg)
+        log.msg('-> %s' % repr(msg))
         assert not self.onwire.has_key(msg.id)
         assert op.needs_answer or not handler
         if op.needs_answer:
@@ -65,11 +66,11 @@ class LDAPClient(protocol.Protocol):
         self.transport.write(str(msg))
 
     def unsolicitedNotification(self, msg):
-        print "Got unsolicited notification:", repr(msg)
+        log.msg("Got unsolicited notification: %s" % repr(msg))
 
     def handle(self, msg):
         assert isinstance(msg.value, pureldap.LDAPProtocolResponse)
-        print '<-', repr(msg)
+        log.msg('<- %s' % repr(msg))
 
         if msg.id==0:
             self.unsolicitedNotification(msg.value)
@@ -126,6 +127,7 @@ class LDAPOperation:
 
 class LDAPSearch(LDAPOperation):
     def __init__(self,
+                 deferred,
                  client,
                  baseObject='',
                  scope=pureldap.LDAP_SCOPE_wholeSubtree,
@@ -137,6 +139,7 @@ class LDAPSearch(LDAPOperation):
                  attributes=[],
                  ):
         LDAPOperation.__init__(self, client)
+        self.deferred=deferred
         r=pureldap.LDAPSearchRequest(baseObject=baseObject,
                                      scope=scope,
                                      derefAliases=derefAliases,
@@ -152,22 +155,17 @@ class LDAPSearch(LDAPOperation):
             assert msg.referral==None #TODO
             if msg.resultCode==0: #TODO ldap.errors.success
                 assert msg.matchedDN==''
-                self.handle_success()
+                print self.__class__
+                self.deferred.callback(self)
             else:
-                self.handle_fail(msg.resultCode,
-                                 msg.errorMessage)
+                self.deferred.errback(Failure(
+                    ldaperrors.get(msg.resultCode, msg.errorMessage)))
             return 1
         else:
             assert isinstance(msg, pureldap.LDAPSearchResultEntry)
             self.handle_entry(msg.objectName, msg.attributes)
             return 0
             
-    def handle_success(self):
-        pass
-
-    def handle_fail(self, resultCode, errorMessage):
-        pass
-
     def handle_entry(self, objectName, attributes):
         pass
 
@@ -179,7 +177,7 @@ class LDAPModifyAttributes(LDAPOperation):
         """
         Request modification of LDAP attributes.
 
-        object is a string represetation of the object DN.
+        object is a string representation of the object DN.
 
         modification is a list of LDAPModifications
         """
@@ -197,14 +195,14 @@ class LDAPModifyAttributes(LDAPOperation):
             self.handle_success()
             return 1
         else:
-            self.handle_fail(msg.resultCode,
-                             msg.errorMessage)
+            self.handle_fail(Failure(
+                ldaperrors.get(msg.resultCode, msg.errorMessage)))
             return 1
             
     def handle_success(self):
         pass
 
-    def handle_fail(self, resultCode, errorMessage):
+    def handle_fail(self, fail):
         pass
 
 
@@ -216,7 +214,7 @@ class LDAPDeleteAttributes(LDAPModifyAttributes):
         """
         Request deletion of LDAP attributes.
 
-        object is a string represetation of the object DN.
+        object is a string representation of the object DN.
 
         vals is a list of (type, vals) pairs, where
 
@@ -239,7 +237,7 @@ class LDAPAddEntry(LDAPOperation):
         """
         Request addition of LDAP entry.
 
-        object is a string represetation of the object DN.
+        object is a string representation of the object DN.
 
         attributes is a list of LDAPAttributeDescription,
         BERSet(LDAPAttributeValue, ..) pairs.
@@ -259,14 +257,14 @@ class LDAPAddEntry(LDAPOperation):
             self.handle_success()
             return 1
         else:
-            self.handle_fail(msg.resultCode,
-                             msg.errorMessage)
+            self.handle_fail(Failure(
+                ldaperrors.get(msg.resultCode, msg.errorMessage)))
             return 1
             
     def handle_success(self):
         pass
 
-    def handle_fail(self, resultCode, errorMessage):
+    def handle_fail(self, fail):
         pass
 
 
@@ -277,7 +275,7 @@ class LDAPDelEntry(LDAPOperation):
         """
         Request deleteition of LDAP entry.
 
-        object is a string represetation of the object DN.
+        object is a string representation of the object DN.
         """
 
         LDAPOperation.__init__(self, client)
@@ -292,18 +290,19 @@ class LDAPDelEntry(LDAPOperation):
             self.handle_success()
             return 1
         else:
-            self.handle_fail(msg.resultCode,
-                             msg.errorMessage)
+            self.handle_fail(Failure(
+                ldaperrors.get(msg.resultCode, msg.errorMessage)))
             return 1
             
     def handle_success(self):
         pass
 
-    def handle_fail(self, resultCode, errorMessage):
+    def handle_fail(self, fail):
         pass
 
 class LDAPModifyPassword(LDAPOperation):
     def __init__(self,
+                 deferred,
                  client,
                  userIdentity=None,
                  oldPasswd=None,
@@ -313,21 +312,16 @@ class LDAPModifyPassword(LDAPOperation):
                                              oldPasswd=oldPasswd,
                                              newPasswd=newPasswd)
         self.client.queue(r, self.handle_msg)
+        self.deferred=deferred
 
     def handle_msg(self, msg):
         assert isinstance(msg, pureldap.LDAPExtendedResponse)
         assert msg.referral==None #TODO
         if msg.resultCode==0: #TODO ldap.errors.success
             assert msg.matchedDN==''
-            self.handle_success()
+            self.deferred.callback(self)
             return 1
         else:
-            self.handle_fail(msg.resultCode,
-                             msg.errorMessage)
+            self.deferred.errback(Failure(
+                ldaperrors.get(msg.resultCode, msg.errorMessage)))
             return 1
-            
-    def handle_success(self):
-        pass
-
-    def handle_fail(self, resultCode, errorMessage):
-        pass

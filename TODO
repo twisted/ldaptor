@@ -1,16 +1,18 @@
 TODO file for the Ldaptor project.
 
-* creating a new group
+* ldaptor-webui, ldaptor-utils: creating a new group
 
-* editing a users groups, multiselection with a list of existing
-   groups to choose from
+* ldaptor-webui, ldaptor-utils: editing a users groups
+   - for ldaptor-webui, a multiselection with a list of existing
+      groups to choose from
 
-* changing a users password with ldaptor-webui
+* ldaptor-webui: changing a users password
 
-* non-ASCII chars
+* ldaptor-webui, maybe others: non-ASCII chars
 
-* batch password changes; for all entries in the search results, show
-   checkbox. For each checked, change password.
+* ldaptor-webui: batch password changes; for all entries in the
+   search results, show checkbox. For each checked, change
+   password.
 
 * changing the dn attribute
 
@@ -27,3 +29,15 @@ TODO file for the Ldaptor project.
    s.update('foo')
    s.update(p[20:])
    assert pwd==base64.encodestring(s.digest())
+
+* rewrite Deferred handling, use Failures, etc.
+
+* SSL
+
+* ldaptor-webui empty lines at end of multiline attributes gets
+   lost in old_foo (atleast with galeon)
+
+* ldaptor-webui: connections to ldap server lost cause tracebacks
+
+* ldaptor-webui: malformed ldap filter causes tracebacks
+

@@ -38,9 +38,11 @@ def l(s):
     """Split a string to ord's of chars."""
     return map(lambda x: ord(x), s)
 
-class LDAPModifyRequestKnownValues(unittest.TestCase):
-    knownValues=( # args, kwargs, expected_result
-        ([],
+class KnownValues(unittest.TestCase):
+    knownValues=( # class, args, kwargs, expected_result
+
+        (pureldap.LDAPModifyRequest,
+         [],
          { "object": 'cn=foo, dc=example, dc=com',
            "modification": [pureldap.LDAPModification_delete([('bar',)])]
            },
@@ -53,27 +55,49 @@ class LDAPModifyRequestKnownValues(unittest.TestCase):
          + [0x30, 0x07]
          + [0x04, 0x03] + l("bar")
          + [0x31, 0x00]),
+
+        (pureldap.LDAPFilter_not,
+         [],
+         { "value": pureldap.LDAPFilter_present("foo"),
+           },
+         [0xa2, 0x05]
+         + [0x87]
+         + [len("foo")]
+         + l("foo")),
         )
 
-    def testToLDAPModifyRequestKnownValues(self):
-        """str(LDAPModifyRequest(...)) should give known result with known input"""
-        for args, kwargs, encoded in self.knownValues:
-            result = apply(pureldap.LDAPModifyRequest, args, kwargs)
+    def testToLDAP(self):
+        """str(LDAPClass(...)) should give known result with known input"""
+        for klass, args, kwargs, encoded in self.knownValues:
+            result = apply(klass, args, kwargs)
             result = str(result)
             result = map(ord, result)
             if encoded!=result:
                 raise AssertionError(encoded, result)
 
-    def testFromLDAPModifyRequestKnownValues(self):
-        """LDAPModifyRequest(encoded="...") should give known result with known input"""
-        for args, kwargs, encoded in self.knownValues:
+    def testFromLDAP(self):
+        """LDAPClass(encoded="...") should give known result with known input"""
+        for klass, args, kwargs, encoded in self.knownValues:
             m=MutableString(apply(s,encoded))
             m.append('foo')
-            result = pureldap.LDAPModifyRequest(encoded=m, berdecoder=pureber.BERDecoderContext())
+            result = klass(encoded=m, berdecoder=pureber.BERDecoderContext())
             assert m=='foo'
-            #TODO assert integer==result
 
-    def testPartialLDAPModifyRequestEncodings(self):
+            shouldBe = apply(klass, args, kwargs)
+            #TODO shouldn't use str below
+            assert str(result)==str(shouldBe), 'result is %s, should be %s' % (repr(result), repr(shouldBe))
+
+    def testPartial(self):
+        """LDAPClass(encoded="...") with too short input should throw BERExceptionInsufficientData"""
+        for klass, args, kwargs, encoded in self.knownValues:
+            for i in xrange(len(encoded)):
+                m=MutableString(apply(s,encoded))[:i]
+                self.assertRaises(pureber.BERExceptionInsufficientData,
+                                  klass,
+                                  encoded=m,
+                                  berdecoder=pureber.BERDecoderContext())
+
+    def testPartialLDAPModifyRequestEncodings_old(self):
         """LDAPModifyRequest(encoded="...") with too short input should throw BERExceptionInsufficientData"""
         m=str(pureldap.LDAPModifyRequest(object='foo', modification=[pureldap.LDAPModification_delete(['bar'])]))
         for i in xrange(len(m)):

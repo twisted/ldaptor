@@ -3,62 +3,64 @@
 from ldaptor.apps import webui
 from ldaptor.apps.webui import gadget
 
-from twisted.internet import main, app
+from twisted.internet import main, app, protocol
 from twisted.cred.service import Service
 from twisted.cred.identity import Identity
 from twisted.cred.perspective import Perspective
 from twisted.cred.authorizer import Authorizer
 from twisted.internet.defer import Deferred
-from twisted.internet import defer
-from twisted.internet import tcp
-from twisted.internet.protocol import ClientFactory
+from twisted.internet import defer, reactor
+from twisted.python.failure import Failure
 from ldaptor.protocols.ldap import ldapclient
 from ldaptor.protocols import pureldap
 from twisted.web import server, guard
 from ldaptor import usage
 
 class LDAPAuth(ldapclient.LDAPClient):
+    def connectionMade(self):
+        ldapclient.LDAPClient.connectionMade(self)
+        self.bind(self.factory.dn, self.factory.auth)
+        del self.factory.auth
+
+    def handle_bind_success(self, matchedDN, serverSaslCreds):
+        ldapclient.LDAPClient.handle_bind_success(self, matchedDN, serverSaslCreds)
+        self.factory.defe.callback("ok")
+
+    def handle_bind_fail(self, resultCode, errorMessage):
+        ldapclient.LDAPClient.handle_bind_fail(self, resultCode, errorMessage)
+        self.factory.defe.errback(errorMessage)
+
+class LDAPAuthFactory(protocol.ClientFactory):
+    protocol = LDAPAuth
+
     def __init__(self, defe, dn, auth, cb_connectionLost):
-        ldapclient.LDAPClient.__init__(self)
         self.defe = defe
         self.dn = dn
         self.auth = auth
         self.cb_connectionLost = cb_connectionLost
-    
-    def connectionMade(self):
-        ldapclient.LDAPClient.connectionMade(self)
-        print "LDAPAuth.connectionMade"
-        self.bind(self.dn, self.auth)
-        del self.auth
+        self.proto=None
 
-    def connectionFailed(self):
-        ldapclient.LDAPClient.connectionFailed(self)
-        print "LDAPAuth.connectionFailed"
+    def connectionFailed(self, connector, reason):
+        self.proto=None
         self.defe.errback("connection failed")
 
-    def connectionLost(self):
-        ldapclient.LDAPClient.connectionLost(self)
-        print "LDAPAuth.connectionLost"
+    def connectionLost(self, connector):
+        self.proto=None
         self.cb_connectionLost()
 
-    def handle_bind_success(self, matchedDN, serverSaslCreds):
-        ldapclient.LDAPClient.handle_bind_success(self, matchedDN, serverSaslCreds)
-        print "LDAPAuth.handle_bind_success"
-        self.defe.callback("ok")
-
-    def handle_bind_fail(self, resultCode, errorMessage):
-        ldapclient.LDAPClient.handle_bind_fail(self, resultCode, errorMessage)
-        print "LDAPAuth.handle_bind_fail"
-        self.defe.errback(errorMessage)
+    def buildProtocol(self, addr):
+        p=protocol.ClientFactory.buildProtocol(self, addr)
+        self.proto=p
+        return p
 
 class LDAPIdentity(Identity):
     def __init__(self, name, application,
-                 ldapClientFactory, ldaphost="localhost", ldapport=389):
+                 ldapClientFactoryFactory, ldaphost="localhost", ldapport=389):
         Identity.__init__(self, name, application)
-        self.ldapClientFactory=ldapClientFactory
+        self.ldapClientFactoryFactory=ldapClientFactoryFactory
+        self.ldapClientFactory=None
         self.ldaphost=ldaphost
         self.ldapport=ldapport
-        self.ldapclient=None
         self.notify_on_connectionLost = []
 
     def setPassword(self, plaintext):
@@ -73,17 +75,22 @@ class LDAPIdentity(Identity):
     def verifyPassword(self, challenge, hashedPassword):
         raise NotImplementedError
 
+    def getLDAPClient(self):
+        if self.ldapClientFactory is None:
+            return None
+        return self.ldapClientFactory.proto
+
     def verifyPlainPassword(self, plaintext):
-        print "LDAPIdentity.verifyPlainPassword"
-        assert not self.ldapclient
+        assert not self.getLDAPClient()
         pwrq = Deferred()
-        self.ldapclient = self.ldapClientFactory(pwrq, self.name, plaintext, self.connectionLost)
-        tcp.Client(self.ldaphost, self.ldapport, self.ldapclient)
+        self.ldapClientFactory = self.ldapClientFactoryFactory(
+            pwrq, self.name, plaintext, self.connectionLost)
+        reactor.connectTCP(self.ldaphost, self.ldapport,
+                          self.ldapClientFactory)
         return pwrq
 
     def connectionLost(self):
-        print "LDAPIdentity.connectionLost"
-        self.ldapclient = None
+        self.ldapClientFactory=None
         for cb in self.notify_on_connectionLost:
             cb()
         self.notify_on_connectionLost = []
@@ -101,7 +108,6 @@ class LDAPPerspective(Perspective):
             self.sessions[reference]+=1
         except KeyError:
             self.sessions[reference]=1
-        print "SESSIONS", self.sessions
         return Perspective.attached(self, reference, identity)
 
     def detached(self, reference, identity):
@@ -111,88 +117,76 @@ class LDAPPerspective(Perspective):
         return Perspective.detached(self, reference, identity)
 
     def connectionLost(self):
-        print "LDAPPerspective.connectionLost"
         for session in self.sessions.keys():
             session.expire()
 
 class LDAPFetchIdentity(ldapclient.LDAPSearch):
-    def __init__(self, client, application, dn, req,
+    def __init__(self, deferred, client, application, dn,
                  ldaphost='localhost',
                  ldapport=389):
-        ldapclient.LDAPSearch.__init__(self, client,
+        ldapclient.LDAPSearch.__init__(self, deferred, client,
                                        baseObject=dn,
                                        scope=pureldap.LDAP_SCOPE_baseObject,
                                        typesOnly=1)
         self.application = application
         self.dn = dn
-        self.req = req
         self.found = None
         self.ldaphost = ldaphost
-        self.ldapport = ldapport        
+        self.ldapport = ldapport
 
-    def handle_success(self):
+        deferred.addCallbacks(callback=self.process,
+                              errback=lambda x: x)
+
+    def process(self, dummy):
         if self.found:
-            ident = LDAPIdentity(self.dn, self.application, LDAPAuth,
+            ident = LDAPIdentity(self.dn, self.application, LDAPAuthFactory,
                                  self.ldaphost, self.ldapport)
             #TODO I don't want to enumerate them here!
             ident.addKeyByString("edit", self.found)
-            self.req.callback(ident)
+            return ident
         else:
-            self.req.errback("unauthorized")
+            raise LDAPUnknownError(ldaperrors.other, "unauthorized")
 
     def handle_entry(self, objectName, attributes):
         if not self.found:
             self.found = str(objectName)
         else:
-            print "GOT DUPLICATES (TODO)"
-
-    def handle_fail(self, resultCode, errorMessage):
-        self.req.errback("unauthorized")
+            raise "GOT DUPLICATES (TODO)"
 
 class FetchIdentities(ldapclient.LDAPClient):
-    def __init__(self,
-                 register=None, unregister=None,
-                 application=None,
-                 ldaphost='localhost',
-                 ldapport=389):
-        assert application
-        ldapclient.LDAPClient.__init__(self)
-        self.register = register
-        self.unregister = unregister
-        self.application = application
-        self.ldaphost = ldaphost
-        self.ldapport = ldapport
-    
     def connectionLost(self):
-        print "FetchIdentities.connectionLost"
         ldapclient.LDAPClient.connectionLost(self)
-        if self.unregister:
-            self.unregister(self)
+        if self.factory.unregister:
+            self.factory.unregister(self)
         
     def connectionMade(self):
         self.bind()
 
     def handle_bind_success(self, matchedDN, serverSaslCreds):
-        if self.register:
-            self.register(self)
+        if self.factory.register:
+            self.factory.register(self)
 
-    def fetch(self, name, req):
-        LDAPFetchIdentity(client=self,
-                          application=self.application,
+    def fetch(self, name, deferred):
+        LDAPFetchIdentity(deferred=deferred,
+                          client=self,
+                          application=self.factory.application,
                           dn=name,
-                          req=req,
-                          ldaphost=self.ldaphost,
-                          ldapport=self.ldapport)
+                          ldaphost=self.factory.ldaphost,
+                          ldapport=self.factory.ldapport)
 
-class FetchIdentitiesFactory(ClientFactory):
-    def __init__(self, args=(), kwargs={}):
-        self.args = args
-        self.kwargs = kwargs
-
-    def buildProtocol(self, connection):
-        p = apply(FetchIdentities, self.args, self.kwargs)
-        p.factory = self
-        return p
+class FetchIdentitiesFactory(protocol.ClientFactory):
+    protocol = FetchIdentities
+    def __init__(self,
+                 register=None, unregister=None,
+                 application=None,
+                 ldaphost='localhost',
+                 ldapport=389):
+        self.register = register
+        self.unregister = unregister
+        assert application
+        self.application = application
+        self.ldaphost = ldaphost
+        self.ldapport = ldapport
 
 class LDAPAuthorizer(Authorizer):
     def __init__(self, ldaphost, ldapport):
@@ -213,13 +207,13 @@ class LDAPAuthorizer(Authorizer):
 
     def setApplication(self, application):
         Authorizer.setApplication(self, application)
-        factory = FetchIdentitiesFactory(kwargs={
-            "register": self.registerFetcher,
-            "unregister": self.unregisterFetcher,
-            "application": application,
-            "ldaphost": self.ldaphost,
-            "ldapport": self.ldapport,
-            })
+        factory = FetchIdentitiesFactory(
+            register=self.registerFetcher,
+            unregister=self.unregisterFetcher,
+            application=application,
+            ldaphost=self.ldaphost,
+            ldapport=self.ldapport,
+            )
         application.connectTCP(self.ldaphost, self.ldapport, factory)
 
     def getIdentityRequest(self, name):

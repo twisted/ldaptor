@@ -130,7 +130,7 @@ class AddForm(widgets.Form):
 
     def process(self, write, request, submit, **kw):
         user = request.getSession().LdaptorPerspective.getPerspectiveName()
-        client = request.getSession().LdaptorIdentity.ldapclient
+        client = request.getSession().LdaptorIdentity.getLDAPClient()
 
         if not client:
             return self._output_status_and_form(
@@ -240,10 +240,12 @@ class AddPage(template.BasicPage):
         d=defer.Deferred()
 
         if self.allowedObjectClasses == None:
-            client = request.getSession().LdaptorIdentity.ldapclient
+            client = request.getSession().LdaptorIdentity.getLDAPClient()
             if client:
+                deferred=defer.Deferred()
                 schema.LDAPGet_subschemaSubentry(
-                    client, self.baseObject,
+                    deferred, client, self.baseObject)
+                deferred.addCallbacks(
                     callback=self._getContent_have_subschemaSubentry,
                     callbackArgs=(request, client, d),
                     errback=AddError(d, request),
@@ -255,16 +257,21 @@ class AddPage(template.BasicPage):
 
         return [self._header(request), d]
 
-    def _getContent_have_subschemaSubentry(self, dn, subschemaSubentry,
+    def _getContent_have_subschemaSubentry(self, subschemaSubentry,
                                            request, client, d):
+        deferred=defer.Deferred()
         schema.LDAPGetSchema(
+            deferred,
             client, subschemaSubentry,
+            )
+        deferred.addCallbacks(
             callback=self._getContent_have_objectClasses,
             callbackArgs=(request, d),
             errback=AddError(d, request),
             )
 
-    def _getContent_have_objectClasses(self, attributeTypes, objectClasses, request, d):
+    def _getContent_have_objectClasses(self, x, request, d):
+        attributeTypes, objectClasses = x
         r = []
         for o in objectClasses:
             r.append(o.name[0])
@@ -283,10 +290,12 @@ class AddPage(template.BasicPage):
                     d.callback(ChooseObjectClass(self.allowedObjectClasses).display(request))
                     return
 
-            client = request.getSession().LdaptorIdentity.ldapclient
+            client = request.getSession().LdaptorIdentity.getLDAPClient()
             if client:
+                deferred=defer.Deferred()
                 schema.LDAPGet_subschemaSubentry(
-                    client, self.baseObject,
+                    deferred, client, self.baseObject)
+                deferred.addCallbacks(
                     callback=self._getContent_2,
                     callbackArgs=(chosenObjectClasses, request, client, d),
                     errback=AddError(d, request),
@@ -294,15 +303,18 @@ class AddPage(template.BasicPage):
             else:
                 AddError(d, request)(errorMessage="connection lost")
 
-    def _getContent_2(self, dn, subschemaSubentry, chosenObjectClasses, request, client, d):
+    def _getContent_2(self, subschemaSubentry, chosenObjectClasses, request, client, d):
+        deferred=defer.Deferred()
         schema.LDAPGetSchema(
-            client, subschemaSubentry,
+            deferred, client, subschemaSubentry)
+        deferred.addCallbacks(
             callback=self._getContent_3,
             callbackArgs=(chosenObjectClasses, request, client, d),
             errback=AddError(d, request),
             )
         
-    def _getContent_3(self, attributeTypes, objectClasses, chosenObjectClasses, request, client, d):
+    def _getContent_3(self, x, chosenObjectClasses, request, client, d):
+        attributeTypes, objectClasses = x
         d.callback(AddForm(baseObject=self.baseObject,
                            chosenObjectClasses=chosenObjectClasses,
                            attributeTypes=attributeTypes,

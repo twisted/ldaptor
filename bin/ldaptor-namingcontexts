@@ -4,19 +4,17 @@ import sys
 from ldaptor.protocols.ldap import ldapclient, ldapfilter, ldif
 from ldaptor.protocols import pureber, pureldap
 from twisted.internet.defer import Deferred, DeferredList
+from twisted.internet import protocol, reactor
 
 class SearchNamingContexts(ldapclient.LDAPSearch):
-    def __init__(self, client, host):
+    def __init__(self, deferred, client, host):
         ldapclient.LDAPSearch.__init__(
-            self, client,
+            self, deferred, client,
             baseObject='',
             scope=pureldap.LDAP_SCOPE_baseObject,
             filter=pureldap.LDAPFilter_present('objectClass'),
             attributes=['namingContexts'])
         self.host=host
-
-    def handle_success(self):
-        self.client.search_done()
 
     def handle_entry(self, objectName, attributes):
         for a,vs in attributes:
@@ -26,51 +24,44 @@ class SearchNamingContexts(ldapclient.LDAPSearch):
                     v=str(v)
                     print '%s\t%s' % (self.host, v)
 
-    def handle_fail(self, resultCode, errorMessage):
-        sys.stderr.write("fail: %d: %s\n"%(resultCode, errorMessage or "Unknown error"))
-        self.client.search_fail(self)
-
 class Search(ldapclient.LDAPClient):
-    def __init__(self, host, deferred):
-        ldapclient.LDAPClient.__init__(self)
-        self.host = host
-        self.deferred = deferred
-    
     def connectionMade(self):
         self.bind()
 
     def handle_bind_success(self, matchedDN, serverSaslCreds):
-        SearchNamingContexts(self, self.host)
+        SearchNamingContexts(self.factory.deferred,
+                             self,
+                             self.factory.server)
 
-    def search_done(self):
-        self.deferred.callback(None)
+class SearchFactory(protocol.ClientFactory):
+    protocol = Search
 
-    def search_fail(self, search):
+    def __init__(self, server, deferred):
+        self.server=server
+        self.deferred=deferred
+
+    def connectionFailed(self, connector, reason):
         self.deferred.errback(None)
 
-def callback(data):
-    from twisted.internet import main
-    main.shutDown()
+exitStatus = 0
 
 def errback(data):
     print "ERROR:", data
-    from twisted.internet import main
-    main.shutDown()
-    sys.exit(1)
+    global exitStatus
+    exitStatus=1
 
 def main(servers):
-    from twisted.internet import tcp, main
     l = []
     for server in servers:
         d=Deferred()
         l.append(d)
-        s=Search(server, d)
-        tcp.Client(server, 389, s)
+        s=SearchFactory(server, d)
+        reactor.connectTCP(server, 389, s)
     dl = DeferredList(l)
-    dl.addCallback(callback)
     dl.addErrback(errback)
-    
-    main.run()
+    dl.addBoth(lambda x: reactor.stop())
+    reactor.run()
+    sys.exit(exitStatus)
 
 if __name__ == "__main__":
     if not sys.argv[1:]:

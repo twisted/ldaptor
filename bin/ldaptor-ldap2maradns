@@ -5,7 +5,7 @@ from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage
 from socket import inet_aton, inet_ntoa
 import sys
-
+from twisted.internet import protocol, defer, reactor
 
 def my_aton(ip):
     s=inet_aton(ip)
@@ -88,20 +88,21 @@ class Net:
 
 
 class SearchHosts(ldapclient.LDAPSearch):
-    def __init__(self, client, base, filter):
+    def __init__(self, deferred, client, base, filter):
         self.entries = []
         filt=pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('objectClass'),
                                                assertionValue=pureber.BEROctetString('ipHost'))
         if filter:
             filt = pureldap.LDAPFilter_and(value=(filter, filt))
-        ldapclient.LDAPSearch.__init__(self, client,
+        ldapclient.LDAPSearch.__init__(self, deferred, client,
                                        baseObject=base,
                                        filter=filt,
                                        attributes=['ipHostNumber',
                                                    'cn'])
-
-    def handle_success(self):
-        self.client.haveHosts(self.entries)
+        deferred.addCallbacks(
+            callback=lambda searchHosts: searchHosts.entries,
+            errback=lambda x: x,
+            )
 
     def handle_entry(self, objectName, attributes):
         args = {}
@@ -117,11 +118,8 @@ class SearchHosts(ldapclient.LDAPSearch):
                                  str(args['cn'][0]),
                                  map(str, args['ipHostNumber'])))
 
-    def handle_fail(self, resultCode, errorMessage):
-        self.client.searchFailed(resultCode, errorMessage)
-
 class SearchNets(ldapclient.LDAPSearch):
-    def __init__(self, client, base, filter):
+    def __init__(self, deferred, client, base, filter):
         self.entries = []
         filt=pureldap.LDAPFilter_and(value=(
             pureldap.LDAPFilter_present('cn'),
@@ -130,16 +128,17 @@ class SearchNets(ldapclient.LDAPSearch):
             ))
         if filter:
             filt = pureldap.LDAPFilter_and(value=(filter, filt))
-        ldapclient.LDAPSearch.__init__(self, client,
+        ldapclient.LDAPSearch.__init__(self, deferred, client,
                                        baseObject=base,
                                        filter=filt,
                                        attributes=['cn',
                                                    'ipNetworkNumber',
                                                    'ipNetmaskNumber',
                                                    ])
-
-    def handle_success(self):
-        self.client.haveNets(self.entries)
+        deferred.addCallbacks(
+            callback=lambda searchNets: searchNets.entries,
+            errback=lambda x: x,
+            )
 
     def handle_entry(self, objectName, attributes):
         args = {}
@@ -162,32 +161,29 @@ class SearchNets(ldapclient.LDAPSearch):
                                 str(args['ipNetworkNumber'][0]),
                                 str(args['ipNetmaskNumber'][0])))
 
-    def handle_fail(self, resultCode, errorMessage):
-        self.client.searchFailed(resultCode, errorMessage)
-
-
 class Search(ldapclient.LDAPClient):
-    def __init__(self, base, filt, callback, errback):
-        ldapclient.LDAPClient.__init__(self)
-        self.base=base
-        self.filter=filt
-        self.callback = callback
-        self.errback = errback
-    
     def connectionMade(self):
         self.bind()
 
     def handle_bind_success(self, matchedDN, serverSaslCreds):
-        SearchNets(self, self.base, self.filter)
+        d1=defer.Deferred()
+        SearchNets(d1, self, self.factory.base, self.factory.filt)
+        d1.addCallbacks(callback=self.haveNets,
+                        errback=lambda x: x)
 
-    def searchFailed(self, resultCode, errorMessage):
-        sys.stderr.write("fail: %d: %s\n"%(resultCode, errorMessage or "Unknown error"))
-        self.errback()
+        d2=defer.Deferred()
+        SearchHosts(d2, self, self.factory.base, self.factory.filt)
+        d2.addCallbacks(callback=self.haveHosts,
+                        errback=lambda x: x)
+
+        dl=defer.DeferredList((d1, d2))
+        dl.chainDeferred(self.factory.deferred)
 
     def haveNets(self, nets):
         self.nets = nets
-        SearchHosts(self, self.base, self.filter)
-
+        d=defer.Deferred()
+        d.addCallbacks(self.haveHosts, self.searchFailed)
+        
     def haveHosts(self, hosts):
         for host in hosts:
             parent=None
@@ -204,22 +200,27 @@ class Search(ldapclient.LDAPClient):
         for net in self.nets:
             net.printZone()
 
-        self.callback()
+class SearchFactory(protocol.ClientFactory):
+    protocol = Search
 
-def callback():
-    from twisted.internet import main
-    main.shutDown()
+    def __init__(self, base, filt, deferred):
+        self.base=base
+        self.filt=filt
+        self.deferred=deferred
 
-def errback():
-    from twisted.internet import main
-    main.shutDown()
-    sys.exit(1)
+    def connectionFailed(self, connector, reason):
+        self.deferred.errback(reason)
+
+exitStatus=0
+
+def error(fail):
+    print >>sys.stderr, 'fail:', fail.getErrorMessage()
+    global exitStatus
+    exitStatus=1
 
 def main(host, port, base, filter_text):
-    from twisted.internet import tcp, main
-    from twisted.python import log
-
     # TODO horrible, ugly hack to work around twisted's ugly logging
+    from twisted.python import log
     log.startLogging(sys.stderr)
     sys.stdout=sys.__stdout__
 
@@ -227,9 +228,14 @@ def main(host, port, base, filter_text):
         filt = ldapfilter.parseFilter(filter_text)
     else:
         filt = None
-    s=Search(base, filt, callback, errback)
-    tcp.Client(host, port, s)
-    main.run()
+
+    d=defer.Deferred()
+    s=SearchFactory(base, filt, d)
+    d.addErrback(error)
+    d.addBoth(lambda x: reactor.stop())
+    reactor.connectTCP(host, port, s)
+    reactor.run()
+    sys.exit(exitStatus)
 
 class MyOptions(usage.Options, usage.Options_hostport, usage.Options_base):
     """LDAPtor maradns zone file exporter"""

@@ -18,10 +18,10 @@
 from ldaptor.protocols.ldap import ldapclient, ldapfilter
 from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage
-
+from twisted.internet import protocol, reactor, defer
 
 class SearchHosts(ldapclient.LDAPSearch):
-    def __init__(self, client, base, filter):
+    def __init__(self, deferred, client, base, filter):
         filt=pureldap.LDAPFilter_and(value=(
             pureldap.LDAPFilter_present('cn'),
             pureldap.LDAPFilter_present('ipHostNumber'),
@@ -29,16 +29,13 @@ class SearchHosts(ldapclient.LDAPSearch):
             ))
         if filter:
             filt = pureldap.LDAPFilter_and(value=(filter, filt))
-        ldapclient.LDAPSearch.__init__(self, client,
+        ldapclient.LDAPSearch.__init__(self, deferred, client,
                                        baseObject=base,
                                        filter=filt,
                                        attributes=['cn',
                                                    'ipHostNumber',
                                                    'macAddress',
                                                    ])
-
-    def handle_success(self):
-        self.client.search_done(self)
 
     def handle_entry(self, objectName, attributes):
         args = {}
@@ -59,14 +56,8 @@ class SearchHosts(ldapclient.LDAPSearch):
             print '\tfixed-address %s;' % ip
         print '}\n'
 
-    def handle_fail(self, resultCode, errorMessage):
-        sys.stderr.write("fail: %d: %s\n"%(resultCode, errorMessage or "Unknown error"))
-        self.client.search_done(self)
-
-
-
 class SearchNets(ldapclient.LDAPSearch):
-    def __init__(self, client, base, filter):
+    def __init__(self, deferred, client, base, filter):
         self.sharedNetworks = {}
 
         filt=pureldap.LDAPFilter_and(value=(
@@ -76,7 +67,7 @@ class SearchNets(ldapclient.LDAPSearch):
             ))
         if filter:
             filt = pureldap.LDAPFilter_and(value=(filter, filt))
-        ldapclient.LDAPSearch.__init__(self, client,
+        ldapclient.LDAPSearch.__init__(self, deferred, client,
                                        baseObject=base,
                                        filter=filt,
                                        attributes=['cn',
@@ -85,14 +76,17 @@ class SearchNets(ldapclient.LDAPSearch):
                                                    'router',
                                                    'dhcpRange',
                                                    'sharedNetworkName'])
+        deferred.addCallbacks(self.printSharedNetworks,
+                              errback=lambda x: x)
+        
 
-    def handle_success(self):
+    def printSharedNetworks(self, data):
         for name, entries in self.sharedNetworks.items():
             print 'shared-network "%s" {' % name
             for objectName, args in entries:
                 self._print_entry(objectName, args, prefix='\t')
             print '}'
-        self.client.search_done(self)
+        return data
 
     def _print_entry(self, objectName, args, prefix=''):
         r = ['# %s' % objectName,
@@ -129,48 +123,58 @@ class SearchNets(ldapclient.LDAPSearch):
         else:
             self._print_entry(objectName, args)
 
-    def handle_fail(self, resultCode, errorMessage):
-        sys.stderr.write("fail: %d: %s\n"%(resultCode, errorMessage or "Unknown error"))
-        self.client.search_done(self)
-
-
 class Search(ldapclient.LDAPClient):
-    def __init__(self, callback, base, filt):
+    def __init__(self):
         ldapclient.LDAPClient.__init__(self)
-        self.base=base
-        self.filter=filt
-        self.callback = callback
-        self.searches = []
     
     def connectionMade(self):
         self.bind()
 
     def handle_bind_success(self, matchedDN, serverSaslCreds):
-        self.searches.extend((SearchNets(self, self.base, self.filter),
-                              SearchHosts(self, self.base, self.filter)))
+        d1=defer.Deferred()
+        d2=defer.Deferred()
+        dl=defer.DeferredList((d1, d2))
+        SearchNets(d1, self,
+                   self.factory.base,
+                   self.factory.filt),
+        SearchHosts(d2, self,
+                    self.factory.base,
+                    self.factory.filt)
+        dl.chainDeferred(self.factory.deferred)
 
-    def search_done(self, search):
-        self.searches.remove(search)
-        if not self.searches:
-            self.callback(self)
+class SearchFactory(protocol.ClientFactory):
+    protocol = Search
 
+    def __init__(self, deferred, base, filt):
+        self.deferred=deferred
+        self.base=base
+        self.filt=filt
 
-def callback(searchalot):
-    from twisted.internet import main
-    main.shutDown()
+    def connectionFailed(self, connector, reason):
+        self.deferred.errback(reason)
+
+exitStatus=0
+
+def error(fail):
+    print >>sys.stderr, 'fail:', fail.getErrorMessage()
+    global exitStatus
+    exitStatus=1
 
 def main(host, port, base, filter_text):
-    from twisted.internet import tcp, main
     if filter_text is not None:
         filt = ldapfilter.parseFilter(filter_text)
     else:
         filt = None
-    s=Search(callback, base, filt)
-    tcp.Client(host, port, s)
-    main.run()
+    d=defer.Deferred()
+    s=SearchFactory(d, base, filt)
+    d.addErrback(error)
+    d.addBoth(lambda x: reactor.stop())
+    reactor.connectTCP(host, port, s)
+    reactor.run()
+    sys.exit(exitStatus)
 
 class MyOptions(usage.Options, usage.Options_hostport, usage.Options_base):
-    """LDAPtor dhchd config file exporter"""
+    """LDAPtor dhcpd config file exporter"""
     def parseArgs(self, filter=None):
         self.opts['filter'] = filter
 

@@ -1,5 +1,5 @@
 from twisted.web import widgets, guard
-import search, edit, add, delete
+import search, edit, add, delete, mass_password_change
 import template
 
 
@@ -59,6 +59,15 @@ class LdaptorWebUIGadget(widgets.Gadget):
                                           editService,
                                           sessionPerspective="LdaptorPerspective",
                                           sessionIdentity="LdaptorIdentity"),
+            'mass_password_change':
+            guard.ResourceGuard(
+            mass_password_change.MassPasswordChangePage(
+            baseObject=baseObject,
+            ldaphost=ldaphost,
+            ldapport=ldapport),
+            editService,
+            sessionPerspective="LdaptorPerspective",
+            sessionIdentity="LdaptorIdentity"),
             }
 
         self.putWidget('', IndexPage())
