@@ -87,11 +87,11 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry):
             derefAliases = pureldap.LDAP_DEREF_neverDerefAliases
 
         # choose iterator: base/children/subtree
-        if scope is pureldap.LDAP_SCOPE_wholeSubtree:
+        if scope == pureldap.LDAP_SCOPE_wholeSubtree:
             iterator = self.subtree
-        elif scope is pureldap.LDAP_SCOPE_singleLevel:
+        elif scope == pureldap.LDAP_SCOPE_singleLevel:
             iterator = self.children
-        elif scope is pureldap.LDAP_SCOPE_baseObject:
+        elif scope == pureldap.LDAP_SCOPE_baseObject:
             def iterateSelf(callback):
                 callback(self)
                 return defer.succeed(None)
@@ -129,9 +129,9 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry):
                 return True
             return False
         elif isinstance(filter, pureldap.LDAPFilter_substrings):
-            if filter.type.value not in self:
+            if filter.type not in self:
                 return False
-            possibleMatches = self[filter.type.value]
+            possibleMatches = self[filter.type]
             substrings = filter.substrings[:]
 
             if (substrings

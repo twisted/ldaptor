@@ -43,15 +43,15 @@ class LDAPServerTest(unittest.TestCase):
         self.server = server
     
     def test_bind(self):
-        self.server.dataReceived(pureldap.LDAPMessage(pureldap.LDAPBindRequest(), id=4))
+        self.server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(), id=4)))
         self.assertEquals(self.server.transport.value(),
                           str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=0), id=4)))
 
     def test_bind_success(self):
         self.thingie['userPassword'] = ['{SSHA}yVLLj62rFf3kDAbzwEU0zYAVvbWrze8='] # "secret"
-        self.server.dataReceived(pureldap.LDAPMessage(pureldap.LDAPBindRequest(
+        self.server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(
             dn='cn=thingie,ou=stuff,dc=example,dc=com',
-            auth='secret'), id=4))
+            auth='secret'), id=4)))
         self.assertEquals(self.server.transport.value(),
                           str(pureldap.LDAPMessage(
             pureldap.LDAPBindResponse(resultCode=0,
@@ -59,10 +59,10 @@ class LDAPServerTest(unittest.TestCase):
             id=4)))
 
     def test_bind_invalidCredentials(self):
-        self.server.dataReceived(pureldap.LDAPMessage(
+        self.server.dataReceived(str(pureldap.LDAPMessage(
             pureldap.LDAPBindRequest(dn='cn=non-existing,dc=example,dc=com',
                                      auth='invalid'),
-            id=78))
+            id=78)))
         self.assertEquals(self.server.transport.value(),
                           str(pureldap.LDAPMessage(
             pureldap.LDAPBindResponse(
@@ -70,9 +70,9 @@ class LDAPServerTest(unittest.TestCase):
             id=78)))
 
     def test_bind_badVersion_1_anonymous(self):
-        self.server.dataReceived(pureldap.LDAPMessage(
+        self.server.dataReceived(str(pureldap.LDAPMessage(
             pureldap.LDAPBindRequest(version=1),
-            id=32))
+            id=32)))
         self.assertEquals(self.server.transport.value(),
                           str(pureldap.LDAPMessage(
             pureldap.LDAPBindResponse(
@@ -81,9 +81,9 @@ class LDAPServerTest(unittest.TestCase):
             id=32)))
 
     def test_bind_badVersion_2_anonymous(self):
-        self.server.dataReceived(pureldap.LDAPMessage(
+        self.server.dataReceived(str(pureldap.LDAPMessage(
             pureldap.LDAPBindRequest(version=2),
-            id=32))
+            id=32)))
         self.assertEquals(self.server.transport.value(),
                           str(pureldap.LDAPMessage(
             pureldap.LDAPBindResponse(
@@ -92,9 +92,9 @@ class LDAPServerTest(unittest.TestCase):
             id=32)))
 
     def test_bind_badVersion_4_anonymous(self):
-        self.server.dataReceived(pureldap.LDAPMessage(
+        self.server.dataReceived(str(pureldap.LDAPMessage(
             pureldap.LDAPBindRequest(version=4),
-            id=32))
+            id=32)))
         self.assertEquals(self.server.transport.value(),
                           str(pureldap.LDAPMessage(
             pureldap.LDAPBindResponse(
@@ -105,11 +105,11 @@ class LDAPServerTest(unittest.TestCase):
     def test_bind_badVersion_4_nonExisting(self):
         # TODO make a test just like this one that would pass authentication
         # if version was correct, to ensure we don't leak that info either.
-        self.server.dataReceived(pureldap.LDAPMessage(
+        self.server.dataReceived(str(pureldap.LDAPMessage(
             pureldap.LDAPBindRequest(version=4,
                                      dn='cn=non-existing,dc=example,dc=com',
                                      auth='invalid'),
-            id=11))
+            id=11)))
         self.assertEquals(self.server.transport.value(),
                           str(pureldap.LDAPMessage(
             pureldap.LDAPBindResponse(
@@ -118,7 +118,7 @@ class LDAPServerTest(unittest.TestCase):
             id=11)))
 
     def test_unbind(self):
-        self.server.dataReceived(pureldap.LDAPMessage(pureldap.LDAPUnbindRequest(), id=7))
+        self.server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPUnbindRequest(), id=7)))
         self.assertEquals(self.server.transport.value(),
                           '')
 
@@ -134,10 +134,10 @@ class LDAPServerTest(unittest.TestCase):
                           )
 
     def test_search_matchAll_oneResult(self):
-        self.server.dataReceived(pureldap.LDAPMessage(
+        self.server.dataReceived(str(pureldap.LDAPMessage(
             pureldap.LDAPSearchRequest(
             baseObject='cn=thingie,ou=stuff,dc=example,dc=com',
-            ), id=2))
+            ), id=2)))
         self.assertEquals(self.server.transport.value(),
                           str(pureldap.LDAPMessage(
             pureldap.LDAPSearchResultEntry(
@@ -152,10 +152,10 @@ class LDAPServerTest(unittest.TestCase):
                           )
 
     def test_search_matchAll_manyResults(self):
-        self.server.dataReceived(pureldap.LDAPMessage(
+        self.server.dataReceived(str(pureldap.LDAPMessage(
             pureldap.LDAPSearchRequest(
             baseObject='ou=stuff,dc=example,dc=com',
-            ), id=2))
+            ), id=2)))
         self.assertEquals(self.server.transport.value(),
                           str(pureldap.LDAPMessage(
             pureldap.LDAPSearchResultEntry(
@@ -184,11 +184,11 @@ class LDAPServerTest(unittest.TestCase):
                           )
 
     def test_search_scope_oneLevel(self):
-        self.server.dataReceived(pureldap.LDAPMessage(
+        self.server.dataReceived(str(pureldap.LDAPMessage(
             pureldap.LDAPSearchRequest(
             baseObject='ou=stuff,dc=example,dc=com',
             scope=pureldap.LDAP_SCOPE_singleLevel,
-            ), id=2))
+            ), id=2)))
         self.assertEquals(self.server.transport.value(),
                           str(pureldap.LDAPMessage(
             pureldap.LDAPSearchResultEntry(
@@ -210,11 +210,11 @@ class LDAPServerTest(unittest.TestCase):
                           )
 
     def test_search_scope_wholeSubtree(self):
-        self.server.dataReceived(pureldap.LDAPMessage(
+        self.server.dataReceived(str(pureldap.LDAPMessage(
             pureldap.LDAPSearchRequest(
             baseObject='ou=stuff,dc=example,dc=com',
             scope=pureldap.LDAP_SCOPE_wholeSubtree,
-            ), id=2))
+            ), id=2)))
         self.assertEquals(self.server.transport.value(),
                           str(pureldap.LDAPMessage(
             pureldap.LDAPSearchResultEntry(
@@ -243,11 +243,11 @@ class LDAPServerTest(unittest.TestCase):
                           )
 
     def test_search_scope_baseObject(self):
-        self.server.dataReceived(pureldap.LDAPMessage(
+        self.server.dataReceived(str(pureldap.LDAPMessage(
             pureldap.LDAPSearchRequest(
             baseObject='ou=stuff,dc=example,dc=com',
             scope=pureldap.LDAP_SCOPE_baseObject,
-            ), id=2))
+            ), id=2)))
         self.assertEquals(self.server.transport.value(),
                           str(pureldap.LDAPMessage(
             pureldap.LDAPSearchResultEntry(
@@ -285,8 +285,8 @@ class LDAPServerTest(unittest.TestCase):
                           )
 
     def test_delete(self):
-        self.server.dataReceived(pureldap.LDAPMessage(
-            pureldap.LDAPDelRequest(str(self.thingie.dn)), id=2))
+        self.server.dataReceived(str(pureldap.LDAPMessage(
+            pureldap.LDAPDelRequest(str(self.thingie.dn)), id=2)))
         self.assertEquals(self.server.transport.value(),
                           str(pureldap.LDAPMessage(
             pureldap.LDAPDelResponse(resultCode=0),
@@ -323,11 +323,11 @@ class LDAPServerTest(unittest.TestCase):
 
     def test_control_unknown_nonCritical(self):
         self.thingie['userPassword'] = ['{SSHA}yVLLj62rFf3kDAbzwEU0zYAVvbWrze8='] # "secret"
-        self.server.dataReceived(pureldap.LDAPMessage(
+        self.server.dataReceived(str(pureldap.LDAPMessage(
             pureldap.LDAPBindRequest(dn='cn=thingie,ou=stuff,dc=example,dc=com',
                                      auth='secret'),
             controls=[('42.42.42.42', False, None)],
-            id=4))
+            id=4)))
         self.assertEquals(self.server.transport.value(),
                           str(pureldap.LDAPMessage(
             pureldap.LDAPBindResponse(resultCode=0,

@@ -17,8 +17,6 @@ TODO file for the Ldaptor project.
 
 * suggest mails/uids/uidNumbers/gidNumbers/homes
 
-* study array.array as a replacement for MutableString
-
 * SSL
 
 * ldaptor-webui empty lines at end of multiline attributes gets

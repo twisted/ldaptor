@@ -143,7 +143,7 @@ class TestEntryMatch(unittest.TestCase):
 	    'bValue': ['b'],
 	    })
         result = o.match(pureldap.LDAPFilter_substrings(
-            type=pureldap.LDAPString('aValue'),
+            type='aValue',
             substrings=[
             pureldap.LDAPFilter_substrings_initial('a'),
             ]))
@@ -157,7 +157,7 @@ class TestEntryMatch(unittest.TestCase):
 	    'bValue': ['b'],
 	    })
         result = o.match(pureldap.LDAPFilter_substrings(
-            type=pureldap.LDAPString('aValue'),
+            type='aValue',
             substrings=[
             pureldap.LDAPFilter_substrings_initial('a'),
             pureldap.LDAPFilter_substrings_final('e'),
@@ -172,7 +172,7 @@ class TestEntryMatch(unittest.TestCase):
 	    'bValue': ['b'],
 	    })
         result = o.match(pureldap.LDAPFilter_substrings(
-            type=pureldap.LDAPString('aValue'),
+            type='aValue',
             substrings=[
             pureldap.LDAPFilter_substrings_initial('a'),
             pureldap.LDAPFilter_substrings_any('c'),
@@ -188,7 +188,7 @@ class TestEntryMatch(unittest.TestCase):
 	    'bValue': ['b'],
 	    })
         result = o.match(pureldap.LDAPFilter_substrings(
-            type=pureldap.LDAPString('aValue'),
+            type='aValue',
             substrings=[
             pureldap.LDAPFilter_substrings_initial('a'),
             pureldap.LDAPFilter_substrings_any('b'),
@@ -206,7 +206,7 @@ class TestEntryMatch(unittest.TestCase):
 	    'bValue': ['b'],
 	    })
         result = o.match(pureldap.LDAPFilter_substrings(
-            type=pureldap.LDAPString('aValue'),
+            type='aValue',
             substrings=[
             pureldap.LDAPFilter_substrings_initial('a'),
             pureldap.LDAPFilter_substrings_any('b'),
@@ -224,7 +224,7 @@ class TestEntryMatch(unittest.TestCase):
 	    'bValue': ['b'],
 	    })
         result = o.match(pureldap.LDAPFilter_substrings(
-            type=pureldap.LDAPString('aValue'),
+            type='aValue',
             substrings=[
             pureldap.LDAPFilter_substrings_initial('bad'),
             pureldap.LDAPFilter_substrings_any('dog'),
@@ -241,7 +241,7 @@ class TestEntryMatch(unittest.TestCase):
 	    'bValue': ['b'],
 	    })
         result = o.match(pureldap.LDAPFilter_substrings(
-            type=pureldap.LDAPString('aValue'),
+            type='aValue',
             substrings=[
             pureldap.LDAPFilter_substrings_initial('a'),
             pureldap.LDAPFilter_substrings_any('b'),

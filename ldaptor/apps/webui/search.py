@@ -63,11 +63,11 @@ class MoveItem(object):
         return 'Cancelled move of %s' % self.entry.dn
 
 def strScope(scope):
-    if scope is pureldap.LDAP_SCOPE_wholeSubtree:
+    if scope == pureldap.LDAP_SCOPE_wholeSubtree:
         return 'whole subtree'
-    elif scope is pureldap.LDAP_SCOPE_singleLevel:
+    elif scope == pureldap.LDAP_SCOPE_singleLevel:
         return 'single level'
-    elif scope is pureldap.LDAP_SCOPE_baseObject:
+    elif scope == pureldap.LDAP_SCOPE_baseObject:
         return 'baseobject'
     else:
         raise RuntimeError, 'scope is not known: %r' % scope

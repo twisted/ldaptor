@@ -33,7 +33,6 @@
 
 
 import string
-from ldaptor.mutablestring import MutableString
 
 # xxxxxxxx
 # |/|\.../
@@ -73,45 +72,42 @@ class UnknownBERTag(Exception):
 
 import UserList
 
-def berlen2int(m):
-    need(m, 1)
-    l=ber2int(m[0])
-    ll=0
+def berDecodeLength(m, offset=0):
+    """
+    Return a tuple of (length, lengthLength).
+    m must be atleast one byte long.
+    """
+    l=ber2int(m[offset+0])
+    ll=1
     if l&0x80:
-	l=l+128
-	ll=l
-	need(m, 1+ll)
-	l=ber2int(m[1:1+ll], signed=0)
-    del m[:1+ll]
-    return l
+	ll=1+(l&0x7F)
+	need(m, offset+ll)
+	l=ber2int(m[offset+1:offset+ll], signed=0)
+    return (l, ll)
 
 def int2berlen(i):
     assert i>=0
-    e=int2ber(i)
-    l=len(e)
-    assert l>0
-    if l==1:
-	return e
+    e=int2ber(i, signed=False)
+    if i <= 127:
+        return e
     else:
-	assert l<=127
-	le=int2ber(l)
-	assert len(le)==1
-	assert ord(le[0])&0x80==0
-	le0=chr(ord(le[0])|0x80)
-	assert ord(le0)&0x80
-	return le0+le[1:]+e
+        l=len(e)
+        assert l>0
+        assert l<=127
+        return chr(0x80|l) + e
 
-def int2ber(i):
-    encoded=MutableString()
-    while i>127 or i<-128:
+def int2ber(i, signed=True):
+    encoded=''
+    while ((signed and (i>127 or i<-128))
+           or (not signed and (i>255))):
 	encoded=chr(i%256)+encoded
 	i=i>>8
     encoded=chr(i%256)+encoded
     return encoded
 
-def ber2int(e, signed=1):
+def ber2int(e, signed=True):
     need(e, 1)
-    v=ord(e[0])
+    v=0L+ord(e[0])
     if v&0x80 and signed:
 	v=v-256
     for i in range(1, len(e)):
@@ -164,35 +160,22 @@ def need(buf, n):
 
 class BERInteger(BERBase):
     tag = 0x02
+    value = None
 
-    def decode(self, encoded, berdecoder):
-	e2=MutableString(encoded)
-	need(e2, 2)
-	self.tag=ber2int(e2[0], signed=0)&(CLASS_MASK|TAG_MASK)
-	del e2[0]
-	l=berlen2int(e2)
-	assert l>0
-	need(e2, l)
-	e=e2[:l]
-	del e2[:l]
-	encoded.set(e2)
-	self.value=ber2int(e)
+    def fromBER(klass, tag, content, berdecoder=None):
+	assert len(content)>0
+	value=ber2int(content)
+        r = klass(value=value, tag=tag)
+        return r
+    fromBER = classmethod(fromBER)
 
-    def __init__(self, value=None, encoded=None, berdecoder=None, tag=None):
+    def __init__(self, value=None, tag=None):
 	"""Create a new BERInteger object.
-	Either value or encoded must be given:
-	value is an integer, encoded is a MutableString.
+	value is an integer.
 	"""
 	BERBase.__init__(self, tag)
-	if value is not None:
-	    assert encoded is None
-	    self.value=value
-	elif encoded is not None:
-	    assert value is None
-	    assert berdecoder
-	    self.decode(encoded, berdecoder)
-	else:
-	    raise "You must give either value or encoded"
+	assert value is not None
+        self.value=value
 
     def __str__(self):
 	encoded=int2ber(self.value)
@@ -202,38 +185,26 @@ class BERInteger(BERBase):
 
     def __repr__(self):
 	if self.tag==self.__class__.tag:
-	    return self.__class__.__name__+"(value=%d)"%self.value
+	    return self.__class__.__name__+"(value=%r)"%self.value
 	else:
-	    return self.__class__.__name__+"(value=%d, tag=%d)" \
+	    return self.__class__.__name__+"(value=%r, tag=%d)" \
 		   %(self.value, self.tag)
 
 class BEROctetString(BERBase):
     tag = 0x04
 
-    def decode(self, encoded, berdecoder):
-	e2=MutableString(encoded)
-	need(e2, 2)
-	self.tag=ber2int(e2[0], signed=0)&(CLASS_MASK|TAG_MASK)
-	del e2[0]
-	l=berlen2int(e2)
-	assert l>=0
-	need(e2, l)
-	e=e2[:l]
-	del e2[:l]
-	encoded.set(e2)
-	self.value=str(e)
+    value = None
 
-    def __init__(self, value=None, encoded=None, berdecoder=None, tag=None):
+    def fromBER(klass, tag, content, berdecoder=None):
+	assert len(content)>=0
+        r = klass(value=content, tag=tag)
+        return r
+    fromBER = classmethod(fromBER)
+
+    def __init__(self, value=None, tag=None):
 	BERBase.__init__(self, tag)
-	if value is not None:
-	    assert encoded is None
-	    self.value=value
-	elif encoded is not None:
-	    assert value is None
-	    assert berdecoder
-	    self.decode(encoded, berdecoder)
-	else:
-	    raise "You must give either value or encoded"
+	assert value is not None
+        self.value=value
 
     def __str__(self):
 	return chr(self.identification()) \
@@ -252,17 +223,14 @@ class BEROctetString(BERBase):
 class BERNull(BERBase):
     tag = 0x05
 
-    def decode(self, encoded, berdecoder):
-	need(encoded, 2)
-	self.tag=ber2int(encoded[0], signed=0)&(CLASS_MASK|TAG_MASK)
-	assert encoded[1]=='\000'
-	del encoded[:2]
+    def fromBER(klass, tag, content, berdecoder=None):
+	assert len(content) == 0
+        r = klass(tag=tag)
+        return r
+    fromBER = classmethod(fromBER)
 
-    def __init__(self, encoded=None, berdecoder=None, tag=None):
+    def __init__(self, tag=None):
 	BERBase.__init__(self, tag)
-	if encoded is not None:
-	    assert berdecoder
-	    self.decode(encoded, berdecoder)
 
     def __str__(self):
 	return chr(self.identification())+chr(0)
@@ -276,39 +244,22 @@ class BERNull(BERBase):
 class BERBoolean(BERBase):
     tag = 0x01
 
-    def decode(self, encoded, berdecoder):
-	e2=MutableString(encoded)
-	need(e2, 2)
-	self.tag=ber2int(e2[0], signed=0)&(CLASS_MASK|TAG_MASK)
-	del e2[0]
-	l=berlen2int(e2)
-	assert l>0
-	need(e2, l)
-	e=e2[:l]
-	del e2[:l]
-	encoded.set(e2)
-	v=ber2int(e)
-	if v:
-	   v=0xFF
-	self.value=v
+    def fromBER(klass, tag, content, berdecoder=None):
+	assert len(content) > 0
+	value = ber2int(content)
+        r = klass(value=value, tag=tag)
+        return r
+    fromBER = classmethod(fromBER)
 
-    def __init__(self, value=None, encoded=None, berdecoder=None, tag=None):
+    def __init__(self, value=None, tag=None):
 	"""Create a new BERInteger object.
-	Either value or encoded must be given:
-	value is an integer, encoded is a MutableString.
+	value is an integer.
 	"""
 	BERBase.__init__(self, tag)
-	if value is not None:
-	    assert encoded is None
-	    if value:
-		value=0xFF
-	    self.value=value
-	elif encoded is not None:
-	    assert value is None
-	    assert berdecoder
-	    self.decode(encoded, berdecoder)
-	else:
-	    raise "You must give either value or encoded"
+	assert value is not None
+        if value:
+            value=0xFF
+        self.value=value
 
     def __str__(self):
 	assert self.value==0 or self.value==0xFF
@@ -331,35 +282,17 @@ class BERSequence(BERStructured, UserList.UserList):
     # TODO __getslice__ calls __init__ with no args.
     tag = 0x10
 
-    def decode(self, encoded, berdecoder):
-	e2=MutableString(encoded)
-	need(e2, 2)
-	self.tag=ber2int(e2[0], signed=0)&(CLASS_MASK|TAG_MASK)
-	del e2[0]
-	l=berlen2int(e2)
-	need(e2, l)
-	content=e2[:l]
-	del e2[:l]
-	self[:]=[]
-	# decode content
-	while content:
-	    n=ber2object(berdecoder, content)
-	    assert n is not None
-	    self.append(n)
-	encoded.set(e2)
+    def fromBER(klass, tag, content, berdecoder=None):
+        l = berDecodeMultiple(content, berdecoder)
+        r = klass(l, tag=tag)
+        return r
+    fromBER = classmethod(fromBER)
 
-    def __init__(self, value=None, encoded=None, berdecoder=None, tag=None):
+    def __init__(self, value=None, tag=None):
 	BERStructured.__init__(self, tag)
 	UserList.UserList.__init__(self)
-	if value is not None:
-	    assert encoded is None
-	    self[:]=value
-	elif encoded is not None:
-	    assert value is None
-	    assert berdecoder
-	    self.decode(encoded, berdecoder)
-	else:
-	    raise "You must give either value or encoded"
+	assert value is not None
+        self[:]=value
 
     def __str__(self):
 	r=string.join(map(str, self.data), '')
@@ -419,28 +352,49 @@ class BERDecoderContext:
 	       +" inherit="+repr(self.inherit_context) \
 	       +">"
 
-def ber2object(context, m):
-    """ber2object(mutablestring) -> berobject
-    Modifies mutablestring to remove decoded part.
-    May give None
+def berDecodeObject(context, m):
+    """berDecodeObject(context, string) -> (berobject, bytesUsed)
+    berobject may be None.
     """
     while m:
-	need(m, 1)
+	need(m, 2)
 	i=ber2int(m[0], signed=0)&(CLASS_MASK|TAG_MASK)
+
+        length, lenlen = berDecodeLength(m, offset=1)
+        need(m, 1+lenlen+length)
+        m2 = m[1+lenlen:1+lenlen+length]
+
 	berclass=context.lookup_id(i)
 	if berclass:
 	    inh=context.inherit()
 	    assert inh
-	    return berclass(encoded=m, berdecoder=inh)
+            r = berclass.fromBER(tag=i,
+                                 content=m2,
+                                 berdecoder=inh)
+            return (r, 1+lenlen+length)
 	else:
-	    raise UnknownBERTag, (i, context)
-	    tag=ber2int(m[0], signed=0)
-	    del m[0]
-	    l=berlen2int(m)
-	    print "Skipped unknown tag=%d, len=%d"%(tag,l)
-	    del m[:l]
-	    return None
-    return None
+	    #raise UnknownBERTag, (i, context)
+            print str(UnknownBERTag(i, context)) #TODO
+            return (None, 1+lenlen+length)
+    return (None, 0)
+
+def berDecodeMultiple(content, berdecoder):
+    """berDecodeMultiple(content, berdecoder) -> [objects]
+
+    Decodes everything in content and returns a list of decoded
+    objects.
+
+    All of content will be decoded, and content must contain complete
+    BER objects.
+    """
+    l = []
+    while content:
+        n, bytes = berDecodeObject(berdecoder, content)
+        if n is not None:
+            l.append(n)
+        assert bytes <= len(content)
+        content = content[bytes:]
+    return l
 
 #TODO unimplemented classes are below:
 

@@ -20,7 +20,6 @@ Test cases for ldaptor.protocols.pureldap module.
 
 from twisted.trial import unittest
 from ldaptor.protocols import pureldap, pureber
-from ldaptor.mutablestring import MutableString
 import types
 
 def s(*l):
@@ -356,6 +355,156 @@ class KnownValues(unittest.TestCase):
         ]))),
          ),
 
+        (pureldap.LDAPFilter_equalityMatch,
+         [],
+         {'attributeDesc': pureldap.LDAPAttributeDescription('cn'),
+          'assertionValue': pureldap.LDAPAssertionValue('foo'),
+          },
+         pureldap.LDAPBERDecoderContext_Filter(
+        fallback=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext()),
+        inherit=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext())),
+
+         [0xa3, 9]
+         + ([0x04, 2] + l('cn')
+            + [0x04, 3] + l('foo'))
+         ),
+
+        (pureldap.LDAPFilter_or,
+         [[pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('cn'),
+                                             assertionValue=pureldap.LDAPAssertionValue('foo')),
+           pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('uid'),
+                                             assertionValue=pureldap.LDAPAssertionValue('foo')),
+           pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('mail'),
+                                             assertionValue=pureldap.LDAPAssertionValue('foo')),
+           pureldap.LDAPFilter_substrings(type='mail', substrings=[pureldap.LDAPFilter_substrings_initial('foo@')]),
+           ]],
+         {},
+         pureldap.LDAPBERDecoderContext_Filter(
+        fallback=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext()),
+        inherit=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext())),
+
+         [0xA1, 52]
+         + ([0xa3, 9]
+            + ([0x04, 2] + l('cn')
+               + [0x04, 3] + l('foo'))
+            + [0xa3, 10]
+            + ([0x04, 3] + l('uid')
+               + [0x04, 3] + l('foo'))
+            + [0xa3, 11]
+               + ([0x04, 4] + l('mail')
+                  + [0x04, 3] + l('foo'))
+            + [0xa4, 14]
+            + ([0x04, 4] + l('mail')
+               + [0x30, 6]
+               + ([0x80, 4] + l('foo@'))))
+         ),
+
+        (pureldap.LDAPSearchRequest,
+         [],
+         {'baseObject': 'dc=example,dc=com',
+          'scope': pureldap.LDAP_SCOPE_wholeSubtree,
+          'derefAliases': pureldap.LDAP_DEREF_neverDerefAliases,
+          'sizeLimit': 1,
+          'timeLimit': 0,
+          'typesOnly': False,
+          'filter': pureldap.LDAPFilter_or([
+        pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('cn'),
+                                          assertionValue=pureldap.LDAPAssertionValue('foo')),
+        pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('uid'),
+                                          assertionValue=pureldap.LDAPAssertionValue('foo')),
+        pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('mail'),
+                                          assertionValue=pureldap.LDAPAssertionValue('foo')),
+        pureldap.LDAPFilter_substrings(type='mail', substrings=[pureldap.LDAPFilter_substrings_initial('foo@')]),
+        ]),
+          'attributes': [''],
+        },
+         pureldap.LDAPBERDecoderContext_LDAPMessage(
+        fallback=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext()),
+        inherit=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext())),
+
+         [0x63, 92]
+         + ([0x04, 17] + l('dc=example,dc=com')
+            + [0x0a, 1, 0x02]
+            + [0x0a, 1, 0x00]
+            + [0x02, 1, 0x01]
+            + [0x02, 1, 0x00]
+            + [0x01, 1, 0x00]
+            + [0xA1, 52]
+            + ([0xa3, 9]
+               + ([0x04, 2] + l('cn')
+                  + [0x04, 3] + l('foo'))
+               + [0xa3, 10]
+               + ([0x04, 3] + l('uid')
+                  + [0x04, 3] + l('foo'))
+               + [0xa3, 11]
+               + ([0x04, 4] + l('mail')
+                  + [0x04, 3] + l('foo'))
+               + [0xa4, 14]
+               + ([0x04, 4] + l('mail')
+                  + [0x30, 6]
+                  + ([0x80, 4] + l('foo@'))))
+            + [0x30, 2]
+            + ([0x04, 0])
+            )
+         ),
+
+        (pureldap.LDAPMessage,
+         [],
+         {'id': 1L,
+          'value': pureldap.LDAPSearchRequest(
+        baseObject='dc=example,dc=com',
+        scope=pureldap.LDAP_SCOPE_wholeSubtree,
+        derefAliases=pureldap.LDAP_DEREF_neverDerefAliases,
+        sizeLimit=1,
+        timeLimit=0,
+        typesOnly=False,
+        filter=pureldap.LDAPFilter_or([
+        pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('cn'),
+                                          assertionValue=pureldap.LDAPAssertionValue('foo')),
+        pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('uid'),
+                                          assertionValue=pureldap.LDAPAssertionValue('foo')),
+        pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('mail'),
+                                          assertionValue=pureldap.LDAPAssertionValue('foo')),
+        pureldap.LDAPFilter_substrings(type='mail', substrings=[pureldap.LDAPFilter_substrings_initial('foo@')]),
+        ]),
+        attributes=[''],
+        ),
+          },
+         pureldap.LDAPBERDecoderContext_TopLevel(
+        inherit=pureldap.LDAPBERDecoderContext_LDAPMessage(
+        fallback=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext()),
+        inherit=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext()))),
+
+         [0x30, 97]
+         # id
+         + [0x02, 1, 1]
+         # value
+         + [0x63, 92]
+         + ([0x04, 17] + l('dc=example,dc=com')
+            + [0x0a, 1, 0x02]
+            + [0x0a, 1, 0x00]
+            + [0x02, 1, 0x01]
+            + [0x02, 1, 0x00]
+            + [0x01, 1, 0x00]
+            + [0xA1, 52]
+            + ([0xa3, 9]
+               + ([0x04, 2] + l('cn')
+                  + [0x04, 3] + l('foo'))
+               + [0xa3, 10]
+               + ([0x04, 3] + l('uid')
+                  + [0x04, 3] + l('foo'))
+               + [0xa3, 11]
+               + ([0x04, 4] + l('mail')
+                  + [0x04, 3] + l('foo'))
+               + [0xa4, 14]
+               + ([0x04, 4] + l('mail')
+                  + [0x30, 6]
+                  + ([0x80, 4] + l('foo@'))))
+            + [0x30, 2]
+            + ([0x04, 0])
+            )
+         ),
+
         )
 
     def testToLDAP(self):
@@ -377,10 +526,9 @@ class KnownValues(unittest.TestCase):
             if decoder is None:
                 decoder = pureldap.LDAPBERDecoderContext(
                     fallback=pureber.BERDecoderContext())
-	    m=MutableString(s(*encoded))
-	    m.append('foo')
-            result = pureber.ber2object(decoder, m)
-	    assert m=='foo'
+	    m=s(*encoded)
+            result, bytes = pureber.berDecodeObject(decoder, m)
+	    self.assertEquals(bytes, len(m))
 
 	    shouldBe = klass(*args, **kwargs)
 	    #TODO shouldn't use str below
@@ -393,20 +541,15 @@ class KnownValues(unittest.TestCase):
     def testPartial(self):
 	"""LDAPClass(encoded="...") with too short input should throw BERExceptionInsufficientData"""
 	for klass, args, kwargs, decoder, encoded in self.knownValues:
-            decoder = pureldap.LDAPBERDecoderContext(
-                fallback=pureber.BERDecoderContext())
-	    for i in xrange(len(encoded)):
-		m=MutableString(s(*encoded))[:i]
+            if decoder is None:
+                decoder = pureldap.LDAPBERDecoderContext(
+                    fallback=pureber.BERDecoderContext())
+	    for i in xrange(1, len(encoded)):
+		m=s(*encoded)[:i]
 		self.assertRaises(pureber.BERExceptionInsufficientData,
-				  klass,
-				  encoded=m,
-				  berdecoder=decoder)
-
-    def testPartialLDAPModifyRequestEncodings_old(self):
-	"""LDAPModifyRequest(encoded="...") with too short input should throw BERExceptionInsufficientData"""
-	m=str(pureldap.LDAPModifyRequest(object='foo', modification=[pureldap.LDAPModification_delete('bar')]))
-	for i in xrange(len(m)):
-	    self.assertRaises(pureber.BERExceptionInsufficientData, pureldap.LDAPModifyRequest, encoded=m[:i], berdecoder=pureber.BERDecoderContext())
+                                  pureber.berDecodeObject,
+                                  decoder, m)
+            self.assertEquals((None, 0), pureber.berDecodeObject(decoder, ''))
 
 class TestEquality(unittest.TestCase):
     valuesToTest=(

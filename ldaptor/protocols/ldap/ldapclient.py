@@ -19,7 +19,6 @@
 from ldaptor.protocols import pureldap, pureber
 from ldaptor.protocols.ldap import ldaperrors
 
-from ldaptor.mutablestring import MutableString
 from twisted.python import log
 from twisted.python.failure import Failure
 from twisted.internet import protocol, defer
@@ -34,7 +33,7 @@ class LDAPClient(protocol.Protocol):
 
     def __init__(self):
 	self.onwire = {}
-	self.buffer = MutableString()
+	self.buffer = ''
 	self.connected = None
 
     berdecoder = pureldap.LDAPBERDecoderContext_TopLevel(
@@ -43,12 +42,13 @@ class LDAPClient(protocol.Protocol):
         inherit=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext())))
 
     def dataReceived(self, recd):
-	self.buffer.append(recd)
+	self.buffer += recd
 	while 1:
 	    try:
-		o=pureber.ber2object(self.berdecoder, self.buffer)
+		o, bytes = pureber.berDecodeObject(self.berdecoder, self.buffer)
 	    except pureldap.BERExceptionInsufficientData:
-		o=None
+		o, bytes = None, 0
+            self.buffer = self.buffer[bytes:]
 	    if not o:
 		break
 	    self.handle(o)
