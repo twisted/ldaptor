@@ -595,11 +595,13 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             assert msg.matchedDN==''
             d.callback(None)
 	    return 1
-	else:
-	    assert isinstance(msg, pureldap.LDAPSearchResultEntry)
+        elif isinstance(msg, pureldap.LDAPSearchResultEntry):
 	    self._cbSearchEntry(callback, msg.objectName, msg.attributes,
                                 complete=complete)
 	    return 0
+        else:
+            raise ldaperrors.LDAPProtocolError, \
+                  'bad search response: %r' % msg
 
     def search(self,
 	       filterText=None,
