@@ -496,6 +496,32 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             raise PasswordSetAggregateError, l
         return self
 
+    def _cbSetPassword_one(self, result):
+        return (True, None)
+    def _ebSetPassword_one(self, fail):
+        fail.trap(ldaperrors.LDAPException,
+                  DNNotPresentError)
+        return (False, fail)
+    def _setPasswordAll(self, results, newPasswd, prefix, names):
+        if not names:
+            return results
+        name, names = names[0], names[1:]
+        if results and not results[-1][0]:
+            # failing
+            d = defer.succeed(results+[(None, 'Aborted')])
+        else:
+            fn = getattr(self, prefix+name)
+            d = defer.maybeDeferred(fn, newPasswd)
+            d.addCallbacks(self._cbSetPassword_one,
+                           self._ebSetPassword_one)
+            def cb((success, info)):
+                return results+[(success, info)]
+            d.addCallback(cb)
+
+        d.addCallback(self._setPasswordAll,
+                      newPasswd, prefix, names)
+        return d
+
     def setPassword(self, newPasswd):
         def _passwordChangerPriorityComparison(me, other):
             mePri = getattr(self, '_setPasswordPriority_'+me)
@@ -506,19 +532,13 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         names=[name[len(prefix):] for name in dir(self) if name.startswith(prefix)]
         names.sort(_passwordChangerPriorityComparison)
 
-        l=[]
-        for name in names:        
-            fn=getattr(self, prefix+name)
-            d=fn(newPasswd)
-            l.append(d)
-        dl = defer.DeferredList(l)
-        for d in l:
-            # Eat the failure or it will be logged.
-            # DeferredList already got its copy, so we
-            # don't lose any information here.
-            d.addErrback(lambda dummy: None)
-        dl.addCallback(self._cbSetPassword, names)
-        return dl
+        d = defer.maybeDeferred(self._setPasswordAll,
+                                [],
+                                newPasswd,
+                                prefix,
+                                names)
+        d.addCallback(self._cbSetPassword, names)
+        return d
 
     # end IEditableLDAPEntry
 

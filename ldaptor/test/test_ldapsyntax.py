@@ -1137,6 +1137,41 @@ class LDAPSyntaxPasswords(unittest.TestCase):
                                        attributes=('objectClass',)),
             )
 
+    def testPasswordSetting_abortsOnFirstError(self):
+        """LDAPEntry.setPassword() aborts on first error (does not parallelize, as it used to)."""
+        client = LDAPClientTestDriver(
+            [pureldap.LDAPExtendedResponse(resultCode=ldaperrors.LDAPInsufficientAccessRights.resultCode,
+                                           matchedDN='',
+                                           errorMessage='')],
+            )
+
+	o=ldapsyntax.LDAPEntry(client=client,
+                               dn='cn=foo,dc=example,dc=com',
+                               attributes={
+            'objectClass': ['foo', 'sambaAccount'],
+            },
+                               complete=1)
+        d=o.setPassword(newPasswd='new')
+        fail = deferredError(d)
+        fail.trap(ldapsyntax.PasswordSetAggregateError)
+        l=fail.value.errors
+        assert len(l)==2
+
+        assert len(l[0])==2
+        self.assertEquals(l[0][0], 'ExtendedOperation')
+        assert isinstance(l[0][1], failure.Failure)
+        l[0][1].trap(ldaperrors.LDAPInsufficientAccessRights)
+
+        assert len(l[1])==2
+        self.assertEquals(l[1][0], 'Samba')
+        assert not isinstance(l[1][1], failure.Failure)
+        self.assertEquals(l[1][1], 'Aborted')
+
+	client.assertSent(pureldap.LDAPPasswordModifyRequest(
+            userIdentity='cn=foo,dc=example,dc=com',
+            newPasswd='new'),
+                          )
+
 
 class LDAPSyntaxFetch(unittest.TestCase):
     def testFetch_WithDirtyJournal(self):
