@@ -14,31 +14,6 @@ class FakeChannel(testutil.FakeChannel):
     def requestDone(self, request):
         self.transport.loseConnection()
 
-class MyHTTPClient(http.HTTPClient):
-    status = None
-    headers = None
-    response = None
-
-    def handleStatus(self, version, status, message):
-        self.status = (version, status, message)
-
-    def handleHeader(self, key, val):
-        if self.headers is None:
-            self.headers = {}
-        if key not in self.headers:
-            self.headers[key] = []
-        self.headers[key].append(val)
-
-    def handleResponse(self, data):
-        self.response = data
-
-    def __repr__(self):
-        return '<%s status=%r headers=%r response=%r>' % (
-            self.__class__.__name__,
-            self.status,
-            self.headers,
-            self.response)
-
 class MyHTTPPageGetter(client.HTTPPageGetter):
     def handleStatus_301(self):
         if not self.followRedirect:
