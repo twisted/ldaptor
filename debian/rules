@@ -11,11 +11,6 @@ DEB_DH_ALWAYS_EXCLUDE := .svn
 build/ldaptor-doc::
 	make -C doc
 
-binary-post-install/ldaptor-doc::
-	mv -i \
-		debian/ldaptor-doc/usr/share/doc/ldaptor-doc/ldap-intro/ldap-intro.html \
-		debian/ldaptor-doc/usr/share/doc/ldaptor-doc/ldap-intro/index.html
-
 binary-post-install/ldaptor-utils::
 	rm -rf debian/ldaptor-utils/usr/bin/ldaptor-webui
 

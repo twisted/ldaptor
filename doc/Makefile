@@ -13,7 +13,7 @@ DOCBOOK:=ldap-intro.xml
 SLIDES:=addressbook-slides.xml
 
 GENERATED:=\
-	$(DOCBOOK:%.xml=%.html) \
+	$(DOCBOOK:%.xml=%/index.html) \
 	$(SLIDES:%.xml=%/index.html) \
 	$(DIAPNG) \
 	api
@@ -23,17 +23,33 @@ XMLIFY:=sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g'
 all:: $(GENERATED)
 
 clean:
-	rm -rf $(GENERATED)
+	rm -rf \
+		$(GENERATED) \
+		ldap-intro
 
 rsync: $(GENERATED)
 	rsync -a $(DOCBOOK:%.xml=%.html) $(SLIDES:%.xml=%) $(DIAPNG) pyramid.twistedmatrix.com:public_html/ldap-intro/
 	rsync -a --exclude '*.pyc' --exclude SCCS --exclude '*~' examples/addressbook/{[0-9]*,README.txt,server}  pyramid.twistedmatrix.com:public_html/ldap-intro/addressbook/
 
-$(DOCBOOK:%.xml=%.html): %.html: %.xml
+$(DOCBOOK:%.xml=%/index.html): %/index.html: %.xml
+	install -d -m0755 '$(@D)'
 	xsltproc  --nonet \
 		/usr/share/sgml/docbook/stylesheet/xsl/nwalsh/xhtml/docbook.xsl \
 		$< \
 		>$@.tmp
+	mv $@.tmp $@
+
+ldap-intro/index.html: \
+	ldap-intro/ldap-is-a-tree.dia.png \
+	ldap-intro/ldapfilter-as-tree.dia.png \
+	ldap-intro/chat-bind.dia.png \
+	ldap-intro/chat-search.dia.png \
+	ldap-intro/chat-search-pipeline.dia.png \
+	ldap-intro/chat-unbind.dia.png
+
+ldap-intro/%.dia.png: %.dia.png
+	install -d -m0755 '$(@D)'
+	install -m0644 $< $@.tmp
 	mv $@.tmp $@
 
 addressbook-ldif/%.xml: examples/addressbook/server/%.ldif
