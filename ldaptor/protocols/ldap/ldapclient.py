@@ -37,7 +37,7 @@ class LDAPStartTLSBusyError(ldaperrors.LDAPOperationsError):
 
 class LDAPClient(protocol.Protocol):
     """An LDAP client"""
-    debug = False
+    debug = True
 
     def __init__(self):
 	self.onwire = {}
@@ -68,6 +68,7 @@ class LDAPClient(protocol.Protocol):
     def connectionLost(self, reason=protocol.connectionDone):
 	"""Called when TCP connection has been lost"""
 	self.connected = 0
+        # TODO somehow abort everything in self.onwire
 
     def queue(self, op, handler=None, *args, **kwargs):
 	if not self.connected:

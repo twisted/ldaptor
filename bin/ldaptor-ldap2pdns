@@ -7,6 +7,7 @@ from twisted.internet.stdio import StandardIO
 from twisted.protocols.basic import LineReceiver
 from twisted.internet.protocol import ClientFactory
 from twisted.python.failure import Failure
+from twisted.python import log
 from ldaptor.protocols.ldap import ldapclient, distinguishedname, ldapconnector
 from ldaptor.protocols.ldap.ldapsyntax import LDAPEntry
 from ldaptor import usage, config
@@ -15,43 +16,58 @@ from cStringIO import StringIO
 class ExitSentinel:
     pass
 
-class Search(ldapclient.LDAPClient):
-    pdnsPipeProtocol = None
-
-    def connectionMade(self):
-	d=self.bind()
-	d.addCallback(self.bind_ok)
-	d.addErrback(lambda dummy: self.transport.loseConnection())
-
-    def bind_ok(self, dummy):
-	o = LDAPEntry(client=self, dn=self.factory.base)
-	self.pdnsPipeProtocol = PdnsPipeProtocol(o, self.factory.dnsDomain)
-	reactor.addReader(StandardIO(self.pdnsPipeProtocol))
-
-    def connectionLost(self, reason):
-	if self.pdnsPipeProtocol:
-	    self.pdnsPipeProtocol.connectionLost()
-
-class SearchFactory(ClientFactory):
-    protocol = Search
-    ldapClient = None
-
-    def __init__(self, base, dnsDomain):
-	self.base=base
-	self.dnsDomain=dnsDomain
-
-    def buildProtocol(self, addr):
-	p = ClientFactory.buildProtocol(self, addr)
-	return p
+class TooMuchQueued(Exception):
+    """Too many requests queued already waiting for server"""
+    def __str__(self):
+        return self.__doc__
 
 class PdnsPipeProtocol(LineReceiver):
     delimiter = '\n'
     state = 'start'
 
-    def __init__(self, ldapObject, dnsDomain):
+    ldapEntry = None
+    ldapEntryFetchInProgress = False
+
+    MAX_WAIT_QUEUE = 10
+
+    def __init__(self, ldapEntryFactory, dnsDomain):
 	self.work=[]
-	self.ldapObject = ldapObject
+	self.ldapEntryFactory = ldapEntryFactory
+        self.waitingForLdapEntry = []
 	self.dnsDomain = dnsDomain
+
+    def _cbLdapEntry(self, e):
+        self.ldapEntryFetchInProgress = False
+        assert self.ldapEntry is None
+        self.ldapEntry = e
+        while self.waitingForLdapEntry:
+            d = self.waitingForLdapEntry.pop(0)
+            d.callback(e)
+
+    def _ebLdapEntry(self, reason):
+        self.ldapEntryFetchInProgress = False
+        waiters, self.waitingForLdapEntry = self.waitingForLdapEntry, []
+        for w in waiters:
+            w.errback(reason)
+        return reason
+
+    def getLdapEntry(self):
+        if self.ldapEntry is not None:
+            return defer.succeed(self.ldapEntry)
+        else:
+            if len(self.waitingForLdapEntry) > self.MAX_WAIT_QUEUE:
+                raise TooMuchQueued
+            d = defer.Deferred()
+            self.waitingForLdapEntry.append(d)
+
+            if not self.ldapEntryFetchInProgress:
+                self.ldapEntryFetchInProgress = True
+                fetch = self.ldapEntryFactory(self)
+                fetch.addCallback(self._cbLdapEntry)
+                fetch.addErrback(self._ebLdapEntry)
+                fetch.addErrback(log.err)
+
+            return d
 
     def _doWork(self):
 	while self.work:
@@ -103,8 +119,12 @@ class PdnsPipeProtocol(LineReceiver):
 	if not qname.endswith('.'+self.dnsDomain):
 	    return succeed(['END'])
 	cn=qname[:-len('.'+self.dnsDomain)]
-	d=self.ldapObject.search(filterText='(&(cn=%s)(ipHostNumber=*))'%cn,
-				 attributes=['ipHostNumber'])
+        d = self.getLdapEntry()
+        def _cb(e):
+            d=e.search(filterText='(&(cn=%s)(ipHostNumber=*))'%cn,
+                       attributes=['ipHostNumber'])
+            return d
+        d.addCallback(_cb)
 	d.addCallback(self._gotA, qname, qclass, 'A', ident)
 	return d
 
@@ -134,8 +154,12 @@ class PdnsPipeProtocol(LineReceiver):
 	    return succeed(['END'])
 	octets.reverse()
 	ip='.'.join(octets)
-	d=self.ldapObject.search(filterText='(ipHostNumber=%s)'%ip,
-				 attributes=['cn'])
+        d = self.getLdapEntry()
+        def _cb(e):
+            d=e.search(filterText='(ipHostNumber=%s)'%ip,
+                       attributes=['cn'])
+            return d
+        d.addCallback(_cb)
 	d.addCallback(self._gotPTR, qname, qclass, 'PTR', ident)
 	return d
 
@@ -184,11 +208,30 @@ class PdnsPipeProtocol(LineReceiver):
 	d.addCallback(self.completed, l)
 	d.addErrback(self.failed, l)
 
-    def connectionLost(self):
+    def connectionLost(self, reason=None):
 	self.work.append([ExitSentinel])
 	self._doWork()
 
+    def lostLDAPClient(self, client):
+        assert self.ldapEntry is not None
+        assert self.ldapEntry.client is client
+        self.ldapEntry = None
+
 exitStatus = 0
+
+def error(fail):
+    print >>sys.stderr, 'fail:', fail.getErrorMessage()
+    global exitStatus
+    exitStatus=1
+
+class MyLDAPClient(ldapclient.LDAPClient):
+    def __init__(self, pdnsProto):
+        ldapclient.LDAPClient.__init__(self)
+        self.pdnsProto = pdnsProto
+
+    def connectionLost(self, reason):
+        ldapclient.LDAPClient.connectionLost(self, reason)
+        self.pdnsProto.lostLDAPClient(self)
 
 def main(cfg, dnsDomain):
     try:
@@ -197,10 +240,22 @@ def main(cfg, dnsDomain):
         print >>sys.stderr, "%s: %s." % (sys.argv[0], e)
         sys.exit(1)
 
-    s=SearchFactory(baseDN, dnsDomain)
-    c=ldapconnector.LDAPConnector(reactor, baseDN, s,
-                                  overrides=cfg.getServiceLocationOverrides())
-    c.connect()
+    def ldapEntryFactory(pdnsProto):
+        c = ldapconnector.LDAPClientCreator(
+            reactor,
+            MyLDAPClient,
+            pdnsProto=pdnsProto)
+        d = c.connectAnonymously(dn=baseDN,
+                                 overrides=cfg.getServiceLocationOverrides())
+        def _cb(client, baseDN):
+            e = LDAPEntry(client=client, dn=baseDN)
+            return e
+        d.addCallback(_cb, baseDN)
+        return d
+
+    pdnsPipeProtocol = PdnsPipeProtocol(ldapEntryFactory, dnsDomain)
+    reactor.addReader(StandardIO(pdnsPipeProtocol))
+
     reactor.run()
     sys.exit(exitStatus)
 
