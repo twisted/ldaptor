@@ -48,3 +48,21 @@ fieldset,
 .zebra-odd {
  background-color: #ffffff;
 }
+
+.ldaptor-service-passwords form {
+ padding: 0.5em;
+}
+
+.ldaptor-service-passwords table.emulate-fieldset {
+ width: 100%;
+}
+
+.ldaptor-service-passwords table.emulate-fieldset thead tr th {
+ text-align: left;
+ padding-left: 0.5em;
+ padding-right: 0.5em;
+}
+
+.ldaptor-service-passwords table.emulate-fieldset .ldaptor-svcpass-name {
+ padding: 0.5em;
+}
