@@ -82,7 +82,7 @@ class PlaceHolder(object):
             ', '.join(args),
             )
         for mod in self.mod:
-            s += ' %% %r' % mod
+            s += ' %% %r' % (mod,)
         return s
 
 class FlatteningProxy(object):
