@@ -57,6 +57,8 @@ class LDAPSearchEntry(ldapclient.LDAPSearch):
         self.count=self.count+1
 
 class DoSearch(ldapclient.LDAPClient):
+    factory = None
+
     def __init__(self):
         ldapclient.LDAPClient.__init__(self)
 
@@ -67,7 +69,8 @@ class DoSearch(ldapclient.LDAPClient):
 
     def _handle_bind_fail(self, fail):
         self.unbind()
-        self.factory.errback(fail)
+        self.factory.deferred.errback(fail)
+        raise fail
 
     def _handle_bind_success(self, x):
         matchedDN, serverSaslCreds = x
@@ -76,6 +79,11 @@ class DoSearch(ldapclient.LDAPClient):
                         self,
                         baseObject=self.factory.baseObject,
                         filter=self.factory.ldapFilter)
+        self.factory.deferred.addCallbacks(self._unbind, lambda x:x)
+
+    def _unbind(self, dummy):
+        self.unbind()
+        return None # if we return self or x here, self is never deleted
 
 class DoSearchFactory(protocol.ClientFactory):
     protocol=DoSearch
@@ -90,7 +98,8 @@ class DoSearchFactory(protocol.ClientFactory):
         self.deferred.errback(reason)
 
     def clientConnectionLost(self, connector, reason):
-        self.deferred.errback(reason)
+        if not self.deferred.called:
+            self.deferred.errback(reason)
 
 class SearchForm(widgets.Form):
     formFields = [
@@ -151,8 +160,7 @@ class SearchForm(widgets.Form):
         return [io.getvalue(),
                 contentDeferred,
                 '<P>Used filter %s' % filtText,
-                '<P><a href="mass_password_change/%s">Mass password change</a>\n'%urllib.quote(filtText)
-
+                '<P><a href="mass_change_password/%s">Mass change passwords</a>\n'%urllib.quote(filtText)
                 ]
 
 class SearchPage(template.BasicPage):

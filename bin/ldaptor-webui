@@ -8,7 +8,7 @@ from twisted.cred.service import Service
 from twisted.cred.identity import Identity
 from twisted.cred.perspective import Perspective
 from twisted.cred.authorizer import Authorizer
-from twisted.internet.defer import Deferred
+import twisted.internet.defer
 from twisted.internet import defer, reactor
 from twisted.python.failure import Failure
 from ldaptor.protocols.ldap import ldapclient, ldapfilter
@@ -21,7 +21,13 @@ class LDAPAuth(ldapclient.LDAPClient):
         ldapclient.LDAPClient.connectionMade(self)
         d=self.bind(self.factory.dn, self.factory.auth)
         del self.factory.auth
+        d.addErrback(self._unbind)
         d.chainDeferred(self.factory.defe)
+
+    def _unbind(self, fail):
+        self.unbind()
+        raise fail
+                     
 
 class LDAPAuthFactory(protocol.ClientFactory):
     protocol = LDAPAuth
@@ -47,9 +53,9 @@ class LDAPAuthFactory(protocol.ClientFactory):
         return p
 
 class LDAPIdentity(Identity):
-    def __init__(self, name, dn, application,
+    def __init__(self, name, dn, authorizer,
                  ldapClientFactoryFactory, ldaphost, ldapport=389):
-        Identity.__init__(self, name, application)
+        Identity.__init__(self, name, authorizer)
         self.dn=dn
         self.ldapClientFactoryFactory=ldapClientFactoryFactory
         self.ldapClientFactory=None
@@ -76,7 +82,10 @@ class LDAPIdentity(Identity):
 
     def verifyPlainPassword(self, plaintext):
         assert not self.getLDAPClient()
-        pwrq = Deferred()
+        if not plaintext:
+            return defer.fail(Failure('You must enter a password.'))
+            
+        pwrq = defer.Deferred()
         self.ldapClientFactory = self.ldapClientFactoryFactory(
             pwrq, self.dn, plaintext, self.connectionLost)
         reactor.connectTCP(self.ldaphost, self.ldapport,
@@ -219,7 +228,7 @@ class FetchIdentities(ldapclient.LDAPClient):
         return deferred
 
     def _gotIdentityDN(self, dn, name):
-        ident = LDAPIdentity(name, dn, self.factory.application,
+        ident = LDAPIdentity(name, dn, self.factory.authorizer,
                              LDAPAuthFactory,
                              self.factory.ldaphost, self.factory.ldapport)
         #TODO I don't want to enumerate them here!
@@ -234,11 +243,11 @@ class FetchIdentitiesFactory(protocol.ClientFactory):
                  ldapbase='',
                  ldapFilterTemplate=None,
                  register=None, unregister=None,
-                 application=None):
+                 authorizer=None):
         self.register = register
         self.unregister = unregister
-        assert application
-        self.application = application
+        assert authorizer
+        self.authorizer = authorizer
         self.ldaphost = ldaphost
         self.ldapport = ldapport
         self.ldapbase = ldapbase
@@ -272,7 +281,7 @@ class LDAPAuthorizer(Authorizer):
             ldapFilterTemplate=self.ldapFilterTemplate,
             register=self.registerFetcher,
             unregister=self.unregisterFetcher,
-            application=application,
+            authorizer=self,
             )
         application.connectTCP(self.ldaphost, self.ldapport, factory)
 
@@ -286,7 +295,7 @@ class LDAPAuthorizer(Authorizer):
         """
 
         if not self.fetcher:
-            req = Deferred()
+            req = defer.Deferred()
             req.errback("unable to serve")
         else:
             req = self.fetcher.fetch(name)
@@ -300,8 +309,8 @@ class LDAPService(Service):
         req.errback("No such perspective %s: %s"%(name, msg))
 
     def loadPerspective(self, name):
-        identreq = self.application.authorizer.getIdentityRequest(name)
-        req = Deferred()
+        identreq = self.authorizer.getIdentityRequest(name)
+        req = defer.Deferred()
         identreq.addCallback(self._ident_ok, name, req)
         identreq.addErrback(self._ident_fail, name, req)
         identreq.arm()
@@ -320,7 +329,7 @@ class MyOptions(usage.Options, usage.Options_hostport, usage.Options_base):
     """LDAPtor Web User Interface"""
 
     optParameters = (
-        ('http-port', None, '8080',
+        ('http-port', None, '38980', # think "ldap and http"
          "listen on this port"),
         ('identity-search', None,
          '(|(cn=%(name)s)(uid=%(name)s))',
@@ -342,14 +351,12 @@ if __name__ == '__main__':
     except usage.UsageError, ue:
         sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
         sys.exit(1)
-    application = app.Application(
-        'ldaptor-webui',
-        authorizer=LDAPAuthorizer(ldaphost=config.opts['ldap-host'],
-                                  ldapport=config.opts['ldap-port'],
-                                  ldapbase=config.opts['base'],
-                                  ldapFilterTemplate=config.opts['identity-search'],
-                                  ))
-    svc = LDAPService("edit", application)
+    auth = LDAPAuthorizer(ldaphost=config.opts['ldap-host'],
+                          ldapport=config.opts['ldap-port'],
+                          ldapbase=config.opts['base'],
+                          ldapFilterTemplate=config.opts['identity-search'])
+    application = app.Application('ldaptor-webui', authorizer=auth)
+    svc = LDAPService("edit", serviceParent=application, authorizer=auth)
     svc.perspectiveClass = LDAPPerspective
     gdgt = gadget.LdaptorWebUIGadget(svc,
                                      baseObject=config.opts['base'],

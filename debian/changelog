@@ -1,3 +1,28 @@
+ldaptor (0.0.7) unstable; urgency=low
+
+  * Don't leave LDAP connections open, cleanup.
+  * ldaptor-webui search no longer leaks LDAP server connections
+    for every search
+  * Misc bug fixes.
+  * Use Failures.
+  * Default ldaptor-webui port is now 38980 (think "ldap and
+    http").
+  * New tool ldaptor-ldap2passwd
+  * Added TODO notes.
+  * Support changing Samba passwords.
+  * Add functionality to get free uidNumbers.
+  * Find free uidNumber/gidNumber in ldaptor-webui add.
+  * Avoid Twisted deprecation warnings.
+  * Support adding objects composed of multiple objectclasses.
+  * Mark mandatory attributes with an asterisk.
+  * Some pychecker cleanups.
+  * Protect setup-*.py against pychecker importing them.
+  * Packaging cleanups; python2.2 as default, python2.3 support,
+    better descriptions.
+  * Fix upstream location.
+
+ -- Tommi Virtanen <tv@debian.org>  Thu,  8 Aug 2002 10:21:51 +0300
+
 ldaptor (0.0.6) unstable; urgency=low
 
   * Twisted ClientFactory and Protocol connectionLost refactor.

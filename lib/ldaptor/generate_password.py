@@ -11,13 +11,13 @@ class ReadPassword(protocol.ProcessProtocol):
         self.stdout=''
         self.stderr=''
 
-    def dataReceived(self, data):
+    def outReceived(self, data):
         self.stdout=self.stdout+data
 
     def errReceived(self, data):
         self.stderr=self.stderr+data
 
-    def processEnded(self):
+    def processEnded(self, reason):
         if self.stderr:
             self.deferred.errback(failure.Failure(
                 PwgenException(self.stderr)))
@@ -33,7 +33,7 @@ class ReadPassword(protocol.ProcessProtocol):
 def generate(n=1):
     d=defer.Deferred()
     proto=ReadPassword(d, n)
-    p=process.Process('pwgen', ('pwgen', '-cn1', '-N', '%d'%n), {}, None, proto)
+    process.Process('pwgen', ('pwgen', '-cn1', '-N', '%d'%n), {}, None, proto)
     return d
 
 if __name__=='__main__':
@@ -57,5 +57,5 @@ if __name__=='__main__':
         l.append(d)
 
     dl=defer.DeferredList(l)
-    dl.addBoth(lambda x=None: reactor.stop())
+    dl.addBoth(lambda dummy: reactor.stop())
     reactor.run()

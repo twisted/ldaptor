@@ -33,6 +33,7 @@ RFC2254:
 
 class InvalidLDAPFilter(Exception):
     def __init__(self, syntax, value):
+        Exception.__init__(self)
         self.syntax=syntax
         self.value=value
 

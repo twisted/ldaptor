@@ -11,7 +11,7 @@ TODO implement rest of syntax from RFC2849
 
 # RFC2849: The LDAP Data Interchange Format (LDIF) - Technical Specification
 
-import base64, string
+import base64
 
 def base64_encode(s):
     return ''.join(base64.encodestring(s).split('\n'))+'\n'

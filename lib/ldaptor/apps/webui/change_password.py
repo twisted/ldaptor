@@ -50,7 +50,7 @@ class PasswordChangeForm(widgets.Form):
                                               userIdentity=dn,
                                               newPasswd=password1)
                 d.addCallbacks(
-                    callback=(lambda modifypass, dn:
+                    callback=(lambda dummy, dn:
                               "<p>Password for <em>%s</em> has been set.</p>"%(dn)),
                     callbackArgs=(dn,),
                     errback=lambda x: x,
@@ -72,7 +72,7 @@ class PasswordChangeForm(widgets.Form):
                                       userIdentity=dn,
                                       newPasswd=pwd)
         d.addCallbacks(
-            callback=(lambda modifypass, dn, pwd:
+            callback=(lambda dummy, dn, pwd:
                       "<p>Password for <em>%s</em> has been set to: <em>%s</em></p>"%(dn, pwd)),
             callbackArgs=(dn, pwd),
             errback=lambda x: x,

@@ -1,9 +1,10 @@
-from twisted.web import widgets
+from twisted.web import widgets, static
 from twisted.internet import defer
 
 from ldaptor.protocols import pureldap, pureber
 from ldaptor.protocols.ldap import ldapclient, ldaperrors
 from ldaptor.protocols.ldap import schema
+from ldaptor import numberalloc
 
 from cStringIO import StringIO
 import urllib
@@ -18,24 +19,26 @@ class DoAdd(ldapclient.LDAPAddEntry):
     def handle_success(self):
         self.callback("<p>Success.")
 
-    def handle_fail(self, resultCode, errorMessage):
-        if errorMessage:
-            msg=", "+errorMessage
-        else:
-            msg=""
-        self.callback("<p><strong>Failed</strong>: %s%s."%(resultCode, msg))
+    def handle_fail(self, fail):
+        self.callback("<p><strong>Failed</strong>: %s."
+                      %fail.getErrorMessage())
 
 class AddForm(widgets.Form):
-    nonUserEditableAttributeTypes = {
-        'objectClass': 1,
-        'uidNumber': 1,
-        'gidNumber': 1,
-        }
+    def _nonUserEditableAttributeType_getFreeNumber(self, attributeType):
+        d=numberalloc.getFreeNumber(attributeType, self.ldapClient,
+                                    self.baseObject,
+                                    min=1000)
+        d.addCallback(lambda x, a=attributeType: (a, [str(x)]))
+        return d
 
-    def __init__(self, baseObject,
+    nonUserEditableAttributeType_uidNumber=_nonUserEditableAttributeType_getFreeNumber
+    nonUserEditableAttributeType_gidNumber=_nonUserEditableAttributeType_getFreeNumber
+    
+    def __init__(self, baseObject, ldapClient,
                  chosenObjectClasses, attributeTypes, objectClasses):
         self.baseObject=baseObject
-        self.chosenObjectClasses=chosenObjectClasses
+        self.ldapClient=ldapClient
+        self.nonUserEditableAttributeType_objectClass=chosenObjectClasses
         self.attributeTypes=attributeTypes
         self.objectClasses=objectClasses
 
@@ -47,20 +50,23 @@ class AddForm(widgets.Form):
         print "attribute type %s not known"%name
         return None
 
-    def _one_formfield(self, attr, result):
+    def _one_formfield(self, attr, result, must=0):
         attrtype = self._get_attrtype(attr)
+        name=attr
+        if must:
+            name=name+"*"
         if attrtype.uiHint_multiline:
             if attrtype.single_value:
-                result.append(('text', attr, 'add_'+attr, "", attrtype.desc or ''))
+                result.append(('text', name, 'add_'+attr, "", attrtype.desc or ''))
             else:
-                result.append(('text', attr, 'add_'+attr, "", attrtype.desc or ''))
+                result.append(('text', name, 'add_'+attr, "", attrtype.desc or ''))
         else:
             if attrtype.single_value:
-                result.append(('string', attr, 'add_'+attr, "", attrtype.desc or ''))
+                result.append(('string', name, 'add_'+attr, "", attrtype.desc or ''))
             else:
                 # TODO maybe use a string field+button to add entries,
                 # multiselection list+button to remove entries?
-                result.append(('text', attr, 'add_'+attr, "", attrtype.desc or ''))
+                result.append(('text', name, 'add_'+attr, "", attrtype.desc or ''))
 
     def getFormFields(self, request, kws={}):
         r=[]
@@ -68,10 +74,11 @@ class AddForm(widgets.Form):
         process = {}
 
         # TODO sort objectclasses somehow?
-        objectClasses = [request.postpath[0]]
+        objectClasses = request.postpath[0].split('+')
         objectClassesSeen = {}
 
         dn_attribute = None
+        self.nonUserEditableAttributes = []
         while objectClasses:
             objclassName = objectClasses.pop()
         
@@ -93,20 +100,23 @@ class AddForm(widgets.Form):
                     dn_attribute = attr_alias
                 real_attr = self._get_attrtype(str(attr_alias))
 
-                if not self.nonUserEditableAttributeTypes.has_key(real_attr.name[0]):
+                if hasattr(self, 'nonUserEditableAttributeType_'+real_attr.name[0]):
+                    self.nonUserEditableAttributes.append(real_attr.name[0])
+                else:
                     for attr in real_attr.name:
                         if not process.has_key(attr.upper()):
                             process[attr.upper()]=0
                         if not process[attr.upper()]:
-                            self._one_formfield(attr,
-                                                result=r)
+                            self._one_formfield(attr, result=r, must=1)
                         for name in real_attr.name:
                             process[name.upper()]=1
 
             for attr_alias in objclass.may:
                 real_attr = self._get_attrtype(str(attr_alias))
 
-                if not self.nonUserEditableAttributeTypes.has_key(real_attr.name[0]):
+                if hasattr(self, 'nonUserEditableAttributeType_'+real_attr.name[0]):
+                    self.nonUserEditableAttributes.append(real_attr.name[0])
+                else:
                     for attr in real_attr.name:
                         if not process.has_key(attr.upper()):
                             process[attr.upper()]=0
@@ -129,25 +139,15 @@ class AddForm(widgets.Form):
         return list(status)+["<P>", io.getvalue()]
 
     def process(self, write, request, submit, **kw):
-        user = request.getSession().LdaptorPerspective.getPerspectiveName()
-        client = request.getSession().LdaptorIdentity.getLDAPClient()
-
-        if not client:
-            return self._output_status_and_form(
-                request, kw,
-                "<P>Add failed: connection lost.")
-
         assert kw['dn'], 'Must have dn set.'
-        assert kw['add_'+kw['dn']], 'Must have attribute dn points to.'
+        assert kw.has_key('add_'+kw['dn']), 'Must have attribute dn %s points to.' % kw['dn']
+        assert kw['add_'+kw['dn']], 'Attribute %s must have value.' % 'add_'+kw['dn']
         dn=kw['dn']+'='+kw['add_'+kw['dn']]+','+self.baseObject
 
         #TODO verify
-        changes = [('objectClass', self.chosenObjectClasses)]
+        changes = []
         for k,v in kw.items():
-            noedit = getattr(self,
-                             "nonUserEditableAttributeType_"+k,
-                             None)
-            if noedit:
+            if hasattr(self, "nonUserEditableAttributeType_"+k):
                 raise "Can't set attribute %s when adding." % k
             elif k[:len("add_")]=="add_":
                 attrtype = self._get_attrtype(k[len("add_"):])
@@ -158,10 +158,39 @@ class AddForm(widgets.Form):
                 else:
                     v=self._textarea_to_list(v)
 
-                if v:
+                if v and [1 for x in v if x]:
                     attr=k[len("add_"):]
-                    changes.append((attr, v))
+                    changes.append(defer.succeed((attr, v)))
                     #TODO
+
+        for attributeType in self.nonUserEditableAttributes:
+            thing=getattr(self, 'nonUserEditableAttributeType_'+attributeType)
+            if callable(thing):
+                changes.append(thing(attributeType))
+            else:
+                changes.append(defer.succeed((attributeType, thing)))
+
+        dl=defer.DeferredList(changes, fireOnOneErrback=1)
+        #dl.addErrback(lambda x: x[0]) # throw away index
+        dl.addCallback(self._pruneSuccessFlags)
+        dl.addCallback(self._process2, request, dn, kw)
+        return [dl]
+
+    def _pruneSuccessFlags(self, l):
+        r=[]
+        for succeeded,result in l:
+            assert succeeded
+            r.append(result)
+        return r
+
+    def _process2(self, changes, request, dn, kw):
+        client = request.getSession().LdaptorIdentity.getLDAPClient()
+
+        if not client:
+            return self._output_status_and_form(
+                request, kw,
+                "<P>Add failed: connection lost.")
+
         if not changes:
             changes_desc=" no changes!" #TODO
             defe=""
@@ -173,13 +202,14 @@ class AddForm(widgets.Form):
                     mod.append((pureldap.LDAPAttributeDescription(attr),
                                 pureber.BERSet(
                         map(pureldap.LDAPAttributeValue, new))))
-                    changes_desc=changes_desc+"<br>adding %s: values %s"%(repr(attr), new)
+                    changes_desc=changes_desc+"<br>adding %s: %s"%(repr(attr), ', '.join(map(repr, new)))
             defe=defer.Deferred()
             if not mod:
                 defe.callback([""])
             else:
                 DoAdd(client, dn, mod, defe.callback)
 
+        user = request.getSession().LdaptorPerspective.getPerspectiveName()
         return self._output_status_and_form(
             request, kw,
             "<P>Submitting add of %s as user %s.."%(dn, user),
@@ -199,17 +229,20 @@ class AddError:
             errorMessage = str(resultCode)+errorMessage
         self.deferred.callback(["Got error%s.\n<HR>"%errorMessage])
 
-class ChooseObjectClass(widgets.Widget):
+class ChooseObjectClass(widgets.Form):
     def __init__(self, allowedObjectClasses):
         self.allowedObjectClasses = allowedObjectClasses
 
-    def display(self, request):
-        r=['<P>Please choose an object class:\n',
-           '<ul>\n']
+    def getFormFields(self, request):
+        l=[]
         for oc in self.allowedObjectClasses:
-            r.append('  <li><a href="%s">%s</a></li>\n'%(request.childLink(oc), oc))
-        r.append('</ul>\n')
-        return r
+            l.append((oc, oc))
+        return [('multimenu', 'Object types to create', 'objectClass', l)]
+
+    def process(self, write, request, submit, **kw):
+        return [static.redirectTo(
+            request.childLink('+'.join(kw['objectClass'])),
+            request)]
 
 class AddPage(template.BasicPage):
     title = "Ldaptor Add Page"
@@ -320,6 +353,7 @@ class AddPage(template.BasicPage):
     def _getContent_3(self, x, chosenObjectClasses, request, client, d):
         attributeTypes, objectClasses = x
         d.callback(AddForm(baseObject=self.baseObject,
+                           ldapClient=client,
                            chosenObjectClasses=chosenObjectClasses,
                            attributeTypes=attributeTypes,
                            objectClasses=objectClasses).display(request))

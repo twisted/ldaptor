@@ -1,7 +1,7 @@
 from twisted.web import widgets
 from twisted.internet import defer, protocol
 from twisted.python.failure import Failure
-from ldaptor.protocols.ldap import ldapclient, ldapfilter
+from ldaptor.protocols.ldap import ldapclient, ldapfilter, ldaperrors
 from ldaptor.protocols import pureber, pureldap
 from ldaptor.apps.webui.htmlify import htmlify_attributes
 from ldaptor import generate_password
@@ -27,6 +27,8 @@ class LDAPSearchEntry(ldapclient.LDAPSearch):
         self.ldapObjects.append((objectName, attributes))
 
 class DoSearch(ldapclient.LDAPClient):
+    factory=None
+
     def __init__(self):
         ldapclient.LDAPClient.__init__(self)
 
@@ -45,6 +47,11 @@ class DoSearch(ldapclient.LDAPClient):
                         self,
                         baseObject=self.factory.baseObject,
                         filter=self.factory.ldapFilter)
+        self.factory.deferred.addCallbacks(self._unbind, lambda x:x)
+
+    def _unbind(self, x):
+        self.unbind()
+        return x
 
 class DoSearchFactory(protocol.ClientFactory):
     protocol=DoSearch
@@ -62,7 +69,8 @@ class DoSearchFactory(protocol.ClientFactory):
         self.deferred.errback(reason)
 
     def clientConnectionLost(self, connector, reason):
-        self.deferred.errback(reason)
+        if not self.deferred.called:
+            self.deferred.errback(reason)
 
 class MassPasswordChangeForm(widgets.Form):
     def __init__(self, ldapObjects):
@@ -102,7 +110,7 @@ class MassPasswordChangeForm(widgets.Form):
                                           userIdentity=dn,
                                           newPasswd=pwd)
             d.addCallbacks(
-                callback=(lambda modifypass, dn, pwd:
+                callback=(lambda dummy, dn, pwd:
                           "<p>%s&nbsp;%s</p>"%(dn, pwd)),
                 callbackArgs=(dn, pwd),
                 errback=lambda x: x,
@@ -161,8 +169,8 @@ class MassPasswordChangePage(template.BasicPage):
                 deferred.addErrback(defer.logError)
             else:
                 CreateError(d, request)(
-                    Failure(LDAPUnknownError(ldaperrors.other,
-                                             "connection lost")))
+                    Failure(ldaperrors.LDAPUnknownError(
+                    ldaperrors.other, "connection lost")))
             return [self._header(request), d]
 
     def _getContent_2(self, ldapObjects, deferred, request):

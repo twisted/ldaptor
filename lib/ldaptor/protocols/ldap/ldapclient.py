@@ -22,6 +22,7 @@ from ldaptor.protocols.ldap import ldaperrors
 from twisted.python import mutablestring, log
 from twisted.python.failure import Failure
 from twisted.internet import protocol, defer
+from ldaptor.samba import smbpassword
 
 class LDAPClientConnectionLostException(ldaperrors.LDAPException):
     pass
@@ -93,7 +94,7 @@ class LDAPClient(protocol.Protocol):
                 ldaperrors.LDAPClientConnectionLostException()))
         else:
             r=pureldap.LDAPBindRequest(dn=dn, auth=auth)
-            self.queue(r, d.callback)
+            self.queue(r, d.callback) #TODO queue needs info back from callback!!!
             d.addCallback(self._handle_bind_msg)
         return d
 
@@ -321,3 +322,34 @@ class LDAPModifyPassword(LDAPOperation):
             self.deferred.errback(Failure(
                 ldaperrors.get(msg.resultCode, msg.errorMessage)))
             return 1
+
+class LDAPModifySambaPassword(LDAPModifyAttributes):
+    def __init__(self,
+                 deferred,
+                 client,
+                 object,
+                 newPassword):
+        """
+        Request modification of LDAP attributes.
+
+        object is a string representation of the object DN.
+
+        newPassword is plaintext version of new password.
+        """
+
+        nthash=smbpassword.nthash(newPassword)
+        lmhash=smbpassword.lmhash(newPassword)
+
+        self.deferred=deferred
+        self.object=object
+
+        LDAPModifyAttributes.__init__(
+            self, client, object,
+            modification=pureldap.LDAPModification_replace(vals=(
+            ('ntPassword', (nthash,)),
+            ('lmPassword', (lmhash,)))))
+
+    def handle_success(self):
+        self.deferred.callback(self.object)
+    def handle_fail(self, fail):
+        self.deferred.errback(fail)

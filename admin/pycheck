@@ -1,0 +1,4 @@
+#!/bin/sh
+set -e
+
+find . -name SCCS -prune -o -name '*.py' -print0 | xargs -0 pychecker

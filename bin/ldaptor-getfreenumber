@@ -1,0 +1,61 @@
+#!/usr/bin/python
+
+import sys
+from ldaptor.protocols.ldap import ldapclient
+from ldaptor.protocols import pureber, pureldap
+from ldaptor import usage, numberalloc
+from twisted.internet import protocol, reactor, defer
+
+class Search(ldapclient.LDAPClient):
+    def connectionMade(self):
+        d=self.bind()
+        d.addCallback(self._handle_bind_success)
+        d.chainDeferred(self.factory.deferred)
+
+    def _handle_bind_success(self, x):
+        matchedDN, serverSaslCreds = x
+        return numberalloc.getFreeNumber('uidNumber', self,
+                                         self.factory.base,
+                                         min=1000)
+
+class SearchFactory(protocol.ClientFactory):
+    protocol = Search
+    def __init__(self, deferred, base):
+        self.deferred=deferred
+        self.base=base
+
+    def clientConnectionFailed(self, connector, reason):
+        self.deferred.errback(reason)
+
+exitStatus=0
+
+def error(fail):
+    print fail
+    print >>sys.stderr, 'fail:', fail.getErrorMessage()
+    global exitStatus
+    exitStatus=1
+
+def main(host, port, base):
+    d=defer.Deferred()
+    s=SearchFactory(d, base)
+    d.addCallback(lambda num: sys.stdout.write('%s\n' % repr(num)))
+    d.addErrback(error)
+    d.addBoth(lambda x: reactor.stop())
+    reactor.connectTCP(host, port, s)
+    reactor.run()
+    sys.exit(exitStatus)
+
+class MyOptions(usage.Options, usage.Options_hostport, usage.Options_base):
+    """LDAPtor command line search utility"""
+
+if __name__ == "__main__":
+    try:
+        config = MyOptions()
+        config.parseOptions()
+    except usage.UsageError, ue:
+        sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
+        sys.exit(1)
+
+    main(config.opts['ldap-host'],
+         config.opts['ldap-port'],
+         config.opts['base'])

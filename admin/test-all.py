@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import unittest, os, os.path, sys
+import unittest, os, os.path
 
 def getTestDir():
     import sys

@@ -38,6 +38,8 @@ class LDAPSearchAndPrint(ldapclient.LDAPSearch):
                                     attributes)))
 
 class SearchALot(ldapclient.LDAPClient):
+    factory=None
+
     def __init__(self):
         ldapclient.LDAPClient.__init__(self)
     
@@ -83,7 +85,7 @@ def main():
         s=SearchALotFactory(d, str(x)+'.')
         reactor.connectTCP("localhost", 389, s)
     dl=defer.DeferredList(l)
-    dl.addBoth(lambda x: reactor.stop())
+    dl.addBoth(lambda dummy: reactor.stop())
     reactor.run()
     sys.exit(exitStatus)
 

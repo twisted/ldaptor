@@ -11,7 +11,7 @@ class Options(usage.Options):
             method = getattr(self, 'postOptions_'+name)
             method()
 
-class Options_hostport:
+class Options_hostport(Options):
     optParameters = (
         ('ldap-host', None, None,
          "LDAP server hostname"),
@@ -32,7 +32,7 @@ class Options_hostport:
         if not self.opts['ldap-host']:
             raise usage.UsageError, "%s must be given" % 'ldap-host'
 
-class Options_base:
+class Options_base(Options):
     optParameters = (
         ('base', None, None,
          "LDAP base dn"),
@@ -43,7 +43,7 @@ class Options_base:
         if not self.opts['base']:
             raise usage.UsageError, "%s must be given" % 'base'
 
-class Options_scope:
+class Options_scope(Options):
     optParameters = (
         ('scope', None, 'sub',
          "LDAP search scope (one of base, one, sub)"),
@@ -64,7 +64,7 @@ class Options_scope:
             raise usage.UsageError, "bad scope: %s" % scope
         self.opts['scope'] = scope
 
-class Options_bind:
+class Options_bind(Options):
     optParameters = (
         ('binddn', None, None,
          "use Distinguished Name to bind to the directory"),

@@ -16,8 +16,6 @@
 
 """LDAP protocol message conversion; no application logic here."""
 
-import sys
-import os
 from pureber import *
 
 next_ldap_message_id=1
@@ -91,7 +89,7 @@ class LDAPBindRequest(LDAPProtocolRequest, BERSequence):
 
     def __init__(self, version=None, dn=None, auth=None, encoded=None, berdecoder=None, tag=None):
         LDAPProtocolRequest.__init__(self)
-        BERSequence.__init__(self, [])
+        BERSequence.__init__(self, [], tag=tag)
         if encoded!=None:
             assert version==None
             assert dn==None
@@ -119,8 +117,8 @@ class LDAPBindRequest(LDAPProtocolRequest, BERSequence):
     def __repr__(self):
         l=[]
         l.append('version=%d' % self.version)
-        l.append('dn=%s' % self.dn)
-        l.append('auth=%s' % self.auth)
+        l.append('dn=%s' % repr(self.dn))
+        l.append('auth=%s' % repr(self.auth))
         if self.tag!=self.__class__.tag:
             l.append('tag=%d' % self.tag)
         return self.__class__.__name__+'('+', '.join(l)+')'
@@ -389,7 +387,7 @@ class LDAPFilter_substrings(BERSequence):
     tag = CLASS_CONTEXT|0x04
 
     def decode(self, encoded, berdecoder):
-        BERSequence.decode(self, encded, LDAPBERDecoderContext_Filter_substrings(fallback=berdecoder))
+        BERSequence.decode(self, encoded, LDAPBERDecoderContext_Filter_substrings(fallback=berdecoder))
         assert len(self.data)==2
         self.type=self.data[0]
         assert len(self.data[1])>=1
@@ -540,7 +538,7 @@ class LDAPMatchingRuleAssertion(BERSequence):
     def __init__(self, matchingRule=None, type=None,
                  matchValue=None, dnAttributes=None,
                  encoded=None, berdecoder=None, tag=None):
-        BERSequence.__init__(self, value=[])
+        BERSequence.__init__(self, value=[], tag=tag)
         if matchValue!=None:
             assert encoded==None
             self.matchingRule=matchingRule
@@ -722,7 +720,7 @@ class LDAPModification(BERSequence):
         self.vals=map(lambda x: x.value, self.data[1:])
 
     def __init__(self, vals=None, op=None, encoded=None, berdecoder=None, tag=None):
-        BERSequence.__init__(self, [])
+        BERSequence.__init__(self, [], tag=tag)
         if encoded!=None:
             assert vals==None
             assert op==None
@@ -789,7 +787,7 @@ l=LDAPModifyRequest(object='cn=foo,dc=example,dc=com',
 """
 
         LDAPProtocolRequest.__init__(self)
-        BERSequence.__init__(self, [])
+        BERSequence.__init__(self, [], tag=tag)
         if encoded!=None:
             assert object==None
             assert modification==None
@@ -843,10 +841,10 @@ l=LDAPAddRequest(entry='cn=foo,dc=example,dc=com',
 """
 
         LDAPProtocolRequest.__init__(self)
-        BERSequence.__init__(self, [])
+        BERSequence.__init__(self, [], tag=tag)
         if encoded!=None:
-            assert object==None
-            assert modification==None
+            assert entry==None
+            assert attributes==None
             assert berdecoder
             self.decode(encoded, berdecoder)
         else:
@@ -936,7 +934,7 @@ class LDAPExtendedRequest(LDAPProtocolRequest, BERSequence):
     def __init__(self, requestName=None, requestValue=None,
                  encoded=None, berdecoder=None, tag=None):
         LDAPProtocolRequest.__init__(self)
-        BERSequence.__init__(self, [])
+        BERSequence.__init__(self, [], tag=tag)
         if encoded!=None:
             assert requestName==None
             assert requestValue==None
@@ -988,6 +986,7 @@ class LDAPPasswordModifyRequest(LDAPExtendedRequest):
             assert oldPasswd==None
             assert newPasswd==None
             assert berdecoder
+            assert tag==None
             LDAPExtendedRequest.__init__(self, encoded=encoded, berdecoder=berdecoder)
         else:
             l=[]
@@ -1001,7 +1000,8 @@ class LDAPPasswordModifyRequest(LDAPExtendedRequest):
                 self,
                 requestName=self.oid,
                 requestValue=BEROctetString(str(BERSequence(l)),
-                                            tag=CLASS_CONTEXT|1))
+                                            tag=CLASS_CONTEXT|1),
+                tag=tag)
 
     def __repr__(self):
         l=[]
@@ -1043,10 +1043,3 @@ class LDAPBERDecoderContext(BERDecoderContext):
         LDAPDelResponse.tag: LDAPDelResponse,
         LDAPExtendedResponse.tag: LDAPExtendedResponse,
     }
-
-
-class LDAPBERDecoderContext_LDAPMessage(BERDecoderContext):
-    Identities = {
-        BERSequence.tag: LDAPMessage,
-        }
-

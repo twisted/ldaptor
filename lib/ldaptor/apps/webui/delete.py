@@ -23,12 +23,12 @@ class LDAPSearch_FetchByDN(ldapclient.LDAPSearch):
 
     def _ok(self, dummy):
         if self.found==0:
-            raise LDAPUnknownError(ldaperrors.other, "No such DN")
+            raise ldaperrors.LDAPUnknownError(ldaperrors.other, "No such DN")
         elif self.found==1:
             return self.attributes
         else:
-            raise LDAPUnknownError(ldaperrors.other,
-                                   "DN matched multiple entries")
+            raise ldaperrors.LDAPUnknownError(ldaperrors.other,
+                                              "DN matched multiple entries")
 
     def handle_entry(self, objectName, attributes):
         self.found=self.found+1
@@ -43,12 +43,8 @@ class DoDelete(ldapclient.LDAPDelEntry):
     def handle_success(self):
         self.callback("<p>Success.")
 
-    def handle_fail(self, resultCode, errorMessage):
-        if errorMessage:
-            msg=", "+errorMessage
-        else:
-            msg=""
-        self.callback("<p><strong>Failed</strong>: %s%s."%(resultCode, msg))
+    def handle_fail(self, fail):
+        self.callback("<p><strong>Failed</strong>: %s."%fail.getErrorMessage())
 
 class DeleteForm(widgets.Form):
     formFields = [

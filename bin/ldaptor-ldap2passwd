@@ -1,0 +1,94 @@
+#!/usr/bin/python
+import sys
+from ldaptor.protocols.ldap import ldapclient, ldapfilter, ldif
+from ldaptor.protocols import pureber, pureldap
+from ldaptor import usage
+from twisted.internet import protocol, reactor, defer
+
+class SearchWithFilter(ldapclient.LDAPSearch):
+    def __init__(self, deferred, client, base, filt, attributes=()):
+        ldapclient.LDAPSearch.__init__(self, deferred, client,
+                                       baseObject=base,
+                                       filter=filt,
+                                       attributes=attributes)
+
+    def handle_entry(self, objectName, attributes):
+	a={}
+        for attr, vals in attributes:
+            attr=str(attr)
+            assert not a.has_key(attr)
+            a[attr]=map(str, vals)
+        
+        print ':'.join((
+            a['uid'][0],
+            'x',
+            a['uidNumber'][0],
+            a['gidNumber'][0],
+            a.get('gecos', a.get('cn', ['']))[0],
+            a['homeDirectory'][0],
+            a.get('loginShell', [''])[0],
+            ))
+
+class Search(ldapclient.LDAPClient):
+    def connectionMade(self):
+        d=self.bind()
+        d.addCallback(self._handle_bind_success)
+
+    def _handle_bind_success(self, x):
+        matchedDN, serverSaslCreds = x
+        SearchWithFilter(self.factory.deferred, self,
+                         self.factory.base, self.factory.filt,
+                         self.factory.attributes)
+
+class SearchFactory(protocol.ClientFactory):
+    protocol = Search
+    def __init__(self, deferred, base, filt, attributes):
+        self.deferred=deferred
+        self.base=base
+        self.filt=filt
+        self.attributes=attributes
+
+    def clientConnectionFailed(self, connector, reason):
+        self.deferred.errback(reason)
+
+exitStatus=0
+
+def error(fail):
+    print >>sys.stderr, 'fail:', fail.getErrorMessage()
+    global exitStatus
+    exitStatus=1
+
+def main(host, port, base, filter_text, attributes):
+    filt = ldapfilter.parseFilter('(objectClass=posixAccount)')
+    if filter_text is not None:
+        filt = pureldap.LDAPFilter_and([
+            filt,
+            ldapfilter.parseFilter(filter_text)])
+    d=defer.Deferred()
+    s=SearchFactory(d, base, filt, attributes)
+    d.addErrback(error)
+    d.addBoth(lambda x: reactor.stop())
+    reactor.connectTCP(host, port, s)
+    reactor.run()
+    sys.exit(exitStatus)
+
+class MyOptions(usage.Options, usage.Options_hostport, usage.Options_base):
+    """LDAPtor command line search utility"""
+
+    def parseArgs(self, filter=None, *attributes):
+        self.opts['filter'] = filter
+        self.opts['attributes'] = attributes
+      
+if __name__ == "__main__":
+    try:
+        config = MyOptions()
+        config.parseOptions()
+    except usage.UsageError, ue:
+        sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
+        sys.exit(1)
+
+    main(config.opts['ldap-host'],
+         config.opts['ldap-port'],
+         config.opts['base'],
+         config.opts['filter'],
+         config.opts['attributes'])

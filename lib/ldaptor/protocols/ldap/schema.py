@@ -1,4 +1,4 @@
-from ldaptor.protocols.ldap import ldapclient
+from ldaptor.protocols.ldap import ldapclient, ldaperrors
 from ldaptor.protocols import pureldap
 
 class LDAPGet_subschemaSubentry(ldapclient.LDAPSearch):
@@ -16,12 +16,12 @@ class LDAPGet_subschemaSubentry(ldapclient.LDAPSearch):
             
     def _ok(self, dummy):
         if self.found==0:
-            raise LDAPUnknownError(ldaperrors.other, "No such DN")
+            raise ldaperrors.LDAPUnknownError(ldaperrors.other, "No such DN")
         elif self.found==1:
             return self.subschemaSubentry
         else:
-            raise LDAPUnknownError(ldaperrors.other,
-                                   "DN matched multiple entries")
+            raise ldaperrors.LDAPUnknownError(ldaperrors.other,
+                                              "DN matched multiple entries")
 
     def handle_entry(self, objectName, attributes):
         self.found=self.found+1
@@ -49,12 +49,12 @@ class LDAPGetSchema(ldapclient.LDAPSearch):
             
     def _ok(self, dummy):
         if self.found==0:
-            raise LDAPUnknownError(ldaperrors.other, "No such DN")
+            raise ldaperrors.LDAPUnknownError(ldaperrors.other, "No such DN")
         elif self.found==1:
             return (self.attributeTypes, self.objectClasses)
         else:
-            raise LDAPUnknownError(ldaperrors.other,
-                                   "DN matched multiple entries")
+            raise ldaperrors.LDAPUnknownError(ldaperrors.other,
+                                              "DN matched multiple entries")
 
 
     def handle_entry(self, objectName, attributes):

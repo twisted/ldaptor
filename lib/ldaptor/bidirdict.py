@@ -18,7 +18,7 @@ class BidirDict(UserDict.UserDict):
         UserDict.UserDict.__delitem__(self, key)
 
     def clear(self):
-        UserDict.UserDict.clear()
+        UserDict.UserDict.clear(self)
         self.reverse.clear()
 
     def update(self, dict):
