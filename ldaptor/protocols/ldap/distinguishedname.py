@@ -191,7 +191,7 @@ class RelativeDistinguishedName:
 
     def __gt__(self, other):
         return (self != other
-                and self > other)
+                and self >= other)
 
     def __le__(self, other):
         return not self > other
@@ -257,6 +257,13 @@ class DistinguishedName:
 
     def __ne__(self, other):
 	return not (self == other)
+
+    def __cmp__(self, other):
+        if isinstance(other, basestring):
+            return cmp(str(self), other)
+	if not isinstance(other, DistinguishedName):
+	    return NotImplemented
+        return cmp(self.split(), other.split())
 
     def getDomainName(self):
 	domainParts = []

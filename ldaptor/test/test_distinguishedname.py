@@ -292,3 +292,10 @@ class RelativeDistinguishedName_Init(unittest.TestCase):
 	proto=dn.RelativeDistinguishedName('dc=example')
 	rdn=dn.RelativeDistinguishedName(proto)
 	self.assertEquals(str(rdn), 'dc=example')
+
+class DistinguishedName_Comparison(unittest.TestCase):
+    # TODO test more carefully
+    def testGT(self):
+	dn1=dn.DistinguishedName('dc=example,dc=com')
+	dn2=dn.DistinguishedName('dc=bar,dc=example,dc=com')
+        self.failUnless(dn1 > dn2)
