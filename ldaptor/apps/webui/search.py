@@ -135,6 +135,16 @@ class SearchForm(configurable.Configurable):
 	    query=pureldap.LDAPFilterMatchAll
 
         self.data.update(kw)
+
+        # annotate.Choice in nevow 0.3 maps choices to a list, and
+        # passes indexes to this list to client. annotate.Choice in
+        # 0.4pre converts choice to string and back with callbacks,
+        # defaulting to str, and leaving the value as string.  We
+        # can't use the 0.4pre mechanism as long as we need 0.3
+        # compatibility, so work around that by explicitly making sure
+        # scope is an integer.
+        scope = int(scope)
+
         self.data['scope'] = scope
         self.data['searchfilter'] = searchfilter
         self.filter = query
