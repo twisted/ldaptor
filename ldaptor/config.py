@@ -12,6 +12,8 @@ class MissingBaseDNError(Exception):
 
 class LDAPConfig(object):
     __implements__ = interfaces.ILDAPConfig
+    baseDN = None
+    identityBaseDN = None
 
     def __init__(self,
                  baseDN=None,
@@ -19,7 +21,7 @@ class LDAPConfig(object):
                  identityBaseDN=None):
         if baseDN is not None:
             baseDN = distinguishedname.DistinguishedName(baseDN)
-        self.baseDN = baseDN
+            self.baseDN = baseDN
         self.serviceLocationOverrides = {}
         if serviceLocationOverrides is not None:
             for k,v in serviceLocationOverrides.items():
@@ -27,7 +29,7 @@ class LDAPConfig(object):
                 self.serviceLocationOverrides[dn]=v
         if identityBaseDN is not None:
             identityBaseDN = distinguishedname.DistinguishedName(identityBaseDN)
-        self.identityBaseDN = identityBaseDN
+            self.identityBaseDN = identityBaseDN
 
     def getBaseDN(self):
         if self.baseDN is not None:
