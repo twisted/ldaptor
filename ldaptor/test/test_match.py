@@ -5,6 +5,7 @@ Test cases for ldaptor.protocols.ldap.ldapserver module.
 from twisted.trial import unittest
 from ldaptor import inmemory
 from ldaptor.protocols import pureldap, pureber
+from ldaptor.protocols.ldap import ldapsyntax
 
 class TestEntryMatch(unittest.TestCase):
     def TODOtest_matchAll(self):
@@ -339,6 +340,19 @@ class TestEntryMatch(unittest.TestCase):
         result = o.match(pureldap.LDAPFilter_lessOrEqual('num',
                                                          3))
         self.assertEquals(result, False)
+
+    def test_notImplemented(self):
+	o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+	    'objectClass': ['a', 'b'],
+	    'aValue': ['b'],
+	    'num': [4],
+	    })
+        class UnknownMatch(object): pass
+        unknownMatch = UnknownMatch()
+        self.assertRaises(ldapsyntax.MatchNotImplemented,
+                          o.match, unknownMatch)
+
 
 # TODO LDAPFilter_approxMatch
 # TODO LDAPFilter_extensibleMatch

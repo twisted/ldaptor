@@ -3,7 +3,7 @@ from twisted.internet import defer, error
 from twisted.python.failure import Failure
 from ldaptor import interfaces, entry, delta
 from ldaptor.protocols import pureldap
-from ldaptor.protocols.ldap import distinguishedname, ldaperrors, ldifprotocol
+from ldaptor.protocols.ldap import distinguishedname, ldaperrors, ldifprotocol, ldapsyntax
 
 class LDAPCannotRemoveRootError(ldaperrors.LDAPNamingViolation):
     """Cannot remove root of LDAP tree"""
@@ -193,7 +193,7 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry):
         elif isinstance(filter, pureldap.LDAPFilter_not):
             return not self.match(filter.value)
         else:
-            raise MatchNotImplemented, filter
+            raise ldapsyntax.MatchNotImplemented, filter
 
     def addChild(self, rdn, attributes):
         """TODO ugly API. Returns the created entry."""
