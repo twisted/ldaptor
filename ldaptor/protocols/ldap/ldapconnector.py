@@ -1,7 +1,12 @@
-from twisted.internet import utils, protocol, defer
+from twisted.internet import protocol, defer
 from ldaptor.protocols.ldap import distinguishedname
 
-class LDAPConnector(utils.SRVConnector):
+try:
+    from twisted.internet.utils import SRVConnector
+except ImportError:
+    from twisted.names.srvconnect import SRVConnector
+
+class LDAPConnector(SRVConnector):
     def __init__(self, reactor, dn, factory,
 		 overrides=None):
         if not isinstance(dn, distinguishedname.DistinguishedName):
@@ -11,8 +16,8 @@ class LDAPConnector(utils.SRVConnector):
         self.override = self._findOverRide(dn, overrides)
 
 	domain = dn.getDomainName()
-	utils.SRVConnector.__init__(self, reactor,
-				    'ldap', domain, factory)
+	SRVConnector.__init__(self, reactor,
+                              'ldap', domain, factory)
 
     def __getstate__(self):
         r={}
@@ -54,7 +59,7 @@ class LDAPConnector(utils.SRVConnector):
             self.factory.startedConnecting(self)
             self._reallyConnect()
 	else:
-	    utils.SRVConnector.connect(self)
+	    SRVConnector.connect(self)
 
     def pickServer(self):
         if self.override is None:
@@ -68,7 +73,7 @@ class LDAPConnector(utils.SRVConnector):
 	    host = overriddenHost
 	    port = overriddenPort
 	else:
-	    host, port = utils.SRVConnector.pickServer(self)
+	    host, port = SRVConnector.pickServer(self)
 	    if overriddenHost is not None:
 		host = overriddenHost
 	    if overriddenPort is not None:
