@@ -178,7 +178,7 @@ class AddForm(configurable.Configurable):
 
             for ocName in objectClass.sup or []:
                 objclass = mapNameToObjectClass(self.objectClasses, ocName)
-                assert objclass, "objectClass %s must have schema"%objclassName
+                assert objclass, "Objectclass %s must have schema" %objclassName
                 objectClasses.append(objclass)
 
 	    for attr_alias in objectClass.must:
