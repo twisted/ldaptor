@@ -7,7 +7,7 @@ def sshaDigest(passphrase, salt=None):
     if salt is None:
         salt = ''
         for i in range(8):
-            salt += ord(random.randint(0, 255))
+            salt += chr(random.randint(0, 255))
 
     s = sha.sha()
     s.update(passphrase)

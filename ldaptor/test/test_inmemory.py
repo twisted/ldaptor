@@ -241,6 +241,12 @@ class TestInMemoryDatabase(unittest.TestCase):
         self.assertEquals(self.foo['userPassword'],
                           ['{SSHA}0n/Iw1NhUOKyaI9gm9v5YsO3ZInySg=='])
 
+    def test_setPassword_noSalt(self):
+        self.foo.setPassword('s3krit')
+        self.failUnless('userPassword' in self.foo)
+        self.assertEquals(self.foo.bind('s3krit'), True)
+        self.assertEquals(self.foo.bind('s4krit'), False)
+
 class FromLDIF(unittest.TestCase):
     def test_single(self):
         ldif = StringIO('''\
