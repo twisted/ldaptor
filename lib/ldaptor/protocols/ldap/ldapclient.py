@@ -21,7 +21,10 @@ from ldaptor.protocols.ldap import ldaperrors
 
 from twisted.python import mutablestring, log
 from twisted.python.failure import Failure
-from twisted.internet import protocol
+from twisted.internet import protocol, defer
+
+class LDAPClientConnectionLostException(ldaperrors.LDAPException):
+    pass
 
 class LDAPClient(protocol.Protocol):
     """An LDAP client"""
@@ -58,7 +61,7 @@ class LDAPClient(protocol.Protocol):
         if not self.connected:
             raise "Not connected (TODO)" #TODO make this a real object
         msg=pureldap.LDAPMessage(op)
-        log.msg('-> %s' % repr(msg))
+        #log.msg('-> %s' % repr(msg))
         assert not self.onwire.has_key(msg.id)
         assert op.needs_answer or not handler
         if op.needs_answer:
@@ -70,7 +73,7 @@ class LDAPClient(protocol.Protocol):
 
     def handle(self, msg):
         assert isinstance(msg.value, pureldap.LDAPProtocolResponse)
-        log.msg('<- %s' % repr(msg))
+        #log.msg('<- %s' % repr(msg))
 
         if msg.id==0:
             self.unsolicitedNotification(msg.value)
@@ -84,30 +87,24 @@ class LDAPClient(protocol.Protocol):
 
     ##Bind
     def bind(self, dn='', auth=''):
+        d=defer.Deferred()
         if not self.connected:
-            raise "Not connected (TODO)" #TODO make this a real object
-        r=pureldap.LDAPBindRequest(dn=dn, auth=auth)
-        self.queue(r, self.handle_bind_msg)
+            d.errback(Failure(
+                ldaperrors.LDAPClientConnectionLostException()))
+        else:
+            r=pureldap.LDAPBindRequest(dn=dn, auth=auth)
+            self.queue(r, d.callback)
+            d.addCallback(self._handle_bind_msg)
+        return d
 
-    def handle_bind_msg(self, resp):
+    def _handle_bind_msg(self, resp):
         assert isinstance(resp, pureldap.LDAPBindResponse)
         assert resp.referral==None #TODO
         if resp.resultCode==0:
-            self.handle_bind_success(resp.matchedDN,
-                                     resp.serverSaslCreds)
+            return (resp.matchedDN, resp.serverSaslCreds)
         else:
-            self.handle_bind_fail(resp.resultCode,
-                                  resp.errorMessage)
-        return 1
-
-    def handle_bind_success(self, matchedDN, serverSaslCreds):
-        pass
-
-    def handle_bind_fail(self, resultCode, errorMessage):
-        # maybe retry with other methods?
-        # SASL has something relevent here
-        #self.transport.loseConnection()
-        raise 'TODO'
+            raise Failure(
+                ldaperrors.get(resp.resultCode, resp.errorMessage))
 
     ##Unbind
     def unbind(self):
@@ -155,7 +152,6 @@ class LDAPSearch(LDAPOperation):
             assert msg.referral==None #TODO
             if msg.resultCode==0: #TODO ldap.errors.success
                 assert msg.matchedDN==''
-                print self.__class__
                 self.deferred.callback(self)
             else:
                 self.deferred.errback(Failure(

@@ -11,7 +11,7 @@ from twisted.cred.authorizer import Authorizer
 from twisted.internet.defer import Deferred
 from twisted.internet import defer, reactor
 from twisted.python.failure import Failure
-from ldaptor.protocols.ldap import ldapclient
+from ldaptor.protocols.ldap import ldapclient, ldapfilter
 from ldaptor.protocols import pureldap
 from twisted.web import server, guard
 from ldaptor import usage
@@ -19,16 +19,9 @@ from ldaptor import usage
 class LDAPAuth(ldapclient.LDAPClient):
     def connectionMade(self):
         ldapclient.LDAPClient.connectionMade(self)
-        self.bind(self.factory.dn, self.factory.auth)
+        d=self.bind(self.factory.dn, self.factory.auth)
         del self.factory.auth
-
-    def handle_bind_success(self, matchedDN, serverSaslCreds):
-        ldapclient.LDAPClient.handle_bind_success(self, matchedDN, serverSaslCreds)
-        self.factory.defe.callback("ok")
-
-    def handle_bind_fail(self, resultCode, errorMessage):
-        ldapclient.LDAPClient.handle_bind_fail(self, resultCode, errorMessage)
-        self.factory.defe.errback(errorMessage)
+        d.chainDeferred(self.factory.defe)
 
 class LDAPAuthFactory(protocol.ClientFactory):
     protocol = LDAPAuth
@@ -54,9 +47,10 @@ class LDAPAuthFactory(protocol.ClientFactory):
         return p
 
 class LDAPIdentity(Identity):
-    def __init__(self, name, application,
-                 ldapClientFactoryFactory, ldaphost="localhost", ldapport=389):
+    def __init__(self, name, dn, application,
+                 ldapClientFactoryFactory, ldaphost, ldapport=389):
         Identity.__init__(self, name, application)
+        self.dn=dn
         self.ldapClientFactoryFactory=ldapClientFactoryFactory
         self.ldapClientFactory=None
         self.ldaphost=ldaphost
@@ -84,7 +78,7 @@ class LDAPIdentity(Identity):
         assert not self.getLDAPClient()
         pwrq = Deferred()
         self.ldapClientFactory = self.ldapClientFactoryFactory(
-            pwrq, self.name, plaintext, self.connectionLost)
+            pwrq, self.dn, plaintext, self.connectionLost)
         reactor.connectTCP(self.ldaphost, self.ldapport,
                           self.ldapClientFactory)
         return pwrq
@@ -121,29 +115,45 @@ class LDAPPerspective(Perspective):
             session.expire()
 
 class LDAPFetchIdentity(ldapclient.LDAPSearch):
-    def __init__(self, deferred, client, application, dn,
-                 ldaphost='localhost',
-                 ldapport=389):
+    def __init__(self, deferred, client, dn):
         ldapclient.LDAPSearch.__init__(self, deferred, client,
                                        baseObject=dn,
                                        scope=pureldap.LDAP_SCOPE_baseObject,
                                        typesOnly=1)
-        self.application = application
         self.dn = dn
         self.found = None
-        self.ldaphost = ldaphost
-        self.ldapport = ldapport
 
         deferred.addCallbacks(callback=self.process,
                               errback=lambda x: x)
 
     def process(self, dummy):
         if self.found:
-            ident = LDAPIdentity(self.dn, self.application, LDAPAuthFactory,
-                                 self.ldaphost, self.ldapport)
-            #TODO I don't want to enumerate them here!
-            ident.addKeyByString("edit", self.found)
-            return ident
+            return self.found
+        else:
+            raise LDAPUnknownError(ldaperrors.other, "unauthorized")
+
+    def handle_entry(self, objectName, attributes):
+        if not self.found:
+            self.found = str(objectName)
+        else:
+            raise "GOT DUPLICATES (TODO)"
+
+class LDAPSearchIdentity(ldapclient.LDAPSearch):
+    def __init__(self, deferred, client,
+                 baseObject, filter):
+        ldapclient.LDAPSearch.__init__(self, deferred, client,
+                                       baseObject=baseObject,
+                                       filter=filter,
+                                       typesOnly=1,
+                                       sizeLimit=1)
+        self.found = None
+
+        deferred.addCallbacks(callback=self.process,
+                              errback=lambda x: x)
+
+    def process(self, dummy):
+        if self.found:
+            return self.found
         else:
             raise LDAPUnknownError(ldaperrors.other, "unauthorized")
 
@@ -160,38 +170,86 @@ class FetchIdentities(ldapclient.LDAPClient):
             self.factory.unregister(self)
         
     def connectionMade(self):
-        self.bind()
+        d=self.bind()
+        d.addCallback(self._handle_bind_success)
 
-    def handle_bind_success(self, matchedDN, serverSaslCreds):
+    def _handle_bind_success(self, x):
+        matchedDN, serverSaslCreds = x
         if self.factory.register:
             self.factory.register(self)
 
-    def fetch(self, name, deferred):
+    def fetch(self, name):
+        deferred=defer.Deferred()
         LDAPFetchIdentity(deferred=deferred,
                           client=self,
-                          application=self.factory.application,
-                          dn=name,
-                          ldaphost=self.factory.ldaphost,
-                          ldapport=self.factory.ldapport)
+                          dn=name)
+        deferred.addCallbacks(callback=self._gotIdentityDN,
+                              callbackArgs=(name,),
+                              errback=self.search,
+                              errbackArgs=(name,))
+        return deferred
+
+    def search(self, fail, name):
+        filter=None
+        try:
+            filter=ldapfilter.parseFilter(name)
+        except ldapfilter.InvalidLDAPFilter:
+            try:
+                filter=ldapfilter.parseFilter('('+name+')')
+            except ldapfilter.InvalidLDAPFilter:
+                if self.factory.ldapFilterTemplate is not None:
+                    try:
+                        filter=ldapfilter.parseFilter(
+                            self.factory.ldapFilterTemplate
+                            % {'name':name})
+                    except ldapfilter.InvalidLDAPFilter:
+                        pass
+
+        deferred=defer.Deferred()
+        if filter is None:
+            deferred.errback(Failure('No such Identity'))
+        else:
+            LDAPSearchIdentity(deferred=deferred,
+                               client=self,
+                               baseObject=self.factory.ldapbase,
+                               filter=filter)
+            deferred.addCallbacks(callback=self._gotIdentityDN,
+                                  callbackArgs=(name,),
+                                  errback=self.search)
+        return deferred
+
+    def _gotIdentityDN(self, dn, name):
+        ident = LDAPIdentity(name, dn, self.factory.application,
+                             LDAPAuthFactory,
+                             self.factory.ldaphost, self.factory.ldapport)
+        #TODO I don't want to enumerate them here!
+        ident.addKeyByString("edit", name)
+        return ident
 
 class FetchIdentitiesFactory(protocol.ClientFactory):
     protocol = FetchIdentities
     def __init__(self,
+                 ldaphost=None,
+                 ldapport=389,
+                 ldapbase='',
+                 ldapFilterTemplate=None,
                  register=None, unregister=None,
-                 application=None,
-                 ldaphost='localhost',
-                 ldapport=389):
+                 application=None):
         self.register = register
         self.unregister = unregister
         assert application
         self.application = application
         self.ldaphost = ldaphost
         self.ldapport = ldapport
+        self.ldapbase = ldapbase
+        self.ldapFilterTemplate = ldapFilterTemplate
 
 class LDAPAuthorizer(Authorizer):
-    def __init__(self, ldaphost, ldapport):
+    def __init__(self, ldaphost, ldapport, ldapbase, ldapFilterTemplate=None):
         self.ldaphost = ldaphost
         self.ldapport = ldapport
+        self.ldapbase = ldapbase
+        self.ldapFilterTemplate = ldapFilterTemplate
         self.fetcher = None
         self.pendingIdentityRequests = {}
 
@@ -208,11 +266,13 @@ class LDAPAuthorizer(Authorizer):
     def setApplication(self, application):
         Authorizer.setApplication(self, application)
         factory = FetchIdentitiesFactory(
+            ldaphost=self.ldaphost,
+            ldapport=self.ldapport,
+            ldapbase=self.ldapbase,
+            ldapFilterTemplate=self.ldapFilterTemplate,
             register=self.registerFetcher,
             unregister=self.unregisterFetcher,
             application=application,
-            ldaphost=self.ldaphost,
-            ldapport=self.ldapport,
             )
         application.connectTCP(self.ldaphost, self.ldapport, factory)
 
@@ -225,11 +285,11 @@ class LDAPAuthorizer(Authorizer):
         you must arm it yourself.
         """
 
-        req = Deferred()
         if not self.fetcher:
+            req = Deferred()
             req.errback("unable to serve")
         else:
-            self.fetcher.fetch(name, req)
+            req = self.fetcher.fetch(name)
         return req
 
 class LDAPService(Service):
@@ -262,6 +322,9 @@ class MyOptions(usage.Options, usage.Options_hostport, usage.Options_base):
     optParameters = (
         ('http-port', None, '8080',
          "listen on this port"),
+        ('identity-search', None,
+         '(|(cn=%(name)s)(uid=%(name)s))',
+         "unknown identities are searched with this filter"),
         )
 
     def postOptions_httpport(self):
@@ -282,7 +345,10 @@ if __name__ == '__main__':
     application = app.Application(
         'ldaptor-webui',
         authorizer=LDAPAuthorizer(ldaphost=config.opts['ldap-host'],
-                                  ldapport=config.opts['ldap-port']))
+                                  ldapport=config.opts['ldap-port'],
+                                  ldapbase=config.opts['base'],
+                                  ldapFilterTemplate=config.opts['identity-search'],
+                                  ))
     svc = LDAPService("edit", application)
     svc.perspectiveClass = LDAPPerspective
     gdgt = gadget.LdaptorWebUIGadget(svc,

@@ -301,8 +301,10 @@ class EditPage(template.BasicPage):
         l.append('<a href="%s">add new entry</a>'%request.sibLink("add"))
 
         if request.postpath and request.postpath!=['']:
-            l.append('<a href="%s">delete this entry</a>' \
+            l.append('<a href="%s">delete</a>' \
                      % request.sibLink("delete/" + '/'.join(request.postpath)))
+            l.append('<a href="%s">change password</a>' \
+                     % request.sibLink("change_password/" + '/'.join(request.postpath)))
         
         return '[' + '|'.join(l) + ']'
 

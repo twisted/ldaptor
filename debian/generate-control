@@ -64,7 +64,7 @@ Description: %(setup --description)s
 pypackage = """
 Package: %(var package)s
 Architecture: all
-Depends: python%(var python_version)s, python%(var python_version)s-twisted
+Depends: python%(var python_version)s, python%(var python_version)s-twisted, pwgen
 Description: %(setup --description)s
 """
 printed_source=0

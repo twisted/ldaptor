@@ -31,13 +31,16 @@ class DoSearch(ldapclient.LDAPClient):
         ldapclient.LDAPClient.__init__(self)
 
     def connectionMade(self):
-        self.bind()
+        d=self.bind()
+        d.addCallbacks(self._handle_bind_success,
+                       self._handle_bind_fail)
 
-    def handle_bind_fail(self, resultCode, errorMessage):
+    def _handle_bind_fail(self, fail):
         self.unbind()
-        self.factory.errback(Failure(Exception("establishing connection to LDAP server failed in bind.")))
+        self.factory.errback(fail)
 
-    def handle_bind_success(self, matchedDN, serverSaslCreds):
+    def _handle_bind_success(self, x):
+        matchedDN, serverSaslCreds = x
         LDAPSearchEntry(self.factory.deferred,
                         self,
                         baseObject=self.factory.baseObject,

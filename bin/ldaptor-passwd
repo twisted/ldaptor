@@ -50,6 +50,8 @@ class PasswdClient(ldapclient.LDAPClient):
             print dn, password
 
     def _got_password(self, password, dn):
+        assert len(password)==1
+        password=password[0]
         d=defer.Deferred()
         ldapclient.LDAPModifyPassword(d, self,
                                       userIdentity=dn,
@@ -62,6 +64,7 @@ class PasswdClient(ldapclient.LDAPClient):
     def _report_pwgen_error(self, fail):
         fail.trap(PwgenException)
         sys.stderr.write('pwgen: %s\n' % fail.getErrorMessage())
+        return fail
 
     def handle_bind_fail(self, resultCode, errorMessage):
         self._report_ldap_error((resultCode, errorMessage))

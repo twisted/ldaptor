@@ -42,9 +42,11 @@ class SearchALot(ldapclient.LDAPClient):
         ldapclient.LDAPClient.__init__(self)
     
     def connectionMade(self):
-        self.bind()
+        d=self.bind()
+        d.addCallback(self._handle_bind_success)
 
-    def handle_bind_success(self, matchedDN, serverSaslCreds):
+    def _handle_bind_success(self, x):
+        matchedDN, serverSaslCreds = x
         l=[]
         for prefix in [self.factory.prefix+x
                        for x

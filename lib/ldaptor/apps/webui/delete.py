@@ -113,7 +113,7 @@ class NeedDNError(widgets.Widget):
         return ['No DN specified. You need to use the <a href="%s">search page</a>.'%request.sibLink("search")]
 
 class DeletePage(template.BasicPage):
-    title = "Ldaptor Del Page"
+    title = "Ldaptor Delete Page"
     isLeaf = 1
 
     def _header(self, request):
@@ -122,8 +122,10 @@ class DeletePage(template.BasicPage):
         l.append('<a href="%s">add new entry</a>'%request.sibLink("add"))
         
         if request.postpath and request.postpath!=['']:
-            l.append('<a href="%s">edit this entry</a>' \
+            l.append('<a href="%s">edit</a>' \
                      % request.sibLink("edit/" + '/'.join(request.postpath)))
+            l.append('<a href="%s">change password</a>' \
+                     % request.sibLink("change_password/" + '/'.join(request.postpath)))
             
         return '[' + '|'.join(l) + ']'
 

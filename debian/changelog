@@ -1,3 +1,26 @@
+ldaptor (0.0.5) unstable; urgency=low
+
+  * ldaptor-passwd generated password setting failed as it tried
+    to handle a list of one string as a string.
+  * Depend on pwgen.
+  * Add change_password.
+  * Rename mass_password_change to mass_change_password, to fit
+    the task-oriented naming convention.
+  * Don't accept empty passwords in ldaptor-webui change_password.
+  * Get rid of the rest of the implicit localhosts.
+  * Moving bidirdict into ldaptor package as distutils can't
+    handle it otherwise.
+  * Added asText method for LDAPFilter_substrings, webui search
+    should no longer fail.
+  * LDAPClient.bind() now returns a Deferred.
+    LDAPClient.handle_bind_success() and
+    LDAPClient.handle_bind_fail() are gone.
+  * LDAPClient.bind() deferred bugfixes.
+  * Added ability to use shorthands for Identity names.
+  * Lots of minor bugfixes.
+
+ -- Tommi Virtanen <tv@debian.org>  Thu,  8 Aug 2002 10:16:19 +0300
+
 ldaptor (0.0.4) unstable; urgency=low
 
   * Remove the obsolete ldaptor.twisted package.

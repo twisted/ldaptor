@@ -116,6 +116,16 @@ class LDAPBindRequest(LDAPProtocolRequest, BERSequence):
             BEROctetString(self.auth, tag=CLASS_CONTEXT|0),
             ], tag=self.tag))
 
+    def __repr__(self):
+        l=[]
+        l.append('version=%d' % self.version)
+        l.append('dn=%s' % self.dn)
+        l.append('auth=%s' % self.auth)
+        if self.tag!=self.__class__.tag:
+            l.append('tag=%d' % self.tag)
+        return self.__class__.__name__+'('+', '.join(l)+')'
+
+
 
 class LDAPReferral(BERSequence):
     tag = CLASS_CONTEXT | 0x03
@@ -176,9 +186,9 @@ class LDAPResult(LDAPProtocolResponse, BERSequence):
         l=[]
         l.append('resultCode=%d' % self.resultCode)
         if self.matchedDN:
-            l.append('matchedDN=%d' % repr(str(self.matchedDN)))
+            l.append('matchedDN=%s' % repr(str(self.matchedDN)))
         if self.errorMessage:
-            l.append('errorMessage=%d' % repr(str(self.errorMessage)))
+            l.append('errorMessage=%s' % repr(str(self.errorMessage)))
         if self.referral:
             l.append('referral=%d' % repr(self.referral))
         if self.tag!=self.__class__.tag:
@@ -351,15 +361,22 @@ class LDAPFilter_equalityMatch(LDAPAttributeValueAssertion):
 
 class LDAPFilter_substrings_initial(LDAPString):
     tag = CLASS_CONTEXT|0x00
-    pass
+
+    def asText(self):
+        return self.value
+
 
 class LDAPFilter_substrings_any(LDAPString):
     tag = CLASS_CONTEXT|0x01
-    pass
+
+    def asText(self):
+        return self.value
 
 class LDAPFilter_substrings_final(LDAPString):
     tag = CLASS_CONTEXT|0x02
-    pass
+
+    def asText(self):
+        return self.value
 
 class LDAPBERDecoderContext_Filter_substrings(BERDecoderContext):
     Identities = {
@@ -405,6 +422,35 @@ class LDAPFilter_substrings(BERSequence):
                    +"(type=%s, substrings=%s, tag=%d)"\
                    %(repr(self.type), repr(self.substrings), self.tag)
 
+    def asText(self):
+        initial=None
+        final=None
+        any=[]
+
+        for s in self.substrings:
+            assert s is not None
+            if isinstance(s, LDAPFilter_substrings_initial):
+                assert initial is None
+                assert not any
+                assert final is None
+                initial=s.asText()
+            elif isinstance(s, LDAPFilter_substrings_final):
+                assert final is None
+                final=s.asText()
+            elif isinstance(s, LDAPFilter_substrings_any):
+                assert final is None
+                any.append(s.asText())
+            else:
+                raise 'TODO'
+
+        if initial is None:
+            initial=''
+        if final is None:
+            final=''
+
+        
+        return '('+self.type+'=' \
+               +'*'.join([initial]+any+[final])+')'
 
 class LDAPFilter_greaterOrEqual(LDAPAttributeValueAssertion):
     tag = CLASS_CONTEXT|0x05

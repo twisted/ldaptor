@@ -22,9 +22,11 @@ class SearchWithFilter(ldapclient.LDAPSearch):
 
 class Search(ldapclient.LDAPClient):
     def connectionMade(self):
-        self.bind()
+        d=self.bind()
+        d.addCallback(self._handle_bind_success)
 
-    def handle_bind_success(self, matchedDN, serverSaslCreds):
+    def _handle_bind_success(self, x):
+        matchedDN, serverSaslCreds = x
         SearchWithFilter(self.factory.deferred, self,
                          self.factory.base, self.factory.filt,
                          self.factory.attributes)

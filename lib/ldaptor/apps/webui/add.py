@@ -231,8 +231,12 @@ class AddPage(template.BasicPage):
             dnattr=request.args['dn'][0]
             if request.args.get('add_'+dnattr):
                 dn=dnattr+'='+request.args.get('add_'+dnattr)[0]+','+self.baseObject
-                l.append('<a href="%s">edit this entry</a>' \
+                l.append('<a href="%s">edit</a>' \
                          % request.sibLink('edit/%s' % urllib.quote(dn)))
+                l.append('<a href="%s">delete</a>' \
+                         % request.sibLink('delete/%s' % urllib.quote(dn)))
+                l.append('<a href="%s">change password</a>' \
+                         % request.sibLink('change_password/%s' % urllib.quote(dn)))
             
         return '[' + '|'.join(l) + ']'
 

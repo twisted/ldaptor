@@ -5,7 +5,7 @@ Test cases for bidirdict module
 """
 
 import unittest
-from bidirdict import BidirDict
+from ldaptor.bidirdict import BidirDict
 
 class SimpleOps(unittest.TestCase):
     def testCreate(self):

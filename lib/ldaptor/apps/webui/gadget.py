@@ -1,5 +1,5 @@
-from twisted.web import widgets, guard
-import search, edit, add, delete, mass_password_change
+from twisted.web import widgets, guard, static
+import search, edit, add, delete, mass_change_password, change_password
 import template
 
 
@@ -7,24 +7,6 @@ import template
 # use it from there.
 from twisted.web import resource
 from twisted.protocols import http
-class Redirect(resource.Resource):
-    def __init__(self, url):
-        self.url = url
-
-    def render(self, request):
-        request.setHeader("location", self.url)
-        request.setResponseCode(http.TEMPORARY_REDIRECT)
-        return """
-<html>
-    <head>
-        <meta http-equiv=\"refresh\" content=\"0;URL=%(url)s\">
-    </head>
-    <body bgcolor=\"#FFFFFF\" text=\"#000000\">
-    <!- The user\'s browser must be incredibly feeble if they have to click...-->
-        Click <a href=\"%(url)s\">here</a>.
-    </body>
-</html>
-""" % {'url': self.url}
 
 class IndexPage(template.BasicPage):
     title = "Ldaptor Web Interface"
@@ -34,7 +16,7 @@ class IndexPage(template.BasicPage):
         template.BasicPage.__init__(self)
 
     def getContent(self, request):
-        return [Redirect(request.childLink('search')).render(request)]
+        return [static.redirectTo(request.childLink('search'), request)]
 
 class LdaptorWebUIGadget(widgets.Gadget):
     def __init__(self, editService,
@@ -44,30 +26,45 @@ class LdaptorWebUIGadget(widgets.Gadget):
         widgets.Gadget.__init__(self)
 
         siblings = {
-            'search': search.SearchPage(baseObject=baseObject,
-                                        ldaphost=ldaphost,
-                                        ldapport=ldapport),
-            'edit': guard.ResourceGuard(edit.EditPage(),
-                                        editService,
-                                        sessionPerspective="LdaptorPerspective",
-                                        sessionIdentity="LdaptorIdentity"),
-            'add': guard.ResourceGuard(add.AddPage(baseObject=baseObject),
-                                       editService,
-                                       sessionPerspective="LdaptorPerspective",
-                                       sessionIdentity="LdaptorIdentity"),
-            'delete': guard.ResourceGuard(delete.DeletePage(),
-                                          editService,
-                                          sessionPerspective="LdaptorPerspective",
-                                          sessionIdentity="LdaptorIdentity"),
-            'mass_password_change':
+            'search':
+            search.SearchPage(baseObject=baseObject,
+                              ldaphost=ldaphost,
+                              ldapport=ldapport),
+
+            'edit':
+            guard.ResourceGuard(edit.EditPage(),
+                                editService,
+                                sessionPerspective="LdaptorPerspective",
+                                sessionIdentity="LdaptorIdentity"),
+            
+            'add':
+            guard.ResourceGuard(add.AddPage(baseObject=baseObject),
+                                editService,
+                                sessionPerspective="LdaptorPerspective",
+                                sessionIdentity="LdaptorIdentity"),
+
+            'delete':
+            guard.ResourceGuard(delete.DeletePage(),
+                                editService,
+                                sessionPerspective="LdaptorPerspective",
+                                sessionIdentity="LdaptorIdentity"),
+
+            'mass_change_password':
             guard.ResourceGuard(
-            mass_password_change.MassPasswordChangePage(
+            mass_change_password.MassPasswordChangePage(
             baseObject=baseObject,
             ldaphost=ldaphost,
             ldapport=ldapport),
             editService,
             sessionPerspective="LdaptorPerspective",
             sessionIdentity="LdaptorIdentity"),
+
+            'change_password':
+            guard.ResourceGuard(change_password.PasswordChangePage(),
+                                editService,
+                                sessionPerspective="LdaptorPerspective",
+                                sessionIdentity="LdaptorIdentity"),
+
             }
 
         self.putWidget('', IndexPage())

@@ -41,9 +41,12 @@ class LDAPSearchEntry(ldapclient.LDAPSearch):
         return fail
 
     def handle_entry(self, objectName, attributes):
+        l=[]
+        l.append('<a href="edit/%s">edit</a>\n'%urllib.quote(objectName))
+        l.append('<a href="delete/%s">delete</a>\n'%urllib.quote(objectName))
+        l.append('<a href="change_password/%s">change password</a>\n'%urllib.quote(objectName))
         result = ('<p>%s\n'%objectName
-                  + ' [<a href="edit/%s">edit</a>\n'%urllib.quote(objectName)
-                  + ' |<a href="delete/%s">delete</a>]\n'%urllib.quote(objectName)
+                  + '[' + '|'.join(l) + ']'
                   + htmlify_attributes(attributes)
                   )
 
@@ -58,13 +61,16 @@ class DoSearch(ldapclient.LDAPClient):
         ldapclient.LDAPClient.__init__(self)
 
     def connectionMade(self):
-        self.bind()
+        d=self.bind()
+        d.addCallbacks(self._handle_bind_success,
+                       self._handle_bind_fail)
 
-    def handle_bind_fail(self, resultCode, errorMessage):
+    def _handle_bind_fail(self, fail):
         self.unbind()
-        self.factory.errback(Failure(Exception("establishing connection to LDAP server failed in bind.")))
+        self.factory.errback(fail)
 
-    def handle_bind_success(self, matchedDN, serverSaslCreds):
+    def _handle_bind_success(self, x):
+        matchedDN, serverSaslCreds = x
         LDAPSearchEntry(self.factory.deferred,
                         self.factory.contentDeferred,
                         self,

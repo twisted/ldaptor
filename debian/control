@@ -7,7 +7,7 @@ Build-Depends-Indep: python2.1-dev, python2.2-dev
 
 Package: python-ldaptor
 Architecture: all
-Depends: python, python-twisted
+Depends: python, python-twisted, pwgen
 Description: Pure-Python library for LDAP
  TODO
  .
@@ -16,7 +16,7 @@ Description: Pure-Python library for LDAP
 
 Package: python2.1-ldaptor
 Architecture: all
-Depends: python2.1, python2.1-twisted
+Depends: python2.1, python2.1-twisted, pwgen
 Description: Pure-Python library for LDAP
  TODO
  .
@@ -24,7 +24,7 @@ Description: Pure-Python library for LDAP
 
 Package: python2.2-ldaptor
 Architecture: all
-Depends: python2.2, python2.2-twisted
+Depends: python2.2, python2.2-twisted, pwgen
 Description: Pure-Python library for LDAP
  TODO
  .
