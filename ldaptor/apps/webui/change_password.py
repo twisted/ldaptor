@@ -108,6 +108,8 @@ class ConfirmChange(rend.Page):
 	return l
 
 class GetDN(rend.Page):
+    addSlash = True
+
     def renderHTTP(self, context):
         entry = inevow.ISession(context).getLoggedInRoot().loggedIn
         request = inevow.IRequest(context)

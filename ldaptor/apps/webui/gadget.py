@@ -84,6 +84,8 @@ class BaseDN(object):
         return 'Redirecting...'
 
 class LdaptorWebUIGadget(rend.Page):
+    addSlash = True
+
     docFactory = loaders.xmlfile(
         'basedn.xhtml',
         templateDir=os.path.split(os.path.abspath(__file__))[0])

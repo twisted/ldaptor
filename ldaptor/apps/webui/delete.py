@@ -133,6 +133,8 @@ class Deleted(rend.Page):
             return 'Internal error, no status to display.'
 
 class GetDN(rend.Page):
+    addSlash = True
+
     docFactory = loaders.xmlfile(
         'delete-nodn.xhtml',
         templateDir=os.path.split(os.path.abspath(__file__))[0])
