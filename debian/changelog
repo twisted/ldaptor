@@ -1,3 +1,119 @@
+ldaptor (0.0.31) unstable; urgency=low
+
+  * Conceptual changes:
+    - Service-specific passwords: added a mechanism that allows having
+      "subpasswords" that are only used with particular services; e.g.
+      let the userPassword attribute be used only for SSH logins, and use
+      additional "mail" and "web" password, stored in an attribute called
+      "servicePassword". The value is two whitespace-separated fields:
+      service name and userPassword-style password digest. See
+      ServiceBindingProxy for more.
+    - LDIFTree allows LDAP server data storage an a one entry per file
+      format, with nice unixy semantics.
+
+  * Applications changes:
+    - WebUI:
+      - Add pretty label to search form submit button.
+      - Service-specific password editing support. Closes: ldaptor#17.
+    - Server:
+      - New LDIFTree storage backend, storing the LDAP as a filesystem
+        directory tree, with one entry per file in LDIF format.
+      - Add LDAP proxy support.
+      - Add ServiceBindingProxy, an LDAP proxy that handles non-anonymous
+        bind requests specially. Closes: ldaptor#15.
+
+  * API changes:
+    - Get rid of MutableString:
+      - Add pureber.berDecodeObject, remove pureber.ber2object.
+      - Add pureber.berDecodeLength, remove pureber.berlen2int.
+      - Switch LDAPClient and LDAPServer buffers to be plain strings.
+      - Remove MutableString.
+    - Change the BER decoding mechanism:
+      - Add classmethod fromBER instead of using __init__ in two
+        roles.
+      - Remove old-style decode support.
+    - Add pureber.berDecodeMultiple, mainly for use by subclasses of
+      BERSequence.
+    - Large lengths appeared to be negative, switched berlen2int to
+      using longs.
+    - Split LDAPServer to BaseLDAPServer, so one has a choice of
+      inheriting something without any handle_* methods.
+    - Make ldapsyntax.LDAPEntryWithClient.move() remove the old RDN.
+    - Make ldapsyntax.LDAPEntryWithClient.move() change the entry's idea
+      of its own DN.
+
+  * Refactorings to adapt to Ldaptor APIs:
+    - Use connectAnonymously in parallelsearch example.
+
+  * Refactorings to adapt to Twisted/Nevow APIs:
+    - Nevow ISerializable is deprecated.
+    - ctx.{allPatterns,patternGenerator} are now called
+      ctx.tag.allPatterns etc.
+    - all IRequest APIs take a context.
+    - switch from getDynamicChild to childFactory.
+    - addSlash where appropriate.
+    - return URLs instead of explicit redirects.
+    - switch from renderHTTP to child_.
+    - switch from locateChild to childFactory.
+    - Twisted >1.3 moves SRVConnector to twisted.names.srvconnect.
+
+  * Bugfixes:
+    - Fix BER length encoding for lengths greater than 127, add unit
+      tests.
+    - Make many __repr__'s work even when __init__ failed.
+    - Make sure every LDAP wire class takes a tag argument.
+    - Make LDAPDelRequest also understand keyword argument value, as
+      that is what LDAPString uses.
+    - Fix and test handling of unknown match types.
+    - Fix and unit test saltless non-client setPassword.
+    - Fix DistinguishedName order comparison.
+    - Make sure configuration does not interfere with the lmPasswords in
+      the unit tests.
+    - Make nevow data access to LDAP entry attributes work.
+    - Add items() to LDAPEntry IContainer adapter's attributes child;
+      webui search needs it.
+    - Webui edit can now edit attributes that are in the RDN. Closes:
+      ldaptor#5.
+    - Improve handling of missing baseDN in configuration.
+
+  * Cleanups:
+    - Remove dead code.
+    - Remove the hack-and-slashed RFC file that served as a TODO note.
+    - Override IOPump to pass around more than one byte at a time, saves
+      >10 seconds in unit tests and protocol decoding of partial messages
+      is unit tested elsewhere anyway.
+    - Improve ldaptor.testutil error messages, accept any true/false value
+      and not just 1 and 0.
+    - Clean up LDAPServer.handleUnknown.
+    - Prettify LDAPMessage.__repr__
+    - Prettify LDAPResult.__repr__
+    - If ldapsyntax.LDAPEntryWithClient.search gets a bad response from
+      the LDAP server, raise a real exception and not an assert.
+    - When converting delta Modifications to LDAP, convert them to basic
+      data types for easier debugging and unit testing.
+    - Be consistent and use "ctx" everywhere in webui change_password.
+    - Add nevow renderer that produces zebra tables.
+    - Make ldapsyntax.LDAPEntryWithClient.move() accept strings etc. as
+      newDN, add unit test.
+    - Make epydoc happy.
+    - Simplify ldap-intro document generation.
+
+  * Packaging:
+    - Depend on Nevow v0.3.0 or later.
+    - Depend on Twisted v1.3.0 or later.
+    - Switch to CDBS.
+    - Add an ldaptor-common package to contain conffiles.
+    - Run unit tests before building debs.
+    - Include the unit tests in the distributed files.
+
+  * Administrivia:
+    - Add TODO notes.
+    - Update ignore file lists to match currently generated files.
+    - Export dia files to format png-libart, not just png. This makes the
+      export reliable. Hint from Debian bug#275959.
+
+ -- Tommi Virtanen <tv@debian.org>  Fri, 10 Dec 2004 17:39:36 +0200
+
 ldaptor (0.0.30) unstable; urgency=low
 
   * Install the webui template and CSS files that were missing
