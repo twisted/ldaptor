@@ -22,14 +22,14 @@ class Dir2LDIF(unittest.TestCase):
         os.mkdir(com)
         example = os.path.join(com, 'dc=example.dir')
         os.mkdir(example)
-        writeFile(os.path.join(example, 'cn=foo.entry'),
+        writeFile(os.path.join(example, 'cn=foo.ldif'),
                   """\
 dn: cn=foo,dc=example,dc=com
 cn: foo
 objectClass: top
 
 """)
-        writeFile(os.path.join(example, 'cn=bad-two-entries.entry'),
+        writeFile(os.path.join(example, 'cn=bad-two-entries.ldif'),
                   """\
 dn: cn=bad-two-entries,dc=example,dc=com
 cn: bad-two-entries
@@ -40,17 +40,17 @@ cn: more
 objectClass: top
 
 """)
-        writeFile(os.path.join(example, 'cn=bad-missing-end.entry'),
+        writeFile(os.path.join(example, 'cn=bad-missing-end.ldif'),
                   """\
 dn: cn=bad-missing-end,dc=example,dc=com
 cn: bad-missing-end
 objectClass: top
 """)
-        writeFile(os.path.join(example, 'cn=bad-empty.entry'), '')
-        writeFile(os.path.join(example, 'cn=bad-only-newline.entry'), '\n')
+        writeFile(os.path.join(example, 'cn=bad-empty.ldif'), '')
+        writeFile(os.path.join(example, 'cn=bad-only-newline.ldif'), '\n')
         sales = os.path.join(example, 'ou=Sales.dir')
         os.mkdir(sales)
-        writeFile(os.path.join(sales, 'cn=sales-thingie.entry'),
+        writeFile(os.path.join(sales, 'cn=sales-thingie.ldif'),
                   """\
 dn: cn=sales-thingie,ou=Sales,dc=example,dc=com
 cn: sales-thingie
@@ -120,14 +120,14 @@ class LDIF2Dir(unittest.TestCase):
         os.mkdir(com)
         example = os.path.join(com, 'dc=example.dir')
         os.mkdir(example)
-        writeFile(os.path.join(example, 'cn=pre-existing.entry'),
+        writeFile(os.path.join(example, 'cn=pre-existing.ldif'),
                   """\
 dn: cn=pre-existing,dc=example,dc=com
 cn: pre-existing
 objectClass: top
 
 """)
-        writeFile(os.path.join(example, 'ou=OrgUnit.entry'),
+        writeFile(os.path.join(example, 'ou=OrgUnit.ldif'),
                   """\
 dn: ou=OrgUnit,dc=example,dc=com
 ou: OrgUnit
@@ -147,7 +147,7 @@ objectClass: organizationalUnit
         except failure.Failure, exc:
             raise exc.value
 
-        path = os.path.join(self.tree, 'dc=com.dir', 'dc=example.dir', 'cn=foo.entry')
+        path = os.path.join(self.tree, 'dc=com.dir', 'dc=example.dir', 'cn=foo.ldif')
         self.failUnless(os.path.isfile(path))
         self.failUnlessEqual(file(path).read(),
                              """\
@@ -170,7 +170,7 @@ cn: foo
             raise exc.value
 
         path = os.path.join(self.tree, 'dc=com.dir', 'dc=example.dir',
-                            'ou=OrgUnit.dir', 'cn=create-me.entry')
+                            'ou=OrgUnit.dir', 'cn=create-me.ldif')
         self.failUnless(os.path.isfile(path))
         self.failUnlessEqual(file(path).read(),
                              """\
@@ -208,7 +208,7 @@ cn: create-me
         except failure.Failure, exc:
             raise exc.value
 
-        path = os.path.join(self.tree, 'dc=org.entry')
+        path = os.path.join(self.tree, 'dc=org.ldif')
         self.failUnless(os.path.isfile(path))
         self.failUnlessEqual(file(path).read(),
                              """\
@@ -231,7 +231,7 @@ class Tree(unittest.TestCase):
         os.mkdir(example)
         meta = os.path.join(example, 'ou=metasyntactic.dir')
         os.mkdir(meta)
-        writeFile(os.path.join(example, 'ou=metasyntactic.entry'),
+        writeFile(os.path.join(example, 'ou=metasyntactic.ldif'),
                   """\
 dn: ou=metasyntactic,dc=example,dc=com
 objectClass: a
@@ -240,7 +240,7 @@ ou: metasyntactic
 
 """)
         foo = os.path.join(meta, 'cn=foo.dir')
-        writeFile(os.path.join(meta, 'cn=foo.entry'),
+        writeFile(os.path.join(meta, 'cn=foo.ldif'),
                   """\
 dn: cn=foo,ou=metasyntactic,dc=example,dc=com
 objectClass: a
@@ -249,7 +249,7 @@ cn: foo
 
 """)
         bar = os.path.join(meta, 'cn=bar.dir')
-        writeFile(os.path.join(meta, 'cn=bar.entry'),
+        writeFile(os.path.join(meta, 'cn=bar.ldif'),
                   """\
 dn: cn=bar,ou=metasyntactic,dc=example,dc=com
 objectClass: a
@@ -258,7 +258,7 @@ cn: bar
 
 """)
         empty = os.path.join(example, 'ou=empty.dir')
-        writeFile(os.path.join(example, 'ou=empty.entry'),
+        writeFile(os.path.join(example, 'ou=empty.ldif'),
                   """\
 dn: ou=empty,dc=example,dc=com
 objectClass: a
@@ -268,7 +268,7 @@ ou: empty
 """)
         oneChild = os.path.join(example, 'ou=oneChild.dir')
         os.mkdir(oneChild)
-        writeFile(os.path.join(example, 'ou=oneChild.entry'),
+        writeFile(os.path.join(example, 'ou=oneChild.ldif'),
                   """\
 dn: ou=oneChild,dc=example,dc=com
 objectClass: a
@@ -277,7 +277,7 @@ ou: oneChild
 
 """)
         theChild = os.path.join(oneChild, 'cn=theChild.dir')
-        writeFile(os.path.join(oneChild, 'cn=theChild.entry'),
+        writeFile(os.path.join(oneChild, 'cn=theChild.ldif'),
                   """\
 dn: cn=theChild,ou=oneChild,dc=example,dc=com
 objectClass: a

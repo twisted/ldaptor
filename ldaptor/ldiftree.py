@@ -45,7 +45,7 @@ def get(path, dn):
 
     entry = os.path.join(path,
                          *['%s.dir'%rdn for rdn in l[:-1]])
-    entry = os.path.join(entry, '%s.entry'%l[-1])
+    entry = os.path.join(entry, '%s.ldif'%l[-1])
     f = file(entry)
     while 1:
         data = f.read(8192)
@@ -73,7 +73,7 @@ def _put(path, entry):
     if l:
         grandParent = os.path.join(path,
                                    *['%s.dir'%rdn for rdn in l[:-1]])
-        parentEntry = os.path.join(grandParent, '%s.entry' % l[-1])
+        parentEntry = os.path.join(grandParent, '%s.ldif' % l[-1])
         parentDir = os.path.join(grandParent, '%s.dir' % l[-1])
         if not os.path.exists(parentDir):
             if not os.path.exists(parentEntry):
@@ -92,7 +92,7 @@ def _put(path, entry):
     f = file(tmp, 'w')
     f.write(str(entry))
     f.close()
-    os.rename(tmp, fileName+'.entry')
+    os.rename(tmp, fileName+'.ldif')
     # TODO atomicity
 
 def put(path, entry):
@@ -111,7 +111,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry):
 
     def _load(self):
         assert self.path.endswith('.dir')
-        entryPath = '%s.entry' % self.path[:-len('.dir')]
+        entryPath = '%s.ldif' % self.path[:-len('.dir')]
 
         d = defer.Deferred()
         parser = StoreParsedLDIF(d)
@@ -166,10 +166,10 @@ class LDIFTreeEntry(entry.EditableLDAPEntry):
                 raise
         else:
             for fn in filenames:
-                if fn.endswith('.entry'):
-                    dirname = '%s.dir' % fn[:-len('.entry')]
+                if fn.endswith('.ldif'):
+                    dirname = '%s.dir' % fn[:-len('.ldif')]
                     dn = distinguishedname.DistinguishedName(
-                        listOfRDNs=((distinguishedname.RelativeDistinguishedName(fn[:-len('.entry')]),)
+                        listOfRDNs=((distinguishedname.RelativeDistinguishedName(fn[:-len('.ldif')]),)
                                     + self.dn.split()))
                     e = self.__class__(os.path.join(self.path, dirname), dn)
                     children.append(e)
@@ -217,7 +217,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry):
         assert ((len(me)==0) or (it[-len(me):] == me))
         rdn = it[-len(me)-1]
         path = os.path.join(self.path, '%s.dir' % rdn)
-        entry = os.path.join(self.path, '%s.entry' % rdn)
+        entry = os.path.join(self.path, '%s.ldif' % rdn)
         if not os.path.isdir(path) and not os.path.isfile(entry):
             return defer.fail(ldaperrors.LDAPNoSuchObject(dn))
         else:
@@ -377,7 +377,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry):
         f = file(tmp, 'w')
         f.write(str(e))
         f.close()
-        os.rename(tmp, fileName+'.entry')
+        os.rename(tmp, fileName+'.ldif')
         # TODO atomicity
 
         dirName = os.path.join(self.path, '%s.dir' % rdn)
@@ -395,7 +395,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry):
         if self._sync_children():
             raise ldaperrors.LDAPNotAllowedOnNonLeaf, self.dn
         assert self.path.endswith('.dir')
-        entryPath = '%s.entry' % self.path[:-len('.dir')]
+        entryPath = '%s.ldif' % self.path[:-len('.dir')]
         os.remove(entryPath)
         return self
 
