@@ -15,7 +15,7 @@
 #shared-network "foo" {
 #}
 
-from ldaptor.protocols.ldap import ldapclient, distinguishedname, ldapconnector
+from ldaptor.protocols.ldap import ldapclient, distinguishedname, ldapconnector, ldapsyntax
 from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage, ldapfilter, config
 from twisted.internet import protocol, reactor, defer
@@ -178,160 +178,119 @@ class SharedNet:
 	print '}'
 	print
 
-class SearchHosts(ldapclient.LDAPSearch):
-    def __init__(self, deferred, client, base, filter):
-	self.entries = []
-	filt=pureldap.LDAPFilter_and(value=(
-	    pureldap.LDAPFilter_present('cn'),
-	    pureldap.LDAPFilter_present('ipHostNumber'),
-	    ))
-	if filter:
-	    filt = pureldap.LDAPFilter_and(value=(filter, filt))
-	ldapclient.LDAPSearch.__init__(self, deferred, client,
-				       baseObject=base,
-				       filter=filt,
-				       attributes=['cn',
-						   'ipHostNumber',
-						   'macAddress',
-						   ])
-	deferred.addCallback(lambda searchHosts: searchHosts.entries)
+def haveHosts(hosts, nets, sharedNets, dnsDomain):
+    for host in hosts:
+        for hostIP in host.ipAddresses:
+            parent=None
+            for net in nets + reduce(lambda x,y: x+y,
+                                          [x.nets for x in sharedNets.values()],
+                                          []):
+                if net.isInNet(hostIP.ipAddress):
+                    parent=net
+                    break
 
-    def handle_entry(self, objectName, attributes):
-	args = {}
-	for k,vs in attributes:
-	    k=str(k)
-	    args[k]=vs
+            if parent:
+                parent.addHost(hostIP)
+            else:
+                sys.stderr.write("IP address %s is in no net, discarding.\n" % hostIP)
 
-	assert len(args['cn'])==1, \
-	       "object %s attribute 'cn' has multiple values: %s" \
-	       % (objectName, args['cn'])
+    for net in sharedNets.values():
+        net.printDHCP(dnsDomain)
+    for net in nets:
+        net.printDHCP(dnsDomain)
 
-	self.entries.append(Host(str(objectName),
-				 str(args['cn'][0]),
-				 map(str, args['ipHostNumber']),
-				 map(str, args.get('macAddress', ()))))
+def only(e, attr):
+    if len(e[attr])!=1:
+        raise RuntimeError, \
+              "object %s attribute %r has multiple values: %s" \
+              % (e.dn, attr, e[attr])
+    for val in e[attr]:
+        return val
 
-class SearchNets(ldapclient.LDAPSearch):
-    def __init__(self, deferred, client, base, filter):
-	self.sharedNetworks = {}
-	self.entries = []
+def _cbGetHosts(entries):
+    entries = []
+    for e in entries:
+        cn = only(e, 'cn')
+	self.entries.append(Host(str(e.dn),
+				 str(cn),
+				 map(str, e['ipHostNumber']),
+				 map(str, e.get('macAddress', ()))))
+    return entries
 
-	filt=pureldap.LDAPFilter_and(value=(
-	    pureldap.LDAPFilter_present('cn'),
-	    pureldap.LDAPFilter_present('ipNetworkNumber'),
-	    pureldap.LDAPFilter_present('ipNetmaskNumber'),
-	    ))
-	if filter:
-	    filt = pureldap.LDAPFilter_and(value=(filter, filt))
-	ldapclient.LDAPSearch.__init__(self, deferred, client,
-				       baseObject=base,
-				       filter=filt,
-				       attributes=['cn',
-						   'ipNetworkNumber',
-						   'ipNetmaskNumber',
-						   'router',
-						   'dhcpRange',
-						   'winsServer',
-						   'domainNameServer',
-						   'sharedNetworkName'])
-	deferred.addCallback(lambda x: (x.entries, x.sharedNetworks))
+def getHosts(e, filter):
+    filt=pureldap.LDAPFilter_and(value=(
+        pureldap.LDAPFilter_present('cn'),
+        pureldap.LDAPFilter_present('ipHostNumber'),
+        ))
+    if filter:
+        filt = pureldap.LDAPFilter_and(value=(filter, filt))
 
-    def handle_entry(self, objectName, attributes):
-	args = {}
-	for k,vs in attributes:
-	    k=str(k)
-	    args[k]=map(str, vs)
+    d = e.search(filterObject=filt,
+                 attributes=['cn',
+                             'ipHostNumber',
+                             'macAddress',
+                             ])
+    d.addCallback(_cbGetHosts)
+    return d
 
-	assert len(args['cn'])==1, \
-	       "object %s attribute 'cn' has multiple values: %s" \
-	       % (objectName, args['cn'])
-	cn=args['cn'][0]
-	assert len(args['ipNetworkNumber'])==1, \
-	       "object %s attribute 'ipNetworkNumber' has multiple values: %s" \
-	       % (objectName, args['ipNetworkNumber'])
-	ipNetworkNumber=args['ipNetworkNumber'][0]
-	assert len(args['ipNetmaskNumber'])==1, \
-	       "object %s attribute 'ipNetmaskNumber' has multiple values: %s" \
-	       % (objectName, args['ipNetmaskNumber'])
-	ipNetmaskNumber=args['ipNetmaskNumber'][0]
-	net = Net(objectName, cn,
-		  ipNetworkNumber, ipNetmaskNumber,
-		  routers=args.get('router', ()),
-		  dhcpRanges=args.get('dhcpRange', ()),
-		  winsServers=args.get('winsServer', ()),
-		  domainNameServers=args.get('domainNameServer', ()),
-		  )
-	if args.has_key('sharedNetworkName'):
-	    assert len(args['sharedNetworkName'])==1, \
-		   "object %s attribute 'sharedNetworkName' has multiple values: %s" \
-		   % (objectName, args['sharedNetworkName'])
-	    name = args['sharedNetworkName'][0]
-	    if not self.sharedNetworks.has_key(name):
-		self.sharedNetworks[name]=SharedNet(name)
-	    self.sharedNetworks[name].addNet(net)
-	else:
-	    self.entries.append(net)
+def haveNets(data, e, baseDN, filt, dnsDomain):
+    nets, sharedNets = data
+    d = getHosts(e, filt)
+    d.addCallback(haveHosts, nets, sharedNets, dnsDomain)
+    return d
 
-class Search(ldapclient.LDAPClient):
-    def __init__(self):
-	ldapclient.LDAPClient.__init__(self)
+def _cbGetNets(entries):
+    sharedNetworks = {}
+    entries = []
 
-    def connectionMade(self):
-	d=self.bind()
-	d.addCallbacks(callback=self._handle_bind_success)
-	d.addErrback(defer.logError)
-	d.chainDeferred(self.factory.deferred)
+    for e in entries:
+        cn=only(e, 'cn')
+        ipNetworkNumber=only(e, 'ipNetworkNumber')
+        ipNetmaskNumber=only(args, 'ipNetmaskNumber')
+        net = Net(objectName, cn,
+                  ipNetworkNumber, ipNetmaskNumber,
+                  routers=args.get('router', ()),
+                  dhcpRanges=args.get('dhcpRange', ()),
+                  winsServers=args.get('winsServer', ()),
+                  domainNameServers=args.get('domainNameServer', ()),
+                  )
+        if args.has_key('sharedNetworkName'):
+            name = only(e, 'sharedNetworkName')
+            if not sharedNetworks.has_key(name):
+                sharedNetworks[name]=SharedNet(name)
+            sharedNetworks[name].addNet(net)
+        else:
+            entries.append(net)
 
-    def _handle_bind_success(self, x):
-	d1=defer.Deferred()
-	SearchNets(d1, self, self.factory.base, self.factory.filt)
-	d1.addCallbacks(callback=self.haveNets,
-			errback=defer.logError)
-	return d1
+    return (entries, sharedNetworks)
 
+def getNets(e, filter):
+    filt=pureldap.LDAPFilter_and(value=(
+        pureldap.LDAPFilter_present('cn'),
+        pureldap.LDAPFilter_present('ipNetworkNumber'),
+        pureldap.LDAPFilter_present('ipNetmaskNumber'),
+        ))
+    if filter:
+        filt = pureldap.LDAPFilter_and(value=(filter, filt))
 
-    def haveNets(self, data):
-	nets, sharedNets = data
-	self.nets = nets
-	self.sharedNets = sharedNets
-	d=defer.Deferred()
-	SearchHosts(d, self, self.factory.base, self.factory.filt)
-	d.addCallbacks(callback=self.haveHosts,
-		       errback=defer.logError)
-	return d
+    d = e.search(filterObject=filt,
+                 attributes=['cn',
+                             'ipNetworkNumber',
+                             'ipNetmaskNumber',
+                             'router',
+                             'dhcpRange',
+                             'winsServer',
+                             'domainNameServer',
+                             'sharedNetworkName'])
+    d.addCallback(_cbGetNets)
+    return d
 
-    def haveHosts(self, hosts):
-	for host in hosts:
-	    for hostIP in host.ipAddresses:
-		parent=None
-		for net in self.nets + reduce(lambda x,y: x+y,
-					      [x.nets for x in self.sharedNets.values()],
-					      []):
-		    if net.isInNet(hostIP.ipAddress):
-			parent=net
-			break
+def search(client, baseDN, filter, dnsDomain):
+    e=ldapsyntax.LDAPEntry(client=client, dn=baseDN)
+    d = getNets(e, filter)
+    d.addCallback(haveNets, e, baseDN, filter, dnsDomain)
+    return d
 
-		if parent:
-		    parent.addHost(hostIP)
-		else:
-		    sys.stderr.write("IP address %s is in no net, discarding.\n" % hostIP)
-
-	for net in self.sharedNets.values():
-	    net.printDHCP(self.factory.dnsDomain)
-	for net in self.nets:
-	    net.printDHCP(self.factory.dnsDomain)
-
-class SearchFactory(protocol.ClientFactory):
-    protocol = Search
-
-    def __init__(self, deferred, base, filt, dnsDomain):
-	self.deferred=deferred
-	self.base=base
-	self.filt=filt
-	self.dnsDomain=dnsDomain
-
-    def clientConnectionFailed(self, connector, reason):
-	self.deferred.errback(reason)
 
 exitStatus=0
 
@@ -355,13 +314,14 @@ def main(cfg, filter_text, dnsDomain):
     else:
 	filt = None
 
-    d=defer.Deferred()
-    s=SearchFactory(d, baseDN, filt, dnsDomain)
+    c = ldapconnector.LDAPClientCreator(reactor,
+                                        ldapclient.LDAPClient)
+    d = c.connectAnonymously(dn=baseDN,
+                             overrides=cfg.getServiceLocationOverrides())
+    d.addCallback(search, baseDN, filt, dnsDomain)
     d.addErrback(error)
     d.addBoth(lambda x: reactor.stop())
-    c=ldapconnector.LDAPConnector(reactor, baseDN, s,
-                                  overrides=cfg.getServiceLocationOverrides())
-    c.connect()
+
     reactor.run()
     sys.exit(exitStatus)
 
