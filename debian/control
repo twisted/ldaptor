@@ -76,7 +76,7 @@ Description: Pure-Python library for LDAP
 Package: python2.3-ldaptor
 Section: python
 Architecture: all
-Depends: ${python:Depends}, python2.3-twisted (>= 1.1.1), python2.3-pyparsing, pwgen
+Depends: ${python:Depends}, ldaptor-common, python2.3-twisted (>= 1.1.1), python2.3-pyparsing, pwgen
 Description: Pure-Python library for LDAP
  Ldaptor is a pure-Python library that implements
  .
@@ -105,3 +105,22 @@ Description: Documentation for Ldaptor
  .
  - Slides for a talk "Creating a simple LDAP application"
 
+Package: ldaptor-common
+Section: python
+Architecture: all
+Description: Pure-Python library for LDAP (common files)
+ Ldaptor is a pure-Python library that implements
+ .
+ - LDAP client logic.
+ .
+ - separately-accessible LDAP and BER protocol message
+ generation/parsing.
+ .
+ - ASCII-format LDAP filter generation and parsing.
+ .
+ - LDIF format data generation.
+ .
+ - Samba password changing logic.
+ .
+ This package contains the common files shared between different
+ builds of the library for different Python versions.
