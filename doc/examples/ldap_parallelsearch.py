@@ -28,11 +28,6 @@ def error(fail):
     global exitStatus
     exitStatus=1
 
-def _bind(proto):
-    d=proto.bind()
-    d.addCallback(lambda _: proto)
-    return d
-
 def _handle_entry(entry, connection, search):
     sys.stdout.write("# connection %d, search %d\n%s"
                      % (connection, search, entry))
@@ -55,9 +50,8 @@ def main(base, serviceLocationOverrides, numOfConnections=3, numOfSearches=3):
     l=[]
     for connection in xrange(0, numOfConnections):
         c=ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
-        d=c.connect(base, serviceLocationOverrides)
+        d=c.connectAnonymously(base, serviceLocationOverrides)
 
-        d.addCallback(_bind)
         d.addCallback(_search, base, connection, numOfSearches)
 	d.addErrback(error)
 	l.append(d)
