@@ -1,7 +1,8 @@
 import sets, random, sha, base64
+from twisted.internet import defer
 from twisted.python.util import InsensitiveDict
 from ldaptor import interfaces, attributeset, delta
-from ldaptor.protocols.ldap import distinguishedname, ldif
+from ldaptor.protocols.ldap import distinguishedname, ldif, ldaperrors
 
 def sshaDigest(passphrase, salt=None):
     if salt is None:
@@ -167,14 +168,17 @@ class BaseLDAPEntry(object):
         return delta.ModifyOp(dn=self.dn, modifications=r)
 
     def bind(self, password):
+        return defer.maybeDeferred(self._bind, password)
+
+    def _bind(self, password):
         for digest in self.get('userPassword', ()):
             if digest.startswith('{SSHA}'):
                 raw = base64.decodestring(digest[len('{SSHA}'):])
                 salt = raw[20:]
                 got = sshaDigest(password, salt)
                 if got == digest:
-                    return True
-        return False
+                    return self
+        raise ldaperrors.LDAPInvalidCredentials
         
     def hasMember(self, dn):
         for memberDN in self.get('member', []):

@@ -116,6 +116,15 @@ class ILDAPEntry(components.Interface):
     def __nonzero__(self):
         """Always return True"""
 
+    def bind(self, password):
+        """
+        Try to authenticate with given secret.
+
+        @return: Deferred ILDAPEntry (that is, self).
+
+        @raise ldaperrors.LDAPInvalidCredentials: password was
+        incorrect.
+        """
 
 class IEditableLDAPEntry(components.Interface):
     """Interface definition for editable LDAP entries."""

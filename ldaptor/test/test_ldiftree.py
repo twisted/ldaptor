@@ -488,5 +488,9 @@ cn: theChild
     def test_setPassword_noSalt(self):
         self.foo.setPassword('s3krit')
         self.failUnless('userPassword' in self.foo)
-        self.assertEquals(self.foo.bind('s3krit'), True)
-        self.assertEquals(self.foo.bind('s4krit'), False)
+        d = self.foo.bind('s3krit')
+        r = util.deferredResult(d)
+        self.assertIdentical(r, self.foo)
+        d = self.foo.bind('s4krit')
+        fail = util.deferredError(d)
+        fail.trap(ldaperrors.LDAPInvalidCredentials)
