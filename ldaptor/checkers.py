@@ -71,7 +71,11 @@ class LDAPBindingChecker:
 	d = c.connect(baseDN, self.config.getServiceLocationOverrides())
         d.addCallback(self._connected, filt, credentials)
         def _err(reason):
-            reason.trap(ldaperrors.LDAPInvalidCredentials)
+            reason.trap(ldaperrors.LDAPInvalidCredentials,
+
+                        # this happens with slapd 2.1.30 when binding
+                        # with DN but no password
+                        ldaperrors.LDAPUnwillingToPerform)
             return failure.Failure(error.UnauthorizedLogin())
         d.addErrback(_err)
         return d
