@@ -281,6 +281,9 @@ class SearchPage(rend.Page):
         else:
             return obj
 
+    def render_data(self, ctx, data):
+        return ctx.tag.clear()[data]
+
     def render_if(self, context, data):
         r=context.tag.allPatterns(str(bool(data)))
         return context.tag.clear()[r]
