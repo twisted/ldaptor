@@ -58,11 +58,11 @@ class DoSearchFactory(protocol.ClientFactory):
     def _ok(self, dummy):
         return dummy.ldapObjects
 
-    def connectionFailed(self, connector, reason):
+    def clientConnectionFailed(self, connector, reason):
         self.deferred.errback(reason)
 
-    def connectionLost(self, connector):
-        self.deferred.errback(Failure(Exception('connection was lost')))
+    def clientConnectionLost(self, connector, reason):
+        self.deferred.errback(reason)
 
 class MassPasswordChangeForm(widgets.Form):
     def __init__(self, ldapObjects):

@@ -33,13 +33,13 @@ class LDAPAuthFactory(protocol.ClientFactory):
         self.cb_connectionLost = cb_connectionLost
         self.proto=None
 
-    def connectionFailed(self, connector, reason):
+    def clientConnectionFailed(self, connector, reason):
         self.proto=None
         self.defe.errback("connection failed")
 
-    def connectionLost(self, connector):
+    def clientConnectionLost(self, connector, reason):
         self.proto=None
-        self.cb_connectionLost()
+        self.cb_connectionLost(reason)
 
     def buildProtocol(self, addr):
         p=protocol.ClientFactory.buildProtocol(self, addr)
@@ -83,7 +83,7 @@ class LDAPIdentity(Identity):
                           self.ldapClientFactory)
         return pwrq
 
-    def connectionLost(self):
+    def connectionLost(self, reason):
         self.ldapClientFactory=None
         for cb in self.notify_on_connectionLost:
             cb()
@@ -164,8 +164,8 @@ class LDAPSearchIdentity(ldapclient.LDAPSearch):
             raise "GOT DUPLICATES (TODO)"
 
 class FetchIdentities(ldapclient.LDAPClient):
-    def connectionLost(self):
-        ldapclient.LDAPClient.connectionLost(self)
+    def connectionLost(self, reason):
+        ldapclient.LDAPClient.connectionLost(self, reason)
         if self.factory.unregister:
             self.factory.unregister(self)
         

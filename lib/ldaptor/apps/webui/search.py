@@ -86,11 +86,11 @@ class DoSearchFactory(protocol.ClientFactory):
         self.baseObject=baseObject
         self.ldapFilter=ldapFilter
 
-    def connectionFailed(self, connector, reason):
+    def clientConnectionFailed(self, connector, reason):
         self.deferred.errback(reason)
 
-    def connectionLost(self, connector):
-        self.deferred.errback(Failure(Exception('connection was lost')))
+    def clientConnectionLost(self, connector, reason):
+        self.deferred.errback(reason)
 
 class SearchForm(widgets.Form):
     formFields = [

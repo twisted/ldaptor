@@ -1,3 +1,9 @@
+ldaptor (0.0.6) unstable; urgency=low
+
+  * Twisted ClientFactory and Protocol connectionLost refactor.
+
+ -- Tommi Virtanen <tv@debian.org>  Thu,  8 Aug 2002 10:21:07 +0300
+
 ldaptor (0.0.5) unstable; urgency=low
 
   * ldaptor-passwd generated password setting failed as it tried

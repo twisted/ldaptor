@@ -210,7 +210,7 @@ class SearchFactory(protocol.ClientFactory):
         self.filt=filt
         self.deferred=deferred
 
-    def connectionFailed(self, connector, reason):
+    def clientConnectionFailed(self, connector, reason):
         self.deferred.errback(reason)
 
 exitStatus=0

@@ -64,7 +64,7 @@ class SearchALotFactory(protocol.ClientFactory):
         self.deferred=deferred
         self.prefix=prefix
         
-    def connectionFailed(self, connector, reason):
+    def clientConnectionFailed(self, connector, reason):
         self.deferred.errback(reason)
 
 exitStatus=0

@@ -42,7 +42,7 @@ class SearchFactory(protocol.ClientFactory):
         self.server=server
         self.deferred=deferred
 
-    def connectionFailed(self, connector, reason):
+    def clientConnectionFailed(self, connector, reason):
         self.deferred.errback(None)
 
 exitStatus = 0
