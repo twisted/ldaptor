@@ -1,7 +1,8 @@
 from twisted.internet import reactor
 from twisted.internet import defer
+from ldaptor.protocols import pureldap
 from ldaptor.protocols.ldap import ldapsyntax, distinguishedname
-from ldaptor import generate_password, entry
+from ldaptor import generate_password, entry, interfaces
 from ldaptor.apps.webui.uriquote import uriUnquote
 from ldaptor import weave
 
@@ -51,26 +52,33 @@ class IServicePasswordChange(annotate.TypedInterface):
 class ServicePasswordChange(object):
     __implements__ = IServicePasswordChange
 
-    def __init__(self, dn, service):
+    def __init__(self, dn):
         super(ServicePasswordChange, self).__init__()
         self.dn = dn
-        self.service = service
 
-    def setServicePassword(self, ctx, newPassword):
-        d = getEntryWithAttributes(ctx, self.dn, 'servicePassword')
-        d.addCallback(self._cbSetPassword, newPassword)
-
-        def _report(_, name):
-            return 'Set password for service %r' % name
-        d.addCallback(_report, self.service)
-
+    def _getServiceName(self, ctx):
+        d = getEntryWithAttributes(ctx, self.dn, 'cn')
+        def _cb(e):
+            for cn in e.get('cn', []):
+                return cn
+            raise RuntimeError, \
+                  "Service password entry has no attribute cn: %r" % e
+        d.addCallback(_cb)
         return d
 
-    def _cbSetPassword(self, e, newPassword):
-        digest = entry.sshaDigest(newPassword)
-        self._doRemove(e)
-        e['servicePassword'].add('%s %s' % (self.service, digest))
-        d = e.commit()
+    def setServicePassword(self, ctx, newPassword):
+        e = getEntry(ctx, self.dn)
+        d = e.setPassword(newPassword)
+
+        def _getName(_, ctx):
+            d = self._getServiceName(ctx)
+            return d
+        d.addCallback(_getName, ctx)
+
+        def _report(name):
+            return 'Set password for service %r' % name
+        d.addCallback(_report)
+
         return d
 
     def generateRandom(self, ctx):
@@ -80,41 +88,39 @@ class ServicePasswordChange(object):
             return passwords[0]
         d.addCallback(_first)
 
-        def _status(newPassword, ctx):
-            d = getEntryWithAttributes(ctx, self.dn, 'servicePassword')
-            d.addCallback(self._cbSetPassword, newPassword)
-            d.addCallback(lambda _: 'Service %r password set to %s' % (self.service, newPassword))
-            return d
-        d.addCallback(_status, ctx)
+        def _setPass(newPassword, ctx):
+            e = getEntry(ctx, self.dn)
+            d = e.setPassword(newPassword)
 
+            def _getName(_, ctx):
+                d = self._getServiceName(ctx)
+                return d
+            d.addCallback(_getName, ctx)
+
+            def _report(name, newPassword):
+                return 'Service %r password set to %s' % (name, newPassword)
+            d.addCallback(_report, newPassword)
+
+            return d
+
+        d.addCallback(_setPass, ctx)
         return d
 
     def remove(self, ctx):
-        d = getEntryWithAttributes(ctx, self.dn, 'servicePassword')
-        d.addCallback(self._cbRemove)
-        return d
+        e = getEntry(ctx, self.dn)
+        d = self._getServiceName(ctx)
 
-    def _doRemove(self, e):
-        remove = []
-        for f in e.get('servicePassword', []):
-            svc = f.split(None, 1)[0]
-            if svc == self.service:
-                remove.append(f)
-        for f in remove:
-            e['servicePassword'].remove(f)
-        return remove
-
-    def _cbRemove(self, e):
-        remove = self._doRemove(e)
-        if not remove:
-            return 'Service %r not found, not removed.' % self.service
-        else:
-            d = e.commit()
-
-            def _report(_, name):
-                return 'Removed service %r' % name
-            d.addCallback(_report, self.service)
+        def _delete(name, e):
+            d = e.delete()
+            d.addCallback(lambda _: name)
             return d
+        d.addCallback(_delete, e)
+
+        def _report(name):
+            return 'Removed service %r' % name
+        d.addCallback(_report)
+
+        return d
 
 class IAddService(annotate.TypedInterface):
     def add(self,
@@ -134,50 +140,50 @@ class AddService(object):
         self.dn = dn
 
     def add(self, ctx, serviceName, newPassword):
-        d = getEntryWithAttributes(ctx, self.dn, 'servicePassword')
         if not newPassword:
-            d.addCallback(self._generate, serviceName)
+            return self._generate(ctx, serviceName)
         else:
-            d.addCallback(self._add, newPassword, serviceName)
+            return self._add(ctx, newPassword, serviceName)
         return d
 
-    def _doRemove(self, e, serviceName):
-        # TODO refactor to share code
-        remove = []
-        for f in e.get('servicePassword', []):
-            svc = f.split(None, 1)[0]
-            if svc == serviceName:
-                remove.append(f)
-        for f in remove:
-            e['servicePassword'].remove(f)
-        return remove
-
-    def _cbSetPassword(self, e, newPassword, serviceName):
-        digest = entry.sshaDigest(newPassword)
-        self._doRemove(e, serviceName) #TODO fail if it exists?
-        if 'servicePassword' not in e:
-            e['servicePassword'] = []
-        e['servicePassword'].add('%s %s' % (serviceName, digest))
-        d = e.commit()
+    def _cbSetPassword(self, ctx, newPassword, serviceName):
+        e = getEntry(ctx, self.dn)
+        rdn = distinguishedname.RelativeDistinguishedName(
+            attributeTypesAndValues=[
+            distinguishedname.LDAPAttributeTypeAndValue(
+            attributeType='cn', value=serviceName),
+            distinguishedname.LDAPAttributeTypeAndValue(
+            attributeType='owner', value=str(self.dn))
+                                     ])
+        d = e.addChild(rdn, {
+            'objectClass': ['serviceSecurityObject'],
+            'cn': [serviceName],
+            'owner': [str(self.dn)],
+            'userPassword': ['{crypt}!'],
+            })
+        def _setPass(e, newPassword):
+            d = e.setPassword(newPassword)
+            return d
+        d.addCallback(_setPass, newPassword)
         return d
 
-    def _generate(self, e, serviceName):
+    def _generate(self, ctx, serviceName):
         d=generate_password.generate(reactor)
         def _first(passwords):
             assert len(passwords)==1
             return passwords[0]
         d.addCallback(_first)
 
-        def _cb(newPassword, e, serviceName):
-            d = self._cbSetPassword(e, newPassword, serviceName)
+        def _cb(newPassword, serviceName):
+            d = self._cbSetPassword(ctx, newPassword, serviceName)
             d.addCallback(lambda _: 'Added service %r with password %s' % (serviceName, newPassword))
             return d
-        d.addCallback(_cb, e, serviceName)
+        d.addCallback(_cb, serviceName)
 
         return d
 
-    def _add(self, e, newPassword, serviceName):
-        d = self._cbSetPassword(e, newPassword, serviceName)
+    def _add(self, ctx, newPassword, serviceName):
+        d = self._cbSetPassword(ctx, newPassword, serviceName)
         def _report(_, name):
             return 'Added service %r' % name
         d.addCallback(_report, serviceName)
@@ -260,24 +266,25 @@ class ConfirmChange(rend.Page):
             return tags.invisible()
 
     def data_servicePasswords(self, ctx, data):
-        d = getEntryWithAttributes(ctx, self.dn, 'servicePassword')
-        def _cb(e):
-            seen = sets.Set()
-            l = []
-            for item in e.get('servicePassword', []):
-                service = item.split(None, 1)[0]
-                if service not in seen:
-                    l.append(service)
-                    seen.add(service)
-            return l
-        d.addCallback(_cb)
+        user = ctx.locate(inevow.ISession).getLoggedInRoot().loggedIn
+        config = interfaces.ILDAPConfig(ctx)
+        e=ldapsyntax.LDAPEntry(client=user.client, dn=config.getBaseDN())
+        d = e.search(filterObject=pureldap.LDAPFilter_and([
+            pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('objectClass'),
+                                              assertionValue=pureldap.LDAPAssertionValue('serviceSecurityObject')),
+            pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('owner'),
+                                              assertionValue=pureldap.LDAPAssertionValue(str(self.dn))),
+            pureldap.LDAPFilter_present('cn'),
+            ]),
+                     attributes=['cn'])
+
         return d
 
     def render_form_service(self, ctx, data):
         # TODO error messages for one password change form display in
         # all of them.
-        serviceName = inevow.IData(ctx)
-        return webform.renderForms('service_%s' % serviceName)[ctx.tag()]
+        e = inevow.IData(ctx)
+        return webform.renderForms('service_%s' % e.dn)[ctx.tag()]
 
     render_zebra = weave.zebra()
 
@@ -290,8 +297,8 @@ class ConfirmChange(rend.Page):
             else:
                 raise
 
-        service = name[len('service_'):]
-        return iformless.IConfigurable(ServicePasswordChange(self.dn, service))
+        dn = name[len('service_'):]
+        return iformless.IConfigurable(ServicePasswordChange(dn))
 
     def render_passthrough(self, ctx, data):
         return ctx.tag.clear()[data]
