@@ -34,3 +34,9 @@
 input:focus {
  border-color: black;
 }
+
+fieldset,
+.emulate-fieldset {
+ border-style: groove; border-width: 2px; border-color: #F7F7F8;
+ padding: 0.5em;
+}
