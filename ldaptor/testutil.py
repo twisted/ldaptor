@@ -35,9 +35,11 @@ class LDAPClientTestDriver:
             r = responses.pop(0)
             ret = callback(r, *args, **kwargs)
             if responses:
-                assert ret==0
+                assert not ret, \
+                       "got %d responses still to give, but handler wants none (got %r)." % (len(responses), ret)
             else:
-                assert ret==1
+                assert ret, \
+                       "no more responses to give, but handler still wants more (got %r)." % ret
 
     def assertNothingSent(self):
         # just a bit more explicit
