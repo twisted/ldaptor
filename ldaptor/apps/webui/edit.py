@@ -1,10 +1,12 @@
 from ldaptor.protocols.ldap import ldapsyntax
 from ldaptor.protocols.ldap import fetchschema
+from ldaptor.protocols.ldap import distinguishedname
 from ldaptor.apps.webui.uriquote import uriQuote, uriUnquote
 
 import os
 from nevow import rend, loaders, inevow, url, tags
-from formless import configurable, annotate, webform
+from formless import iformless, configurable, annotate, webform
+from twisted.internet import defer
 
 class EditStatus(object):
     def __init__(self, entry, changes):
@@ -235,6 +237,8 @@ class EditForm(configurable.Configurable):
         entry = context.locate(inevow.ISession).getLoggedInRoot().loggedIn
         user = entry.dn
 
+        d = defer.succeed(None)
+
 	changes = []
 	for k,v in kw.items():
             if v is None:
@@ -269,6 +273,58 @@ class EditForm(configurable.Configurable):
             return EditStatus(self.entry, 'No changes!')
 
         changes_desc=tags.ul()
+        newRDN = None
+        for rdn in self.entry.dn.split()[0].split():
+            for attr,old,new in changes:
+                if (rdn.attributeType == attr
+                    and rdn.value in old):
+                    # Need to change the rdn
+                    if newRDN is None:
+                        newRDN = list(self.entry.dn.split()[0].split())
+                    newRDN.remove(rdn)
+
+                    # Try to find a replacement RDN. Possibilities are
+                    # new values from the edit form and old values
+                    # currently in LDAP.
+                    possible = list(new)
+                    possible.extend(self.entry.get(rdn.attributeType, []))
+                    for o in old:
+                        # Values to be removed are not acceptable as
+                        # new RDN.
+                        try:
+                            possible.remove(o)
+                        except ValueError:
+                            pass
+                    if not possible:
+                        raise ldapsyntax.CannotRemoveRDNError \
+                              (rdn.attributeType,
+                               rdn.value)
+                    newRDN.append(distinguishedname.LDAPAttributeTypeAndValue(attributeType=attr,
+                                                                              value=possible[0]))
+                    old.remove(rdn.value)
+                    try:
+                        new.remove(possible[0])
+                    except ValueError:
+                        pass
+        if newRDN is not None:
+            newRDN = distinguishedname.RelativeDistinguishedName(newRDN)
+            changes_desc[tags.li[
+                "changing %s: changing RDN to say %s" \
+                %(repr(attr), newRDN)]]
+            newDN = distinguishedname.DistinguishedName(
+                (newRDN,)+self.entry.dn.split()[1:]
+                )
+            def _move(_):
+                return self.entry.move(newDN)
+            d.addCallback(_move)
+            def _redirect(r, ctx, newDN):
+                request = inevow.IRequest(ctx)
+                u = url.URL.fromRequest(request).curdir()
+                u = u.child(uriQuote(newDN))
+                request.setComponent(iformless.IRedirectAfterPost, u)
+                return r
+            d.addCallback(_redirect, context, newDN)
+                    
         for attr,old,new in changes:
             if new:
                 if self.entry.has_key(attr):
@@ -279,13 +335,7 @@ class EditForm(configurable.Configurable):
                 for x in old:
                     if x=='':
                         continue
-                    try:
-                        self.entry[attr].remove(x)
-                    except ldapsyntax.CannotRemoveRDNError, e:
-                        changes_desc[tags.li(
-                            "changing %s: cannot remove old value %s: %s" \
-                            %(repr(attr), x, e))]
-                        old.remove(x)
+                    self.entry[attr].remove(x)
             if old or new:
                 l=tags.ul()
                 changes_desc[tags.li["changing %s" % attr], l]
@@ -294,9 +344,9 @@ class EditForm(configurable.Configurable):
                 if new:
                     l[tags.li["add ", ', '.join(map(repr, new))]]
 
-        defe=self.entry.commit()
-        defe.addCallback(lambda e: EditStatus(e, changes_desc))
-	return defe
+        d.addCallback(lambda _: self.entry.commit())
+        d.addCallback(lambda e: EditStatus(e, changes_desc))
+	return d
 
 class ReallyEditPage(rend.Page):
     addSlash = True
