@@ -16,7 +16,7 @@ directory.
 	  author="Tommi Virtanen",
 	  author_email="tv@debian.org",
 	  #url="TODO",
-	  licence="GNU LGPL",
+	  license="GNU LGPL",
 
 	  packages=[
 	"ldaptor.apps.webui",

@@ -1,3 +1,28 @@
+ldaptor (0.0.20) unstable; urgency=low
+
+  * Applications changes:
+    - Whoops, the syntax for singe-element tuple literals bit me
+      again. Switch webui change_password to using lists, it's what Guido
+      wants.
+
+  * Bugfixes:
+    - Explicitly stringify the dn to transparently work with
+      DistinguishedName objects.
+
+  * Packaging:
+    - Drop python2.1, Twisted no longer supports it. Closes: #196038.
+    - Let dh_python handle removing *.pyc from the deb and generating them
+      in postinst (and use dh_clean to clean up after it). Make
+      python-ldaptor's dependency to python be a versioned one. Not using
+      dh_python's automagic, as it doesn't seem to work right. Closes:
+      #205398.
+
+  * Administrivia:
+    - Add TODO entry about some SyntaxWarnings triggered by scoping.
+    - Fix typo in setup-*.py.
+
+ -- Tommi Virtanen <tv@debian.org>  Mon, 25 Aug 2003 22:22:20 +0300
+
 ldaptor (0.0.19) unstable; urgency=low
 
   * Fix reference to non-existent local variable dn in webui

@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 
-PYTHON_VERSIONS:=2.1 2.2 2.3
+PYTHON_VERSIONS:=2.2 2.3
 PYTHON_VERSION_DEFAULT:=2.3
 
 docdir=debian/install/$(1)/usr/share/doc/$(1)
@@ -18,6 +18,7 @@ clean:
 	test -e debian/control
 	test root = "`whoami`" || (echo need root priviledges; exit 1)
 	rm -rf build debian/install
+	dh_clean
 	find . -type f -name '*.pyc' -print0 \
 	| xargs -0 --no-run-if-empty rm --
 	rm -rf debian/substvars debian/files
@@ -44,6 +45,7 @@ binary-indep-dummy:
 	gzip -9f \
 		'$(call docdir,python-ldaptor)/README.Debian' \
 		'$(call docdir,python-ldaptor)/changelog'
+	dh_python -p'python-ldaptor' -P'$(DUMMY_INSTDIR)'
 	dpkg-gencontrol -isp -p'python-ldaptor' -P'$(DUMMY_INSTDIR)'
 	dpkg --build '$(DUMMY_INSTDIR)' ..
 
@@ -101,6 +103,7 @@ binary-indep-python-%: install-python-%
 	test root = "`whoami`" || (echo need root priviledges; exit 1)
 
 	install -d --mode=0755 'debian/install/python$*-ldaptor/DEBIAN'
+	dh_python -p'python$*-ldaptor' -P'debian/install/python$*-ldaptor'
 	dpkg-gencontrol \
 		-isp -p'python$*-ldaptor' -P'debian/install/python$*-ldaptor'
 	dpkg --build 'debian/install/python$*-ldaptor' ..
@@ -112,6 +115,7 @@ binary-indep-ldaptor-%: \
 	test root = "`whoami`" || (echo need root priviledges; exit 1)
 
 	install -d --mode=0755 'debian/install/ldaptor-$*/DEBIAN'
+	dh_python -p'ldaptor-$*' -P'debian/install/ldaptor-$*'
 	dpkg-gencontrol \
 		-isp -p'ldaptor-$*' -P'debian/install/ldaptor-$*'
 	dpkg --build 'debian/install/ldaptor-$*' ..

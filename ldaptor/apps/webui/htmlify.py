@@ -17,7 +17,7 @@ def htmlify_attributes(attributes):
     return result
 
 def htmlify_object(o):
-    result='<b>'+o.dn+'</b>'
+    result='<b>'+str(o.dn)+'</b>'
     result+='<ul>\n'
 
     for a in o.keys():

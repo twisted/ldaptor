@@ -2,7 +2,7 @@
 import os, os.path, commands
 import formatter, StringIO
 
-PYTHON_VERSIONS=['2.1', '2.2', '2.3']
+PYTHON_VERSIONS=['2.2', '2.3']
 PYTHON_VERSION_DEFAULT='2.3'
 PYTHON_VERSION_TOOBIG='2.4'
 
@@ -83,7 +83,7 @@ pypackage = """
 Package: %(var package)s
 Section: %(extract-setup-var debian-section)s
 Architecture: all
-Depends: python%(var python_version)s, python%(var python_version)s-twisted (>= 1.0.6), pwgen%(var extra_depends)s
+Depends: python%(var python_version)s-twisted (>= 1.0.6), pwgen%(var extra_depends)s
 Description: %(setup --description)s
 """
 printed_source=0
@@ -101,7 +101,7 @@ Section: %(extract-setup-var debian-section)s
 Priority: optional
 Maintainer: %(setup --contact)s <%(setup --contact-email)s>
 Standards-Version: 3.5.6
-Build-Depends-Indep: %(forpython python%s-dev)s
+Build-Depends-Indep: %(forpython python%s-dev)s, debhelper (>= 4.1.68)
 """ % CmdDict(filename)
     package=filename[len('setup-'):-len('.py')]
 
@@ -109,7 +109,11 @@ Build-Depends-Indep: %(forpython python%s-dev)s
 	c = CmdDict(filename,
 		    python_version='',
 		    package=package,
-		    extra_depends=', python'+PYTHON_VERSION_DEFAULT+'-'+package[len('python-'):],
+		    extra_depends=', '.join(['',
+            'python (>= %s)' % PYTHON_VERSION_DEFAULT,
+            'python (<< %s)' % PYTHON_VERSION_TOOBIG,
+            'python'+PYTHON_VERSION_DEFAULT+'-'+package[len('python-'):],
+            ]),
 		    )
 	print pypackage.strip() % c
 	print reflow('%(setup --long-description)s' % c)
@@ -124,9 +128,9 @@ Build-Depends-Indep: %(forpython python%s-dev)s
 	    pkgname='python'+pyver+'-'+package[len('python-'):]
 	    c=CmdDict(
 		filename,
+                python_version=pyver,
 		package=pkgname,
-		python_version=pyver,
-		extra_depends='',
+		extra_depends=', python%s' % pyver,
 		)
 	    print pypackage.strip() % c
 	    print reflow('%(setup --long-description)s' % c)
@@ -136,9 +140,9 @@ Build-Depends-Indep: %(forpython python%s-dev)s
 
     else:
 	c=CmdDict(filename, package=package,
-		  PYTHON_VERSION_DEFAULT=PYTHON_VERSION_DEFAULT,
-		  PYTHON_VERSION_TOOBIG=PYTHON_VERSION_TOOBIG,
-		  )
+                  PYTHON_VERSION_DEFAULT=PYTHON_VERSION_DEFAULT,
+                  PYTHON_VERSION_TOOBIG=PYTHON_VERSION_TOOBIG,
+                  )
 	print otherpackage.strip() % c
 	print reflow('%(setup --long-description)s' % c)
 	print

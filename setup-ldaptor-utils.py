@@ -42,7 +42,7 @@ ldaptor-fetchschema -- Fetch schema from a server.
 	  author="Tommi Virtanen",
 	  author_email="tv@debian.org",
 	  #url="TODO",
-	  licence="GNU LGPL",
+	  license="GNU LGPL",
 
 	  packages=[
 	],

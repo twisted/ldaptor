@@ -1,5 +1,12 @@
 TODO file for the Ldaptor project.
 
+* Fix these:
+
+ldaptor/protocols/ldap/ldapsyntax.py:492: SyntaxWarning: local name 'attributes' in 'search' shadows use of 'attributes' as global in nested scope 'lambda'
+ldaptor/protocols/ldap/ldapsyntax.py:492: SyntaxWarning: local name 'results' in 'search' shadows use of 'results' as global in nested scope 'lambda'
+ldaptor/protocols/ldap/ldapsyntax.py:832: SyntaxWarning: local name 'self' in 'setPassword' shadows use of 'self' as global in nested scope '_passwordChangerPriorityComparison'
+
+
 * ldaptor-webui: twisted.web.widgets.Form.tryAgain()
 
 * ldaptor-webui: edit: adding attributes in schema MAY that didn't
