@@ -287,7 +287,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 
         assert msg.matchedDN==''
 
-        self._remoteData = entry.BaseLDAPEntry(self.dn, self)
+        self._remoteData = entry.EditableLDAPEntry(self.dn, self)
 	self._journal=[]
         return self
 

@@ -1250,6 +1250,47 @@ class LDAPSyntaxFetch(unittest.TestCase):
         self.assertEquals(o['bar'], ['b', 'c'])
         self.assertEquals(o['quux'], ['baz', 'xyzzy'])
 
+    def testCommitAndFetch(self):
+	"""Fetching after a commit works."""
+
+        client = LDAPClientTestDriver(
+            [	pureldap.LDAPModifyResponse(resultCode=0,
+                                            matchedDN='',
+                                            errorMessage='')
+                ],
+            [	pureldap.LDAPSearchResultEntry('cn=foo,dc=example,dc=com',
+                                               [('aValue', ['foo', 'bar'])],
+                                               ),
+                pureldap.LDAPSearchResultDone(resultCode=0),
+                ])
+	o=ldapsyntax.LDAPEntry(client=client,
+                               dn='cn=foo,dc=example,dc=com',
+                               attributes={
+	    'objectClass': ['a', 'b'],
+	    'aValue': ['a'],
+	    })
+
+	o['aValue']=['foo', 'bar']
+	d=o.commit()
+        val = deferredResult(d)
+        self.assertIdentical(o, val)
+
+	d=o.fetch('aValue')
+        val2 = deferredResult(d)
+        self.assertIdentical(o, val2)
+
+        client.assertSent(pureldap.LDAPModifyRequest(
+	    object='cn=foo,dc=example,dc=com',
+	    modification=[
+	    pureldap.LDAPModification_replace(attributeType='aValue',
+                                              vals=['foo', 'bar']),
+	    ]),
+                          pureldap.LDAPSearchRequest(
+	    baseObject='cn=foo,dc=example,dc=com',
+            scope=pureldap.LDAP_SCOPE_baseObject,
+            attributes=['aValue'],
+	    ))
+
 class LDAPSyntaxRDNHandling(unittest.TestCase):
     def testRemovingRDNFails(self):
         """Removing RDN fails with CannotRemoveRDNError."""
