@@ -39,6 +39,7 @@ from the command line.
 	"ldaptor.samba",
 	"ldaptor.apps",
 	"ldaptor.apps.webui",
+	"ldaptor.test",
 	],
 	  scripts=[
 	"bin/ldaptor-webui",
