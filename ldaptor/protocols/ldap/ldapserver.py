@@ -76,12 +76,12 @@ class BaseLDAPServer(protocol.Protocol):
                     raise ldaperrors.LDAPUnavailableCriticalExtension, \
                           'Unknown control %s' % controlType
 
-    def handleUnknown(self, request, controls, id):
+    def handleUnknown(self, request, controls, callback):
         log.msg('Unknown request: %r' % request)
 	msg = pureldap.LDAPExtendedResponse(resultCode=ldaperrors.LDAPProtocolError.resultCode,
                                             responseName='1.3.6.1.4.1.1466.20036',
                                             errorMessage='Unknown request')
-	return defer.succeed(msg)
+	return msg
 
     def _cbLDAPError(self, reason, name):
         reason.trap(ldaperrors.LDAPException)
