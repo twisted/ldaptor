@@ -10,13 +10,13 @@ from formless import annotate, webform, iformless
 
 class IPasswordChange(annotate.TypedInterface):
     def setPassword(self,
-                    context=annotate.Context(),
+                    ctx=annotate.Context(),
                     newPassword=annotate.Password(required=True)):
         pass
     setPassword = annotate.autocallable(setPassword)
 
     def generateRandom(self,
-                       context=annotate.Context()):
+                       ctx=annotate.Context()):
         pass
     generateRandom = annotate.autocallable(generateRandom)
 
@@ -32,23 +32,23 @@ class ConfirmChange(rend.Page):
         super(ConfirmChange, self).__init__()
         self.dn = dn
 
-    def data_css(self, context, data):
-        request = context.locate(inevow.IRequest)
+    def data_css(self, ctx, data):
+        request = ctx.locate(inevow.IRequest)
         u = (url.URL.fromRequest(request).clear().parent().parent().parent()
              .child('form.css'))
         return [ u ]
 
-    def render_css_item(self, context, data):
-        context.fillSlots('url', data)
-        return context.tag
+    def render_css_item(self, ctx, data):
+        ctx.fillSlots('url', data)
+        return ctx.tag
 
     def _prettifyExceptions(self, reason, prefix='', errorTypes=None):
         if errorTypes is not None:
             reason.trap(*errorTypes)
         return (prefix + reason.getErrorMessage())
 
-    def _setPassword(self, context, password):
-        entry = context.locate(inevow.ISession).getLoggedInRoot().loggedIn
+    def _setPassword(self, ctx, password):
+        entry = ctx.locate(inevow.ISession).getLoggedInRoot().loggedIn
         user = entry.dn
         client = entry.client
 
@@ -57,46 +57,46 @@ class ConfirmChange(rend.Page):
         d=defer.maybeDeferred(e.setPassword, newPasswd=password)
         return d
 
-    def setPassword(self, context, newPassword):
-        d = self._setPassword(context, newPassword)
+    def setPassword(self, ctx, newPassword):
+        d = self._setPassword(ctx, newPassword)
         d.addCallback(lambda dummy: 'Password set.')
         d.addErrback(self._prettifyExceptions,
                      prefix="Failed: ")
         return d
 
-    def generateRandom(self, context):
+    def generateRandom(self, ctx):
         d=generate_password.generate(reactor)
         def _first(passwords):
             assert len(passwords)==1
             return passwords[0]
         d.addCallback(_first)
 
-        def _status(newPassword, context):
-            d = self._setPassword(context, newPassword)
+        def _status(newPassword, ctx):
+            d = self._setPassword(ctx, newPassword)
             d.addCallback(lambda dummy: 'Password set to %s' % newPassword)
             return d
-        d.addCallback(_status, context)
+        d.addCallback(_status, ctx)
         d.addErrback(self._prettifyExceptions,
                      prefix="Failed: ")
         return d
 
-    def data_status(self, context, data):
+    def data_status(self, ctx, data):
         try:
-            return context.locate(inevow.IStatusMessage)
+            return ctx.locate(inevow.IStatusMessage)
         except KeyError:
             return ''
 
-    def data_dn(self, context, data):
+    def data_dn(self, ctx, data):
         return self.dn
 
-    def render_form(self, context, data):
+    def render_form(self, ctx, data):
         return webform.renderForms()
 
-    def render_passthrough(self, context, data):
-        return context.tag.clear()[data]
+    def render_passthrough(self, ctx, data):
+        return ctx.tag.clear()[data]
 
-    def data_header(self, context, data):
-        request = context.locate(inevow.IRequest)
+    def data_header(self, ctx, data):
+        request = ctx.locate(inevow.IRequest)
         u=url.URL.fromRequest(request)
         u=u.parent().parent()
         l=[]
@@ -109,12 +109,12 @@ class ConfirmChange(rend.Page):
 class GetDN(rend.Page):
     addSlash = True
 
-    def child_(self, context):
-        entry = inevow.ISession(context).getLoggedInRoot().loggedIn
-        u = inevow.IRequest(context).URLPath()
+    def child_(self, ctx):
+        entry = inevow.ISession(ctx).getLoggedInRoot().loggedIn
+        u = inevow.IRequest(ctx).URLPath()
         return u.child(str(entry.dn))
 
-    def childFactory(self, context, name):
+    def childFactory(self, ctx, name):
         unquoted=uriUnquote(name)
         try:
             dn = distinguishedname.DistinguishedName(stringValue=unquoted)
