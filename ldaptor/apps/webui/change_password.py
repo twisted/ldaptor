@@ -213,13 +213,6 @@ class ServicePasswordChangeMixin(object):
         user = ctx.locate(inevow.ISession).getLoggedInRoot().loggedIn
         config = interfaces.ILDAPConfig(ctx)
         e=ldapsyntax.LDAPEntry(client=user.client, dn=config.getBaseDN())
-        print pureldap.LDAPFilter_and([
-            pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('objectClass'),
-                                              assertionValue=pureldap.LDAPAssertionValue('serviceSecurityObject')),
-            pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('owner'),
-                                              assertionValue=pureldap.LDAPAssertionValue(str(self.dn))),
-            pureldap.LDAPFilter_present('cn'),
-            ]).asText()
         d = e.search(filterObject=pureldap.LDAPFilter_and([
             pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('objectClass'),
                                               assertionValue=pureldap.LDAPAssertionValue('serviceSecurityObject')),
