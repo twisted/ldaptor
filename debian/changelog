@@ -1,3 +1,11 @@
+ldaptor (0.0.34) unstable; urgency=low
+
+  * Brown paper bag time, 0.0.33 was never uploaded. Epydoc --check only
+    check and generates no output, reverting back to do not complain about
+    missing docstrings.
+
+ -- Tommi Virtanen <tv@debian.org>  Sun, 23 Jan 2005 03:32:46 +0200
+
 ldaptor (0.0.33) unstable; urgency=low
 
   * Conceptual changes:
