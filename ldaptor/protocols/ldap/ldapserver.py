@@ -26,11 +26,8 @@ from twisted.internet import protocol, defer
 class LDAPServerConnectionLostException(ldaperrors.LDAPException):
     pass
 
-class LDAPServer(protocol.Protocol):
-    """An LDAP server"""
+class BaseLDAPServer(protocol.Protocol):
     debug = False
-
-    boundUser = None
 
     def __init__(self):
 	self.buffer = ''
@@ -79,6 +76,62 @@ class LDAPServer(protocol.Protocol):
                     raise ldaperrors.LDAPUnavailableCriticalExtension, \
                           'Unknown control %s' % controlType
 
+    def handleUnknown(self, request, controls, id):
+        log.msg('Unknown request: %r' % request)
+	msg = pureldap.LDAPExtendedResponse(resultCode=ldaperrors.LDAPProtocolError.resultCode,
+                                            responseName='1.3.6.1.4.1.1466.20036',
+                                            errorMessage='Unknown request')
+	return defer.succeed(msg)
+
+    def _cbLDAPError(self, reason, name):
+        reason.trap(ldaperrors.LDAPException)
+        return self._callErrorHandler(name=name,
+                                      resultCode=reason.value.resultCode,
+                                      errorMessage=reason.value.message)
+
+    def _cbHandle(self, response, id):
+        if response is not None:
+            self.queue(id, response)
+
+    def failDefault(self, resultCode, errorMessage):
+        return pureldap.LDAPExtendedResponse(resultCode=resultCode,
+                                             responseName='1.3.6.1.4.1.1466.20036',
+                                             errorMessage=errorMessage)
+
+    def _callErrorHandler(self, name, resultCode, errorMessage):
+        errh = getattr(self, 'fail_'+name, self.failDefault)
+        return errh(resultCode=resultCode, errorMessage=errorMessage)
+
+    def _cbOtherError(self, reason, name):
+        return self._callErrorHandler(name=name,
+                                      resultCode=ldaperrors.LDAPProtocolError.resultCode,
+                                      errorMessage=reason.getErrorMessage())
+
+    def handle(self, msg):
+	assert isinstance(msg.value, pureldap.LDAPProtocolRequest)
+        if self.debug:
+            log.debug('S<-C %s' % repr(msg))
+
+	if msg.id==0:
+	    self.unsolicitedNotification(msg.value)
+	else:
+            name = msg.value.__class__.__name__
+            handler = getattr(self, 'handle_'+name, self.handleUnknown)
+            d = defer.maybeDeferred(handler,
+                                    msg.value,
+                                    msg.controls,
+                                    lambda response: self._cbHandle(response, msg.id))
+            assert isinstance(d, defer.Deferred)
+            d.addErrback(self._cbLDAPError, name)
+            d.addErrback(defer.logError)
+            d.addErrback(self._cbOtherError, name)
+            d.addCallback(self._cbHandle, msg.id)
+
+
+class LDAPServer(BaseLDAPServer):
+    """An LDAP server"""
+    boundUser = None
+
     fail_LDAPBindRequest = pureldap.LDAPBindResponse
 
     def handle_LDAPBindRequest(self, request, controls, reply):
@@ -119,57 +172,6 @@ class LDAPServer(protocol.Protocol):
         # explicitly do not check unsupported critical controls -- we
         # have no way to return an error, anyway.
         self.transport.loseConnection()
-
-    def handleUnknown(self, request, controls, id):
-        log.msg('Unknown request: %r' % request)
-	msg = pureldap.LDAPExtendedResponse(resultCode=ldaperrors.LDAPProtocolError.resultCode,
-                                            responseName='1.3.6.1.4.1.1466.20036',
-                                            errorMessage='Unknown request')
-	return defer.succeed(msg)
-
-    def _cbHandle(self, response, id):
-        if response is not None:
-            self.queue(id, response)
-
-    def failDefault(self, resultCode, errorMessage):
-        return pureldap.LDAPExtendedResponse(resultCode=resultCode,
-                                             responseName='1.3.6.1.4.1.1466.20036',
-                                             errorMessage=errorMessage)
-
-    def _callErrorHandler(self, name, resultCode, errorMessage):
-        errh = getattr(self, 'fail_'+name, self.failDefault)
-        return errh(resultCode=resultCode, errorMessage=errorMessage)
-
-    def _cbLDAPError(self, reason, name):
-        reason.trap(ldaperrors.LDAPException)
-        return self._callErrorHandler(name=name,
-                                      resultCode=reason.value.resultCode,
-                                      errorMessage=reason.value.message)
-
-    def _cbOtherError(self, reason, name):
-        return self._callErrorHandler(name=name,
-                                      resultCode=ldaperrors.LDAPProtocolError.resultCode,
-                                      errorMessage=reason.getErrorMessage())
-
-    def handle(self, msg):
-	assert isinstance(msg.value, pureldap.LDAPProtocolRequest)
-        if self.debug:
-            log.debug('S<-C %s' % repr(msg))
-
-	if msg.id==0:
-	    self.unsolicitedNotification(msg.value)
-	else:
-            name = msg.value.__class__.__name__
-            handler = getattr(self, 'handle_'+name, self.handleUnknown)
-            d = defer.maybeDeferred(handler,
-                                    msg.value,
-                                    msg.controls,
-                                    lambda response: self._cbHandle(response, msg.id))
-            assert isinstance(d, defer.Deferred)
-            d.addErrback(self._cbLDAPError, name)
-            d.addErrback(defer.logError)
-            d.addErrback(self._cbOtherError, name)
-            d.addCallback(self._cbHandle, msg.id)
 
     def getRootDSE(self, request, reply):
         root = interfaces.IConnectedLDAPEntry(self.factory)
