@@ -1,3 +1,45 @@
+ldaptor (0.0.33) unstable; urgency=low
+
+  * Conceptual changes:
+    - Add our own LDAP schema file. To use in slapd, add line "include
+      /etc/ldaptor/ldaptor.schema" to /etc/ldap/slapd.conf.
+    - Switch service-specific password support in svcbindproxy and webui
+      change_password to use new-style password entries, for nicer slapd
+      ACLs. Closes: ldaptor#20.
+
+  * API changes:
+    - Add a pumpingDeferredError to test utils, for consistency.
+    - Allow overriding things by subclassing LDAPConfig and setting
+      attributes.
+    - Allow overriding identity search filter at LDAPConfig instantiation
+      time.
+    - Change e.bind() semantics to defer more, and return self or raise.
+    - Add LDAPEntryWithClient.bind() that sends a BindRequest to the
+      server.
+    - Deprecate LDAPClient.bind(dn, auth) in favor of e.bind(auth).
+    - Proxy now takes an ILDAPConfig parameter to init and not just
+      overrides.
+
+  * Bugfixes:
+    - Escape "=" in RDN values.
+    - Remove ldaptor.protocols.ldap.__all__, it's unnecessary and had
+      wrong content.
+
+  * Cleanups:
+    - Convert U32 to unix-style newlines.
+    - Epydoc formatting fixes.
+    - Make epydoc complain about missing docstrings.
+    - Fix API doc home page URL.
+
+  * Packaging:
+    - When running unit tests from debian/rules, ensure PYTHONPATH gets an
+      explicit . in it -- for the poor guy running a build as root.
+      Closes: #291615.
+    - Include everything needed for successful unit test run in
+      Build-Depends-Indep. Closes: #290236, #291618.
+
+ -- Tommi Virtanen <tv@debian.org>  Sun, 23 Jan 2005 02:52:56 +0200
+
 ldaptor (0.0.32) unstable; urgency=low
 
   * Conceptual changes:
