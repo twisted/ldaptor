@@ -386,7 +386,7 @@ class EditPage(rend.Page):
         u = url.URL.fromRequest(request)
         return context.tag(href=u.parent().child('search'))
 
-    def getDynamicChild(self, name, context):
+    def childFactory(self, context, name):
         dn = uriUnquote(name)
         userEntry = inevow.ISession(context).getLoggedInRoot().loggedIn
 

@@ -149,7 +149,7 @@ class MassPasswordChangePage(rend.Page):
         u = url.URL.fromRequest(request)
         return context.tag(href=u.parent().child('search'))
 
-    def getDynamicChild(self, name, context):
+    def childFactory(self, context, name):
         entry = inevow.ISession(context).getLoggedInRoot().loggedIn
 
         filt = uriUnquote(name)
