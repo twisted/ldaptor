@@ -7,7 +7,7 @@ from twisted.python import failure
 import os
 from ldaptor import ldiftree, entry
 from ldaptor.entry import BaseLDAPEntry
-from ldaptor.protocols.ldap import distinguishedname
+from ldaptor.protocols.ldap import distinguishedname, ldaperrors
 
 def writeFile(path, content):
     f = file(path, 'w')
@@ -217,3 +217,272 @@ objectClass: dcObject
 dc: org
 
 """)
+
+
+class Tree(unittest.TestCase):
+    # TODO share the actual tests with inmemory and any other
+    # implementations of the same interface
+    def setUp(self):
+        self.tree = self.mktemp()
+        os.mkdir(self.tree)
+        com = os.path.join(self.tree, 'dc=com.dir')
+        os.mkdir(com)
+        example = os.path.join(com, 'dc=example.dir')
+        os.mkdir(example)
+        meta = os.path.join(example, 'ou=metasyntactic.dir')
+        os.mkdir(meta)
+        writeFile(os.path.join(example, 'ou=metasyntactic.entry'),
+                  """\
+dn: ou=metasyntactic,dc=example,dc=com
+objectClass: a
+objectClass: b
+ou: metasyntactic
+
+""")
+        foo = os.path.join(meta, 'cn=foo.dir')
+        writeFile(os.path.join(meta, 'cn=foo.entry'),
+                  """\
+dn: cn=foo,ou=metasyntactic,dc=example,dc=com
+objectClass: a
+objectClass: b
+cn: foo
+
+""")
+        bar = os.path.join(meta, 'cn=bar.dir')
+        writeFile(os.path.join(meta, 'cn=bar.entry'),
+                  """\
+dn: cn=bar,ou=metasyntactic,dc=example,dc=com
+objectClass: a
+objectClass: b
+cn: bar
+
+""")
+        empty = os.path.join(example, 'ou=empty.dir')
+        writeFile(os.path.join(example, 'ou=empty.entry'),
+                  """\
+dn: ou=empty,dc=example,dc=com
+objectClass: a
+objectClass: b
+ou: empty
+
+""")
+        oneChild = os.path.join(example, 'ou=oneChild.dir')
+        os.mkdir(oneChild)
+        writeFile(os.path.join(example, 'ou=oneChild.entry'),
+                  """\
+dn: ou=oneChild,dc=example,dc=com
+objectClass: a
+objectClass: b
+ou: oneChild
+
+""")
+        theChild = os.path.join(oneChild, 'cn=theChild.dir')
+        writeFile(os.path.join(oneChild, 'cn=theChild.entry'),
+                  """\
+dn: cn=theChild,ou=oneChild,dc=example,dc=com
+objectClass: a
+objectClass: b
+cn: theChild
+
+""")
+        self.root = ldiftree.LDIFTreeEntry(self.tree)
+        self.example = ldiftree.LDIFTreeEntry(example, 'dc=example,dc=com')
+        self.empty = ldiftree.LDIFTreeEntry(empty, 'ou=empty,dc=example,dc=com')
+        self.meta = ldiftree.LDIFTreeEntry(meta, 'ou=metasyntactic,dc=example,dc=com')
+        self.foo = ldiftree.LDIFTreeEntry(foo, 'cn=foo,ou=metasyntactic,dc=example,dc=com')
+        self.bar = ldiftree.LDIFTreeEntry(bar, 'cn=bar,ou=metasyntactic,dc=example,dc=com')
+        self.oneChild = ldiftree.LDIFTreeEntry(oneChild, 'ou=oneChild,dc=example,dc=com')
+        self.theChild = ldiftree.LDIFTreeEntry(theChild, 'cn=theChild,ou=oneChild,dc=example,dc=com')
+
+    def test_children_empty(self):
+        d = self.empty.children()
+        children = util.deferredResult(d)
+        self.assertEquals(children, [])
+
+    def test_children_oneChild(self):
+        d = self.oneChild.children()
+        children = util.deferredResult(d)
+        self.assertEquals(len(children), 1)
+        got = [e.dn for e in children]
+        want = [distinguishedname.DistinguishedName('cn=theChild,ou=oneChild,dc=example,dc=com')]
+        got.sort()
+        want.sort()
+        self.assertEquals(got, want)
+
+    def test_children_repeat(self):
+        """Test that .children() returns a copy of the data so that modifying it does not affect behaviour."""
+        d = self.oneChild.children()
+        children1 = util.deferredResult(d)
+        self.assertEquals(len(children1), 1)
+
+        children1.pop()
+
+        d = self.oneChild.children()
+        children2 = util.deferredResult(d)
+        self.assertEquals(len(children2), 1)
+
+    def test_children_twoChildren(self):
+        d = self.meta.children()
+        children = util.deferredResult(d)
+        self.assertEquals(len(children), 2)
+        want = [
+            distinguishedname.DistinguishedName('cn=foo,ou=metasyntactic,dc=example,dc=com'),
+            distinguishedname.DistinguishedName('cn=bar,ou=metasyntactic,dc=example,dc=com'),
+            ]
+        got = [e.dn for e in children]
+        self.assertEquals(got, want)
+
+    def test_addChild(self):
+        self.empty.addChild(
+            rdn='a=b',
+            attributes={
+            'objectClass': ['a', 'b'],
+            'a': 'b',
+            })
+        d = self.empty.children()
+        children = util.deferredResult(d)
+        self.assertEquals(len(children), 1)
+        got = [e.dn for e in children]
+        want = [
+            distinguishedname.DistinguishedName('a=b,ou=empty,dc=example,dc=com'),
+            ]
+        got.sort()
+        want.sort()
+        self.assertEquals(got, want)
+
+    def test_addChild_Exists(self):
+        self.assertRaises(ldaperrors.LDAPEntryAlreadyExists,
+                          self.meta.addChild,
+                          rdn='cn=foo',
+                          attributes={
+            'objectClass': ['a'],
+            'cn': 'foo',
+            })
+
+    def test_parent(self):
+        self.assertEquals(self.foo.parent(), self.meta)
+        self.assertEquals(self.meta.parent(), self.example)
+        self.assertEquals(self.root.parent(), None)
+
+
+    def test_subtree_empty(self):
+        d = self.empty.subtree()
+        entries = util.deferredResult(d)
+        self.assertEquals(len(entries), 1)
+
+    def test_subtree_oneChild(self):
+        d = self.oneChild.subtree()
+        results = util.deferredResult(d)
+        got = results
+        want = [
+            self.oneChild,
+            self.theChild,
+            ]
+        self.assertEquals(got, want)
+
+    def test_subtree_oneChild_cb(self):
+        got = []
+        d = self.oneChild.subtree(got.append)
+        r = util.deferredResult(d)
+        self.assertEquals(r, None)
+
+        want = [
+            self.oneChild,
+            self.theChild,
+            ]
+        self.assertEquals(got, want)
+
+    def test_subtree_many(self):
+        d = self.example.subtree()
+        results = util.deferredResult(d)
+        got = results
+        want = [
+            self.example,
+            self.oneChild,
+            self.theChild,
+            self.empty,
+            self.meta,
+            self.bar,
+            self.foo,
+            ]
+        self.assertEquals(got, want)
+
+    def test_subtree_many_cb(self):
+        got = []
+        d = self.example.subtree(callback=got.append)
+        r = util.deferredResult(d)
+        self.assertEquals(r, None)
+
+        want = [
+            self.example,
+            self.oneChild,
+            self.theChild,
+            self.empty,
+            self.meta,
+            self.bar,
+            self.foo,
+            ]
+        self.assertEquals(got, want)
+
+    def test_lookup_fail(self):
+        dn = distinguishedname.DistinguishedName('cn=thud,ou=metasyntactic,dc=example,dc=com')
+        d = self.root.lookup(dn)
+        failure = util.deferredError(d)
+        failure.trap(ldaperrors.LDAPNoSuchObject)
+        self.assertEquals(failure.value.message, dn)
+
+    def test_lookup_fail_outOfTree(self):
+        dn = distinguishedname.DistinguishedName('dc=invalid')
+        d = self.root.lookup(dn)
+        failure = util.deferredError(d)
+        failure.trap(ldaperrors.LDAPNoSuchObject)
+        self.assertEquals(failure.value.message, dn)
+
+    def test_lookup_deep(self):
+        dn = distinguishedname.DistinguishedName('cn=bar,ou=metasyntactic,dc=example,dc=com')
+        d = self.root.lookup(dn)
+        r = util.deferredResult(d)
+        self.assertEquals(r, self.bar)
+
+    def test_delete_root(self):
+        d = self.root.delete()
+        self.assertRaises(ldiftree.LDAPCannotRemoveRootError,
+                          util.wait, d)
+
+    def test_delete_nonLeaf(self):
+        d = self.meta.delete()
+        self.assertRaises(ldaperrors.LDAPNotAllowedOnNonLeaf,
+                          util.wait, d)
+
+    def test_delete(self):
+        d = self.foo.delete()
+        r = util.deferredResult(d)
+        self.assertEquals(r, self.foo)
+        d = self.meta.children()
+        r = util.deferredResult(d)
+        self.assertEquals(r, [self.bar])
+
+    def test_deleteChild(self):
+        d = self.meta.deleteChild('cn=bar')
+        r = util.deferredResult(d)
+        self.assertEquals(r, self.bar)
+        d = self.meta.children()
+        r = util.deferredResult(d)
+        self.assertEquals(r, [self.foo])
+
+    def test_deleteChild_NonExisting(self):
+        d = self.root.deleteChild('cn=not-exist')
+        self.assertRaises(ldaperrors.LDAPNoSuchObject,
+                          util.wait, d)
+        
+    def test_setPassword(self):
+        self.foo.setPassword('s3krit', salt='\xf2\x4a')
+        self.failUnless('userPassword' in self.foo)
+        self.assertEquals(self.foo['userPassword'],
+                          ['{SSHA}0n/Iw1NhUOKyaI9gm9v5YsO3ZInySg=='])
+
+    def test_setPassword_noSalt(self):
+        self.foo.setPassword('s3krit')
+        self.failUnless('userPassword' in self.foo)
+        self.assertEquals(self.foo.bind('s3krit'), True)
+        self.assertEquals(self.foo.bind('s4krit'), False)
