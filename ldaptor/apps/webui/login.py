@@ -1,5 +1,6 @@
 import os
 from nevow import rend, loaders, guard, inevow, url
+from ldaptor.apps.webui import i18n
 
 def getActionURL(current, history):
     action = current
@@ -34,3 +35,5 @@ class LoginPage(rend.Page):
         action = getActionURL(current, self.history)
         context.fillSlots('action-url', str(action))
         return context.tag
+
+    render_i18n = i18n.render()

@@ -1,5 +1,7 @@
 from ldaptor.protocols.ldap import ldapsyntax, distinguishedname
 from ldaptor.apps.webui.uriquote import uriUnquote
+from ldaptor.apps.webui.i18n import _
+from ldaptor.apps.webui import i18n
 from ldaptor import weave
 
 import os
@@ -9,7 +11,10 @@ from formless import annotate, webform, iformless
 class IDelete(annotate.TypedInterface):
     def delete(self, request=annotate.Request()):
         pass
-    delete = annotate.autocallable(delete)
+    delete = annotate.autocallable(delete,
+                                   action=_('Delete'),
+                                   label=_('Confirm delete'),
+                                   )
 
 class ErrorWrapper:
     def __init__(self, value):
@@ -41,14 +46,14 @@ class ConfirmDelete(rend.Page):
                                dn=self.dn)
         d=e.delete()
         d.addCallbacks(
-            callback=lambda _: "Success.",
-            errback=lambda fail: "Failed: %s."
+            callback=lambda dummy: _("Success."),
+            errback=lambda fail: _("Failed: %s.")
             % fail.getErrorMessage())
-        def _redirect(_):
+        def _redirect(r):
             u = url.URL.fromRequest(request)
             u = u.child('deleted')
             request.setComponent(iformless.IRedirectAfterPost, u)
-            return _
+            return r
         d.addBoth(_redirect)
         return d
 
@@ -68,7 +73,7 @@ class ConfirmDelete(rend.Page):
         if isinstance(data, ErrorWrapper):
             return context.tag.clear() \
                    [ tags.strong(style="color: red;") \
-                     [ 'An error occurred: ',
+                     [ _('An error occurred: '),
                        data.value.getErrorMessage(),
                        ]
                      ]
@@ -89,10 +94,10 @@ class ConfirmDelete(rend.Page):
         u=url.URL.fromRequest(request)
         u=u.parent().parent()
         l=[]
-	l.append(tags.a(href=u.sibling("search"))["Search"])
-	l.append(tags.a(href=u.sibling("add"))["add new entry"])
-        l.append(tags.a(href=u.sibling("edit").child(str(self.dn)))["edit"])
-        l.append(tags.a(href=u.sibling("delete").child(str(self.dn)))["delete"])
+	l.append(tags.a(href=u.sibling("search"))[_("Search")])
+	l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
+        l.append(tags.a(href=u.sibling("edit").child(str(self.dn)))[_("edit")])
+        l.append(tags.a(href=u.sibling("delete").child(str(self.dn)))[_("delete")])
 	return l
 
     def render_keyvalue(self, context, data):
@@ -100,6 +105,8 @@ class ConfirmDelete(rend.Page):
 
     def render_keyvalue_item(self, context, data):
         return weave.keyvalue_item(context, data)
+
+    render_i18n = i18n.render()
 
 class Deleted(rend.Page):
     docFactory = loaders.xmlfile(
@@ -118,8 +125,8 @@ class Deleted(rend.Page):
         u=url.URL.fromRequest(request)
         u=u.parent().parent()
         l=[]
-	l.append(tags.a(href=u.sibling("search"))["Search"])
-	l.append(tags.a(href=u.sibling("add"))["add new entry"])
+	l.append(tags.a(href=u.sibling("search"))[_("Search")])
+	l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
         return l
 
     def render_passthrough(self, context, data):
@@ -129,7 +136,9 @@ class Deleted(rend.Page):
         try:
             return context.locate(inevow.IStatusMessage)
         except KeyError:
-            return 'Internal error, no status to display.'
+            return _('Internal error, no status to display.')
+
+    render_i18n = i18n.render()
 
 class GetDN(rend.Page):
     addSlash = True
@@ -152,6 +161,8 @@ class GetDN(rend.Page):
             return None
         r=ConfirmDelete(dn=dn)
         return r
+
+    render_i18n = i18n.render()
 
 def getResource():
     return GetDN()

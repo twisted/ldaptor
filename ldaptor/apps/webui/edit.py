@@ -2,6 +2,8 @@ from ldaptor.protocols.ldap import ldapsyntax
 from ldaptor.protocols.ldap import fetchschema
 from ldaptor.protocols.ldap import distinguishedname
 from ldaptor.apps.webui.uriquote import uriQuote, uriUnquote
+from ldaptor.apps.webui.i18n import _
+from ldaptor.apps.webui import i18n
 
 import os
 from nevow import rend, loaders, inevow, url, tags
@@ -43,7 +45,9 @@ class EditForm(configurable.Configurable):
     def bind_edit(self, ctx):
         return annotate.MethodBinding(
             'edit',
-            annotate.Method(arguments=self.formFields))
+            annotate.Method(arguments=self.formFields,
+                            label=_('Edit')),
+            action=_('Edit'))
 
     def _one_formfield(self, attr, values, required, result):
 	if not self.nonEditableAttributes.get(attr):
@@ -309,7 +313,7 @@ class EditForm(configurable.Configurable):
         if newRDN is not None:
             newRDN = distinguishedname.RelativeDistinguishedName(newRDN)
             changes_desc[tags.li[
-                "changing %s: changing RDN to say %s" \
+                _("changing %s: changing RDN to say %s") \
                 %(repr(attr), newRDN)]]
             newDN = distinguishedname.DistinguishedName(
                 (newRDN,)+self.entry.dn.split()[1:]
@@ -338,11 +342,11 @@ class EditForm(configurable.Configurable):
                     self.entry[attr].remove(x)
             if old or new:
                 l=tags.ul()
-                changes_desc[tags.li["changing %s" % attr], l]
+                changes_desc[tags.li[_("changing %s") % attr], l]
                 if old:
-                    l[tags.li["remove ", ', '.join(map(repr, old))]]
+                    l[tags.li[_("remove "), ', '.join(map(repr, old))]]
                 if new:
-                    l[tags.li["add ", ', '.join(map(repr, new))]]
+                    l[tags.li[_("add "), ', '.join(map(repr, new))]]
 
         d.addCallback(lambda _: self.entry.commit())
         d.addCallback(lambda e: EditStatus(e, changes_desc))
@@ -378,8 +382,8 @@ class ReallyEditPage(rend.Page):
         u=url.URL.fromRequest(request)
         u=u.parent().parent()
         l=[]
-	l.append(tags.a(href=u.sibling("search"))["Search"])
-	l.append(tags.a(href=u.sibling("add"))["add new entry"])
+	l.append(tags.a(href=u.sibling("search"))[_("Search")])
+	l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
 	return l
 
     def configurable_(self, context):
@@ -408,22 +412,24 @@ class ReallyEditPage(rend.Page):
         u=u.parent().parent()
 
         return context.tag.clear()[
-            "Edited ",
+            _("Edited "),
             tags.a(href=u.parent().child(obj.entry.dn).child("search"))[obj.entry.dn],
-            " successfully. ",
+            _(" successfully. "),
 
             # TODO share implementation with entryLinks
             '[',
-            tags.a(href=u.sibling('move').child(uriQuote(obj.entry.dn)))['move'],
+            tags.a(href=u.sibling('move').child(uriQuote(obj.entry.dn)))[_('move')],
             '|',
-            tags.a(href=u.sibling('delete').child(uriQuote(obj.entry.dn)))['delete'],
+            tags.a(href=u.sibling('delete').child(uriQuote(obj.entry.dn)))[_('delete')],
             '|',
-            tags.a(href=u.sibling('change_password').child(uriQuote(obj.entry.dn)))['change_password'],
+            tags.a(href=u.sibling('change_password').child(uriQuote(obj.entry.dn)))[_('change password')],
             ']',
 
             tags.p[obj.changes],
 
             ]
+
+    render_i18n = i18n.render()
 
 class EditPage(rend.Page):
     addSlash = True
@@ -454,3 +460,5 @@ class EditPage(rend.Page):
             return ReallyEditPage(entry, attributeTypes, objectClasses)
         d.addCallback(_createEditPage)
         return d
+
+    render_i18n = i18n.render()

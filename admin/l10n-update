@@ -1,0 +1,83 @@
+#!/bin/sh
+set -e
+
+py_files_for() {
+    DOMAIN="$1"
+
+    case "$DOMAIN" in
+	ldaptor)
+	    find ldaptor \( -path ldaptor/apps -prune \) \
+		-o -name '*.py' -print
+	    ;;
+	ldaptor-*)
+	    find "ldaptor/apps/${DOMAIN#ldaptor-}" -name '*.py'
+	    ;;
+    esac
+}
+
+xml_files_for() {
+    DOMAIN="$1"
+
+    case "$DOMAIN" in
+	ldaptor)
+	    ;;
+	ldaptor-*)
+	    find "ldaptor/apps/${DOMAIN#ldaptor-}" -name '*.xhtml'
+	    ;;
+    esac
+}
+
+for POT in po/*.pot; do
+    DOMAIN="$(basename "$POT" .pot)"
+
+    install -d -m0755 "po/$DOMAIN"
+    py_files_for "$DOMAIN" \
+	| xgettext \
+	--omit-header \
+	--files-from=- \
+	--output=- \
+	>"$POT.py.tmp"
+
+    xml_files_for "$DOMAIN" \
+	| xargs --no-run-if-empty -- \
+	./admin/nevow-xmlgettext -- \
+	>"$POT.xml.tmp"
+
+    msgcat -o - "$POT.py.tmp" "$POT.xml.tmp" \
+	>"$POT.tmp"
+    rm "$POT.py.tmp" "$POT.xml.tmp"
+    mv "$POT.tmp" "$POT"
+
+    find "po/$DOMAIN" -name '*.po' \
+	| while read PO; do
+	msgmerge --quiet "$PO" "$POT" \
+	    | msgattrib --no-obsolete --sort-output \
+	    >"$PO.tmp"
+	if cmp --silent "$PO.tmp" "$PO"; then
+	    rm "$PO.tmp"
+	else
+	    mv "$PO.tmp" "$PO"
+	fi
+    done
+done
+
+tobedone() {
+    DESCRIPTION="$1"; shift
+
+    find po -name '*.po' \
+	| while read PO; do
+	msgattrib --no-obsolete "$@" "$PO"
+    done \
+	>"l10n-update.$$.tmp"
+    
+    if [ -s "l10n-update.$$.tmp" ]; then
+	echo "# $DESCRIPTION"
+	cat "l10n-update.$$.tmp"
+    fi
+    rm "l10n-update.$$.tmp"
+}
+
+tobedone 'UNTRANSLATED' --untranslated
+tobedone 'FUZZY' --only-fuzzy
+
+./admin/l10n-generate

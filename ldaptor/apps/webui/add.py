@@ -6,6 +6,8 @@ from ldaptor.protocols.ldap import ldapsyntax, distinguishedname
 from ldaptor.protocols.ldap import fetchschema
 from ldaptor import numberalloc, interfaces, interfaces
 from ldaptor.apps.webui.uriquote import uriQuote, uriUnquote
+from ldaptor.apps.webui.i18n import _
+from ldaptor.apps.webui import i18n
 
 import os
 from nevow import rend, inevow, loaders, url, tags
@@ -56,7 +58,7 @@ class AddOCForm(configurable.Configurable):
             annotate.Argument('request',
                               annotate.Request()),
             annotate.Argument('structuralObjectClass',
-                              annotate.Choice(label='Object type to create',
+                              annotate.Choice(label=_('Object type to create'),
                                               choices=structural,
                                               stringify=strObjectClass)),
             ]
@@ -73,7 +75,9 @@ class AddOCForm(configurable.Configurable):
     def bind_add(self, ctx):
         return annotate.MethodBinding(
             'add',
-            annotate.Method(arguments=self.formFields))
+            annotate.Method(arguments=self.formFields,
+                            label=_('Add')),
+            action=_('Add'))
 
     def add(self, request, structuralObjectClass, **kw):
         assert structuralObjectClass is not None
@@ -90,11 +94,11 @@ class AddOCForm(configurable.Configurable):
             u.child('manual').child('+'.join([structuralObjectClass.name[0]]
                                              + auxiliaryObjectClasses)))
         if auxiliaryObjectClasses:
-            return 'Using objectclasses %s and %s.' % (
+            return _('Using objectclasses %s and %s.') % (
                 structuralObjectClass.name[0],
                 ', '.join(auxiliaryObjectClasses))
         else:
-            return 'Using objectclass %s.' % structuralObjectClass.name[0]
+            return _('Using objectclass %s.') % structuralObjectClass.name[0]
 
 class AddForm(configurable.Configurable):
     def __init__(self, chosenObjectClasses, attributeTypes, objectClasses):
@@ -219,7 +223,9 @@ class AddForm(configurable.Configurable):
     def bind_add(self, ctx):
         return annotate.MethodBinding(
             'add',
-            annotate.Method(arguments=self.formFields))
+            annotate.Method(arguments=self.formFields,
+                            label=_('Add')),
+            action=_('Add'))
 
     def _textarea_to_list(self, t):
 	return filter(lambda x: x, [x.strip() for x in t.split("\n")])
@@ -289,7 +295,7 @@ class AddForm(configurable.Configurable):
         user = context.locate(inevow.ISession).getLoggedInRoot().loggedIn
 
 	if not changes:
-            return "No changes!" #TODO
+            return _("No changes!") #TODO
 
         changes_desc=""
         mod={}
@@ -301,13 +307,13 @@ class AddForm(configurable.Configurable):
                 changes_desc=changes_desc+"<br>adding %s: %s"%(repr(attr), ', '.join(map(repr, new)))
 
         if not mod:
-            return "No changes (2)!" #TODO
+            return _("No changes (2)!") #TODO
 
         e = ldapsyntax.LDAPEntryWithClient(client=user.client,
                                            dn=cfg.getBaseDN())
         d = e.addChild(rdn, mod)
         #d.addCallback(lambda e: "Added %s successfully." % e.dn)
-        d.addErrback(lambda reason: "Failed: %s." % reason.getErrorMessage())
+        d.addErrback(lambda reason: _("Failed: %s.") % reason.getErrorMessage())
 	return d
 
 class ReallyAddPage(rend.Page):
@@ -332,8 +338,8 @@ class ReallyAddPage(rend.Page):
         u=url.URL.fromRequest(request)
         u=u.parent().parent().parent()
         l=[]
-	l.append(tags.a(href=u.sibling("search"))["Search"])
-	l.append(tags.a(href=u.sibling("add"))["add new entry"])
+	l.append(tags.a(href=u.sibling("search"))[_("Search")])
+	l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
         
 	return l
     
@@ -358,22 +364,24 @@ class ReallyAddPage(rend.Page):
         u=u.parent().parent().parent()
 
         return context.tag.clear()[
-            "Added ",
+            _("Added "),
             tags.a(href=u.parent().child(e.dn).child("search"))[e.dn],
-            " successfully. ",
+            _(" successfully. "),
 
             # TODO share implementation with entryLinks
             '[',
-            tags.a(href=u.sibling('edit').child(uriQuote(e.dn)))['edit'],
+            tags.a(href=u.sibling('edit').child(uriQuote(e.dn)))[_('edit')],
             '|',
-            tags.a(href=u.sibling('move').child(uriQuote(e.dn)))['move'],
+            tags.a(href=u.sibling('move').child(uriQuote(e.dn)))[_('move')],
             '|',
-            tags.a(href=u.sibling('delete').child(uriQuote(e.dn)))['delete'],
+            tags.a(href=u.sibling('delete').child(uriQuote(e.dn)))[_('delete')],
             '|',
-            tags.a(href=u.sibling('change_password').child(uriQuote(e.dn)))['change_password'],
+            tags.a(href=u.sibling('change_password').child(uriQuote(e.dn)))[_('change password')],
             ']',
             ]
             
+    render_i18n = i18n.render()
+
 class SmartObjectAddPage(ReallyAddPage):
     def __init__(self, smartObject):
 	super(SmartObjectAddPage, self).__init__()
@@ -412,7 +420,8 @@ class IChooseSmartObject(annotate.TypedInterface):
             context=annotate.Context(),
             smartObjectClass=annotate.Choice(choicesAttribute='plugins')):
         pass
-    add = annotate.autocallable(add)
+    add = annotate.autocallable(add,
+                                label=_('Add'))
 
 class ChooseSmartObject(object):
     __implements__ = IChooseSmartObject
@@ -427,7 +436,7 @@ class ChooseSmartObject(object):
         request.setComponent(
             iformless.IRedirectAfterPost,
             u.child('smart').child(smartObjectClass))
-        return 'Using smart objectclass %s.' % smartObjectClass
+        return _('Using smart objectclass %s.') % smartObjectClass
 
 class AddPage(rend.Page):
     addSlash = True
@@ -471,7 +480,7 @@ class AddPage(rend.Page):
         u=url.URL.fromRequest(request)
         u=u.parent()
         l=[]
-	l.append(tags.a(href=u.sibling("search"))["Search"])
+	l.append(tags.a(href=u.sibling("search"))[_("Search")])
         return l
 
     def configurable_objectClass(self, context):
@@ -534,6 +543,8 @@ class AddPage(rend.Page):
             return r, segments[2:]
         else:
             return rend.NotFound
+
+    render_i18n = i18n.render()
 
 def getResource(baseObject, request):
     entry = request.getSession().getLoggedInRoot().loggedIn

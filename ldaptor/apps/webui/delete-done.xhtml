@@ -5,10 +5,10 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:nevow="http://nevow.com/ns/nevow/0.1">
   <head>
-    <title>Ldaptor Deleting Entry</title>
+    <title nevow:render="i18n">Ldaptor Deleting Entry</title>
   </head>
   <body>
-    <h1>Deleting Entry</h1>
+    <h1 nevow:render="i18n">Deleting Entry</h1>
 
     <p nevow:render="sequence" nevow:data="header"><span
     nevow:pattern="header">[</span><span nevow:pattern="item" nevow:render="passthrough">foo</span><span
@@ -16,7 +16,8 @@
     nevow:pattern="footer">]</span></p>
 
     <p>
-      Deleting <nevow:invisible nevow:data="dn" nevow:render="string"/>...
+      <nevow:invisible nevow:render="i18n">Deleting</nevow:invisible>
+      <nevow:invisible nevow:data="dn" nevow:render="string"/>...
       
       <nevow:invisible nevow:data="status" nevow:render="string"/>
     </p>

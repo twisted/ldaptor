@@ -5,15 +5,16 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:nevow="http://nevow.com/ns/nevow/0.1">
   <head>
-    <title>Ldaptor Move Page</title>
+    <title nevow:render="i18n">Ldaptor Move Page</title>
   </head>
   <body>
-    <h1>Ldaptor Move Page</h1>
+    <h1 nevow:render="i18n">Ldaptor Move Page</h1>
 
     <p>
-      <strong>Missing DN to move.</strong>
+      <strong nevow:render="i18n">Missing DN to move.</strong>
 
-      You need to use the <a nevow:render="url">search page</a>.
+      <nevow:invisible nevow:render="i18n">You need to use the</nevow:invisible>
+      <a nevow:render="url"><nevow:invisible nevow:render="i18n">search page</nevow:invisible></a>.
     </p>
   </body>
 </html>

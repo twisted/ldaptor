@@ -7,6 +7,8 @@ from ldaptor import ldapfilter, interfaces
 from twisted.internet import reactor
 from ldaptor.apps.webui import config
 from ldaptor.apps.webui.uriquote import uriQuote
+from ldaptor.apps.webui.i18n import _
+from ldaptor.apps.webui import i18n
 from ldaptor import weave
 
 import os
@@ -21,12 +23,14 @@ class IMoveItem(annotate.TypedInterface):
     def move(self,
              context=annotate.Context()):
         pass
-    move = annotate.autocallable(move)
+    move = annotate.autocallable(move,
+                                 label=_('Move'))
 
     def cancel(self,
                context=annotate.Context()):
         pass
-    cancel = annotate.autocallable(cancel)
+    cancel = annotate.autocallable(cancel,
+                                   label=_('Cancel'))
 
 class MoveItem(object):
     __implements__ = IMoveItem
@@ -51,7 +55,7 @@ class MoveItem(object):
             self.entry.dn.split()[:1]
             + cfg.getBaseDN().split())
         d = self.entry.move(newDN)
-        d.addCallback(lambda _: 'Moved %s to %s.' % (self.entry.dn, newDN))
+        d.addCallback(lambda dummy: _('Moved %s to %s.') % (self.entry.dn, newDN))
         def _cb(r, context):
             self._remove(context)
             return r
@@ -60,15 +64,15 @@ class MoveItem(object):
 
     def cancel(self, context):
         self._remove(context)
-        return 'Cancelled move of %s' % self.entry.dn
+        return _('Cancelled move of %s') % self.entry.dn
 
 def strScope(scope):
     if scope == pureldap.LDAP_SCOPE_wholeSubtree:
-        return 'whole subtree'
+        return _('whole subtree')
     elif scope == pureldap.LDAP_SCOPE_singleLevel:
-        return 'single level'
+        return _('single level')
     elif scope == pureldap.LDAP_SCOPE_baseObject:
-        return 'baseobject'
+        return _('baseobject')
     else:
         raise RuntimeError, 'scope is not known: %r' % scope
 
@@ -90,10 +94,10 @@ class SearchForm(configurable.Configurable):
             l.append(annotate.Argument('search_%s' % field,
                                        annotate.String(label=field)))
         l.append(annotate.Argument('searchfilter',
-                                   annotate.String(label="Advanced")))
+                                   annotate.String(label=_("Advanced search"))))
         l.append(annotate.Argument(
             'scope',
-            annotate.Choice(label="Search depth",
+            annotate.Choice(label=_("Search depth"),
                             choices=[ pureldap.LDAP_SCOPE_wholeSubtree,
                                       pureldap.LDAP_SCOPE_singleLevel,
                                       pureldap.LDAP_SCOPE_baseObject,
@@ -103,8 +107,9 @@ class SearchForm(configurable.Configurable):
 
         return annotate.MethodBinding(
             name='search',
-            action="Search",
-            typeValue=annotate.Method(arguments=l))
+            action=_("Search"),
+            typeValue=annotate.Method(arguments=l,
+                                      label=_('Search')))
 
     def search(self, scope, searchfilter, **kw):
 	filt=[]
@@ -307,7 +312,7 @@ class SearchPage(rend.Page):
         u=url.URL.fromRequest(request)
         u=u.parent()
         l=[]
-	l.append(tags.a(href=u.sibling("add"))["add new entry"])
+	l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
 	return l
 
     def data_navilink(self, context, data):
@@ -335,10 +340,14 @@ class SearchPage(rend.Page):
     def render_entryLinks(self, context, data):
         request = context.locate(inevow.IRequest)
         u = url.URL.fromRequest(request)
-        l = [ (u.parent().sibling('edit').child(uriQuote(data)), 'edit'),
-              (u.parent().sibling('move').child(uriQuote(data)), 'move'),
-              (u.parent().sibling('delete').child(uriQuote(data)), 'delete'),
-              (u.parent().sibling('change_password').child(uriQuote(data)), 'change password'),
+        l = [ (u.parent().sibling('edit').child(uriQuote(data)),
+               _('edit')),
+              (u.parent().sibling('move').child(uriQuote(data)),
+               _('move')),
+              (u.parent().sibling('delete').child(uriQuote(data)),
+               _('delete')),
+              (u.parent().sibling('change_password').child(uriQuote(data)),
+               _('change password')),
               ]
         return self.render_sequence(context, l)
 
@@ -390,6 +399,8 @@ class SearchPage(rend.Page):
     def render_move(self, context, data):
         return webform.renderForms('move_%s' % data.dn)[context.tag]
         
+    render_i18n = i18n.render()
+
 def getSearchPage():
     r = SearchPage()
     return r

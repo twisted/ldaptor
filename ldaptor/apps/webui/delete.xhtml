@@ -5,7 +5,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:nevow="http://nevow.com/ns/nevow/0.1">
   <head>
-    <title>Ldaptor Delete Page</title>
+    <title nevow:render="i18n">Ldaptor Delete Page</title>
     <nevow:invisible nevow:render="sequence" nevow:data="css">
       <link rel="stylesheet" 
 	    nevow:pattern="item"
@@ -15,19 +15,19 @@
     </nevow:invisible>
   </head>
   <body>
-    <h1>Ldaptor Delete Page</h1>
+    <h1 nevow:render="i18n">Ldaptor Delete Page</h1>
 
     <p nevow:render="sequence" nevow:data="header"><span
     nevow:pattern="header">[</span><span nevow:pattern="item" nevow:render="passthrough">foo</span><span
     nevow:pattern="divider">|</span><span
     nevow:pattern="footer">]</span></p>
 
-    <p>Remove <span nevow:data="dn" nevow:render="string"/>?</p>
+    <p><nevow:invisible nevow:render="i18n">Remove</nevow:invisible> <span nevow:data="dn" nevow:render="string"/>?</p>
 
     <div nevow:data="entry" nevow:render="error_or_pass">
       <div nevow:render="form" />
       <ul nevow:render="keyvalue">
-	<li nevow:pattern="empty">None</li>
+	<li nevow:pattern="empty" nevow:render="i18n">None</li>
 	<li nevow:pattern="item" nevow:render="keyvalue_item">
 	  <span nevow:pattern="key" nevow:render="string"/>:
 	  <ul nevow:pattern="value" nevow:render="sequence">

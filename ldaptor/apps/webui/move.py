@@ -2,6 +2,8 @@ import os
 from ldaptor.protocols.ldap import ldapsyntax
 from ldaptor.apps.webui.uriquote import uriUnquote
 from nevow import rend, loaders, url, inevow
+from ldaptor.apps.webui.i18n import _
+from ldaptor.apps.webui import i18n
 
 from ldaptor.apps.webui.search import IMove
 
@@ -31,3 +33,5 @@ class MovePage(rend.Page):
         move.append(e)
         u = url.URL.fromRequest(inevow.IRequest(context)).sibling('search')
         return u
+
+    render_i18n = i18n.render()

@@ -1,0 +1,407 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Free Software Foundation, Inc.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"PO-Revision-Date: 2005-02-21 14:54+0200\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ldaptor/apps/webui/add.py:369 ldaptor/apps/webui/edit.py:417
+msgid " successfully. "
+msgstr " onnistuneesti. "
+
+#: ldaptor/apps/webui/change_password.xhtml
+msgid "About to set password for"
+msgstr "Asettamassa salasanaa oliolle"
+
+#: ldaptor/apps/webui/change_service_passwords.xhtml
+msgid "Actions"
+msgstr "Toiminnot"
+
+#: ldaptor/apps/webui/add.py:79 ldaptor/apps/webui/add.py:80
+#: ldaptor/apps/webui/add.py:227 ldaptor/apps/webui/add.py:228
+#: ldaptor/apps/webui/add.py:424 ldaptor/apps/webui/change_password.py:182
+msgid "Add"
+msgstr "Lisää"
+
+#: ldaptor/apps/webui/add.py:367
+msgid "Added "
+msgstr "Lisätty "
+
+#: ldaptor/apps/webui/change_password.py:240
+#, python-format
+msgid "Added service %r"
+msgstr "Lisätty palvelu %r"
+
+#: ldaptor/apps/webui/change_password.py:231
+#, python-format
+msgid "Added service %r with password %s"
+msgstr "Lisätty palvelu %r salasanalla %s"
+
+#: ldaptor/apps/webui/search.py:97
+msgid "Advanced search"
+msgstr "Edistynyt haku"
+
+#: ldaptor/apps/webui/change_password.py:48
+#: ldaptor/apps/webui/change_password.py:72
+#: ldaptor/apps/webui/change_password.py:178
+msgid "Again"
+msgstr "Uudestaan"
+
+#: ldaptor/apps/webui/delete.py:76
+msgid "An error occurred: "
+msgstr "Virhe: "
+
+#: ldaptor/apps/webui/gadget.py:71 ldaptor/apps/webui/basedn.xhtml
+msgid "Base DN"
+msgstr "Päätason DN"
+
+#: ldaptor/apps/webui/search.py:33
+msgid "Cancel"
+msgstr "Peruuta"
+
+#: ldaptor/apps/webui/search.py:67
+#, python-format
+msgid "Cancelled move of %s"
+msgstr "Peruutettu %s:n siirto"
+
+#: ldaptor/apps/webui/delete.py:16
+msgid "Confirm delete"
+msgstr "Vahvista poisto"
+
+#: ldaptor/apps/webui/change_service_passwords.xhtml
+msgid "Current service passwords"
+msgstr "Palvelusalasanat"
+
+#: ldaptor/apps/webui/delete.py:15
+msgid "Delete"
+msgstr "Poista"
+
+#: ldaptor/apps/webui/delete-done.xhtml
+msgid "Deleting"
+msgstr "Poistetaan"
+
+#: ldaptor/apps/webui/delete-done.xhtml
+msgid "Deleting Entry"
+msgstr "Poistetaan olio"
+
+#: ldaptor/apps/webui/edit.py:49 ldaptor/apps/webui/edit.py:50
+msgid "Edit"
+msgstr "Muokkaa"
+
+#: ldaptor/apps/webui/edit.py:415
+msgid "Edited "
+msgstr "Muokattu "
+
+#: ldaptor/apps/webui/change_password.py:369
+#: ldaptor/apps/webui/change_password.py:385
+#: ldaptor/apps/webui/mass_change_password.py:137
+msgid "Failed: "
+msgstr "Epäonnistui: "
+
+#: ldaptor/apps/webui/delete.py:50 ldaptor/apps/webui/add.py:316
+#, python-format
+msgid "Failed: %s."
+msgstr "Epäonnistui: %s."
+
+#: ldaptor/apps/webui/mass_change_password.py:45
+#: ldaptor/apps/webui/mass_change_password.py:46
+msgid "Generate passwords"
+msgstr "Tee salasanat"
+
+#: ldaptor/apps/webui/change_password.py:57
+#: ldaptor/apps/webui/change_password.py:83
+msgid "Generate random"
+msgstr "Aseta satunnainen salasana"
+
+#: ldaptor/apps/webui/gadget.py:76
+msgid "Go"
+msgstr "Siirry"
+
+#: ldaptor/apps/webui/delete.py:139
+msgid "Internal error, no status to display."
+msgstr "Sisäinen virhe, ei tilannetietoa näytettäväksi."
+
+#: ldaptor/apps/webui/add-really.xhtml ldaptor/apps/webui/add.xhtml
+msgid "Ldaptor Add Page"
+msgstr "Ldaptor lisäyssivu"
+
+#: ldaptor/apps/webui/delete.xhtml ldaptor/apps/webui/delete-nodn.xhtml
+msgid "Ldaptor Delete Page"
+msgstr "Ldaptor poistosivu"
+
+#: ldaptor/apps/webui/delete-done.xhtml
+msgid "Ldaptor Deleting Entry"
+msgstr "Ldaptor olion poisto"
+
+#: ldaptor/apps/webui/edit.xhtml ldaptor/apps/webui/edit-really.xhtml
+msgid "Ldaptor Edit Page"
+msgstr "Ldaptor muokkaussivu"
+
+#: ldaptor/apps/webui/mass_change_password-really.xhtml
+#: ldaptor/apps/webui/mass_change_password.xhtml
+msgid "Ldaptor Mass Password Change Page"
+msgstr "Ldaptor usean salasanan vaihtosivu"
+
+#: ldaptor/apps/webui/move.xhtml
+msgid "Ldaptor Move Page"
+msgstr "Ldaptor olion siirto"
+
+#: ldaptor/apps/webui/change_password.xhtml
+msgid "Ldaptor Password Change Page"
+msgstr "Ldaptor salasananvaihtosivu"
+
+#: ldaptor/apps/webui/search.xhtml
+msgid "Ldaptor Search Page"
+msgstr "Ldaptor hakusivu"
+
+#: ldaptor/apps/webui/basedn.xhtml
+msgid "Ldaptor Web Interface"
+msgstr "Ldaptor Web-liittymä"
+
+#: ldaptor/apps/webui/change_password.py:176
+msgid "Leave empty to generate random password."
+msgstr "Jätä tyhjäksi asettaaksesi satunnaisen salasanan."
+
+#: ldaptor/apps/webui/login.xhtml
+msgid "Login"
+msgstr "Kirjaudu sisään"
+
+#: ldaptor/apps/webui/search.xhtml
+msgid "Mass change passwords"
+msgstr "Vaihda useita salasanoja"
+
+#: ldaptor/apps/webui/delete-nodn.xhtml
+msgid "Missing DN to delete."
+msgstr "Poistettava DN puuttuu."
+
+#: ldaptor/apps/webui/edit.xhtml
+msgid "Missing DN to edit."
+msgstr "Muokattava DN puuttuu."
+
+#: ldaptor/apps/webui/move.xhtml
+msgid "Missing DN to move."
+msgstr "Siirrettävä DN puuttuu."
+
+#: ldaptor/apps/webui/mass_change_password.xhtml
+msgid "Missing filter to use."
+msgstr "Käytettävä suodin puuttuu."
+
+#: ldaptor/apps/webui/search.py:27
+msgid "Move"
+msgstr "Siirrä"
+
+#: ldaptor/apps/webui/search.py:58
+#, python-format
+msgid "Moved %s to %s."
+msgstr "Siirretty %s uudelle nimelle %s."
+
+#: ldaptor/apps/webui/change_password.py:46
+#: ldaptor/apps/webui/change_password.py:70
+#: ldaptor/apps/webui/change_password.py:175
+msgid "New password"
+msgstr "Uusi salasana"
+
+#: ldaptor/apps/webui/add.py:310
+msgid "No changes (2)!"
+msgstr "Ei muutoksia (2)!"
+
+#: ldaptor/apps/webui/add.py:298
+msgid "No changes!"
+msgstr "Ei muutoksia!"
+
+#: ldaptor/apps/webui/mass_change_password.py:60
+msgid "No passwords to change."
+msgstr "Ei salasanoja muutettavaksi."
+
+#: ldaptor/apps/webui/delete.xhtml ldaptor/apps/webui/search.xhtml
+msgid "None"
+msgstr "Ei ole"
+
+#: ldaptor/apps/webui/add.py:61
+msgid "Object type to create"
+msgstr "Luotavan olion tyyppi"
+
+#: ldaptor/apps/webui/login.xhtml
+msgid "Password"
+msgstr "Salasana"
+
+#: ldaptor/apps/webui/change_password.py:381
+#, python-format
+msgid "Password set to %s"
+msgstr "Salasana asetettu: %s"
+
+#: ldaptor/apps/webui/change_password.py:367
+msgid "Password set."
+msgstr "Salasana asetettu."
+
+#: ldaptor/apps/webui/change_password.py:40
+msgid "Passwords do not match."
+msgstr "Salasanat eivät täsmää."
+
+#: ldaptor/apps/webui/gadget.py:85
+msgid "Redirecting..."
+msgstr "Uudelleenohjataan..."
+
+#: ldaptor/apps/webui/change_password.py:64 ldaptor/apps/webui/delete.xhtml
+msgid "Remove"
+msgstr "Poista"
+
+#: ldaptor/apps/webui/change_password.py:103
+#, python-format
+msgid "Removed service %r"
+msgstr "Poistettu palvelu %r"
+
+#: ldaptor/apps/webui/delete.py:97 ldaptor/apps/webui/delete.py:128
+#: ldaptor/apps/webui/add.py:341 ldaptor/apps/webui/add.py:483
+#: ldaptor/apps/webui/change_password.py:408
+#: ldaptor/apps/webui/mass_change_password.py:106
+#: ldaptor/apps/webui/search.py:110 ldaptor/apps/webui/search.py:112
+#: ldaptor/apps/webui/edit.py:385
+msgid "Search"
+msgstr "Hae"
+
+#: ldaptor/apps/webui/search.py:100
+msgid "Search depth"
+msgstr "Hakusyvyys"
+
+#: ldaptor/apps/webui/change_service_passwords.xhtml
+msgid "Service"
+msgstr "Palvelu"
+
+#: ldaptor/apps/webui/change_password.py:161
+#, python-format
+msgid "Service %r password set to %s"
+msgstr "Palvelun %r salasana asetettu arvoon %s"
+
+#: ldaptor/apps/webui/change_password.py:173
+msgid "Service name"
+msgstr "Palvelun nimi"
+
+#: ldaptor/apps/webui/change_password.py:31
+#, python-format
+msgid "Service password entry has no attribute cn: %r"
+msgstr "Palvelusalasanan tiedoissa ei ole kenttää cn: %r"
+
+#: ldaptor/apps/webui/change_password.xhtml
+msgid "Service passwords"
+msgstr "Palvelusalasanat"
+
+#: ldaptor/apps/webui/change_password.py:51
+#: ldaptor/apps/webui/change_password.py:76
+msgid "Set password"
+msgstr "Aseta salasana"
+
+#: ldaptor/apps/webui/change_password.py:132
+#, python-format
+msgid "Set password for service %r"
+msgstr "Aseta salasana palvelulle %r"
+
+#: ldaptor/apps/webui/delete.py:49
+msgid "Success."
+msgstr "Onnistui."
+
+#: ldaptor/apps/webui/gadget.py:72
+msgid "The top-level LDAP DN you want to browse, e.g. dc=example,dc=com"
+msgstr "Päätason LDAP DN, jota haluat selata. Esim. dc=example,dc=com"
+
+#: ldaptor/apps/webui/search.xhtml
+msgid "Used filter"
+msgstr "Käytettiin suodinta"
+
+#: ldaptor/apps/webui/login.xhtml
+msgid "Username"
+msgstr "Käyttäjätunnus"
+
+#: ldaptor/apps/webui/add.py:101
+#, python-format
+msgid "Using objectclass %s."
+msgstr "Käytetään oliotyyppiä %s."
+
+#: ldaptor/apps/webui/add.py:97
+#, python-format
+msgid "Using objectclasses %s and %s."
+msgstr "Käytetään oliotyyppejä %s ja %s."
+
+#: ldaptor/apps/webui/add.py:439
+#, python-format
+msgid "Using smart objectclass %s."
+msgstr "Käytetään älykästä oliotyyppiä %s."
+
+#: ldaptor/apps/webui/delete-nodn.xhtml ldaptor/apps/webui/edit.xhtml
+#: ldaptor/apps/webui/mass_change_password.xhtml ldaptor/apps/webui/move.xhtml
+msgid "You need to use the"
+msgstr "Käytä"
+
+#: ldaptor/apps/webui/edit.py:349
+msgid "add "
+msgstr "lisää "
+
+#: ldaptor/apps/webui/delete.py:98 ldaptor/apps/webui/delete.py:129
+#: ldaptor/apps/webui/add.py:342 ldaptor/apps/webui/change_password.py:409
+#: ldaptor/apps/webui/mass_change_password.py:107
+#: ldaptor/apps/webui/search.py:315 ldaptor/apps/webui/edit.py:386
+msgid "add new entry"
+msgstr "lisää"
+
+#: ldaptor/apps/webui/search.py:75
+msgid "baseobject"
+msgstr "vain päätaso"
+
+#: ldaptor/apps/webui/add.py:379 ldaptor/apps/webui/search.py:350
+#: ldaptor/apps/webui/edit.py:425
+msgid "change password"
+msgstr "aseta salasana"
+
+#: ldaptor/apps/webui/edit.py:345
+#, python-format
+msgid "changing %s"
+msgstr "muokataan %s"
+
+#: ldaptor/apps/webui/edit.py:316
+#, python-format
+msgid "changing %s: changing RDN to say %s"
+msgstr "muokataan %s: vaihdetaan RDN:ksi %s"
+
+#: ldaptor/apps/webui/delete.py:100 ldaptor/apps/webui/add.py:377
+#: ldaptor/apps/webui/change_password.py:411 ldaptor/apps/webui/search.py:348
+#: ldaptor/apps/webui/edit.py:423
+msgid "delete"
+msgstr "poista"
+
+#: ldaptor/apps/webui/delete.py:99 ldaptor/apps/webui/add.py:373
+#: ldaptor/apps/webui/change_password.py:410 ldaptor/apps/webui/search.py:344
+msgid "edit"
+msgstr "muokkaa"
+
+#: ldaptor/apps/webui/search.xhtml
+msgid "entries matched"
+msgstr "oliota löytyi."
+
+#: ldaptor/apps/webui/add.py:375 ldaptor/apps/webui/search.py:346
+#: ldaptor/apps/webui/edit.py:421
+msgid "move"
+msgstr "siirrä"
+
+#: ldaptor/apps/webui/edit.py:347
+msgid "remove "
+msgstr "poista "
+
+#: ldaptor/apps/webui/delete-nodn.xhtml ldaptor/apps/webui/edit.xhtml
+#: ldaptor/apps/webui/mass_change_password.xhtml ldaptor/apps/webui/move.xhtml
+msgid "search page"
+msgstr "hakusivua"
+
+#: ldaptor/apps/webui/search.py:73
+msgid "single level"
+msgstr "vain yksi taso"
+
+#: ldaptor/apps/webui/search.py:71
+msgid "whole subtree"
+msgstr "koko alipuu"

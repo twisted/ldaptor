@@ -5,6 +5,8 @@ from ldaptor.protocols.ldap import ldapsyntax, distinguishedname
 from ldaptor import generate_password, entry, interfaces
 from ldaptor.apps.webui.uriquote import uriUnquote
 from ldaptor import weave
+from ldaptor.apps.webui.i18n import _
+from ldaptor.apps.webui import i18n
 
 import os, sets
 from nevow import rend, inevow, loaders, url, tags
@@ -26,7 +28,7 @@ def getServiceName(ctx, dn):
         for cn in e.get('cn', []):
             return cn
         raise RuntimeError, \
-              "Service password entry has no attribute cn: %r" % e
+              _("Service password entry has no attribute cn: %r") % e
     d.addCallback(_cb)
     return d
 
@@ -35,41 +37,50 @@ def checkPasswordTypos(newPassword, again):
     if newPassword != again:
         raise annotate.ValidateError(
             {},
-            formErrorMessage='Passwords do not match.')
+            formErrorMessage=_('Passwords do not match.'))
 
 class IPasswordChange(annotate.TypedInterface):
     def setPassword(self,
                     ctx=annotate.Context(),
-                    newPassword=annotate.PasswordEntry(required=True),
-                    again=annotate.PasswordEntry(required=True)):
+                    newPassword=annotate.PasswordEntry(required=True,
+                                                       label=_('New password')),
+                    again=annotate.PasswordEntry(required=True,
+                                                 label=_('Again'))):
         pass
-    setPassword = annotate.autocallable(setPassword)
+    setPassword = annotate.autocallable(setPassword,
+                                        label=_('Set password'))
 
     def generateRandom(self,
                        ctx=annotate.Context()):
         pass
-    generateRandom = annotate.autocallable(generateRandom)
+    generateRandom = annotate.autocallable(generateRandom,
+                                           label=_('Generate random'))
 
 class IRemoveServicePassword(annotate.TypedInterface):
     def remove(self,
                ctx=annotate.Context()):
         pass
-    remove = annotate.autocallable(remove)
+    remove = annotate.autocallable(remove,
+                                   label=_('Remove'))
 
 class ISetServicePassword(annotate.TypedInterface):
     def setServicePassword(self,
                            ctx=annotate.Context(),
-                           newPassword=annotate.PasswordEntry(required=True),
-                           again=annotate.PasswordEntry(required=True),
+                           newPassword=annotate.PasswordEntry(required=True,
+                                                              label=_('New password')),
+                           again=annotate.PasswordEntry(required=True,
+                                                        label=_('Again')),
                            ):
         pass
-    setServicePassword = annotate.autocallable(setServicePassword)
+    setServicePassword = annotate.autocallable(setServicePassword,
+                                               label=_('Set password'))
 
 class ISetRandomServicePassword(annotate.TypedInterface):
     def generateRandom(self,
                        ctx=annotate.Context()):
         pass
-    generateRandom = annotate.autocallable(generateRandom)
+    generateRandom = annotate.autocallable(generateRandom,
+                                           label=_('Generate random'))
 
 class RemoveServicePassword(object):
     __implements__ = IRemoveServicePassword
@@ -89,7 +100,7 @@ class RemoveServicePassword(object):
         d.addCallback(_delete, e)
 
         def _report(name):
-            return 'Removed service %r' % name
+            return _('Removed service %r') % name
         d.addCallback(_report)
 
         return d
@@ -118,7 +129,7 @@ class SetServicePassword(object):
         d.addCallback(_getName, ctx)
 
         def _report(name):
-            return 'Set password for service %r' % name
+            return _('Set password for service %r') % name
         d.addCallback(_report)
 
         return d
@@ -147,7 +158,7 @@ class SetRandomServicePassword(object):
             d.addCallback(_getName, ctx)
 
             def _report(name, newPassword):
-                return 'Service %r password set to %s' % (name, newPassword)
+                return _('Service %r password set to %s') % (name, newPassword)
             d.addCallback(_report, newPassword)
 
             return d
@@ -158,13 +169,17 @@ class SetRandomServicePassword(object):
 class IAddService(annotate.TypedInterface):
     def add(self,
             ctx=annotate.Context(),
-            serviceName=annotate.String(required=True),
+            serviceName=annotate.String(required=True,
+                                        label=_('Service name')),
             newPassword=annotate.PasswordEntry(required=False,
-                                               description="Leave empty to generate random password."),
-            again=annotate.PasswordEntry(required=False),
+                                               label=_('New password'),
+                                               description=_("Leave empty to generate random password.")),
+            again=annotate.PasswordEntry(required=False,
+                                         label=_('Again')),
             ):
         pass
-    add = annotate.autocallable(add)
+    add = annotate.autocallable(add,
+                                label=_('Add'))
 
 class AddService(object):
     __implements__ = IAddService
@@ -213,7 +228,7 @@ class AddService(object):
 
         def _cb(newPassword, serviceName):
             d = self._cbSetPassword(ctx, newPassword, serviceName)
-            d.addCallback(lambda _: 'Added service %r with password %s' % (serviceName, newPassword))
+            d.addCallback(lambda dummy: _('Added service %r with password %s') % (serviceName, newPassword))
             return d
         d.addCallback(_cb, serviceName)
 
@@ -221,8 +236,8 @@ class AddService(object):
 
     def _add(self, ctx, newPassword, serviceName):
         d = self._cbSetPassword(ctx, newPassword, serviceName)
-        def _report(_, name):
-            return 'Added service %r' % name
+        def _report(dummy, name):
+            return _('Added service %r') % name
         d.addCallback(_report, serviceName)
 
         return d
@@ -309,6 +324,8 @@ class ServicePasswordChangeMixin(object):
 
     render_zebra = weave.zebra()
 
+    render_i18n = i18n.render()
+
 
 class ConfirmChange(ServicePasswordChangeMixin, rend.Page):
     __implements__ = rend.Page.__implements__, IPasswordChange
@@ -347,9 +364,9 @@ class ConfirmChange(ServicePasswordChangeMixin, rend.Page):
     def setPassword(self, ctx, newPassword, again):
         d = defer.maybeDeferred(checkPasswordTypos, newPassword, again)
         d.addCallback(lambda dummy: self._setPassword(ctx, newPassword))
-        d.addCallback(lambda dummy: 'Password set.')
+        d.addCallback(lambda dummy: _('Password set.'))
         d.addErrback(self._prettifyExceptions,
-                     prefix="Failed: ")
+                     prefix=_("Failed: "))
         return d
 
     def generateRandom(self, ctx):
@@ -361,11 +378,11 @@ class ConfirmChange(ServicePasswordChangeMixin, rend.Page):
 
         def _status(newPassword, ctx):
             d = self._setPassword(ctx, newPassword)
-            d.addCallback(lambda dummy: 'Password set to %s' % newPassword)
+            d.addCallback(lambda dummy: _('Password set to %s') % newPassword)
             return d
         d.addCallback(_status, ctx)
         d.addErrback(self._prettifyExceptions,
-                     prefix="Failed: ")
+                     prefix=_("Failed: "))
         return d
 
     def data_status(self, ctx, data):
@@ -388,10 +405,10 @@ class ConfirmChange(ServicePasswordChangeMixin, rend.Page):
         u=url.URL.fromRequest(request)
         u=u.parent().parent()
         l=[]
-	l.append(tags.a(href=u.sibling("search"))["Search"])
-	l.append(tags.a(href=u.sibling("add"))["add new entry"])
-        l.append(tags.a(href=u.sibling("edit").child(str(self.dn)))["edit"])
-        l.append(tags.a(href=u.sibling("delete").child(str(self.dn)))["delete"])
+	l.append(tags.a(href=u.sibling("search"))[_("Search")])
+	l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
+        l.append(tags.a(href=u.sibling("edit").child(str(self.dn)))[_("edit")])
+        l.append(tags.a(href=u.sibling("delete").child(str(self.dn)))[_("delete")])
 	return l
 
     def render_add(self, ctx, data):
@@ -399,6 +416,8 @@ class ConfirmChange(ServicePasswordChangeMixin, rend.Page):
 
     def configurable_add(self, ctx):
         return AddService(self.dn)
+
+    render_i18n = i18n.render()
 
 class GetDN(rend.Page):
     addSlash = True

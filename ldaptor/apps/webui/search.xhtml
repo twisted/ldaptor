@@ -5,7 +5,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:nevow="http://nevow.com/ns/nevow/0.1">
   <head>
-    <title>Ldaptor Search Page</title>
+    <title nevow:render="i18n">Ldaptor Search Page</title>
     <nevow:invisible nevow:render="sequence" nevow:data="css">
       <link rel="stylesheet" 
 	    nevow:pattern="item"
@@ -15,7 +15,7 @@
     </nevow:invisible>
   </head>
   <body id="ldaptorPage-search">
-    <h1>Ldaptor Search Page</h1>
+    <h1 nevow:render="i18n">Ldaptor Search Page</h1>
 
     <p nevow:render="sequence" nevow:data="navilink">
       <nevow:invisible nevow:pattern="item">
@@ -98,10 +98,10 @@
 	      </ul>
 	    </li>
 	  </ul>
-	  <p><span nevow:render="listLen" /> entries matched.</p>
+	  <p><span nevow:render="listLen" /> <nevow:invisible nevow:render="i18n">entries matched</nevow:invisible>.</p>
 	</div>
-	<p>Used filter <span nevow:render="string" nevow:data="filter"/></p>
-	<p><a nevow:data="filter" nevow:render="mass_change_password">Mass change passwords</a></p>
+	<p><nevow:invisible nevow:render="i18n">Used filter</nevow:invisible> <span nevow:render="string" nevow:data="filter"/></p>
+	<p><a nevow:data="filter" nevow:render="mass_change_password"><nevow:invisible nevow:render="i18n">Mass change passwords</nevow:invisible></a></p>
       </nevow:invisible>
       <nevow:invisible nevow:pattern="False">
 	<div nevow:data="base">
@@ -120,7 +120,7 @@
 	    </nevow:invisible>
 	  </nevow:invisible>
 	  <ul nevow:data="attributes" nevow:render="keyvalue">
-	    <li nevow:pattern="empty">None</li>
+	    <li nevow:pattern="empty" nevow:render="i18n">None</li>
 	    <li nevow:pattern="item" nevow:render="keyvalue_item">
 	      <div nevow:pattern="key">
 		<nevow:invisible nevow:render="string"/>:

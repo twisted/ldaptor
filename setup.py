@@ -2,7 +2,59 @@
 
 import os
 from distutils.core import setup, Extension
-from distutils import sysconfig
+from distutils import sysconfig, cmd
+from distutils.command.build import build as _build
+from distutils.command.clean import clean as _clean
+from distutils.command.install import install as _install
+from distutils.util import change_root
+from distutils.dir_util import remove_tree, copy_tree
+
+# quick hack to support generating locale files
+class build(_build):
+    def run(self):
+        _build.run(self)
+        self.spawn(['./admin/l10n-generate'])
+
+class clean(_clean):
+    def run(self):
+        _clean.run(self)
+
+        if os.path.exists('locale'):
+            remove_tree('locale', dry_run=self.dry_run)
+
+class install(_install):
+    def run(self):
+        _install.run(self)
+        
+        copy_tree(src='locale',
+                  dst=os.path.join(change_root(self.root, self.prefix),
+                                   'share', 'locale'),
+                  dry_run=self.dry_run)
+
+def grabAll(topdir, to=None, fileFilter=None):
+    for dirpath, dirnames, filenames in os.walk(topdir):
+        if '.svn' in dirnames:
+            dirnames.remove('.svn')
+
+        if len(dirpath) == len(topdir):
+            path = '.'
+        elif len(dirpath) > len(topdir):
+            path = dirpath[len(topdir):]
+            if path[0] != '/':
+                raise RuntimeError, "all weird"
+            path = path[1:]
+        else:
+            raise RuntimeError, "all weird"
+
+        if to is not None:
+            path = os.path.join(to, path)
+        l = []
+        for filename in filenames:
+            if (fileFilter is None
+                or fileFilter(dirpath, filename)):
+                l.append(os.path.join(dirpath, filename))
+        if l:
+            yield (path, l)
 
 if __name__=='__main__':
     setup(name="ldaptor",
@@ -31,6 +83,11 @@ from the command line.
 	  author_email="tv@debian.org",
 	  #url="TODO",
 	  license="GNU LGPL",
+
+          cmdclass={'build': build,
+                    'clean': clean,
+                    'install': install,
+                    },
 
 	  packages=[
 	"ldaptor",
@@ -77,5 +134,4 @@ from the command line.
 
         'ldaptor/apps/webui/ldaptor.css',
         ]),
-        ],
-	  )
+        ])

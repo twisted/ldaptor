@@ -5,22 +5,22 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:nevow="http://nevow.com/ns/nevow/0.1">
   <head>
-    <title>Login</title>
+    <title nevow:render="i18n">Login</title>
   </head>
   <body>
     <form name="login" method="post" action="PLACEHOLDER" nevow:render="form">
       <nevow:attr name="action"><nevow:slot name="action-url"/></nevow:attr>
       <p>
-	<label for="username">Username: </label>
+	<label for="username"><nevow:invisible nevow:render="i18n">Username</nevow:invisible>: </label>
 	<input id="username" name="username" type="text"/>
       </p>
       <p>
-	<label for="password">Password: </label>
+	<label for="password"><nevow:invisible nevow:render="i18n">Password</nevow:invisible>: </label>
 	<input id="password" name="password" type="password"/>
       </p>
       <p>
 	<input type="submit">
-	  <nevow:attr name="value">Login</nevow:attr>
+	  <nevow:attr name="value" nevow:render="i18n">Login</nevow:attr>
 	</input>
       </p>
     </form>

@@ -18,10 +18,25 @@ build/ldaptor-doc::
 binary-post-install/ldaptor-utils::
 	rm -rf debian/ldaptor-utils/usr/bin/ldaptor-webui
 
-binary-post-install/python2.3-ldaptor:: binary-install/ldaptor-utils binary-install/ldaptor-webui
+binary-post-install/python2.3-ldaptor:: binary-install/ldaptor-utils binary-install/ldaptor-webui binary-install/ldaptor-common
 	rm -rf \
 		debian/python2.3-ldaptor/usr/bin \
-		debian/python2.3-ldaptor/usr/lib/python2.3/site-packages/ldaptor/apps/webui
+		debian/python2.3-ldaptor/usr/lib/python2.3/site-packages/ldaptor/apps/webui \
+		debian/python2.3-ldaptor/usr/share/locale
+
+binary-post-install/ldaptor-common::
+	find debian/ldaptor-common/usr/share/locale \
+		-name '*.mo' \
+		-a \! -name 'ldaptor.mo' \
+		-print0 \
+	| xargs -0 --no-run-if-empty rm --
+
+binary-post-install/ldaptor-webui::
+	find debian/ldaptor-webui/usr/share/locale \
+		-name '*.mo' \
+		-a \! -name 'ldaptor-webui.mo' \
+		-print0 \
+	| xargs -0 --no-run-if-empty rm --
 
 clean::
 	find . -type f -name '*.pyc' -print0 \

@@ -3,6 +3,8 @@ from ldaptor.protocols.ldap import ldapsyntax
 from ldaptor import generate_password
 from ldaptor.apps.webui.uriquote import uriUnquote
 from twisted.internet import reactor
+from ldaptor.apps.webui.i18n import _
+from ldaptor.apps.webui import i18n
 
 import os
 from nevow import rend, inevow, loaders, url, tags
@@ -39,7 +41,9 @@ class MassPasswordChangeForm(configurable.Configurable):
     def bind_generate(self, ctx):
         return annotate.MethodBinding(
             'generatePasswords',
-            annotate.Method(arguments=self.formFields))
+            annotate.Method(arguments=self.formFields,
+                            label=_('Generate passwords')),
+            action=_('Generate passwords'))
 
     def generatePasswords(self, request, **kw):
         entries = []
@@ -53,7 +57,7 @@ class MassPasswordChangeForm(configurable.Configurable):
             entries.append(self.ldapObjects[k])
 
 	if not entries:
-	    return 'No passwords to change.'
+	    return _('No passwords to change.')
 	d=generate_password.generate(reactor, len(entries))
 
         def _gotPasswords(passwords, entries):
@@ -99,8 +103,8 @@ class ReallyMassPasswordChangePage(rend.Page):
         u=url.URL.fromRequest(request)
         u=u.parent().parent()
         l=[]
-	l.append(tags.a(href=u.sibling("search"))["Search"])
-	l.append(tags.a(href=u.sibling("add"))["add new entry"])
+	l.append(tags.a(href=u.sibling("search"))[_("Search")])
+	l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
 	return l
 
     def configurable_(self, context):
@@ -130,9 +134,11 @@ class ReallyMassPasswordChangePage(rend.Page):
                 dl[tags.dt[entry.dn],
                    tags.dd[pwd]]
             else:
-                context.tag['Failed: ', x.getErrorMessage()]
+                context.tag[_('Failed: '), x.getErrorMessage()]
 
         return context.tag
+
+    render_i18n = i18n.render()
 
 class MassPasswordChangePage(rend.Page):
     addSlash = True
@@ -159,3 +165,5 @@ class MassPasswordChangePage(rend.Page):
         d=e.search(filterText=filt, sizeLimit=20)
         d.addCallback(ReallyMassPasswordChangePage)
         return d
+
+    render_i18n = i18n.render()

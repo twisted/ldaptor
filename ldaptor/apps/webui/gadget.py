@@ -2,6 +2,8 @@ from ldaptor.apps.webui import login, search, edit, add, delete, mass_change_pas
 from ldaptor.protocols.ldap import distinguishedname
 from ldaptor.apps.webui.uriquote import uriUnquote
 from ldaptor import interfaces
+from ldaptor.apps.webui.i18n import _
+from ldaptor.apps.webui import i18n
 
 from nevow import rend, loaders, url, static, inevow
 from formless import annotate, webform, iformless
@@ -65,10 +67,13 @@ class LDAPDN(annotate.String):
 class IBaseDN(annotate.TypedInterface):
     def go(self,
            request=annotate.Request(),
-           baseDN=LDAPDN(description="The top-level LDAP DN you want"
-                         + " to browse, e.g. dc=example,dc=com")):
+           baseDN=LDAPDN(
+        label=_('Base DN'),
+        description=_("The top-level LDAP DN you want"
+                      " to browse, e.g. dc=example,dc=com"))):
         pass
-    go = annotate.autocallable(go)
+    go = annotate.autocallable(go,
+                               label=_('Go'))
 
 class BaseDN(object):
     __implements__ = IBaseDN
@@ -77,7 +82,7 @@ class BaseDN(object):
         u = url.URL.fromRequest(request)
         u = u.child(str(baseDN))
         request.setComponent(iformless.IRedirectAfterPost, u)
-        return 'Redirecting...'
+        return _('Redirecting...')
 
 class LdaptorWebUIGadget(rend.Page):
     addSlash = True
@@ -127,3 +132,5 @@ class LdaptorWebUIGadget(rend.Page):
         cfg = self.config.copy(baseDN=dn)
         r.remember(cfg, interfaces.ILDAPConfig)
         return r, segments[1:]
+
+    render_i18n = i18n.render()
