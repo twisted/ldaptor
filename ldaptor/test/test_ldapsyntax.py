@@ -1347,3 +1347,34 @@ class LDAPSyntaxMove(unittest.TestCase):
             ))
 
         self.assertEquals(o.dn, 'cn=bar,ou=somewhere,dc=example,dc=com')
+
+class Bind(unittest.TestCase):
+    def test_ok(self):
+        client = LDAPClientTestDriver(
+            [	pureldap.LDAPBindResponse(resultCode=0,
+                                          matchedDN=''),
+                ])
+
+	o=ldapsyntax.LDAPEntry(client=client,
+                               dn='cn=foo,dc=example,dc=com')
+	d = defer.maybeDeferred(o.bind, 's3krit')
+        val = deferredResult(d)
+
+        client.assertSent(pureldap.LDAPBindRequest(
+	    dn='cn=foo,dc=example,dc=com',
+            auth='s3krit'))
+
+        self.assertIdentical(val, o)
+
+    def test_fail(self):
+        client = LDAPClientTestDriver(
+            [	pureldap.LDAPBindResponse(
+            resultCode=ldaperrors.LDAPInvalidCredentials.resultCode,
+            matchedDN=''),
+                ])
+
+	o=ldapsyntax.LDAPEntry(client=client,
+                               dn='cn=foo,dc=example,dc=com')
+	d = defer.maybeDeferred(o.bind, 's3krit')
+        fail = deferredError(d)
+        fail.trap(ldaperrors.LDAPInvalidCredentials)

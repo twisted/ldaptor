@@ -254,6 +254,21 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 
     def __nonzero__(self):
         return True
+
+    def bind(self, password):
+        r=pureldap.LDAPBindRequest(dn=str(self.dn), auth=password)
+        d = self.client.send(r)
+        d.addCallback(self._handle_bind_msg)
+	return d
+
+    def _handle_bind_msg(self, msg):
+	assert isinstance(msg, pureldap.LDAPBindResponse)
+	assert msg.referral is None #TODO
+	if msg.resultCode!=ldaperrors.Success.resultCode:
+            raise ldaperrors.get(msg.resultCode, msg.errorMessage)
+        return self
+        
+
     # end ILDAPEntry
 
     # start IEditableLDAPEntry
