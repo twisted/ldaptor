@@ -1,44 +1,16 @@
 #!/usr/bin/python
 
-import sys, getpass
+import sys, os, getpass
 from ldaptor.protocols.ldap import ldapclient, ldif, ldapsyntax, distinguishedname, ldapconnector
 from ldaptor.protocols import pureber, pureldap
-from ldaptor import usage, ldapfilter
+from ldaptor import usage, config
 from twisted.internet import protocol, reactor, defer
 
-class Move(ldapclient.LDAPClient):
-    def connectionMade(self):
-	if self.factory.binddn:
-	    pwd = self.factory.bindPassword
-	    if pwd is None:
-		pwd = getpass.getpass('Password for %s: ' \
-				      % self.factory.binddn)
-	    d=self.bind(self.factory.binddn, pwd)
-	else:
-	    d=self.bind()
-	d.addCallbacks(self._handle_bind_success,
-		       self.factory.deferred.errback)
-
-    def _handle_bind_success(self, x):
-	matchedDN, serverSaslCreds = x
-	o=ldapsyntax.LDAPEntry(client=self,
-                               dn=self.factory.fromDN)
-	d=o.move(self.factory.toDN)
-	d.chainDeferred(self.factory.deferred)
-
-class MoveFactory(protocol.ClientFactory):
-    protocol = Move
-
-    def __init__(self, deferred, fromDN, toDN,
-		 binddn, bindPassword=None):
-	self.deferred=deferred
-	self.fromDN=fromDN
-	self.toDN=toDN
-	self.binddn=binddn
-	self.bindPassword=bindPassword
-
-    def clientConnectionFailed(self, connector, reason):
-	self.deferred.errback(reason)
+def move(client, fromDN, toDN):
+    e = ldapsyntax.LDAPEntry(client=client,
+                             dn=fromDN)
+    d = e.move(toDN)
+    return d
 
 exitStatus=0
 
@@ -47,19 +19,31 @@ def error(fail):
     global exitStatus
     exitStatus=1
 
-def main(serviceLocationOverride, fromDN, toDN,
+def main(cfg, fromDN, toDN,
 	 binddn, bindPassword):
     fromDN = distinguishedname.DistinguishedName(stringValue=fromDN)
     toDN = distinguishedname.DistinguishedName(stringValue=toDN)
 
-    d=defer.Deferred()
-    s=MoveFactory(d, fromDN, toDN, binddn, bindPassword)
+    c = ldapconnector.LDAPClientCreator(reactor,
+                                        ldapclient.LDAPClient)
+    d = c.connect(dn=fromDN,
+                  overrides=cfg.getServiceLocationOverrides())
+
+    def _bind(proto, binddn, bindPassword):
+	if binddn:
+	    pwd = bindPassword
+	    if pwd is None:
+		pwd = getpass.getpass('Password for %s: ' % binddn)
+	    d=proto.bind(binddn, pwd)
+	else:
+	    d=proto.bind()
+        d.addCallback(lambda _: proto)
+        return d
+    d.addCallback(_bind, binddn, bindPassword)
+
+    d.addCallback(move, fromDN, toDN)
     d.addErrback(error)
     d.addBoth(lambda x: reactor.stop())
-
-    c = ldapconnector.LDAPConnector(reactor, fromDN, s,
-				    overrides=serviceLocationOverride)
-    c.connect()
 
     reactor.run()
     sys.exit(exitStatus)
@@ -72,27 +56,28 @@ class MyOptions(usage.Options, usage.Options_service_location, usage.Options_bin
 	self.opts['to'] = toDN
 
 if __name__ == "__main__":
-    import os
-    from twisted.python import log
-    log.startLogging(sys.stderr, setStdout=0)
-
     try:
-	config = MyOptions()
-	config.parseOptions()
+	opts = MyOptions()
+	opts.parseOptions()
     except usage.UsageError, ue:
 	sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
 	sys.exit(1)
 
+    from twisted.python import log
+    log.startLogging(sys.stderr, setStdout=0)
+
+    cfg = config.LDAPConfig(serviceLocationOverrides=opts['service-location'])
+
     bindPassword=None
-    if config.opts['bind-auth-fd']:
-	f=os.fdopen(config.opts['bind-auth-fd'])
+    if opts['bind-auth-fd']:
+	f=os.fdopen(opts['bind-auth-fd'])
 	bindPassword=f.readline()
 	assert bindPassword[-1]=='\n'
 	bindPassword=bindPassword[:-1]
 	f.close()
 
-    main(config.opts['service-location'],
-	 config.opts['from'],
-	 config.opts['to'],
-	 config.opts['binddn'],
+    main(cfg,
+	 opts['from'],
+	 opts['to'],
+	 opts['binddn'],
 	 bindPassword)
