@@ -57,7 +57,7 @@ class LDAPClient(protocol.Protocol):
 	"""TCP connection has opened"""
 	self.connected = 1
 
-    def connectionLost(self, reason):
+    def connectionLost(self, reason=protocol.connectionDone):
 	"""Called when TCP connection has been lost"""
 	self.connected = 0
 

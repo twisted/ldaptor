@@ -212,7 +212,7 @@ class IConnectedLDAPEntry(components.Interface):
 
         Fetch the attributes of this object from the server.
 
-        @params: Attributes to fetch. If none, fetch all
+        @param attributes: Attributes to fetch. If none, fetch all
         attributes. Fetched attributes are overwritten, and if
         fetching all attributes, attributes that are not on the server
         are removed.

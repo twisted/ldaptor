@@ -9,44 +9,44 @@ def keyvalue(context, data):
     
     Keyvalue recognizes the following patterns:
 
-    header: Rendered at the start, before the first item. If multiple
-        header patterns are provided they are rendered together in the
-        order they were defined.
+      - header: Rendered at the start, before the first item. If
+        multiple header patterns are provided they are rendered
+        together in the order they were defined.
             
-    footer: Just like the header only renderer at the end, after the
-        last item.
+      - footer: Just like the header only renderer at the end, after
+        the last item.
     
-    item: Rendered once for each item in the sequence. Can contain
+      - item: Rendered once for each item in the sequence. Can contain
         subpatterns key and value.
 
         If multiple item patterns are provided then the pattern is
         cycled in the order defined.
         
-    divider: Rendered once between each item in the sequence. Multiple
-        divider patterns are cycled.
+      - divider: Rendered once between each item in the
+        sequence. Multiple divider patterns are cycled.
 
-    empty: Rendered instead of item and divider patterns when the
+      - empty: Rendered instead of item and divider patterns when the
         sequence contains no items.
 
-    Example:
+    Example::
     
-    <table nevow:render="sequence" nevow:data="peopleSeq">
-      <tr nevow:pattern="header">
-        <th>name</th>
-        <th>email</th>
-      </tr>
-      <tr nevow:pattern="item" class="odd">
-        <td>name goes here</td>
-        <td>email goes here</td>
-      </tr>
-      <tr nevow:pattern="item" class="even">
-        <td>name goes here</td>
-        <td>email goes here</td>
-      </tr>
-      <tr nevow:pattern="empty">
-        <td colspan="2"><em>they've all gone!</em></td>
-      </tr>
-    </table>
+      <table nevow:render="sequence" nevow:data="peopleSeq">
+        <tr nevow:pattern="header">
+          <th>name</th>
+          <th>email</th>
+        </tr>
+        <tr nevow:pattern="item" class="odd">
+          <td>name goes here</td>
+          <td>email goes here</td>
+        </tr>
+        <tr nevow:pattern="item" class="even">
+          <td>name goes here</td>
+          <td>email goes here</td>
+        </tr>
+        <tr nevow:pattern="empty">
+          <td colspan="2"><em>they've all gone!</em></td>
+        </tr>
+      </table>
 
     """
     headers = context.tag.allPatterns('header')
@@ -132,15 +132,17 @@ def zebra(colors=['#edf3fe', '#ffffff']):
     """
     Provide alternating background colors for e.g. zebra tables.
 
-    Use like this:
+    @param colors: Two or more color strings to iterate.
 
-    render_zebra = weave.zebra()
+    Use like this::
 
-    <table>
-      <tr nevow:render="zebra"><td>foo</td></tr>
-      <tr nevow:render="zebra"><td>bar</td></tr>
-      <tr nevow:render="zebra"><td>baz</td></tr>
-    </table>
+      render_zebra = weave.zebra()
+
+      <table>
+        <tr nevow:render="zebra"><td>foo</td></tr>
+        <tr nevow:render="zebra"><td>bar</td></tr>
+        <tr nevow:render="zebra"><td>baz</td></tr>
+      </table>
     """
     colors = list(colors)
     def f(self, ctx, data):
