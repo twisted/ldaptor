@@ -9,25 +9,12 @@ from twisted.python import components
 from ldaptor import inmemory, interfaces, schema
 from ldaptor.protocols.ldap import proxy, ldaperrors
 from ldaptor.protocols import pureldap, pureber
-from twisted.test import proto_helpers
 from ldaptor.test import util, test_schema
-from ldaptor.testutil import LDAPClientTestDriver
+from ldaptor import testutil
 
 class Proxy(unittest.TestCase):
     def createServer(self, *responses):
-        def createClient(factory):
-            factory.doStart()
-            #TODO factory.startedConnecting(c)
-            proto = factory.buildProtocol(addr=None)
-            proto.connectionMade()
-        overrides = {
-            '': createClient,
-            }
-        server = proxy.Proxy(overrides)
-        server.protocol = lambda : LDAPClientTestDriver(*responses)
-        server.transport = proto_helpers.StringTransport()
-        server.connectionMade()
-        return server
+        return testutil.createServer(proxy.Proxy, *responses)
 
     def test_bind(self):
         server = self.createServer([ pureldap.LDAPBindResponse(resultCode=0),

@@ -1,6 +1,7 @@
 """Utilities for writing Twistedy unit tests and debugging."""
 
 from twisted.internet import reactor
+from twisted.test import proto_helpers
 
 def calltrace():
     """Print out all function calls. For debug use only."""
@@ -88,3 +89,18 @@ class LDAPClientTestDriver:
         r='fake-unbind-by-LDAPClientTestDriver'
         self.queue(r)
         self.transport.loseConnection()
+
+def createServer(proto, *responses):
+    def createClient(factory):
+        factory.doStart()
+        #TODO factory.startedConnecting(c)
+        proto = factory.buildProtocol(addr=None)
+        proto.connectionMade()
+    overrides = {
+        '': createClient,
+        }
+    server = proto(overrides)
+    server.protocol = lambda : LDAPClientTestDriver(*responses)
+    server.transport = proto_helpers.StringTransport()
+    server.connectionMade()
+    return server
