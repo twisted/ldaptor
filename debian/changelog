@@ -1,3 +1,23 @@
+ldaptor (0.0.37) unstable; urgency=low
+
+  * Bugfixes:
+    - ldaptor.checkers:
+      - trap LDAPUnwillingToPerform and make it just an UnauthorizedLogin
+        in LDAPBindingChecker.
+    - WebUI:
+      - do not stringify i18n PlaceHolder, just pass it through to
+        flattening.
+      - Port nevow commits r1252 and r1253: handle interpolation of i18n
+        strings better.
+      - Make zebra tables not reverse colors on refresh, by moving state
+        from resource to request.
+
+  * Cleanups:
+    - Remove dead code.
+    - Use CSS in webui service password changing layout.
+
+ -- Tommi Virtanen <tv@debian.org>  Wed, 23 Feb 2005 23:00:57 +0200
+
 ldaptor (0.0.36) unstable; urgency=low
 
   * Applications changes:
