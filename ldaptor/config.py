@@ -14,11 +14,13 @@ class LDAPConfig(object):
     __implements__ = interfaces.ILDAPConfig
     baseDN = None
     identityBaseDN = None
+    identitySearch = None
 
     def __init__(self,
                  baseDN=None,
                  serviceLocationOverrides=None,
-                 identityBaseDN=None):
+                 identityBaseDN=None,
+                 identitySearch=None):
         if baseDN is not None:
             baseDN = distinguishedname.DistinguishedName(baseDN)
             self.baseDN = baseDN
@@ -30,6 +32,8 @@ class LDAPConfig(object):
         if identityBaseDN is not None:
             identityBaseDN = distinguishedname.DistinguishedName(identityBaseDN)
             self.identityBaseDN = identityBaseDN
+        if identitySearch is not None:
+            self.identitySearch = identitySearch
 
     def getBaseDN(self):
         if self.baseDN is not None:
@@ -77,6 +81,8 @@ class LDAPConfig(object):
             kw['serviceLocationOverrides'] = self.serviceLocationOverrides
         if 'identityBaseDN' not in kw:
             kw['identityBaseDN'] = self.identityBaseDN
+        if 'identitySearch' not in kw:
+            kw['identitySearch'] = self.identitySearch
         r = self.__class__(**kw)
         return r
 
@@ -92,15 +98,19 @@ class LDAPConfig(object):
             return self.getBaseDN()
 
     def getIdentitySearch(self, name):
-        cfg = loadConfig()
         data = {
             'name': name,
             }
-        try:
-            f=cfg.get('authentication', 'identity-search', vars=data)
-        except (ConfigParser.NoOptionError,
-                ConfigParser.NoSectionError):
-            f='(|(cn=%(name)s)(uid=%(name)s))' % data
+
+        if self.identitySearch is not None:
+            f = self.identitySearch % data
+        else:
+            cfg = loadConfig()
+            try:
+                f=cfg.get('authentication', 'identity-search', vars=data)
+            except (ConfigParser.NoOptionError,
+                    ConfigParser.NoSectionError):
+                f='(|(cn=%(name)s)(uid=%(name)s))' % data
         return f
 
 

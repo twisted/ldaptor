@@ -37,3 +37,31 @@ fooVar = val2
 
         val = self.cfg.get('barSection', 'barVar')
         self.assertEquals(val, 'anotherVal')
+
+class IdentitySearch(unittest.TestCase):
+    def setUp(self):
+        self.dir = self.mktemp()
+        os.mkdir(self.dir)
+        self.f1 = os.path.join(self.dir, 'one.cfg')
+        writeFile(self.f1, """\
+[authentication]
+identity-search = (something=%(name)s)
+""")
+        self.cfg = config.loadConfig(
+            configFiles=[self.f1],
+            reload=True)
+        self.config = config.LDAPConfig()
+
+    def testConfig(self):
+        self.assertEquals(self.config.getIdentitySearch('foo'),
+                          '(something=foo)')
+
+    def testCopy(self):
+        conf = self.config.copy(identitySearch='(&(bar=baz)(quux=%(name)s))')
+        self.assertEquals(conf.getIdentitySearch('foo'),
+                          '(&(bar=baz)(quux=foo))')
+
+    def testInitArg(self):
+        conf = config.LDAPConfig(identitySearch='(&(bar=thud)(quux=%(name)s))')
+        self.assertEquals(conf.getIdentitySearch('foo'),
+                          '(&(bar=thud)(quux=foo))')
