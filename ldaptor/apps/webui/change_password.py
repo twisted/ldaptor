@@ -30,10 +30,18 @@ def getServiceName(ctx, dn):
     d.addCallback(_cb)
     return d
 
+
+def checkPasswordTypos(newPassword, again):
+    if newPassword != again:
+        raise annotate.ValidateError(
+            {},
+            formErrorMessage='Passwords do not match.')
+
 class IPasswordChange(annotate.TypedInterface):
     def setPassword(self,
                     ctx=annotate.Context(),
-                    newPassword=annotate.Password(required=True)):
+                    newPassword=annotate.PasswordEntry(required=True),
+                    again=annotate.PasswordEntry(required=True)):
         pass
     setPassword = annotate.autocallable(setPassword)
 
@@ -94,10 +102,7 @@ class SetServicePassword(object):
         self.dn = dn
 
     def _isPasswordAcceptable(self, ctx, newPassword, again):
-        if newPassword != again:
-            raise annotate.ValidateError(
-                {},
-                formErrorMessage='Passwords do not match.')
+        return checkPasswordTypos(newPassword, again)
 
     def setServicePassword(self, ctx, newPassword, again):
         d = defer.maybeDeferred(self._isPasswordAcceptable, ctx, newPassword, again)
@@ -154,8 +159,9 @@ class IAddService(annotate.TypedInterface):
     def add(self,
             ctx=annotate.Context(),
             serviceName=annotate.String(required=True),
-            newPassword=annotate.Password(required=False,
-                                          description="Leave empty to generate random password."),
+            newPassword=annotate.PasswordEntry(required=False,
+                                               description="Leave empty to generate random password."),
+            again=annotate.PasswordEntry(required=False),
             ):
         pass
     add = annotate.autocallable(add)
@@ -167,7 +173,10 @@ class AddService(object):
         super(AddService, self).__init__()
         self.dn = dn
 
-    def add(self, ctx, serviceName, newPassword):
+    def add(self, ctx, serviceName, newPassword, again):
+        if newPassword or again:
+            checkPasswordTypos(newPassword, again)
+
         if not newPassword:
             return self._generate(ctx, serviceName)
         else:
@@ -335,8 +344,9 @@ class ConfirmChange(ServicePasswordChangeMixin, rend.Page):
         d=defer.maybeDeferred(e.setPassword, newPasswd=password)
         return d
 
-    def setPassword(self, ctx, newPassword):
-        d = self._setPassword(ctx, newPassword)
+    def setPassword(self, ctx, newPassword, again):
+        d = defer.maybeDeferred(checkPasswordTypos, newPassword, again)
+        d.addCallback(lambda dummy: self._setPassword(ctx, newPassword))
         d.addCallback(lambda dummy: 'Password set.')
         d.addErrback(self._prettifyExceptions,
                      prefix="Failed: ")
