@@ -419,6 +419,9 @@ class ConfirmChange(ServicePasswordChangeMixin, rend.Page):
 
     render_i18n = i18n.render()
 
+    def render_data(self, ctx, data):
+        return ctx.tag.clear()[data]
+
 class GetDN(rend.Page):
     addSlash = True
 
