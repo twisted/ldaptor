@@ -330,7 +330,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 	newSuperior=distinguishedname.DistinguishedName(listOfRDNs=newDN.split()[1:])
 	op = pureldap.LDAPModifyDNRequest(entry=str(self.dn),
 					  newrdn=str(newrdn),
-					  deleteoldrdn=0,
+					  deleteoldrdn=1,
 					  newSuperior=str(newSuperior))
 	self.client.queue(op, self._cbMoveDone, d)
 	return d

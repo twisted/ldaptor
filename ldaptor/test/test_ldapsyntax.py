@@ -1301,6 +1301,6 @@ class LDAPSyntaxMove(unittest.TestCase):
         client.assertSent(pureldap.LDAPModifyDNRequest(
 	    entry='cn=foo,dc=example,dc=com',
             newrdn='cn=bar',
-            deleteoldrdn=0,
+            deleteoldrdn=1,
             newSuperior='ou=somewhere,dc=example,dc=com',
             ))
