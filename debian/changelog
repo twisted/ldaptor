@@ -1,3 +1,12 @@
+ldaptor (0.0.38) unstable; urgency=low
+
+  * Bugfixes:
+    - WebUI:
+      - rewrite webui search DN linking to be more nevowy and not assume
+        ldaptor is the root resource.
+
+ -- Tommi Virtanen <tv@debian.org>  Fri,  4 Mar 2005 14:46:28 +0200
+
 ldaptor (0.0.37) unstable; urgency=low
 
   * Bugfixes:
