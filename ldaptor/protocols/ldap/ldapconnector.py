@@ -35,11 +35,7 @@ class LDAPConnector(SRVConnector):
 	return None
 
     def _isQueryNeeded(self):
-        """Is there both need and capability to do an SRV query."""
-        if self.domain is None:
-            # unable to query
-            return False
-
+        """Is there both need to do an SRV query."""
         if self.override is None:
             return True
 
