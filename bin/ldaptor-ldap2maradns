@@ -88,7 +88,6 @@ class Net:
 	self.name=name
 	self.address=address
 	self.mask=mask
-	self.hosts=[]
 
     def isInNet(self, ipAddress):
 	net = my_aton(self.address)
@@ -97,10 +96,6 @@ class Net:
 	if ip&mask == net:
 	    return 1
 	return 0
-
-    def addHost(self, host):
-	assert self.isInNet(host.ipAddress)
-	self.hosts.append(host)
 
     def printZone(self):
 	print '#'+self.dn
@@ -112,12 +107,6 @@ class Net:
 	broadcast = my_ntoa(ip|~mask)
 	printIPAddress('broadcast.'+self.name, broadcast)
 	printPTR('broadcast.'+self.name, broadcast)
-
-	print '# hosts begin'
-	for host in self.hosts:
-	    host.printZone(self.name)
-	print '# hosts end'
-	print
 
     def __repr__(self):
 	return (self.__class__.__name__
@@ -164,6 +153,7 @@ def getNets(e, filter):
                       str(only(e, 'cn')),
                       str(only(e, 'ipNetworkNumber')),
                       str(only(e, 'ipNetmaskNumber')))
+            net.printZone()
             r.append(net)
         return r
     d.addCallback(_cbGotNets)
@@ -174,23 +164,10 @@ def getHosts(nets, e, filter):
                                            assertionValue=pureber.BEROctetString('ipHost'))
     if filter:
         filt = pureldap.LDAPFilter_and(value=(filter, filt))
-    d = e.search(filterObject=filt,
-                 attributes=['ipHostNumber',
-                             'cn'])
-    def _cbGotHosts(hosts):
-        r = []
-        for e in hosts:
-            host = Host(str(e.dn),
-                        str(only(e, 'cn')),
-                        map(str, e['ipHostNumber']))
-            r.append(host)
-        return r
-    d.addCallback(_cbGotHosts)
-    d.addCallback(lambda hosts: (nets, hosts))
-    return d
-
-def show((nets, hosts)):
-    for host in hosts:
+    def _cbGotHost(e):
+        host = Host(str(e.dn),
+                    str(only(e, 'cn')),
+                    map(str, e['ipHostNumber']))
         for hostIP in host.ipAddresses:
             parent=None
             for net in nets:
@@ -199,12 +176,14 @@ def show((nets, hosts)):
                     break
 
             if parent:
-                parent.addHost(hostIP)
+                hostIP.printZone(parent.name)
             else:
                 sys.stderr.write("IP address %s is in no net, discarding.\n" % hostIP)
-
-    for net in nets:
-        net.printZone()
+    d = e.search(filterObject=filt,
+                 attributes=['ipHostNumber',
+                             'cn'],
+                 callback=_cbGotHost)
+    return d
 
 def cbConnected(client, cfg, filter):
     e = ldapsyntax.LDAPEntryWithClient(client, cfg.getBaseDN())
@@ -214,7 +193,6 @@ def cbConnected(client, cfg, filter):
         e.client.unbind()
         return r
     d.addCallback(unbind, e)
-    d.addCallback(show)
     return d
 
 def main(cfg, filter_text):
