@@ -90,15 +90,13 @@ install-ldaptor-%:
 		TODO \
 		debian/copyright \
 		'$(call docdir,ldaptor-$*)'
+	make -C doc 'install-$*' DESTDIR='$(PWD)/$(call docdir,ldaptor-$*)'
 	install --mode=0644 \
 		debian/changelog \
 		'$(call docdir,ldaptor-$*)/changelog'
 	gzip -9f \
 		'$(call docdir,ldaptor-$*)/README' \
 		'$(call docdir,ldaptor-$*)/changelog'
-
-install-ldaptor-webui:
-	make -C doc install-webui DESTDIR='$(PWD)/$(call docdir,ldaptor-webui)'
 
 install-ldaptor-doc:
 	test -e debian/control

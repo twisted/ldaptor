@@ -1,3 +1,11 @@
+ldaptor (0.0.23) unstable; urgency=low
+
+  * Bugfixes:
+    - Fix a totally embarassing bug that left ldaptor-webui.deb
+      almost empty.
+
+ -- Tommi Virtanen <tv@debian.org>  Fri, 12 Mar 2004 17:20:03 +0200
+
 ldaptor (0.0.22) unstable; urgency=low
 
   * Applications changes:
