@@ -101,10 +101,11 @@ class Net:
 	print '#'+self.dn
 	printIPAddress(self.name, self.address)
 	printPTR(self.name, self.address)
-	printIPAddress('netmask.'+self.name, self.mask)
 	ip = my_aton(self.address)
 	mask = my_aton(self.mask)
+	ipmask = my_ntoa(mask)
 	broadcast = my_ntoa(ip|~mask)
+	printIPAddress('netmask.'+self.name, ipmask)
 	printIPAddress('broadcast.'+self.name, broadcast)
 	printPTR('broadcast.'+self.name, broadcast)
 
