@@ -122,31 +122,6 @@ class install_locale(cmd.Command):
                   dst=self.install_dir,
                   dry_run=self.dry_run)
 
-def grabAll(topdir, to=None, fileFilter=None):
-    for dirpath, dirnames, filenames in os.walk(topdir):
-        if '.svn' in dirnames:
-            dirnames.remove('.svn')
-
-        if len(dirpath) == len(topdir):
-            path = '.'
-        elif len(dirpath) > len(topdir):
-            path = dirpath[len(topdir):]
-            if path[0] != '/':
-                raise RuntimeError, "all weird"
-            path = path[1:]
-        else:
-            raise RuntimeError, "all weird"
-
-        if to is not None:
-            path = os.path.join(to, path)
-        l = []
-        for filename in filenames:
-            if (fileFilter is None
-                or fileFilter(dirpath, filename)):
-                l.append(os.path.join(dirpath, filename))
-        if l:
-            yield (path, l)
-
 if __name__=='__main__':
     setup(name="ldaptor",
 	  description="Pure-Python library for LDAP",
