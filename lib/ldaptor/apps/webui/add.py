@@ -29,7 +29,6 @@ class AddForm(widgets.Form):
 				dn=self.baseObject)
 	d=numberalloc.getFreeNumber(ldapObject=o,
                                     numberType=attributeType,
-				    self.baseObject,
 				    min=1000)
 	d.addCallback(lambda x, a=attributeType: (a, [str(x)]))
 	return d
