@@ -1,3 +1,44 @@
+ldaptor (0.0.36) unstable; urgency=low
+
+  * Applications changes:
+    - Enforce validFrom and validUntil in ServiceBindingProxy. Closes:
+      ldaptor#22.
+    - I18n support in webui and translation to finnish.
+
+  * API changes:
+    - Do not parallelize password setting, abort on first error.
+    - When aborting password setting, use a real exception and not a
+      string as explanation.
+
+  * Refactorings to adapt to Twisted/Nevow APIs:
+    - In webui, use annotate.Choice in a way that works with nevow 0.3 and
+      0.4pre.
+
+  * Bugfixes:
+    - Add ldaptor.protocols.ldap.autofill that was missed earlier.
+    - Clean up and python2.4-proof LDAPAttributeTypeAndValue parsing.
+    - Do not repeat the form error message for each argument in webui
+      change_password.
+
+  * Cleanups:
+    - WebUI:
+      - refactor to separate service password setting, for reuse
+        elsewhere.
+      - make zebra tables set CSS styles, not just background colors.
+      - redo webui service password changing form layout.
+      - avoid annotate.Password in webui password changing, it
+        results in poor layout.
+      - use table for nicer layout of service password controls.
+
+  * Packaging:
+    - Add missing depends on python2.3-pyopenssl, python2.3-crypto.
+
+  * Administrivia:
+    - Run unit tests after the install target, with the installed code
+      base.
+
+ -- Tommi Virtanen <tv@debian.org>  Wed, 23 Feb 2005 11:13:08 +0200
+
 ldaptor (0.0.35) unstable; urgency=low
 
   * Bugfixes:
