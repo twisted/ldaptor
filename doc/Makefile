@@ -31,6 +31,13 @@ install: api $(GENERATED)
 	find examples -name SCCS -prune -o -type f -exec \
 		install -D -m0644 '{}' '$(DESTDIR)/{}' \;
 
+install-%:
+	@[ -n '$(DESTDIR)' ] || { echo 'Please provide variable DESTDIR pointing to desired location of documents.' 1>&2; exit 1; }
+	install -d -m0755 '$(DESTDIR)'
+	find 'examples.$*' -name SCCS -prune -o -type f -printf '%P\0' \
+		| xargs -0 --replace -- \
+			install -D -m0644 'examples.$*/{}' '$(DESTDIR)/examples/{}'
+
 clean:
 	rm -f $(GENERATED)
 

@@ -97,6 +97,9 @@ install-ldaptor-%:
 		'$(call docdir,ldaptor-$*)/README' \
 		'$(call docdir,ldaptor-$*)/changelog'
 
+install-ldaptor-webui:
+	make -C doc install-webui DESTDIR='$(PWD)/$(call docdir,ldaptor-webui)'
+
 install-ldaptor-doc:
 	test -e debian/control
 	test root = "`whoami`" || (echo need root priviledges; exit 1)

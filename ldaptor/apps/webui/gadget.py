@@ -1,8 +1,7 @@
 from twisted.web import microdom
-from twisted.web.util import Redirect
+from twisted.web.util import Redirect, redirectTo
 from twisted.web.woven import simpleguard, page, form
 from twisted.python import urlpath, formmethod
-from twisted.web.static import redirectTo
 from ldaptor.apps.webui import util, login
 import search, edit, add, delete, mass_change_password, change_password, move
 from ldaptor.protocols.ldap import distinguishedname
@@ -50,7 +49,8 @@ class LdaptorWebUIGadget2(page.Page):
     def wchild_add(self, request):
         if not request.getComponent(simpleguard.Authenticated):
             return util.InfiniChild(login.LoginPage())
-        return add.AddPage(baseObject=self.baseObject)
+        return add.getResource(baseObject=self.baseObject,
+                               request=request)
 
     def wchild_delete(self, request):
         if not request.getComponent(simpleguard.Authenticated):
@@ -118,7 +118,7 @@ class LdaptorWebUIGadget(page.Page):
             root=request.prePathURL()
         url = urlpath.URLPath.fromString(root)
         microdom.lmx(widget.node).form(
-            action=str(url.sibling('process')),
+            action=str(url.child('process')),
             model="form")
 
     def wmfactory_form(self, request):

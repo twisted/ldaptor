@@ -1,5 +1,8 @@
-from twisted.web import widgets, static
-from twisted.web.woven import simpleguard
+from twisted.web import widgets
+from twisted.web import microdom
+from twisted.web.util import Redirect, DeferredResource
+from twisted.web.woven import simpleguard, page, form
+from twisted.python import urlpath, formmethod
 from twisted.internet import defer
 
 from ldaptor.protocols import pureldap, pureber
@@ -11,6 +14,34 @@ from ldaptor.apps.webui.uriquote import uriQuote, uriUnquote
 from cStringIO import StringIO
 
 import template
+
+def mapNameToObjectClass(objectClasses, name):
+    name = name.upper()
+    objclass = None
+    for oc in objectClasses:
+        for ocName in oc.name:
+            if ocName.upper()==name:
+                objclass = oc
+    return objclass
+
+def mapNameToAttributeType(attributeTypes, name):
+    name = name.upper()
+    attrtype = None
+    for at in attributeTypes:
+        for atName in at.name:
+            if atName.upper()==name:
+                attrtype = at
+    return attrtype
+
+class UnknownAttributeType(Exception):
+    """LDAP Attribute type not known"""
+
+    def __init__(self, name):
+        Exception.__init__(self)
+        self.name = name
+
+    def __str__(self):
+        return self.__doc__ + ': ' + repr(self.name)
 
 class DoAdd(ldapclient.LDAPAddEntry):
     def __init__(self, client, object, attributes, callback):
@@ -25,8 +56,10 @@ class DoAdd(ldapclient.LDAPAddEntry):
 		      %fail.getErrorMessage())
 
 class AddForm(widgets.Form):
-    def _nonUserEditableAttributeType_getFreeNumber(self, attributeType):
-	o=ldapsyntax.LDAPEntry(client=self.ldapClient,
+    def _nonUserEditableAttributeType_getFreeNumber(self, attributeType, request):
+        entry = request.getComponent(simpleguard.Authenticated).name
+        client = entry.client
+	o=ldapsyntax.LDAPEntry(client=client,
                                dn=self.baseObject)
 	d=numberalloc.getFreeNumber(ldapObject=o,
                                     numberType=attributeType,
@@ -37,11 +70,11 @@ class AddForm(widgets.Form):
     nonUserEditableAttributeType_uidNumber=_nonUserEditableAttributeType_getFreeNumber
     nonUserEditableAttributeType_gidNumber=_nonUserEditableAttributeType_getFreeNumber
 
-    def __init__(self, baseObject, ldapClient,
+    def __init__(self, baseObject,
 		 chosenObjectClasses, attributeTypes, objectClasses):
 	self.baseObject=baseObject
-	self.ldapClient=ldapClient
-	self.nonUserEditableAttributeType_objectClass=chosenObjectClasses
+        self.chosenObjectClasses=chosenObjectClasses
+	self.nonUserEditableAttributeType_objectClass=[oc.name[0] for oc in self.chosenObjectClasses]
 	self.attributeTypes=attributeTypes
 	self.objectClasses=objectClasses
 
@@ -50,8 +83,7 @@ class AddForm(widgets.Form):
 	    if name in a.name:
 		a.uiHint_multiline=0 #TODO
 		return a
-	print "attribute type %s not known"%name
-	return None
+        raise UnknownAttributeType, name
 
     def _one_formfield(self, attr, result, must=0):
 	attrtype = self._get_attrtype(attr)
@@ -77,30 +109,30 @@ class AddForm(widgets.Form):
 	process = {}
 
 	# TODO sort objectclasses somehow?
-	objectClasses = request.postpath[0].split('+')
+        objectClasses = list(self.chosenObjectClasses)
 	objectClassesSeen = {}
 
 	dn_attribute = None
 	self.nonUserEditableAttributes = []
 	while objectClasses:
-	    objclassName = objectClasses.pop()
+            objectClass = objectClasses.pop()
+	    objclassName = objectClass.name[0]
 
 	    if objectClassesSeen.has_key(objclassName):
 		continue
 	    objectClassesSeen[objclassName]=1
-	    objclass = None
-	    for o in self.objectClasses:
-		for name in o.name:
-		    if objclassName.upper()==name.upper():
-			objclass = o
-	    assert objclass, "objectClass %s must have schema"%objclassName
 
-	    objectClasses.extend(objclass.sup or [])
+            for ocName in objectClass.sup or []:
+                objclass = mapNameToObjectClass(self.objectClasses, ocName)
+                assert objclass, "objectClass %s must have schema"%objclassName
+                objectClasses.append(objclass)
 
-
-	    for attr_alias in objclass.must:
+	    for attr_alias in objectClass.must:
 		if not dn_attribute and attr_alias != 'objectClass':
-		    dn_attribute = attr_alias
+                    # map alias to canonical name of attribute type
+                    attrType = mapNameToAttributeType(self.attributeTypes, attr_alias)
+                    assert attrType is not None
+		    dn_attribute = attrType.name[0]
 		real_attr = self._get_attrtype(str(attr_alias))
 
 		if hasattr(self, 'nonUserEditableAttributeType_'+real_attr.name[0]):
@@ -114,7 +146,7 @@ class AddForm(widgets.Form):
 			for name in real_attr.name:
 			    process[name.upper()]=1
 
-	    for attr_alias in objclass.may:
+	    for attr_alias in objectClass.may:
 		real_attr = self._get_attrtype(str(attr_alias))
 
 		if hasattr(self, 'nonUserEditableAttributeType_'+real_attr.name[0]):
@@ -169,7 +201,7 @@ class AddForm(widgets.Form):
 	for attributeType in self.nonUserEditableAttributes:
 	    thing=getattr(self, 'nonUserEditableAttributeType_'+attributeType)
 	    if callable(thing):
-		changes.append(thing(attributeType))
+		changes.append(thing(attributeType, request))
 	    else:
 		changes.append(defer.succeed((attributeType, thing)))
 
@@ -221,48 +253,26 @@ class AddForm(widgets.Form):
 	    changes_desc,
 	    defe)
 
-class AddError:
-    def __init__(self, defe, request):
-	self.deferred=defe
-	self.request=request
+class ReallyAddPage(template.BasicPage):
+    title = "Ldaptor Add Object"
 
-    def __call__(self, resultCode=None, errorMessage=""):
-	self.request.args['incomplete']=['true']
-	if errorMessage:
-	    errorMessage=": "+errorMessage
-	if resultCode is not None:
-	    errorMessage = str(resultCode)+errorMessage
-	self.deferred.callback(["Got error %s.\n<HR>"%errorMessage])
-
-class ChooseObjectClass(widgets.Form):
-    def __init__(self, allowedObjectClasses):
-	self.allowedObjectClasses = allowedObjectClasses
-
-    def getFormFields(self, request):
-	l=[]
-	for oc in self.allowedObjectClasses:
-	    l.append((oc, oc))
-	return [('multimenu', 'Object types to create', 'objectClass', l)]
-
-    def process(self, write, request, submit, **kw):
-	return [static.redirectTo(
-	    request.childLink('+'.join(kw['objectClass'])),
-	    request)]
-
-class AddPage(template.BasicPage):
-    title = "Ldaptor Add Page"
-    isLeaf = 1
-
-    allowedObjectClasses = None
-
-    def __init__(self, baseObject):
+    def __init__(self,
+                 baseObject,
+                 structuralObjectClass,
+                 auxiliaryObjectClasses,
+                 attributeTypes,
+                 objectClasses):
 	template.BasicPage.__init__(self)
 	self.baseObject = baseObject
+        self.structuralObjectClass = structuralObjectClass
+        self.auxiliaryObjectClasses = auxiliaryObjectClasses
+        self.attributeTypes = attributeTypes
+        self.objectClasses = objectClasses
 
     def _header(self, request):
 	l=[]
-	l.append('<a href="%s">Search</a>'%request.sibLink("search"))
-	l.append('<a href="%s">add new entry</a>'%request.sibLink("add"))
+	l.append('<a href="%s">Search</a>' % request.URLPath().parent().sibling("search"))
+	l.append('<a href="%s">add new entry</a>' % request.URLPath().parent().sibling("add"))
 
 	if request.args.get('dn') \
 	   and request.args.get('dn')[0]:
@@ -270,68 +280,135 @@ class AddPage(template.BasicPage):
 	    if request.args.get('add_'+dnattr):
 		dn=dnattr+'='+request.args.get('add_'+dnattr)[0]+','+str(self.baseObject)
 		l.append('<a href="%s">edit</a>' \
-			 % request.sibLink('edit/%s' % uriQuote(dn)))
+			 % request.URLPath().parent().sibling('edit/%s' % uriQuote(dn)))
 		l.append('<a href="%s">delete</a>' \
-			 % request.sibLink('delete/%s' % uriQuote(dn)))
+			 % request.URLPath().parent().sibling('delete/%s' % uriQuote(dn)))
 		l.append('<a href="%s">change password</a>' \
-			 % request.sibLink('change_password/%s' % uriQuote(dn)))
+			 % request.URLPath().parent().sibling('change_password/%s' % uriQuote(dn)))
 
 	return '[' + '|'.join(l) + ']'
 
     def getContent(self, request):
-	d=defer.Deferred()
+        a = AddForm(baseObject=self.baseObject,
+                    chosenObjectClasses=[self.structuralObjectClass] + self.auxiliaryObjectClasses,
+                    attributeTypes=self.attributeTypes,
+                    objectClasses=self.objectClasses)
+        d = defer.execute(a.display, request)
+        return [self._header(request), d]
 
-	if self.allowedObjectClasses is None:
-            entry = request.getComponent(simpleguard.Authenticated).name
-            client = entry.client
-	    if client:
-                deferred = fetchschema.fetch(client, self.baseObject)
-                deferred.addCallback(self._getContent_have_objectClasses,
-                                     request, d)
-                deferred.addErrback(AddError(d, request))
-	    else:
-		AddError(d, request)(errorMessage="connection lost")
-	else:
-	    self._getContent_real(request, d)
+class AddPage(page.Page):
+    template = '''<html>
+    <head>
+        <title>Ldaptor Web Interface</title>
+        <style type="text/css">
+.formDescription, .formError {
+    /* fixme - inherit */
+    font-size: smaller;
+    font-family: sans-serif;
+    margin-bottom: 1em;
+}
 
-	return [self._header(request), d]
+.formDescription {
+    color: green;
+}
 
-    def _getContent_have_objectClasses(self, x, request, d):
-	attributeTypes, objectClasses = x
-	r = []
-	for o in objectClasses:
-	    r.append(o.name[0])
-	self.allowedObjectClasses = r
-	self._getContent_real(request, d)
+.formError {
+    color: red;
+}
+</style>
+    </head>
+    <body>
+    <h1>Ldaptor Add Page</h1>
+    <div view="objectClassForm" />
 
-    def _getContent_real(self, request, d):
-	assert self.allowedObjectClasses is not None
-	assert self.allowedObjectClasses != []
-	if not request.postpath or request.postpath==['']:
-	    d.callback(ChooseObjectClass(self.allowedObjectClasses).display(request))
-	else:
-	    chosenObjectClasses = request.postpath[0].split('+')
-	    for oc in chosenObjectClasses:
-		if oc not in self.allowedObjectClasses:
-		    d.callback(ChooseObjectClass(self.allowedObjectClasses).display(request))
-		    return
+    </body>
+</html>'''
 
-            entry = request.getComponent(simpleguard.Authenticated).name
-            client = entry.client
-	    if client:
-                deferred = fetchschema.fetch(client, self.baseObject)
-                deferred.addCallbacks(
-                    callback=self._getContent_2,
-                    callbackArgs=(chosenObjectClasses, request, client, d),
-                    errback=AddError(d, request),
-                    )
-	    else:
-		AddError(d, request)(errorMessage="connection lost")
 
-    def _getContent_2(self, x, chosenObjectClasses, request, client, d):
-	attributeTypes, objectClasses = x
-	d.callback(AddForm(baseObject=self.baseObject,
-			   ldapClient=client,
-			   chosenObjectClasses=chosenObjectClasses,
-			   attributeTypes=attributeTypes,
-			   objectClasses=objectClasses).display(request))
+    def __init__(self, baseObject, attributeTypes, objectClasses):
+	page.Page.__init__(self)
+	self.baseObject = baseObject
+        self.attributeTypes = attributeTypes
+        self.objectClasses = objectClasses
+
+
+        structural = []
+        auxiliary = []
+        for oc in self.objectClasses:
+            description = oc.name[0]
+            if oc.desc is not None:
+                description = '%s: %s' % (description, oc.desc)
+            if oc.type == 'STRUCTURAL':
+                structural.append((oc.name[0], oc, description))
+            elif oc.type == 'AUXILIARY':
+                auxiliary.append((oc.name[0], oc, description))
+                               
+        self.formSignature = formmethod.MethodSignature(
+            formmethod.RadioGroup(name="structuralObjectClass",
+                                  shortDesc='Object type to create',
+                                  choices=structural),
+            formmethod.CheckGroup(name="auxiliaryObjectClasses",
+                                  shortDesc='Auxiliary object classes',
+                                  flags=auxiliary),
+            formmethod.Submit("submit", allowNone=1),
+            )
+
+    def wvupdate_objectClassForm(self, request, widget, model):
+        url = request.URLPath()
+        microdom.lmx(widget.node).form(
+            action=str(url.child('process')),
+            method='POST',
+            model="form")
+
+    def wmfactory_form(self, request):
+        return self.formSignature.method(None)
+
+    def wchild_process(self, request):
+        def process(structuralObjectClass,
+                    auxiliaryObjectClasses,
+                    submit=None):
+            return (structuralObjectClass, auxiliaryObjectClasses)
+        def callback(x):
+            structuralObjectClass, auxiliaryObjectClasses = x
+            structuralObjectClass = structuralObjectClass.original
+            auxiliaryObjectClasses = auxiliaryObjectClasses.original
+            return Redirect('+'.join([oc.name[0]
+                                      for oc in ([structuralObjectClass]
+                                                 + auxiliaryObjectClasses)]))
+        return form.FormProcessor(
+            self.formSignature.method(process),
+            callback=callback,
+            )
+
+    def getDynamicChild(self, path, request):
+        unquoted=uriUnquote(path)
+        objectClasses = unquoted.split('+')
+        assert len(objectClasses) >= 1
+
+        structName=objectClasses[0]
+        structuralObjectClass = mapNameToObjectClass(self.objectClasses,
+                                                     structName)
+        assert structuralObjectClass is not None, \
+               "objectClass %s must have schema"%structName
+
+        auxiliaryObjectClasses = []
+        for auxName in objectClasses[1:]:
+            oc = mapNameToObjectClass(self.objectClasses, auxName)
+            assert oc is not None, "objectClass %s must have schema"%oc
+            auxiliaryObjectClasses.append(oc)
+        return ReallyAddPage(self.baseObject,
+                             structuralObjectClass=structuralObjectClass,
+                             auxiliaryObjectClasses=auxiliaryObjectClasses,
+                             attributeTypes=self.attributeTypes,
+                             objectClasses=self.objectClasses)
+
+def getResource(baseObject, request):
+    entry = request.getComponent(simpleguard.Authenticated).name
+    client = entry.client
+    
+    d = fetchschema.fetch(client, baseObject)
+    def cbAddPage(schema, baseObject):
+        attributeTypes, objectClasses = schema
+        return AddPage(baseObject, attributeTypes, objectClasses)
+    d.addCallback(cbAddPage, baseObject)
+    return DeferredResource(d)

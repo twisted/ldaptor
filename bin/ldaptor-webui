@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
 from ldaptor.apps import webui
-from ldaptor.apps.webui import gadget, util
-from ldaptor import cred, usage
+from ldaptor.apps.webui import main
+from ldaptor import usage
 from ldaptor.checkers import LDAPBindingChecker
 from ldaptor.protocols.ldap.distinguishedname import DistinguishedName
 
@@ -65,20 +65,14 @@ if __name__ == '__main__':
 	sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
 	sys.exit(1)
     log.startLogging(sys.stderr, setStdout=0)
-    gdgt = gadget.LdaptorWebUIGadget(
-	serviceLocationOverride=config.opts['service-location'],
+    resource = main.getResource(
+        identityBaseDN=DistinguishedName(stringValue=(config.opts['identity-base']
+                                                      or config.opts['base'])),
+        serviceLocationOverride=config.opts['service-location'],
 	searchFields=config.opts['search-field'],
 	)
-    checker = LDAPBindingChecker(ldapbase=DistinguishedName(stringValue=(config.opts['identity-base']
-                                                                         or config.opts['base'])),
-                                 serviceLocationOverride=config.opts['service-location'],
-                                 ldapFilterTemplate=config.opts['identity-search'])
-    gdgt = simpleguard.guardResource(
-        gdgt,
-        [checker],
-        callback=util.callback)
 
-    sit = server.Site(gdgt)
+    sit = server.Site(resource)
 
     reactor.listenTCP(config.opts['http-port'], sit)
     reactor.run()

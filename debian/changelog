@@ -1,3 +1,34 @@
+ldaptor (0.0.22) unstable; urgency=low
+
+  * Applications changes:
+    - Partial rewrite of ldaptor-webui add to handle structural
+      objectclasses separately from auxiliary objectclasses.
+
+  * Documentation changes:
+    - Add an example of using ldaptor-webui via twisted-web.
+
+  * API changes:
+    - Removed ldaptor.cred, it is no longer used.
+
+  * Refactorings to adapt to Twisted APIs:
+    - Switch from twisted.web.static.redirectTo() to
+      twisted.web.util.redirectTo(), don't import static anymore.
+
+  * Internal refactorings:
+    - Move resource creation from ldaptor-webui script to library.
+
+  * Bugfixes:
+    - Make sure errors in ldaptor-webui add are passed along.
+    - Explicitly fail when schema objectclasses refer to unknown
+      attributetypes.
+    - Make ldaptor-webui baseDN form work even when it's not at the root
+      of the web server.
+
+  * Cleanups:
+    - Remove unused import in ldaptor-webui.
+
+ -- Tommi Virtanen <tv@debian.org>  Fri, 12 Mar 2004 16:58:12 +0200
+
 ldaptor (0.0.21) unstable; urgency=low
 
   * Documentation changes:

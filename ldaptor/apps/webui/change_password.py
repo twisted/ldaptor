@@ -1,11 +1,11 @@
 from twisted.internet import reactor
-from twisted.web import static, html
+from twisted.web import html
 from twisted.web.woven import simpleguard
 from twisted.web.woven import page, simpleguard, form, model
 from twisted.web.microdom import lmx
 from twisted.python import formmethod
 from twisted.internet import defer
-from twisted.web.util import Redirect
+from twisted.web.util import Redirect, redirectTo
 from ldaptor.protocols.ldap import ldapsyntax, distinguishedname
 from ldaptor import generate_password
 from ldaptor import weave
@@ -149,7 +149,7 @@ class ConfirmChange(page.Page):
             entry = request.getComponent(simpleguard.Authenticated).name
             dn = entry.dn
 	    url=request.childLink(uriQuote(dn))
-	    return static.redirectTo(url, request)
+	    return redirectTo(url, request)
 	else:
             return page.Page.render(self, request)
 

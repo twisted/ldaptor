@@ -1,4 +1,4 @@
-from twisted.web import widgets, static
+from twisted.web import widgets, util
 from twisted.web.woven import simpleguard
 from twisted.internet import defer, protocol
 from twisted.python.failure import Failure
@@ -340,7 +340,7 @@ class MoveForm(OLD_SearchForm):
 
     def process(self, write, request, submit, **kw):
 	if submit == 'Abort':
-	    return [static.redirectTo(
+	    return [util.redirectTo(
 		request.sibLink('search'),
 		request)]
 	elif submit != 'Put it here':
