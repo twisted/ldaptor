@@ -1279,3 +1279,28 @@ class LDAPSyntaxRDNHandling(unittest.TestCase):
             o['cn']=['foo']
         self.assertRaises(ldapsyntax.CannotRemoveRDNError,
                           f)
+
+class LDAPSyntaxMove(unittest.TestCase):
+    def test_move(self):
+        client = LDAPClientTestDriver(
+            [	pureldap.LDAPModifyDNResponse(resultCode=0,
+                                              matchedDN='',
+                                              errorMessage=''),
+                ])
+
+	o=ldapsyntax.LDAPEntry(client=client,
+                               dn='cn=foo,dc=example,dc=com',
+                               attributes={
+	    'objectClass': ['a', 'b'],
+            'cn': ['foo'],
+	    'aValue': ['a'],
+	    })
+	d = o.move('cn=bar,ou=somewhere,dc=example,dc=com')
+        val = deferredResult(d)
+
+        client.assertSent(pureldap.LDAPModifyDNRequest(
+	    entry='cn=foo,dc=example,dc=com',
+            newrdn='cn=bar',
+            deleteoldrdn=0,
+            newSuperior='ou=somewhere,dc=example,dc=com',
+            ))

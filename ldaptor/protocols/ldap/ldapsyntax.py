@@ -323,8 +323,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 
     def move(self, newDN):
         self._checkState()
-	assert isinstance(newDN, distinguishedname.DistinguishedName), \
-	       "LDAPEntry.move() needs an attribute of type DistinguishedName."
+        newDN = distinguishedname.DistinguishedName(newDN)
 	d = defer.Deferred()
 
 	newrdn=newDN.split()[0]
