@@ -14,11 +14,20 @@ class Proxy(ldapserver.BaseLDAPServer):
         ldapserver.BaseLDAPServer.__init__(self)
         self.overrides=overrides
 
+    def _whenConnected(self, fn, *a, **kw):
+        if self.client is None:
+            d = defer.Deferred()
+            self.waitingConnect.append((d, fn, a, kw))
+            return d
+        else:
+            return defer.maybeDeferred(fn, *a, **kw)
+
     def _cbConnectionMade(self, proto):
         self.client = proto
         while self.waitingConnect:
-            request, controls, reply = self.waitingConnect.pop(0)
-            self._clientQueue(request, controls, reply)
+            d, fn, a, kw = self.waitingConnect.pop(0)
+            d2 = defer.maybeDeferred(fn, *a, **kw)
+            d2.chainDeferred(d)
 
     def _clientQueue(self, request, controls, reply):
         # TODO controls
@@ -55,10 +64,7 @@ class Proxy(ldapserver.BaseLDAPServer):
         ldapserver.BaseLDAPServer.connectionLost(self, reason)
 
     def _handleUnknown(self, request, controls, reply):
-        if self.client is None:
-            self.waitingConnect.append((request, controls, reply))
-        else:
-            self._clientQueue(request, controls, reply)
+        self._whenConnected(self._clientQueue, request, controls, reply)
         return None
 
     def handleUnknown(self, request, controls, reply):
