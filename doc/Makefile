@@ -137,6 +137,7 @@ api:
 	epydoc \
 	        -o api \
 		-n Ldaptor \
+		--check \
 	        -u http://tv.debian.net/software/ldaptor/ \
 		$$(find ../ldaptor \( -name SCCS -prune \) -o -name '*.py' -print)
 
