@@ -83,12 +83,12 @@ class LDAPMessage(BERSequence):
 	return str(BERSequence(l))
 
     def __repr__(self):
-	if self.tag==self.__class__.tag:
-	    return self.__class__.__name__+"(id=%r, value=%r)"\
-		   %(self.id, repr(self.value))
-	else:
-	    return self.__class__.__name__+"(id=%r, value=%r, tag=%d)" \
-		   %(self.id, repr(self.value), self.tag)
+        l=[]
+        l.append('id=%r' % self.id)
+        l.append('value=%r' % self.value)
+	if self.tag!=self.__class__.tag:
+            l.append('tag=%d' % self.tag)
+        return self.__class__.__name__+'('+', '.join(l)+')'
 
 class LDAPProtocolOp:
     def __init__(self):
