@@ -1,3 +1,13 @@
+ldaptor (0.0.39) unstable; urgency=low
+
+  * Cleanups:
+    - Sort results before comparison in unit tests. Avoid spurious errors
+      in test_ldiftree.Tree.test_children_twoChildren. Make unit tests
+      explicitly shuffle results to avoid such false negative tests in the
+      future. Closes: #307101.
+
+ -- Tommi Virtanen <tv@debian.org>  Fri,  6 May 2005 14:46:31 +0300
+
 ldaptor (0.0.38) unstable; urgency=low
 
   * Bugfixes:
