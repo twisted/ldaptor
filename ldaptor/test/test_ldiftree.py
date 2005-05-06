@@ -4,7 +4,7 @@ Test cases for LDIF directory tree writing/reading.
 
 from twisted.trial import unittest, util
 from twisted.python import failure
-import os
+import os, random
 from ldaptor import ldiftree, entry
 from ldaptor.entry import BaseLDAPEntry
 from ldaptor.protocols.ldap import distinguishedname, ldaperrors
@@ -14,7 +14,22 @@ def writeFile(path, content):
     f.write(content)
     f.close()
 
-class Dir2LDIF(unittest.TestCase):
+class RandomizeListdirMixin(object):
+    def randomListdir(self, *args, **kwargs):
+        r = self.__listdir(*args, **kwargs)
+        random.shuffle(r)
+        return r
+
+    def setUpClass(self):
+        self.__listdir = os.listdir
+        os.listdir = self.randomListdir
+        super(RandomizeListdirMixin, self).setUpClass()
+
+    def tearDownClass(self):
+        os.listdir = self.__listdir
+        super(RandomizeListdirMixin, self).tearDownClass()
+
+class Dir2LDIF(RandomizeListdirMixin, unittest.TestCase):
     def setUp(self):
         self.tree = self.mktemp()
         os.mkdir(self.tree)
@@ -112,7 +127,7 @@ objectClass: top
         e = self.get(want.dn)
         self.failUnlessEqual(e, want)
 
-class LDIF2Dir(unittest.TestCase):
+class LDIF2Dir(RandomizeListdirMixin, unittest.TestCase):
     def setUp(self):
         self.tree = self.mktemp()
         os.mkdir(self.tree)
@@ -219,7 +234,7 @@ dc: org
 """)
 
 
-class Tree(unittest.TestCase):
+class Tree(RandomizeListdirMixin, unittest.TestCase):
     # TODO share the actual tests with inmemory and any other
     # implementations of the same interface
     def setUp(self):
@@ -330,6 +345,8 @@ cn: theChild
             distinguishedname.DistinguishedName('cn=bar,ou=metasyntactic,dc=example,dc=com'),
             ]
         got = [e.dn for e in children]
+        got.sort()
+        want.sort()
         self.assertEquals(got, want)
 
     def test_addChild(self):
