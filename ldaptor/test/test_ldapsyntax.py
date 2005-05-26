@@ -1007,6 +1007,105 @@ class LDAPSyntaxPasswords(unittest.TestCase):
             ]))
 
 
+    def testPasswordSettingAll_hasSambaSam(self):
+        """LDAPEntry.setPassword(newPasswd=...) changes the password."""
+        client = LDAPClientTestDriver(
+            [pureldap.LDAPExtendedResponse(resultCode=0,
+                                           matchedDN='',
+                                           errorMessage='')],
+	    [pureldap.LDAPModifyResponse(resultCode=0,
+                                         matchedDN='',
+                                         errorMessage='')],
+            )
+
+	o=ldapsyntax.LDAPEntry(client=client,
+                               dn='cn=foo,dc=example,dc=com',
+                               attributes={
+            'objectClass': ['foo', 'sambaSamAccount'],
+            },
+                               complete=1)
+        d=o.setPassword(newPasswd='new')
+        val = deferredResult(d)
+
+	client.assertSent(pureldap.LDAPPasswordModifyRequest(
+            userIdentity='cn=foo,dc=example,dc=com',
+            newPasswd='new'),
+                          pureldap.LDAPModifyRequest(
+	    object='cn=foo,dc=example,dc=com',
+	    modification=[
+	    pureldap.LDAPModification_replace(attributeType='sambaNTPassword',
+                                              vals=['89963F5042E5041A59C249282387A622']),
+	    pureldap.LDAPModification_replace(attributeType='sambaLMPassword',
+                                              vals=['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
+            ]))
+
+
+    def testPasswordSettingAll_hasSamba_differentCase(self):
+        """LDAPEntry.setPassword(newPasswd=...) changes the password."""
+        client = LDAPClientTestDriver(
+            [pureldap.LDAPExtendedResponse(resultCode=0,
+                                           matchedDN='',
+                                           errorMessage='')],
+	    [pureldap.LDAPModifyResponse(resultCode=0,
+                                         matchedDN='',
+                                         errorMessage='')],
+            )
+
+	o=ldapsyntax.LDAPEntry(client=client,
+                               dn='cn=foo,dc=example,dc=com',
+                               attributes={
+            'objectClass': ['foo', 'saMBaAccOuNT'],
+            },
+                               complete=1)
+        d=o.setPassword(newPasswd='new')
+        val = deferredResult(d)
+
+	client.assertSent(pureldap.LDAPPasswordModifyRequest(
+            userIdentity='cn=foo,dc=example,dc=com',
+            newPasswd='new'),
+                          pureldap.LDAPModifyRequest(
+	    object='cn=foo,dc=example,dc=com',
+	    modification=[
+	    pureldap.LDAPModification_replace(attributeType='ntPassword',
+                                              vals=['89963F5042E5041A59C249282387A622']),
+	    pureldap.LDAPModification_replace(attributeType='lmPassword',
+                                              vals=['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
+            ]))
+
+
+    def testPasswordSettingAll_hasSambaSam_differentCase(self):
+        """LDAPEntry.setPassword(newPasswd=...) changes the password."""
+        client = LDAPClientTestDriver(
+            [pureldap.LDAPExtendedResponse(resultCode=0,
+                                           matchedDN='',
+                                           errorMessage='')],
+	    [pureldap.LDAPModifyResponse(resultCode=0,
+                                         matchedDN='',
+                                         errorMessage='')],
+            )
+
+	o=ldapsyntax.LDAPEntry(client=client,
+                               dn='cn=foo,dc=example,dc=com',
+                               attributes={
+            'objectClass': ['foo', 'sAmbASAmaccoUnt'],
+            },
+                               complete=1)
+        d=o.setPassword(newPasswd='new')
+        val = deferredResult(d)
+
+	client.assertSent(pureldap.LDAPPasswordModifyRequest(
+            userIdentity='cn=foo,dc=example,dc=com',
+            newPasswd='new'),
+                          pureldap.LDAPModifyRequest(
+	    object='cn=foo,dc=example,dc=com',
+	    modification=[
+	    pureldap.LDAPModification_replace(attributeType='sambaNTPassword',
+                                              vals=['89963F5042E5041A59C249282387A622']),
+	    pureldap.LDAPModification_replace(attributeType='sambaLMPassword',
+                                              vals=['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
+            ]))
+
+
     def testPasswordSettingAll_maybeSamba_WillFind(self):
         """LDAPEntry.setPassword(newPasswd=...) changes the password."""
         client = LDAPClientTestDriver(

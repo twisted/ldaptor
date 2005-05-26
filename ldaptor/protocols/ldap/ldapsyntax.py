@@ -484,9 +484,10 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             d.addCallback(lambda dummy, self=self, newPasswd=newPasswd:
                           self.setPasswordMaybe_Samba(newPasswd))
         else:
-            if 'sambaAccount' in self.get('objectClass', ()):
+            objectClasses = [s.upper() for s in self.get('objectClass', ())]
+            if 'sambaAccount'.upper() in objectClasses:
                 d = self.setPassword_Samba(newPasswd, style="sambaAccount")
-            elif 'sambaSamAccount' in self.get('objectClass', ()):
+            elif 'sambaSamAccount'.upper() in objectClasses:
                 d = self.setPassword_Samba(newPasswd, style="sambaSamAccount")
             else:
                 d = defer.succeed(self)
