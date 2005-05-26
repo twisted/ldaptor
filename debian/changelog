@@ -1,3 +1,13 @@
+ldaptor (0.0.41) unstable; urgency=low
+
+  * Bugfixes:
+    - Handle attributeTypes written with non-canonical cases better in
+      webui edit and add. Stops tracebacks complaining about unknown
+      attribute types, especially related to x500uniqueidentifier.
+      Closes: ldaptor#25.
+
+ -- Tommi Virtanen <tv@debian.org>  Thu, 26 May 2005 21:07:24 +0300
+
 ldaptor (0.0.40) unstable; urgency=low
 
   * Bugfixes:
