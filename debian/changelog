@@ -1,3 +1,12 @@
+ldaptor (0.0.40) unstable; urgency=low
+
+  * Bugfixes:
+    - Make e.setPassword() set Samba passwords even when Samba
+      objectClasses are spelled with non-canonical case.
+      Closes: ldaptor#31.
+
+ -- Tommi Virtanen <tv@debian.org>  Thu, 26 May 2005 19:47:53 +0300
+
 ldaptor (0.0.39) unstable; urgency=low
 
   * Cleanups:
