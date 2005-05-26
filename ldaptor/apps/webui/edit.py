@@ -17,13 +17,13 @@ class EditStatus(object):
         self.changes = changes
 
 multiLineAttributeTypes = {
-    'description': 1,
+    'description'.upper(): 1,
     }
 def isAttributeTypeMultiLine(attributeType):
     for name in attributeType.name:
-	if multiLineAttributeTypes.has_key(name):
+	if multiLineAttributeTypes.has_key(name.upper()):
 	    assert not attributeType.single_value
-	    return multiLineAttributeTypes[name]
+	    return multiLineAttributeTypes[name.upper()]
     return 0
 
 class EditForm(configurable.Configurable):
@@ -202,9 +202,10 @@ class EditForm(configurable.Configurable):
 
     def _get_attrtype(self, name):
 	for a in self.attributeTypes:
-	    if name in a.name:
-		a.uiHint_multiline=isAttributeTypeMultiLine(a)
-		return a
+            for cur in a.name:
+                if name.upper() == cur.upper():
+                    a.uiHint_multiline=isAttributeTypeMultiLine(a)
+                    return a
         raise RuntimeError, "attribute type %s not known"%name
 
     def _textarea_to_list(self, t):

@@ -127,9 +127,10 @@ class AddForm(configurable.Configurable):
 
     def _get_attrtype(self, name):
 	for a in self.attributeTypes:
-	    if name in a.name:
-		a.uiHint_multiline=0 #TODO
-		return a
+            for cur in a.name:
+                if name.upper() == cur.upper():
+                    a.uiHint_multiline=0 #TODO
+                    return a
         raise UnknownAttributeType, name
 
     def _one_formfield(self, attr, result, must=False):
