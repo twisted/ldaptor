@@ -233,14 +233,17 @@ class SearchPage(rend.Page):
         context.fillSlots('url', data)
         return context.tag
 
-    def render_form(self, context, data):
-        formDefaults = context.locate(iformless.IFormDefaults)
-        methodDefaults = formDefaults.getAllDefaults('search')
-        conf = self.locateConfigurable(context, '')
-        for k,v in conf.data.items():
-            if v is not None:
-                methodDefaults[k] = str(v)
-        return webform.renderForms()
+    def render_form(self, ctx, data):
+        d = defer.maybeDeferred(self.locateConfigurable, ctx, '')
+        def _cb(conf, ctx):
+            formDefaults = ctx.locate(iformless.IFormDefaults)
+            methodDefaults = formDefaults.getAllDefaults('search')
+            for k,v in conf.data.items():
+                if v is not None:
+                    methodDefaults[k] = str(v)
+            return webform.renderForms()
+        d.addCallback(_cb, ctx)
+        return d
 
     def render_keyvalue(self, context, data):
         return weave.keyvalue(context, data)
