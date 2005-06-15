@@ -238,7 +238,6 @@ class LDAPClient(protocol.Protocol):
             raise LDAPStartTLSBusyError, self.onwire
         else:
 	    op=pureldap.LDAPStartTLSRequest()
-            d=defer.Deferred()
-	    self.send(op)
+	    d = self.send(op)
             d.addCallback(self._cbStartTLS, ctx)
             return d
