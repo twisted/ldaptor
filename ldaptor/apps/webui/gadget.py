@@ -1,4 +1,4 @@
-from ldaptor.apps.webui import login, search, edit, add, delete, mass_change_password, change_password, move
+from ldaptor.apps.webui import login, search, edit, add, delete, mass_change_password, change_password, move, iwebui
 from ldaptor.protocols.ldap import distinguishedname
 from ldaptor.apps.webui.uriquote import uriUnquote
 from ldaptor import interfaces
@@ -129,8 +129,8 @@ class LdaptorWebUIGadget(rend.Page):
             return u, []
 
         r=LdaptorWebUIGadget2(baseObject=dn)
-        cfg = self.config.copy(baseDN=dn)
-        r.remember(cfg, interfaces.ILDAPConfig)
+        r.remember(self.config, interfaces.ILDAPConfig)
+        r.remember(dn, iwebui.ICurrentDN)
         return r, segments[1:]
 
     render_i18n = i18n.render()

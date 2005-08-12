@@ -5,6 +5,7 @@ from ldaptor.protocols import pureldap, pureber
 from ldaptor.protocols.ldap import ldapsyntax, distinguishedname
 from ldaptor.protocols.ldap import fetchschema
 from ldaptor import numberalloc, interfaces, interfaces
+from ldaptor.apps.webui import iwebui
 from ldaptor.apps.webui.uriquote import uriQuote, uriUnquote
 from ldaptor.apps.webui.i18n import _
 from ldaptor.apps.webui import i18n
@@ -329,7 +330,7 @@ class AddForm(configurable.Configurable):
             return _("No changes (2)!") #TODO
 
         e = ldapsyntax.LDAPEntryWithClient(client=user.client,
-                                           dn=cfg.getBaseDN())
+                                           dn=iwebui.ICurrentDN(context))
         d = e.addChild(rdn, mod)
         #d.addCallback(lambda e: "Added %s successfully." % e.dn)
         d.addErrback(lambda reason: _("Failed: %s.") % reason.getErrorMessage())

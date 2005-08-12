@@ -5,7 +5,7 @@ from ldaptor.protocols.ldap import distinguishedname, ldapconnector
 from ldaptor.protocols import pureber, pureldap
 from ldaptor import ldapfilter, interfaces
 from twisted.internet import reactor
-from ldaptor.apps.webui import config
+from ldaptor.apps.webui import config, iwebui
 from ldaptor.apps.webui.uriquote import uriQuote
 from ldaptor.apps.webui.i18n import _
 from ldaptor.apps.webui import i18n
@@ -53,7 +53,7 @@ class MoveItem(object):
         cfg = context.locate(interfaces.ILDAPConfig)
         newDN = distinguishedname.DistinguishedName(
             self.entry.dn.split()[:1]
-            + cfg.getBaseDN().split())
+            + iwebui.ICurrentDN(context).split())
         d = self.entry.move(newDN)
         d.addCallback(lambda dummy: _('Moved %s to %s.') % (self.entry.dn, newDN))
         def _cb(r, context):
@@ -170,24 +170,25 @@ class SearchForm(configurable.Configurable):
         cfg = context.locate(interfaces.ILDAPConfig)
 
         c=ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
-        d=c.connectAnonymously(cfg.getBaseDN(),
+        curDN = iwebui.ICurrentDN(context)
+        d=c.connectAnonymously(curDN,
                                cfg.getServiceLocationOverrides())
 
-        def _search(proto, base, searchFilter, scope):
-            baseEntry = ldapsyntax.LDAPEntry(client=proto, dn=base)
+        def _search(proto, dn, searchFilter, scope):
+            baseEntry = ldapsyntax.LDAPEntry(client=proto, dn=dn)
             d=baseEntry.search(filterObject=searchFilter,
                                scope=scope,
                                sizeLimit=20,
                                sizeLimitIsNonFatal=True)
             return d
-        d.addCallback(_search, cfg.getBaseDN(), self.filter, self.data['scope'])
+        d.addCallback(_search, curDN, self.filter, self.data['scope'])
         return d
 
     def child_base(self, context):
         cfg = context.locate(interfaces.ILDAPConfig)
 
         c=ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
-        d=c.connectAnonymously(cfg.getBaseDN(),
+        d=c.connectAnonymously(iwebui.ICurrentDN(context),
                                cfg.getServiceLocationOverrides())
 
         def _search(proto, base):
@@ -196,7 +197,7 @@ class SearchForm(configurable.Configurable):
             d=baseEntry.search(scope=pureldap.LDAP_SCOPE_baseObject,
                                sizeLimit=1)
             return d
-        d.addCallback(_search, cfg.getBaseDN())
+        d.addCallback(_search, iwebui.ICurrentDN(context))
 
         def _first(results, dn):
             assert len(results)==1, \
@@ -204,7 +205,7 @@ class SearchForm(configurable.Configurable):
             return {'dn': dn,
                     'attributes': results[0],
                     }
-        d.addCallback(_first, cfg.getBaseDN())
+        d.addCallback(_first, iwebui.ICurrentDN(context))
 
         return d
 
@@ -296,10 +297,10 @@ class SearchPage(rend.Page):
 
     def data_navilink(self, context, data):
         cfg = context.locate(interfaces.ILDAPConfig)
-        dn = cfg.getBaseDN()
+        dn = iwebui.ICurrentDN(context)
 
 	r=[]
-	while dn!=distinguishedname.DistinguishedName(stringValue=''):
+	while dn!=distinguishedname.DistinguishedName(stringValue=''): #TODO and while inside base?
 	    firstPart=dn.split()[0]
 	    r.append(('../../%s' % uriQuote(str(dn)),
                       str(firstPart)))
@@ -314,7 +315,7 @@ class SearchPage(rend.Page):
     def render_linkedDN(self, ctx, data):
         dn = data
         cfg = ctx.locate(interfaces.ILDAPConfig)
-        baseDN = cfg.getBaseDN()
+        baseDN = iwebui.ICurrentDN(ctx)
 
         ctx.tag.clear()
         while (dn!=baseDN
