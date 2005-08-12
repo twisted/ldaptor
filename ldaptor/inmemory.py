@@ -118,6 +118,9 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry):
         else:
             return defer.succeed(None)
 
+    def fetch(self, *attributes):
+        return defer.succeed(self)
+
     def match(self, filter):
         if isinstance(filter, pureldap.LDAPFilter_present):
             return filter.value in self
