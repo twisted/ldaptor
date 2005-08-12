@@ -251,6 +251,29 @@ class TestInMemoryDatabase(unittest.TestCase):
         fail = util.deferredError(d)
         fail.trap(ldaperrors.LDAPInvalidCredentials)
 
+    def testSearch_withCallback(self):
+        got = []
+        d = self.root.search(filterText='(|(cn=foo)(cn=bar))',
+                             callback=got.append)
+        r = util.deferredResult(d)
+        self.assertEquals(r, None)
+
+        want = [
+            self.bar,
+            self.foo,
+            ]
+        self.assertEquals(got, want)
+
+    def testSearch_withoutCallback(self):
+        d = self.root.search(filterText='(|(cn=foo)(cn=bar))')
+        got = util.deferredResult(d)
+
+        want = [
+            self.bar,
+            self.foo,
+            ]
+        self.assertEquals(got, want)
+
 class FromLDIF(unittest.TestCase):
     def test_single(self):
         ldif = StringIO('''\

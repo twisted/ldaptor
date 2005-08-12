@@ -1,7 +1,7 @@
 import sets
 from twisted.internet import defer, error
 from twisted.python.failure import Failure
-from ldaptor import interfaces, entry, delta
+from ldaptor import interfaces, entry, delta, ldapfilter
 from ldaptor.protocols import pureldap
 from ldaptor.protocols.ldap import distinguishedname, ldaperrors, ldifprotocol, ldapsyntax
 
@@ -109,7 +109,7 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry):
         # gather results, send them
         def _tryMatch(entry):
             if entry.match(filterObject):
-                callback(entry)
+                matchCallback(entry)
 
         d = iterator(callback=_tryMatch)
 
