@@ -54,12 +54,29 @@ class AddOCForm(configurable.Configurable):
         structural.sort()
         auxiliary.sort()
 
+
+        class KludgeNevowChoice(object):
+            """
+            A kludge that allows using Choice with both Nevow 0.3 and
+            newer.
+            """
+            def __init__(self, oc):
+                self.name = oc.name
+                self.desc = oc.desc
+            def __str__(self):
+                """
+                For Choice in Nevow 0.4 and newer. Nevow 0.3 will use
+                integer indexes. Actual stringification for display
+                purposes happens in strObjectClass.
+                """
+                return self.name[0]
+
         formFields = [
             annotate.Argument('request',
                               annotate.Request()),
             annotate.Argument('structuralObjectClass',
                               annotate.Choice(label=_('Object type to create'),
-                                              choices=structural,
+                                              choices=[KludgeNevowChoice(x) for x in structural],
                                               stringify=strObjectClass)),
             ]
         for oc in auxiliary:
@@ -81,6 +98,7 @@ class AddOCForm(configurable.Configurable):
 
     def add(self, request, structuralObjectClass, **kw):
         assert structuralObjectClass is not None
+        structuralObjectClass = str(structuralObjectClass)
         auxiliaryObjectClasses = []
         for k,v in kw.items():
             assert k.startswith('auxiliary_')
@@ -91,14 +109,14 @@ class AddOCForm(configurable.Configurable):
         u = url.URL.fromRequest(request)
         request.setComponent(
             iformless.IRedirectAfterPost,
-            u.child('manual').child('+'.join([structuralObjectClass.name[0]]
+            u.child('manual').child('+'.join([structuralObjectClass]
                                              + auxiliaryObjectClasses)))
         if auxiliaryObjectClasses:
             return _('Using objectclasses %s and %s.') % (
-                structuralObjectClass.name[0],
+                structuralObjectClass,
                 ', '.join(auxiliaryObjectClasses))
         else:
-            return _('Using objectclass %s.') % structuralObjectClass.name[0]
+            return _('Using objectclass %s.') % structuralObjectClass
 
 class AddForm(configurable.Configurable):
     def __init__(self, chosenObjectClasses, attributeTypes, objectClasses):
