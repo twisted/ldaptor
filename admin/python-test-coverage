@@ -10,8 +10,7 @@ $PYTHON admin/coverage.py -e
 
 $PYTHON admin/coverage.py -x /usr/bin/trial -R ldaptor || true
 
-bk -r sfiles -gU \
-| grep '\.py$' \
-| xargs --no-run-if-empty $PYTHON admin/coverage.py -a -r
+find ldaptor -name '*.py' -print0 \
+    | xargs -0 --no-run-if-empty $PYTHON admin/coverage.py -a -r
 
 rm coverage
