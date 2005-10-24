@@ -1,3 +1,46 @@
+ldaptor (0.0.42) unstable; urgency=low
+
+  * Applications changes:
+    - In webui, don't change config base DN based on the DN in the URL.
+      Instead, remember new ICurrentDN in context for that purpose. Allows
+      guessing right next free uid numbers even when looking at a subtree
+      that doesn't include (all of) the user accounts.
+    - Add ldaptor-ldap2dnszones, generates bind-style DNS zones from
+      LDAP ipHosts and ipNetworks.
+    - Add french translation, update l10n. Closes: #301547.
+
+  * Refactorings to adapt to Nevow APIs:
+    - Kludge webui add to work with Choice in both nevow 0.3 and newer.
+
+  * Bugfixes:
+    - Apparently locateConfigurable can not return a Deferred. Handle it.
+    - Make startTLS no longer hang. Thanks to Christopher Zorn
+      <christopher.zorn@gmail.com>.
+    - Fix and unit test ReadOnlyInMemoryLDAPEntry.search()
+    - Add a dummy fetch() to ReadOnlyInMemoryLDAPEntry for API consistency.
+
+  * Cleanups:
+    - Port changes and minor bugfixes from nevow.i18n:
+      + r2303: Get rid of nevow.i18n.FlatteningProxy, it isn't needed
+        anymore and caused trouble with unicode etc.
+      + r2290: i18n bugfix: make _("%(foo)d") % {"foo": 42} work.
+      + r2251: add ungettext (pluralization) support for nevow.i18n.
+      + r2250: nevow.i18n string formatting fails with %d and %f
+      + r2241: guard against nonexisting localizations.
+      + r2240: also look for locales without a dash-suffix.
+
+  * Packaging:
+    - doko, I find your lack of trust in API stability disturbing.  Yes,
+      things work even if you upgrade. Closes: #327032.
+    - Build-depend on python-epydoc not python2.3-epydoc. Closes: #320897.
+    - Remove old unused packaging helpers.
+    - Add package python2.4-ldaptor.
+
+  * Administrivia:
+    - No longer using bk, fix test coverage reporting.
+
+ -- Tommi Virtanen <tv@debian.org>  Mon, 24 Oct 2005 18:19:46 +0300
+
 ldaptor (0.0.41) unstable; urgency=low
 
   * Bugfixes:
