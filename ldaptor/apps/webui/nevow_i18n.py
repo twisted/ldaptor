@@ -91,21 +91,6 @@ class PlaceHolder(object):
             s += ' %% %r' % (mod,)
         return s
 
-class FlatteningProxy(object):
-    def __init__(self, ctx, original):
-        self.ctx = ctx
-        self.original = original
-    def __getitem__(self, key):
-        return flat.flatten(self.original[key], self.ctx)
-    def __str__(self):
-        return str(self.original)
-    def __repr__(self):
-        return repr(self.original)
-    def __int__(self):
-        return int(self.original)
-    def __float__(self):
-        return float(self.original)
-
 def flattenL10n(placeHolder, ctx):
     kw = placeHolder.kwargs
 
@@ -131,15 +116,7 @@ def flattenL10n(placeHolder, ctx):
 
     s = placeHolder.translator(*placeHolder.args, **kw)
     for mod in placeHolder.mod:
-        if isinstance(mod, tuple):
-            l = tuple([FlatteningProxy(ctx, x) for x in mod])
-        elif isinstance(mod, dict):
-            l = {}
-            for k,v in mod.items():
-                l[k] = FlatteningProxy(ctx, v)
-        else:
-            l = FlatteningProxy(ctx, mod)
-        s = s % l
+        s = s % mod
     return s
 
     
