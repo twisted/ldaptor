@@ -133,6 +133,10 @@ def flattenL10n(placeHolder, ctx):
     for mod in placeHolder.mod:
         if isinstance(mod, tuple):
             l = tuple([FlatteningProxy(ctx, x) for x in mod])
+        elif isinstance(mod, dict):
+            l = {}
+            for k,v in mod.items():
+                l[k] = FlatteningProxy(ctx, v)
         else:
             l = FlatteningProxy(ctx, mod)
         s = s % l
