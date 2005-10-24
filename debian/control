@@ -31,6 +31,9 @@ Description: Command-line LDAP utilities
  .
  ldaptor-ldap2dhcpconf -- Create dhcp.conf based on LDAP host info.
  .
+ ldaptor-ldap2dnszones -- Create a DNS zone files based on LDAP host
+ info.
+ .
  ldaptor-ldap2maradns -- Create a maradns zone file based on LDAP host
  info.
  .

@@ -172,6 +172,7 @@ from the command line.
 	"bin/ldaptor-webui",
 	"bin/ldaptor-ldap2dhcpconf",
 	"bin/ldaptor-ldap2maradns",
+	"bin/ldaptor-ldap2dnszones",
 	"bin/ldaptor-search",
 	"bin/ldaptor-namingcontexts",
 	"bin/ldaptor-passwd",
