@@ -97,6 +97,10 @@ class FlatteningProxy(object):
         return str(self.original)
     def __repr__(self):
         return repr(self.original)
+    def __int__(self):
+        return int(self.original)
+    def __float__(self):
+        return float(self.original)
 
 def flattenL10n(placeHolder, ctx):
     kw = placeHolder.kw
