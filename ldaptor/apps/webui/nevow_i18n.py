@@ -158,14 +158,9 @@ class Translator(object):
                 localedir=localeDir,
                 languages=languages,
                 )
-        except IOError, e:
-            if e.errno == errno.ENOENT:
-                # no locale file found
-                return s
-            else:
-                raise
-        else:
-            return translation.ugettext(s)
+        except IOError:
+            translation = gettext.NullTranslations()
+        return translation.ugettext(s)             
 
     def __init__(self, **kw):
         """
