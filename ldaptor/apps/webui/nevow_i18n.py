@@ -41,6 +41,8 @@ def languagesFactory(ctx):
                 except ValueError:
                     pass
         langs.append((quality, lang))
+        if '-' in lang:
+            langs.append((quality, lang.split('-')[0])) 
     langs.sort(lambda a,b: cmp(b[0], a[0]))
     return [lang for quality, lang in langs]
 
