@@ -59,26 +59,30 @@ class I18NConfig(object):
 
         
 class PlaceHolder(object):
-    def __init__(self, translator, original, _mod=None, **kw):
+    def __init__(self, translator, *args, **kwargs):
         self.translator = translator
-        self.original = original
-        self.kw = kw
+        self.args = args
+        self.kwargs = kwargs
+        _mod = kwargs.pop('_mod', None)
         if _mod is None:
             _mod = []
         self.mod = _mod
 
     def __mod__(self, other):
+        kw = {}
+        kw.update(self.kwargs)
+        kw['_mod'] = self.mod+[other]
         return self.__class__(self.translator,
-                              self.original,
-                              _mod=self.mod+[other])
+                              *self.args,
+                              **kw)
 
     def __repr__(self):
-        args = [
-            'translator=%r' % self.translator,
-            'original=%r' % self.original,
-            ]
-        if self.kw:
-            args.append('**%r' % self.kw)
+        args = []
+        if self.args:
+            args.append('*%r' % (self.args,))
+        args.append('translator=%r' % self.translator)
+        if self.kwargs:
+            args.append('**%r' % self.kwargs)
         s = '%s(%s)' % (
             self.__class__.__name__,
             ', '.join(args),
@@ -103,7 +107,7 @@ class FlatteningProxy(object):
         return float(self.original)
 
 def flattenL10n(placeHolder, ctx):
-    kw = placeHolder.kw
+    kw = placeHolder.kwargs
 
     try:
         languages = ILanguages(ctx)
@@ -125,7 +129,7 @@ def flattenL10n(placeHolder, ctx):
         if cfg.localeDir is not None:
             kw['localeDir'] = cfg.localeDir
 
-    s = placeHolder.translator(placeHolder.original, **kw)
+    s = placeHolder.translator(*placeHolder.args, **kw)
     for mod in placeHolder.mod:
         if isinstance(mod, tuple):
             l = tuple([FlatteningProxy(ctx, x) for x in mod])
@@ -144,67 +148,84 @@ class Translator(object):
     flattening process, allowing per-user settings to be retrieved via
     the context.
 
-    @ivar translator: The actual translation function to use.
+    @ivar translator: the actual translation function to use.
 
-    @ivar args: keyword arguments to pass to translator.
+    @ivar args: positional arguments to pass to translator.
+
+    @ivar kwargs: keyword arguments to pass to translator.
+
+    @ivar gettextFunction: If using the default translator function,
+    name of GNU gettext function to wrap. Useful for 'ungettext'.
     """
     translator = None
     args = None
+    kwargs = None
 
-    def _gettextTranslation(self, s,
-                            domain=None,
-                            localeDir=None,
-                            languages=None):
+    gettextFunction = 'ugettext'
+
+    def _gettextTranslation(self, *args, **kwargs):
+        domain = kwargs.pop('domain', None)
+        localeDir = kwargs.pop('localeDir', None)
+        languages = kwargs.pop('languages', None)
         import gettext
-        try:
-            translation = gettext.translation(
-                domain=domain,
-                localedir=localeDir,
-                languages=languages,
-                )
-        except IOError:
-            translation = gettext.NullTranslations()
-        return translation.ugettext(s)             
+        translation = gettext.translation(
+            domain=domain,
+            localedir=localeDir,
+            languages=languages,
+            fallback=True,
+            )
+        fn = getattr(translation,
+                     self.gettextFunction)
+        return fn(*args, **kwargs)
 
-    def __init__(self, **kw):
+    def __init__(self, **kwargs):
         """
         Initialize.
 
-        @keyword translator: The translator function to use.
+        @keyword translator: the translator function to use.
 
-        @param kw: keyword arguments for the translator function.
+        @keyword gettextFunction: The GNU gettext function to
+        wrap. See class docstring.
+
+        @param kwargs: keyword arguments for the translator function.
         """
-        translator = kw.pop('translator', None)
+        translator = kwargs.pop('translator', None)
         if translator is not None:
             self.translator = translator
         if self.translator is None:
             self.translator = self._gettextTranslation
-        self.args = kw
 
-    def __call__(self, original, **kw):
+        gettextFunction = kwargs.pop('gettextFunction', None)
+        if gettextFunction is not None:
+            self.gettextFunction = gettextFunction
+
+        self.kwargs = kwargs
+
+    def __call__(self, *args, **kwargs):
         """
         Translate a string.
 
-        @param original: string to translate
+        @param args: arguments to pass to translator, usually the
+        string to translate, or for things like ungettext two strings
+        and a number.
 
-        @type original: basestr
-
-        @param kw: keyword arguments for the translator.
-        Arguments given here will override the ones given
-        at initialization.
+        @param kwargs: keyword arguments for the translator.
+        Arguments given here will override the ones given at
+        initialization.
 
         @return: a placeholder that will be translated
         when flattened.
 
         @rtype: PlaceHolder
         """
-        args = dict(self.args)
-        args.update(kw)
-        return PlaceHolder(self.translator, original, **args)
+        kw = dict(self.kwargs)
+        kw.update(kwargs)
+        return PlaceHolder(self.translator, *args, **kw)
 
         
 _ = Translator()
 
+ungettext = Translator(gettextFunction='ungettext')
 
 def render(translator=None):
     """
