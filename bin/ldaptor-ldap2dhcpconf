@@ -208,14 +208,14 @@ def only(e, attr):
         return val
 
 def _cbGetHosts(entries):
-    entries = []
+    hosts = []
     for e in entries:
         cn = only(e, 'cn')
-	self.entries.append(Host(str(e.dn),
-				 str(cn),
-				 map(str, e['ipHostNumber']),
-				 map(str, e.get('macAddress', ()))))
-    return entries
+	hosts.append(Host(str(e.dn),
+                          str(cn),
+                          map(str, e['ipHostNumber']),
+                          map(str, e.get('macAddress', ()))))
+    return hosts
 
 def getHosts(e, filter):
     filt=pureldap.LDAPFilter_and(value=(
@@ -241,28 +241,28 @@ def haveNets(data, e, baseDN, filt, dnsDomain):
 
 def _cbGetNets(entries):
     sharedNetworks = {}
-    entries = []
+    nets = []
 
     for e in entries:
         cn=only(e, 'cn')
         ipNetworkNumber=only(e, 'ipNetworkNumber')
-        ipNetmaskNumber=only(args, 'ipNetmaskNumber')
-        net = Net(objectName, cn,
+        ipNetmaskNumber=only(e, 'ipNetmaskNumber')
+        net = Net(e.dn, cn,
                   ipNetworkNumber, ipNetmaskNumber,
-                  routers=args.get('router', ()),
-                  dhcpRanges=args.get('dhcpRange', ()),
-                  winsServers=args.get('winsServer', ()),
-                  domainNameServers=args.get('domainNameServer', ()),
+                  routers=e.get('router', ()),
+                  dhcpRanges=e.get('dhcpRange', ()),
+                  winsServers=e.get('winsServer', ()),
+                  domainNameServers=e.get('domainNameServer', ()),
                   )
-        if args.has_key('sharedNetworkName'):
+        if e.has_key('sharedNetworkName'):
             name = only(e, 'sharedNetworkName')
             if not sharedNetworks.has_key(name):
                 sharedNetworks[name]=SharedNet(name)
             sharedNetworks[name].addNet(net)
         else:
-            entries.append(net)
+            nets.append(net)
 
-    return (entries, sharedNetworks)
+    return (nets, sharedNetworks)
 
 def getNets(e, filter):
     filt=pureldap.LDAPFilter_and(value=(
