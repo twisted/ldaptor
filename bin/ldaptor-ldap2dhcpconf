@@ -63,18 +63,18 @@ class HostIPAddress:
 	self.ipAddress=ipAddress
 
     def printDHCP(self, domain, prefix=''):
-	r=([
-	    '# %s' % self.host.dn,
-	    'host %s.%s {' % (self.host.name, domain),
-	    ]
-	   + [ '\thardware ethernet %s;' % mac
-	       for mac in self.host.macAddresses
-	       ]
-	   + [
-	    '\tfixed-address %s;' % self.ipAddress,
-	    '}'
-	    ])
-	print '\n'.join([prefix+line for line in r])
+        def output():
+	    yield '# %s' % self.host.dn
+	    yield 'host %s.%s {' % (self.host.name, domain)
+            for mac in self.host.macAddresses:
+                yield '\thardware ethernet %s;' % mac
+            yield '\tfixed-address %s;' % self.ipAddress
+            if self.host.bootFile is not None:
+                # TODO quote bootFile
+                yield '\tfilename "%s";' % self.host.bootFile
+	    yield '}'
+
+	print '\n'.join([prefix+line for line in output()])
 
     def __repr__(self):
 	return (self.__class__.__name__
@@ -84,11 +84,13 @@ class HostIPAddress:
 		+')')
 
 class Host:
-    def __init__(self, dn, name, ipAddresses, macAddresses=()):
+    def __init__(self, dn, name, ipAddresses, macAddresses=(),
+                 bootFile=None):
 	self.dn=dn
 	self.name=name
 	self.ipAddresses=[HostIPAddress(self, ip) for ip in ipAddresses]
 	self.macAddresses=macAddresses
+        self.bootFile = bootFile
 
     def __repr__(self):
 	return (self.__class__.__name__
@@ -97,6 +99,7 @@ class Host:
 		+'name=%s, ' % repr(self.name)
 		+'ipAddresses=%s' % repr(self.ipAddresses)
 		+'macAddresses=%s' % repr(self.macAddresses)
+		+'bootFile=%s' % repr(self.bootFile)
 		+')')
 
 class Net:
@@ -199,13 +202,21 @@ def haveHosts(hosts, nets, sharedNets, dnsDomain):
     for net in nets:
         net.printDHCP(dnsDomain)
 
-def only(e, attr):
-    if len(e[attr])!=1:
-        raise RuntimeError, \
-              "object %s attribute %r has multiple values: %s" \
-              % (e.dn, attr, e[attr])
-    for val in e[attr]:
-        return val
+class _NO_DEFAULT(object): pass
+def only(e, attr, default=_NO_DEFAULT):
+    val = e.get(attr, _NO_DEFAULT)
+    if val is _NO_DEFAULT:
+        if default is not _NO_DEFAULT:
+            return default
+        else:
+            raise RuntimeError("object %s does not have attribute %r."
+                               % (e.dn, attr))
+    else:
+        if len(val)!=1:
+            raise RuntimeError("object %s attribute %r has multiple values: %s"
+                               % (e.dn, attr, val))
+        for item in val:
+            return item
 
 def _cbGetHosts(entries):
     hosts = []
@@ -214,7 +225,9 @@ def _cbGetHosts(entries):
 	hosts.append(Host(str(e.dn),
                           str(cn),
                           map(str, e['ipHostNumber']),
-                          map(str, e.get('macAddress', ()))))
+                          map(str, e.get('macAddress', ())),
+                          bootFile=only(e, 'bootFile', default=None),
+                          ))
     return hosts
 
 def getHosts(e, filter):
@@ -229,6 +242,7 @@ def getHosts(e, filter):
                  attributes=['cn',
                              'ipHostNumber',
                              'macAddress',
+                             'bootFile',
                              ])
     d.addCallback(_cbGetHosts)
     return d
