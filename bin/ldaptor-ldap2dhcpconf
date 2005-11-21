@@ -15,10 +15,10 @@
 #shared-network "foo" {
 #}
 
-from ldaptor.protocols.ldap import ldapclient, distinguishedname, ldapconnector, ldapsyntax
+from ldaptor.protocols.ldap import ldapclient, ldapconnector, ldapsyntax
 from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage, ldapfilter, config
-from twisted.internet import protocol, reactor, defer
+from twisted.internet import reactor
 from socket import inet_aton, inet_ntoa
 
 
@@ -97,8 +97,8 @@ class Host:
 		+'('
 		+'dn=%s, ' % repr(self.dn)
 		+'name=%s, ' % repr(self.name)
-		+'ipAddresses=%s' % repr(self.ipAddresses)
-		+'macAddresses=%s' % repr(self.macAddresses)
+		+'ipAddresses=%s, ' % repr(self.ipAddresses)
+		+'macAddresses=%s, ' % repr(self.macAddresses)
 		+'bootFile=%s' % repr(self.bootFile)
 		+')')
 
