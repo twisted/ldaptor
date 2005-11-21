@@ -20,6 +20,7 @@ from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage, ldapfilter, config
 from twisted.internet import reactor
 from socket import inet_aton, inet_ntoa
+import sets
 
 
 def my_aton_octets(ip):
@@ -83,7 +84,39 @@ class HostIPAddress:
 		+'ipAddress=%s' % repr(self.ipAddress)
 		+')')
 
+class Group:
+    def __init__(self, dn, bootFile=None):
+        self.dn = dn
+        self.bootFile = bootFile
+        self.hosts = sets.Set()
+
+    def addHost(self, host):
+        if host.group is not None:
+            print >>sys.stderr, (
+                'Host %s is in two groups: %r and %r'
+                % (host.dn, host.group, self))
+        else:
+            host.group = self
+            self.hosts.add(host)
+
+    def printDHCP(self, domain, addrs, prefix=''):
+        print prefix+'# '+str(self.dn)
+        print prefix+'group {'
+
+        if self.bootFile is not None:
+            # TODO quote bootFile
+            print prefix+'\tfilename "%s";' % self.bootFile
+
+        for host in self.hosts:
+            for addr in host.ipAddresses:
+                if addr in addrs:
+                    addrs.remove(addr)
+                    addr.printDHCP(domain, prefix=prefix+'\t')
+        print prefix+'}'
+
 class Host:
+    group = None
+
     def __init__(self, dn, name, ipAddresses, macAddresses=(),
                  bootFile=None):
 	self.dn=dn
@@ -150,12 +183,20 @@ class Net:
 
 	print '\n'.join([prefix+line for line in r])
 
-	seen = {}
-	for host in self.hosts:
-	    if seen.has_key(host.host):
-		continue
-	    seen[host.host]=1
-	    host.printDHCP(self.name+'.'+domain, prefix=prefix)
+        addrs = sets.Set()
+	for addr in self.hosts:
+            addrs.add(addr)
+
+        for addr in self.hosts:
+            g = addr.host.group
+            if g is not None:
+                g.printDHCP(self.name+'.'+domain,
+                            addrs,
+                            prefix=prefix)
+
+        while addrs:
+            addr = addrs.pop()
+	    addr.printDHCP(self.name+'.'+domain, prefix=prefix)
 
     def __repr__(self):
 	return (self.__class__.__name__
@@ -181,7 +222,55 @@ class SharedNet:
 	print '}'
 	print
 
-def haveHosts(hosts, nets, sharedNets, dnsDomain):
+def _cbGetGroups(entries, hosts):
+    dnToHost = {}
+    for host in hosts:
+        assert host.dn not in dnToHost
+        dnToHost[host.dn] = host
+
+    for e in entries:
+        group = Group(dn=e.dn,
+                      bootFile=only(e, 'bootFile', None))
+
+        for member in e.get('member', []):
+            host = dnToHost.get(member, None)
+            if host is not None:
+                group.addHost(host)
+
+    return hosts
+
+def getGroups(hosts, e, filter):
+    """Add group info to hosts."""
+    def buildFilter(hosts):
+        for host in hosts:
+            f = pureldap.LDAPFilter_equalityMatch(
+                attributeDesc=pureldap.LDAPAttributeDescription('member'),
+                assertionValue=pureber.BEROctetString(str(host.dn)))
+            yield f
+
+    filt=pureldap.LDAPFilter_and(value=(
+        # the only reason we do groups is for the bootFile,
+        # so require one to be present
+        pureldap.LDAPFilter_present('bootFile'),
+
+        pureldap.LDAPFilter_or(value=list(buildFilter(hosts))),
+        ))
+    if filter:
+        filt = pureldap.LDAPFilter_and(value=(filter, filt))
+
+    d = e.search(filterObject=filt,
+                 attributes=['member',
+                             'bootFile'])
+
+    d.addCallback(_cbGetGroups, hosts)
+    return d
+
+def haveHosts(hosts, e, filt, nets, sharedNets, dnsDomain):
+    d = getGroups(hosts, e, filt)
+    d.addCallback(haveGroups, nets, sharedNets, dnsDomain)
+    return d
+
+def haveGroups(hosts, nets, sharedNets, dnsDomain):
     for host in hosts:
         for hostIP in host.ipAddresses:
             parent=None
@@ -250,7 +339,7 @@ def getHosts(e, filter):
 def haveNets(data, e, baseDN, filt, dnsDomain):
     nets, sharedNets = data
     d = getHosts(e, filt)
-    d.addCallback(haveHosts, nets, sharedNets, dnsDomain)
+    d.addCallback(haveHosts, e, filt, nets, sharedNets, dnsDomain)
     return d
 
 def _cbGetNets(entries):
