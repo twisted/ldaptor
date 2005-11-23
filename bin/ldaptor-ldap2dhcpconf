@@ -100,19 +100,24 @@ class Group:
             self.hosts.add(host)
 
     def printDHCP(self, domain, addrs, prefix=''):
-        print prefix+'# '+str(self.dn)
-        print prefix+'group {'
+        addresses = sets.Set([addr
+                              for host in self.hosts
+                              for addr in host.ipAddresses])
+        addresses.intersection_update(addrs)
+        addrs.difference_update(addresses)
 
-        if self.bootFile is not None:
-            # TODO quote bootFile
-            print prefix+'\tfilename "%s";' % self.bootFile
+        if addresses:
+            print prefix+'# '+str(self.dn)
+            print prefix+'group {'
 
-        for host in self.hosts:
-            for addr in host.ipAddresses:
-                if addr in addrs:
-                    addrs.remove(addr)
-                    addr.printDHCP(domain, prefix=prefix+'\t')
-        print prefix+'}'
+            if self.bootFile is not None:
+                # TODO quote bootFile
+                print prefix+'\tfilename "%s";' % self.bootFile
+
+            for addr in addresses:
+                addr.printDHCP(domain, prefix=prefix+'\t')
+
+            print prefix+'}'
 
 class Host:
     group = None
