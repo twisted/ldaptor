@@ -176,14 +176,17 @@ class LDIFTreeEntry(entry.EditableLDAPEntry):
                     children.append(e)
         return children
 
-    def children(self, callback=None):
+    def _children(self, callback=None):
         children = self._sync_children()
         if callback is None:
-            return defer.succeed(children)
+            return children
         else:
             for c in children:
                 callback(c)
-            return defer.succeed(None)
+            return None
+
+    def children(self, callback=None):
+        return defer.maybeDeferred(self._children, callback=callback)
 
     def subtree(self, callback=None):
         if callback is None:
