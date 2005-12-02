@@ -400,7 +400,14 @@ cn: theChild
         want.sort()
         self.assertEquals(got, want)
 
-    def test_children_noAccess(self):
+    def test_children_noAccess_dir(self):
+        os.chmod(self.meta.path, 0)
+        d = self.meta.children()
+        e = self.assertRaises(OSError,
+                              util.wait, d)
+        self.assertEquals(e.errno, errno.EACCES)
+
+    def test_children_noAccess_file(self):
         os.chmod(os.path.join(self.meta.path, 'cn=foo.ldif'), 0)
         d = self.meta.children()
         e = self.assertRaises(IOError,
@@ -523,6 +530,35 @@ cn: theChild
         failure = util.deferredError(d)
         failure.trap(ldaperrors.LDAPNoSuchObject)
         self.assertEquals(failure.value.message, dn)
+
+    def test_lookup_fail_multipleError(self):
+        writeFile(os.path.join(self.example.path,
+                               'cn=bad-two-entries.ldif'),
+                  """\
+dn: cn=bad-two-entries,dc=example,dc=com
+cn: bad-two-entries
+objectClass: top
+
+dn: cn=more,dc=example,dc=com
+cn: more
+objectClass: top
+
+""")
+        self.assertRaises(
+            ldiftree.LDIFTreeEntryContainsMultipleEntries,
+            self.example.lookup,
+            distinguishedname.DistinguishedName(
+            'cn=bad-two-entries,dc=example,dc=com'))
+
+    def test_lookup_fail_emptyError(self):
+        writeFile(os.path.join(self.example.path,
+                               'cn=bad-empty.ldif'),
+                  "")
+        self.assertRaises(
+            ldiftree.LDIFTreeEntryContainsNoEntries,
+            self.example.lookup,
+            distinguishedname.DistinguishedName(
+            'cn=bad-empty,dc=example,dc=com'))
 
     def test_lookup_deep(self):
         dn = distinguishedname.DistinguishedName('cn=bar,ou=metasyntactic,dc=example,dc=com')
