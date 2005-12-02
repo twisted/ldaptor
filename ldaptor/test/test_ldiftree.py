@@ -347,6 +347,21 @@ cn: theChild
         want.sort()
         self.assertEquals(got, want)
 
+    def test_children_twoChildren_callback(self):
+        children = []
+        d = self.meta.children(callback=children.append)
+        r = util.deferredResult(d)
+        self.assertIdentical(r, None)
+        self.assertEquals(len(children), 2)
+        want = [
+            distinguishedname.DistinguishedName('cn=foo,ou=metasyntactic,dc=example,dc=com'),
+            distinguishedname.DistinguishedName('cn=bar,ou=metasyntactic,dc=example,dc=com'),
+            ]
+        got = [e.dn for e in children]
+        got.sort()
+        want.sort()
+        self.assertEquals(got, want)
+
     def test_addChild(self):
         self.empty.addChild(
             rdn='a=b',
