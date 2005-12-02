@@ -23,11 +23,9 @@ class RandomizeListdirMixin(object):
     def setUpClass(self):
         self.__listdir = os.listdir
         os.listdir = self.randomListdir
-        super(RandomizeListdirMixin, self).setUpClass()
 
     def tearDownClass(self):
         os.listdir = self.__listdir
-        super(RandomizeListdirMixin, self).tearDownClass()
 
 class Dir2LDIF(RandomizeListdirMixin, unittest.TestCase):
     def setUp(self):
