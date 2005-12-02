@@ -4,7 +4,7 @@ Test cases for LDIF directory tree writing/reading.
 
 from twisted.trial import unittest, util
 from twisted.python import failure
-import os, random
+import os, random, errno
 from ldaptor import ldiftree, entry
 from ldaptor.entry import BaseLDAPEntry
 from ldaptor.protocols.ldap import distinguishedname, ldaperrors
@@ -87,6 +87,19 @@ objectClass: top
 	    })
         e = self.get(want.dn)
         self.failUnlessEqual(e, want)
+
+    def testNoAccess(self):
+        os.chmod(os.path.join(self.tree,
+                              'dc=com.dir',
+                              'dc=example.dir',
+                              'cn=foo.ldif'),
+                 0)
+        e = self.assertRaises(
+            IOError,
+            self.get,
+            distinguishedname.DistinguishedName(
+            'cn=foo,dc=example,dc=com'))
+        self.assertEquals(e.errno, errno.EACCES)
 
     def testMultipleError(self):
         self.assertRaises(
@@ -184,6 +197,31 @@ cn: foo
 
         path = os.path.join(self.tree, 'dc=com.dir', 'dc=example.dir',
                             'ou=OrgUnit.dir', 'cn=create-me.ldif')
+        self.failUnless(os.path.isfile(path))
+        self.failUnlessEqual(file(path).read(),
+                             """\
+dn: cn=create-me,ou=OrgUnit,dc=example,dc=com
+objectClass: top
+cn: create-me
+
+""")
+
+    def testDirExists(self):
+	e = BaseLDAPEntry(dn='cn=create-me,ou=OrgUnit,dc=example,dc=com',
+                          attributes={
+	    'objectClass': ['top'],
+	    'cn': ['create-me'],
+	    })
+        dirpath = os.path.join(self.tree, 'dc=com.dir', 'dc=example.dir',
+                               'ou=OrgUnit.dir')
+        os.mkdir(dirpath)
+        d = ldiftree.put(self.tree, e)
+        try:
+            entry = util.deferredResult(d)
+        except failure.Failure, exc:
+            raise exc.value
+
+        path = os.path.join(dirpath, 'cn=create-me.ldif')
         self.failUnless(os.path.isfile(path))
         self.failUnlessEqual(file(path).read(),
                              """\
@@ -362,6 +400,13 @@ cn: theChild
         want.sort()
         self.assertEquals(got, want)
 
+    def test_children_noAccess(self):
+        os.chmod(os.path.join(self.meta.path, 'cn=foo.ldif'), 0)
+        d = self.meta.children()
+        e = self.assertRaises(IOError,
+                              util.wait, d)
+        self.assertEquals(e.errno, errno.EACCES)
+
     def test_addChild(self):
         self.empty.addChild(
             rdn='a=b',
@@ -468,6 +513,13 @@ cn: theChild
     def test_lookup_fail_outOfTree(self):
         dn = distinguishedname.DistinguishedName('dc=invalid')
         d = self.root.lookup(dn)
+        failure = util.deferredError(d)
+        failure.trap(ldaperrors.LDAPNoSuchObject)
+        self.assertEquals(failure.value.message, dn)
+
+    def test_lookup_fail_outOfTree_2(self):
+        dn = distinguishedname.DistinguishedName('dc=invalid')
+        d = self.example.lookup(dn)
         failure = util.deferredError(d)
         failure.trap(ldaperrors.LDAPNoSuchObject)
         self.assertEquals(failure.value.message, dn)
