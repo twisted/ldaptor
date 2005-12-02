@@ -7,7 +7,7 @@ from twisted.python import failure
 import os, random, errno
 from ldaptor import ldiftree, entry
 from ldaptor.entry import BaseLDAPEntry
-from ldaptor.protocols.ldap import distinguishedname, ldaperrors
+from ldaptor.protocols.ldap import distinguishedname, ldaperrors, ldifprotocol
 
 def writeFile(path, content):
     f = file(path, 'w')
@@ -120,14 +120,14 @@ objectClass: top
             ldiftree.LDIFTreeEntryContainsNoEntries,
             self.get,
             distinguishedname.DistinguishedName(
-            'cn=bad-missing-end,dc=example,dc=com'))
+            'cn=bad-empty,dc=example,dc=com'))
 
     def testOnlyNewlineError(self):
         self.assertRaises(
-            ldiftree.LDIFTreeEntryContainsNoEntries,
+            ldifprotocol.LDIFLineWithoutSemicolonError,
             self.get,
             distinguishedname.DistinguishedName(
-            'cn=bad-missing-end,dc=example,dc=com'))
+            'cn=bad-only-newline,dc=example,dc=com'))
 
     def testTreeBranches(self):
         want = BaseLDAPEntry(dn='cn=sales-thingie,ou=Sales,dc=example,dc=com',
