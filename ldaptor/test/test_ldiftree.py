@@ -400,12 +400,21 @@ cn: theChild
         want.sort()
         self.assertEquals(got, want)
 
-    def test_children_noAccess_dir(self):
-        os.chmod(self.meta.path, 0)
+    def test_children_noAccess_dir_noRead(self):
+        os.chmod(self.meta.path, 0300)
         d = self.meta.children()
         e = self.assertRaises(OSError,
                               util.wait, d)
         self.assertEquals(e.errno, errno.EACCES)
+        os.chmod(self.meta.path, 0755)
+
+    def test_children_noAccess_dir_noExec(self):
+        os.chmod(self.meta.path, 0600)
+        d = self.meta.children()
+        e = self.assertRaises(IOError,
+                              util.wait, d)
+        self.assertEquals(e.errno, errno.EACCES)
+        os.chmod(self.meta.path, 0755)
 
     def test_children_noAccess_file(self):
         os.chmod(os.path.join(self.meta.path, 'cn=foo.ldif'), 0)
