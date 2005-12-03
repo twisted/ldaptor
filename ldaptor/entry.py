@@ -318,3 +318,26 @@ class DiffTreeMixin(object):
         d.addCallback(self._diffTree_gotMyChildren, other, result)
 
         return d
+
+class SubtreeFromChildrenMixin(object):
+    def subtree(self, callback=None):
+        if callback is None:
+            result = []
+            d = self.subtree(callback=result.append)
+            d.addCallback(lambda _: result)
+            return d
+        else:
+            callback(self)
+            d = self.children()
+            def _processOneChild(_, children, callback):
+                if not children:
+                    return None
+
+                c = children.pop()
+                d = c.subtree(callback)
+                d.addCallback(_processOneChild, children, callback)
+            def _gotChildren(children, callback):
+                _processOneChild(None, children, callback)
+            d.addCallback(_gotChildren, callback)
+            return d
+

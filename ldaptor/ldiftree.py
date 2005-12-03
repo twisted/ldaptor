@@ -104,7 +104,8 @@ def put(path, entry):
     return defer.execute(_put, path, entry)
 
 class LDIFTreeEntry(entry.EditableLDAPEntry,
-                    entry.DiffTreeMixin):
+                    entry.DiffTreeMixin,
+                    entry.SubtreeFromChildrenMixin):
     __implements__ = (interfaces.IConnectedLDAPEntry,
                       )
     def __init__(self, path, dn=None, *a, **kw):
@@ -198,27 +199,6 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
 
     def children(self, callback=None):
         return defer.maybeDeferred(self._children, callback=callback)
-
-    def subtree(self, callback=None):
-        if callback is None:
-            result = []
-            d = self.subtree(callback=result.append)
-            d.addCallback(lambda _: result)
-            return d
-        else:
-            callback(self)
-            d = self.children()
-            def _processOneChild(_, children, callback):
-                if not children:
-                    return None
-
-                c = children.pop()
-                d = c.subtree(callback)
-                d.addCallback(_processOneChild, children, callback)
-            def _gotChildren(children, callback):
-                _processOneChild(None, children, callback)
-            d.addCallback(_gotChildren, callback)
-            return d
 
     def lookup(self, dn):
         dn = distinguishedname.DistinguishedName(dn)
