@@ -7,7 +7,7 @@ from twisted.python import failure
 import os, random, errno
 from ldaptor import ldiftree, entry
 from ldaptor.entry import BaseLDAPEntry
-from ldaptor.protocols.ldap import distinguishedname, ldaperrors, ldifprotocol
+from ldaptor.protocols.ldap import ldaperrors, ldifprotocol
 
 def writeFile(path, content):
     f = file(path, 'w')
@@ -97,37 +97,32 @@ objectClass: top
         e = self.assertRaises(
             IOError,
             self.get,
-            distinguishedname.DistinguishedName(
-            'cn=foo,dc=example,dc=com'))
+            'cn=foo,dc=example,dc=com')
         self.assertEquals(e.errno, errno.EACCES)
 
     def testMultipleError(self):
         self.assertRaises(
             ldiftree.LDIFTreeEntryContainsMultipleEntries,
             self.get,
-            distinguishedname.DistinguishedName(
-            'cn=bad-two-entries,dc=example,dc=com'))
+            'cn=bad-two-entries,dc=example,dc=com')
 
     def testMissingEndError(self):
         self.assertRaises(
             ldiftree.LDIFTreeEntryContainsNoEntries,
             self.get,
-            distinguishedname.DistinguishedName(
-            'cn=bad-missing-end,dc=example,dc=com'))
+            'cn=bad-missing-end,dc=example,dc=com')
 
     def testEmptyError(self):
         self.assertRaises(
             ldiftree.LDIFTreeEntryContainsNoEntries,
             self.get,
-            distinguishedname.DistinguishedName(
-            'cn=bad-empty,dc=example,dc=com'))
+            'cn=bad-empty,dc=example,dc=com')
 
     def testOnlyNewlineError(self):
         self.assertRaises(
             ldifprotocol.LDIFLineWithoutSemicolonError,
             self.get,
-            distinguishedname.DistinguishedName(
-            'cn=bad-only-newline,dc=example,dc=com'))
+            'cn=bad-only-newline,dc=example,dc=com')
 
     def testTreeBranches(self):
         want = BaseLDAPEntry(dn='cn=sales-thingie,ou=Sales,dc=example,dc=com',
@@ -355,7 +350,7 @@ cn: theChild
         children = util.deferredResult(d)
         self.assertEquals(len(children), 1)
         got = [e.dn for e in children]
-        want = [distinguishedname.DistinguishedName('cn=theChild,ou=oneChild,dc=example,dc=com')]
+        want = ['cn=theChild,ou=oneChild,dc=example,dc=com']
         got.sort()
         want.sort()
         self.assertEquals(got, want)
@@ -377,8 +372,8 @@ cn: theChild
         children = util.deferredResult(d)
         self.assertEquals(len(children), 2)
         want = [
-            distinguishedname.DistinguishedName('cn=foo,ou=metasyntactic,dc=example,dc=com'),
-            distinguishedname.DistinguishedName('cn=bar,ou=metasyntactic,dc=example,dc=com'),
+            'cn=foo,ou=metasyntactic,dc=example,dc=com',
+            'cn=bar,ou=metasyntactic,dc=example,dc=com',
             ]
         got = [e.dn for e in children]
         got.sort()
@@ -392,8 +387,8 @@ cn: theChild
         self.assertIdentical(r, None)
         self.assertEquals(len(children), 2)
         want = [
-            distinguishedname.DistinguishedName('cn=foo,ou=metasyntactic,dc=example,dc=com'),
-            distinguishedname.DistinguishedName('cn=bar,ou=metasyntactic,dc=example,dc=com'),
+            'cn=foo,ou=metasyntactic,dc=example,dc=com',
+            'cn=bar,ou=metasyntactic,dc=example,dc=com',
             ]
         got = [e.dn for e in children]
         got.sort()
@@ -435,7 +430,7 @@ cn: theChild
         self.assertEquals(len(children), 1)
         got = [e.dn for e in children]
         want = [
-            distinguishedname.DistinguishedName('a=b,ou=empty,dc=example,dc=com'),
+            'a=b,ou=empty,dc=example,dc=com',
             ]
         got.sort()
         want.sort()
@@ -520,21 +515,21 @@ cn: theChild
         self.assertEquals(got, want)
 
     def test_lookup_fail(self):
-        dn = distinguishedname.DistinguishedName('cn=thud,ou=metasyntactic,dc=example,dc=com')
+        dn = 'cn=thud,ou=metasyntactic,dc=example,dc=com'
         d = self.root.lookup(dn)
         failure = util.deferredError(d)
         failure.trap(ldaperrors.LDAPNoSuchObject)
         self.assertEquals(failure.value.message, dn)
 
     def test_lookup_fail_outOfTree(self):
-        dn = distinguishedname.DistinguishedName('dc=invalid')
+        dn = 'dc=invalid'
         d = self.root.lookup(dn)
         failure = util.deferredError(d)
         failure.trap(ldaperrors.LDAPNoSuchObject)
         self.assertEquals(failure.value.message, dn)
 
     def test_lookup_fail_outOfTree_2(self):
-        dn = distinguishedname.DistinguishedName('dc=invalid')
+        dn = 'dc=invalid'
         d = self.example.lookup(dn)
         failure = util.deferredError(d)
         failure.trap(ldaperrors.LDAPNoSuchObject)
@@ -556,8 +551,7 @@ objectClass: top
         self.assertRaises(
             ldiftree.LDIFTreeEntryContainsMultipleEntries,
             self.example.lookup,
-            distinguishedname.DistinguishedName(
-            'cn=bad-two-entries,dc=example,dc=com'))
+            'cn=bad-two-entries,dc=example,dc=com')
 
     def test_lookup_fail_emptyError(self):
         writeFile(os.path.join(self.example.path,
@@ -566,11 +560,10 @@ objectClass: top
         self.assertRaises(
             ldiftree.LDIFTreeEntryContainsNoEntries,
             self.example.lookup,
-            distinguishedname.DistinguishedName(
-            'cn=bad-empty,dc=example,dc=com'))
+            'cn=bad-empty,dc=example,dc=com')
 
     def test_lookup_deep(self):
-        dn = distinguishedname.DistinguishedName('cn=bar,ou=metasyntactic,dc=example,dc=com')
+        dn = 'cn=bar,ou=metasyntactic,dc=example,dc=com'
         d = self.root.lookup(dn)
         r = util.deferredResult(d)
         self.assertEquals(r, self.bar)

@@ -36,6 +36,7 @@ class StoreParsedLDIF(ldifprotocol.LDIF):
         self.deferred.callback(self.seen)
 
 def get(path, dn):
+    dn = distinguishedname.DistinguishedName(dn)
     l = list(dn.split())
     assert len(l) >= 1
     l.reverse()
@@ -210,6 +211,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry):
             return d
 
     def lookup(self, dn):
+        dn = distinguishedname.DistinguishedName(dn)
         if not self.dn.contains(dn):
             return defer.fail(ldaperrors.LDAPNoSuchObject(dn))
         if dn == self.dn:
