@@ -2,14 +2,16 @@ from twisted.internet import defer, error
 from twisted.python.failure import Failure
 from ldaptor import interfaces, entry, ldapfilter, entryhelpers
 from ldaptor.protocols import pureldap
-from ldaptor.protocols.ldap import distinguishedname, ldaperrors, ldifprotocol, ldapsyntax
+from ldaptor.protocols.ldap import distinguishedname, ldaperrors, ldifprotocol
 
 class LDAPCannotRemoveRootError(ldaperrors.LDAPNamingViolation):
     """Cannot remove root of LDAP tree"""
 
 class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
                                 entryhelpers.DiffTreeMixin,
-                                entryhelpers.SubtreeFromChildrenMixin):
+                                entryhelpers.SubtreeFromChildrenMixin,
+                                entryhelpers.MatchMixin,
+                                ):
     __implements__ = (interfaces.IConnectedLDAPEntry,
                       )
 
@@ -100,83 +102,6 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
 
     def fetch(self, *attributes):
         return defer.succeed(self)
-
-    def match(self, filter):
-        if isinstance(filter, pureldap.LDAPFilter_present):
-            return filter.value in self
-        elif isinstance(filter, pureldap.LDAPFilter_equalityMatch):
-            # TODO case insensitivity etc, different attribute syntaxes
-            if filter.attributeDesc.value not in self:
-                return False
-            if filter.assertionValue.value in self[filter.attributeDesc.value]:
-                return True
-            return False
-        elif isinstance(filter, pureldap.LDAPFilter_substrings):
-            if filter.type not in self:
-                return False
-            possibleMatches = self[filter.type]
-            substrings = filter.substrings[:]
-
-            if (substrings
-                and isinstance(filter.substrings[0],
-                               pureldap.LDAPFilter_substrings_initial)):
-                possibleMatches = [
-                    x[len(filter.substrings[0].value):]
-                    for x in possibleMatches
-                    if x.startswith(filter.substrings[0].value)
-                    ]
-                del substrings[0]
-
-            if (substrings
-                and isinstance(filter.substrings[-1],
-                               pureldap.LDAPFilter_substrings_final)):
-                possibleMatches = [
-                    x[:-len(filter.substrings[0].value)]
-                    for x in possibleMatches
-                    if x.endswith(filter.substrings[-1].value)
-                    ]
-                del substrings[-1]
-
-            while possibleMatches and substrings:
-                assert isinstance(substrings[0], pureldap.LDAPFilter_substrings_any)
-                r = []
-                for possible in possibleMatches:
-                    i = possible.find(substrings[0].value)
-                    if i >= 0:
-                        r.append(possible[i:])
-                possibleMatches = r
-                del substrings[0]
-            if possibleMatches and not substrings:
-                return True
-            return False
-        elif isinstance(filter, pureldap.LDAPFilter_greaterOrEqual):
-            if filter.attributeDesc not in self:
-                return False
-            for value in self[filter.attributeDesc]:
-                if value  >= filter.assertionValue:
-                    return True
-            return False
-        elif isinstance(filter, pureldap.LDAPFilter_lessOrEqual):
-            if filter.attributeDesc not in self:
-                return False
-            for value in self[filter.attributeDesc]:
-                if value <= filter.assertionValue:
-                    return True
-            return False
-        elif isinstance(filter, pureldap.LDAPFilter_and):
-            for filt in filter:
-                if not self.match(filt):
-                    return False
-            return True
-        elif isinstance(filter, pureldap.LDAPFilter_or):
-            for filt in filter:
-                if self.match(filt):
-                    return True
-            return False
-        elif isinstance(filter, pureldap.LDAPFilter_not):
-            return not self.match(filter.value)
-        else:
-            raise ldapsyntax.MatchNotImplemented, filter
 
     def addChild(self, rdn, attributes):
         """TODO ugly API. Returns the created entry."""
