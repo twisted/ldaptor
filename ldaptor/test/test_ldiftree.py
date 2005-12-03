@@ -4,8 +4,8 @@ Test cases for LDIF directory tree writing/reading.
 
 from twisted.trial import unittest, util
 from twisted.python import failure
-import os, random, errno
-from ldaptor import ldiftree, entry
+import os, random, errno, shutil
+from ldaptor import ldiftree, entry, delta
 from ldaptor.entry import BaseLDAPEntry
 from ldaptor.protocols.ldap import ldaperrors, ldifprotocol
 
@@ -614,3 +614,65 @@ objectClass: top
         d = self.foo.bind('s4krit')
         fail = util.deferredError(d)
         fail.trap(ldaperrors.LDAPInvalidCredentials)
+
+    def test_diffTree_self(self):
+        d = self.root.diffTree(self.root)
+        r = util.deferredResult(d)
+        self.assertEquals(r, [])
+
+    def test_diffTree_copy(self):
+        otherDir = self.mktemp()
+        shutil.copytree(self.tree, otherDir)
+        other = ldiftree.LDIFTreeEntry(otherDir)
+        d = self.root.diffTree(other)
+        r = util.deferredResult(d)
+        self.assertEquals(r, [])
+
+    def test_diffTree_addChild(self):
+        otherDir = self.mktemp()
+        shutil.copytree(self.tree, otherDir)
+        other = ldiftree.LDIFTreeEntry(otherDir)
+        e = entry.BaseLDAPEntry(dn='cn=foo,dc=example,dc=com')
+        d = ldiftree.put(otherDir, e)
+        r = util.deferredResult(d)
+
+        d = other.lookup('cn=foo,dc=example,dc=com')
+        r = util.deferredResult(d)
+
+        d = self.root.diffTree(other)
+        got = util.deferredResult(d)
+        self.assertEquals(got, [delta.AddOp(r)])
+
+
+    def test_diffTree_delChild(self):
+        otherDir = self.mktemp()
+        shutil.copytree(self.tree, otherDir)
+        other = ldiftree.LDIFTreeEntry(otherDir)
+
+        d = other.lookup('ou=empty,dc=example,dc=com')
+        otherEmpty = util.deferredResult(d)
+        d = otherEmpty.delete()
+        util.deferredResult(d)
+
+        d = self.root.diffTree(other)
+        got = util.deferredResult(d)
+        self.assertEquals(got, [delta.DeleteOp(self.empty)])
+
+    def test_diffTree_edit(self):
+        otherDir = self.mktemp()
+        shutil.copytree(self.tree, otherDir)
+        other = ldiftree.LDIFTreeEntry(otherDir)
+
+        d = other.lookup('ou=empty,dc=example,dc=com')
+        otherEmpty = util.deferredResult(d)
+        otherEmpty['foo'] = ['bar']
+        d = otherEmpty.commit()
+        util.deferredResult(d)
+
+        d = self.root.diffTree(other)
+        got = util.deferredResult(d)
+        self.assertEquals(got, [
+            delta.ModifyOp(self.empty.dn,
+                           [delta.Add('foo', ['bar'])],
+                           ),
+            ])
