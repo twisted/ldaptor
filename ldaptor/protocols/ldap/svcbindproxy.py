@@ -1,8 +1,7 @@
 from ldaptor.protocols.ldap import proxy
 from ldaptor.protocols.ldap import ldapsyntax, ldaperrors
 from ldaptor.protocols import pureldap
-from ldaptor.entry import sshaDigest
-import base64, datetime
+import datetime
 
 class ServiceBindingProxy(proxy.Proxy):
     """

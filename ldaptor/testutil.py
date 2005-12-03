@@ -1,6 +1,6 @@
 """Utilities for writing Twistedy unit tests and debugging."""
 
-from twisted.internet import reactor, defer
+from twisted.internet import defer
 from twisted.test import proto_helpers
 from ldaptor import config
 

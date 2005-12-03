@@ -7,9 +7,6 @@ from twisted.trial import util
 from twisted.test import proto_helpers
 
 from ldaptor.protocols.ldap import ldapclient
-from twisted.internet import defer
-from twisted.python import failure
-from twisted.trial.util import deferredResult, deferredError
 
 class SillyMessage(object):
     needs_answer = True

@@ -8,7 +8,7 @@ from twisted.internet import protocol, address
 from twisted.python import components
 from ldaptor import inmemory, interfaces, schema
 from ldaptor.protocols.ldap import ldapserver, ldapclient, ldaperrors, fetchschema
-from ldaptor.protocols import pureldap, pureber
+from ldaptor.protocols import pureldap
 from twisted.test import proto_helpers
 from ldaptor.test import util, test_schema
 

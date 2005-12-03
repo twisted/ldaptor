@@ -47,7 +47,7 @@ def parseExtensible(attr, s):
 
 from pyparsing import Word, Literal, Optional, ZeroOrMore, Suppress, \
                        Group, Forward, OneOrMore, ParseException, \
-                       CharsNotIn, Combine, empty, StringStart, \
+                       CharsNotIn, Combine, StringStart, \
                        StringEnd, delimitedList
 
 import copy, string

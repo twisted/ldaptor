@@ -3,15 +3,13 @@ from twisted.trial import unittest
 import urllib, string
 
 from twisted.internet import address, protocol
-from twisted.test import testutils
 from twisted.python import components
 from twisted.web import microdom
 
-from nevow import appserver, url, inevow
-from nevow import testutil
+from nevow import appserver
 
 from ldaptor import inmemory, interfaces, config
-from ldaptor.protocols.ldap import distinguishedname, ldapconnector, ldapserver
+from ldaptor.protocols.ldap import ldapserver
 from ldaptor.apps.webui import main
 
 from ldaptor.test import mockweb, util

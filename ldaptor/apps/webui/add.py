@@ -1,10 +1,9 @@
 from twisted.internet import defer
 from twisted.python import plugin
 
-from ldaptor.protocols import pureldap, pureber
 from ldaptor.protocols.ldap import ldapsyntax, distinguishedname
 from ldaptor.protocols.ldap import fetchschema
-from ldaptor import numberalloc, interfaces, interfaces
+from ldaptor import numberalloc, interfaces
 from ldaptor.apps.webui import iwebui
 from ldaptor.apps.webui.uriquote import uriQuote, uriUnquote
 from ldaptor.apps.webui.i18n import _

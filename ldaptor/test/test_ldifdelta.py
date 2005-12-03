@@ -3,8 +3,7 @@ Test cases for ldaptor.protocols.ldap.ldifdelta
 """
 
 from twisted.trial import unittest
-import sets
-from ldaptor.protocols.ldap import ldifdelta, distinguishedname
+from ldaptor.protocols.ldap import ldifdelta
 from ldaptor import delta, entry
 
 class LDIFDeltaDriver(ldifdelta.LDIFDelta):

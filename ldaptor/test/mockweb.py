@@ -1,10 +1,7 @@
 """I mock the web."""
 
-from StringIO import StringIO
-
-from nevow import appserver, url
-from twisted.internet import address, protocol, error
-from twisted.protocols import http
+from nevow import url
+from twisted.internet import address
 from twisted.web import client
 
 from nevow import testutil

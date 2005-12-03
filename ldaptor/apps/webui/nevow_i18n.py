@@ -1,4 +1,3 @@
-import errno
 from nevow import inevow, flat, compy, context
 
 ### from nevow.inevow

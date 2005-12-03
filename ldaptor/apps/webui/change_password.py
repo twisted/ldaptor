@@ -2,15 +2,15 @@ from twisted.internet import reactor
 from twisted.internet import defer
 from ldaptor.protocols import pureldap
 from ldaptor.protocols.ldap import ldapsyntax, distinguishedname
-from ldaptor import generate_password, entry, interfaces
+from ldaptor import generate_password, interfaces
 from ldaptor.apps.webui.uriquote import uriUnquote
 from ldaptor import weave
 from ldaptor.apps.webui.i18n import _
 from ldaptor.apps.webui import i18n
 
-import os, sets
+import os
 from nevow import rend, inevow, loaders, url, tags
-from formless import annotate, webform, iformless, configurable
+from formless import annotate, webform, iformless
 
 def getEntry(ctx, dn):
     user = ctx.locate(inevow.ISession).getLoggedInRoot().loggedIn

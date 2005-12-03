@@ -3,13 +3,9 @@ Test cases for ldaptor.protocols.ldap.proxy module.
 """
 
 from twisted.trial import unittest
-from twisted.trial.util import deferredResult
-from twisted.internet import protocol, address, reactor, error
-from twisted.python import components
-from ldaptor import inmemory, interfaces, schema
+from twisted.internet import reactor, error
 from ldaptor.protocols.ldap import proxy, ldaperrors
-from ldaptor.protocols import pureldap, pureber
-from ldaptor.test import util, test_schema
+from ldaptor.protocols import pureldap
 from ldaptor import testutil
 
 class Proxy(unittest.TestCase):

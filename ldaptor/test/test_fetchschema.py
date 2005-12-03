@@ -3,11 +3,9 @@ Test cases for ldaptor.protocols.ldap.fetchschema module.
 """
 
 from twisted.trial import unittest
-from ldaptor.protocols.ldap import ldapsyntax, fetchschema
+from ldaptor.protocols.ldap import fetchschema
 from ldaptor import schema
-from ldaptor.protocols import pureldap, pureber
-from twisted.internet import defer
-from twisted.python import failure
+from ldaptor.protocols import pureldap
 from ldaptor.testutil import LDAPClientTestDriver
 from twisted.trial.util import deferredResult
 

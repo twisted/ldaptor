@@ -153,7 +153,6 @@ class LDIFDelta(ldifprotocol.LDIF):
 
 def fromLDIFFile(f):
     """Read LDIF data from a file."""
-    from twisted.trial import util
 
     p = LDIFDelta()
     l = []

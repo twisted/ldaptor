@@ -3,8 +3,6 @@ Test cases for ldaptor.diff
 """
 
 from twisted.trial import unittest
-import sets
-from ldaptor.protocols.ldap import ldifdelta, distinguishedname
 from ldaptor import delta, entry
 
 class TestDiffEntry(unittest.TestCase):

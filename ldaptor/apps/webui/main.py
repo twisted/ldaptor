@@ -1,9 +1,7 @@
-from twisted.application import internet
 from twisted.cred import portal, checkers, credentials
 from nevow import guard, inevow
-from ldaptor.protocols.ldap import distinguishedname
 from ldaptor.config import LDAPConfig
-from ldaptor.apps.webui import gadget, config
+from ldaptor.apps.webui import gadget
 from ldaptor.checkers import LDAPBindingChecker
 
 class TODOGetRidOfMeRealm:

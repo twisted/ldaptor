@@ -1,6 +1,4 @@
-from twisted.internet import defer
-
-from ldaptor.protocols.ldap import ldapclient, ldaperrors, ldapsyntax
+from ldaptor.protocols.ldap import ldaperrors, ldapsyntax
 from ldaptor.protocols import pureldap
 from ldaptor import schema
 

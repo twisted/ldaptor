@@ -18,7 +18,7 @@
 
 from ldaptor import interfaces
 from ldaptor.protocols import pureldap, pureber
-from ldaptor.protocols.ldap import ldaperrors, distinguishedname, ldaperrors
+from ldaptor.protocols.ldap import distinguishedname, ldaperrors
 
 from twisted.python import log
 from twisted.internet import protocol, defer

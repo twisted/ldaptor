@@ -3,7 +3,7 @@ Test cases for ldaptor.protocols.ldap.ldapfilter module.
 """
 
 from twisted.trial import unittest
-from ldaptor.protocols import pureldap, pureber
+from ldaptor.protocols import pureldap
 from ldaptor import ldapfilter
 import types
 

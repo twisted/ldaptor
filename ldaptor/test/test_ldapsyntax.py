@@ -4,7 +4,7 @@ Test cases for ldaptor.protocols.ldap.ldapsyntax module.
 
 from twisted.trial import unittest
 from ldaptor import config
-from ldaptor.protocols.ldap import ldapsyntax, distinguishedname, ldaperrors
+from ldaptor.protocols.ldap import ldapsyntax, ldaperrors
 from ldaptor.protocols import pureldap, pureber
 from twisted.internet import defer
 from twisted.python import failure

@@ -96,7 +96,7 @@ if __name__ == '__main__':
     """
     Demonstration LDAP proxy; passes all requests to localhost:389.
     """
-    from twisted.internet import reactor, protocol
+    from twisted.internet import protocol
     from twisted.python import log
     import sys
     log.startLogging(sys.stderr)

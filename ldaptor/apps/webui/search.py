@@ -1,8 +1,8 @@
-from twisted.internet import defer, protocol
+from twisted.internet import defer
 from twisted.python import components
 from ldaptor.protocols.ldap import ldapclient, ldapsyntax
 from ldaptor.protocols.ldap import distinguishedname, ldapconnector
-from ldaptor.protocols import pureber, pureldap
+from ldaptor.protocols import pureldap
 from ldaptor import ldapfilter, interfaces
 from twisted.internet import reactor
 from ldaptor.apps.webui import config, iwebui
@@ -12,7 +12,7 @@ from ldaptor.apps.webui import i18n
 from ldaptor import weave
 
 import os
-from nevow import rend, inevow, loaders, url, tags, compy
+from nevow import rend, inevow, loaders, url, tags
 from formless import annotate, webform, iformless, configurable
 
 class IMove(components.Interface):

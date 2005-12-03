@@ -4,9 +4,9 @@ Manage LDAP data as a tree of LDIF files.
 import os, errno, sets
 from twisted.internet import defer, error
 from twisted.python import failure
-from ldaptor import entry, interfaces, attributeset, delta
+from ldaptor import entry, interfaces, attributeset
 from ldaptor.protocols import pureldap
-from ldaptor.protocols.ldap import ldifprotocol, ldif, distinguishedname, ldaperrors
+from ldaptor.protocols.ldap import ldifprotocol, distinguishedname, ldaperrors
 from twisted.mail.maildir import _generateMaildirName as tempName
 
 class LDIFTreeEntryContainsMultipleEntries(Exception):
@@ -436,7 +436,6 @@ if __name__ == '__main__':
     log.startLogging(sys.stderr)
 
     from twisted.python import components
-    from twisted.trial import util
     from ldaptor.protocols.ldap import ldapserver
 
     path = sys.argv[1]

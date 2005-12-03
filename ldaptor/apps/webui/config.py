@@ -1,5 +1,4 @@
 from ldaptor import config
-import ConfigParser
 
 def _getSearchFields():
     cfg = config.loadConfig()

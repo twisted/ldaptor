@@ -8,7 +8,7 @@ from ldaptor.apps.webui import i18n
 
 import os
 from nevow import rend, inevow, loaders, url, tags
-from formless import annotate, webform, iformless, configurable
+from formless import annotate, webform, configurable
 
 class MassPasswordChangeStatus(object):
     def __init__(self, deferlist):

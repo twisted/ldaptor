@@ -2,7 +2,6 @@
 
 from twisted.internet import defer
 from twisted.python.failure import Failure
-from twisted.python.util import InsensitiveDict
 from ldaptor.protocols.ldap import ldapclient, ldif, distinguishedname, ldaperrors
 from ldaptor.protocols import pureldap, pureber
 from ldaptor.samba import smbpassword

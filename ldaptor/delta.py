@@ -5,7 +5,6 @@ Changes to the content of one single LDAP entry.
 changing of location in tree)
 """
 
-from twisted.python.util import InsensitiveDict
 from ldaptor import attributeset
 from ldaptor.protocols import pureldap
 from ldaptor.protocols.ldap import ldif, distinguishedname

@@ -1,8 +1,6 @@
 """Find an available uidNumber/gidNumber/other similar number."""
 
-from twisted.internet import defer, reactor
 from ldaptor.protocols import pureldap
-from ldaptor.protocols.ldap import ldapclient
 
 class freeNumberGuesser:
     def __init__(self, makeAGuess, min=None, max=None):

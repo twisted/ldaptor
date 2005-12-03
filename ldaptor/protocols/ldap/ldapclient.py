@@ -20,7 +20,6 @@ from ldaptor.protocols import pureldap, pureber
 from ldaptor.protocols.ldap import ldaperrors
 
 from twisted.python import log
-from twisted.python.failure import Failure
 from twisted.internet import protocol, defer, ssl, reactor
 
 class LDAPClientConnectionLostException(ldaperrors.LDAPException):

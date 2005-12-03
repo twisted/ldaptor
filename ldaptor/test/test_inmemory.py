@@ -4,10 +4,8 @@ Test cases for ldaptor.inmemory module.
 
 from twisted.trial import unittest, util
 from cStringIO import StringIO
-from ldaptor import inmemory, delta, entry
-from ldaptor.protocols import pureldap
+from ldaptor import inmemory, delta
 from ldaptor.protocols.ldap import distinguishedname, ldaperrors
-from twisted.test import proto_helpers
 
 class TestInMemoryDatabase(unittest.TestCase):
     def setUp(self):

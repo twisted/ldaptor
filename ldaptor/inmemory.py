@@ -1,7 +1,6 @@
-import sets
 from twisted.internet import defer, error
 from twisted.python.failure import Failure
-from ldaptor import interfaces, entry, delta, ldapfilter
+from ldaptor import interfaces, entry, ldapfilter
 from ldaptor.protocols import pureldap
 from ldaptor.protocols.ldap import distinguishedname, ldaperrors, ldifprotocol, ldapsyntax
 
@@ -279,7 +278,6 @@ class InMemoryLDIFProtocol(ldifprotocol.LDIF):
 
 def fromLDIFFile(f):
     """Read LDIF data from a file."""
-    from twisted.trial import util
 
     p = InMemoryLDIFProtocol()
     while 1:

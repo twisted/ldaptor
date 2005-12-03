@@ -1,5 +1,5 @@
 from twisted.cred import checkers, credentials, error
-from twisted.internet import defer, reactor
+from twisted.internet import reactor
 from twisted.python import failure
 from ldaptor import ldapfilter, config
 from ldaptor.protocols.ldap import ldapconnector, ldapclient, ldapsyntax, ldaperrors
