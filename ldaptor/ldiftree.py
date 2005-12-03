@@ -4,7 +4,7 @@ Manage LDAP data as a tree of LDIF files.
 import os, errno
 from twisted.internet import defer, error
 from twisted.python import failure
-from ldaptor import entry, interfaces
+from ldaptor import entry, interfaces, attributeset
 from ldaptor.protocols import pureldap
 from ldaptor.protocols.ldap import ldifprotocol, ldif, distinguishedname, ldaperrors
 from twisted.mail.maildir import _generateMaildirName as tempName
@@ -65,6 +65,15 @@ def get(path, dn):
     d.addCallback(_thereCanOnlyBeOne)
     return d
 
+def _putEntry(fileName, entry):
+    """fileName is without extension."""
+    tmp = fileName + '.' + tempName() + '.tmp'
+    f = file(tmp, 'w')
+    f.write(str(entry))
+    f.close()
+    os.rename(tmp, fileName+'.ldif')
+    # TODO atomicity
+
 def _put(path, entry):
     l = list(entry.dn.split())
     assert len(l) >= 1
@@ -89,13 +98,7 @@ def _put(path, entry):
                     raise
     else:
         parentDir = path
-    fileName = os.path.join(parentDir, '%s'%entryRDN)
-    tmp = fileName + '.' + tempName() + '.tmp'
-    f = file(tmp, 'w')
-    f.write(str(entry))
-    f.close()
-    os.rename(tmp, fileName+'.ldif')
-    # TODO atomicity
+    return _putEntry(os.path.join(parentDir, '%s'%entryRDN), entry)
 
 def put(path, entry):
     return defer.execute(_put, path, entry)
@@ -146,7 +149,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry):
         from twisted.trial import util
         e = util.wait(d)
         for k,v in e.items():
-            self._attributes[k] = list(v)
+            self._attributes[k] = attributeset.LDAPAttributeSet(k, v)
 
     def parent(self):
         # TODO add __nonzero__ to DistinguishedName
@@ -535,6 +538,10 @@ class LDIFTreeEntry(entry.EditableLDAPEntry):
             return NotImplemented
         return cmp(self.dn, other.dn)
 
+    def commit(self):
+        assert self.path.endswith('.dir')
+        entryPath = self.path[:-len('.dir')]
+        return defer.maybeDeferred(_putEntry, entryPath, self)
 
 if __name__ == '__main__':
     """
