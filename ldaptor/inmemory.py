@@ -1,6 +1,6 @@
 from twisted.internet import defer, error
 from twisted.python.failure import Failure
-from ldaptor import interfaces, entry, ldapfilter
+from ldaptor import interfaces, entry, ldapfilter, entryhelpers
 from ldaptor.protocols import pureldap
 from ldaptor.protocols.ldap import distinguishedname, ldaperrors, ldifprotocol, ldapsyntax
 
@@ -8,8 +8,8 @@ class LDAPCannotRemoveRootError(ldaperrors.LDAPNamingViolation):
     """Cannot remove root of LDAP tree"""
 
 class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
-                                entry.DiffTreeMixin,
-                                entry.SubtreeFromChildrenMixin):
+                                entryhelpers.DiffTreeMixin,
+                                entryhelpers.SubtreeFromChildrenMixin):
     __implements__ = (interfaces.IConnectedLDAPEntry,
                       )
 

@@ -4,7 +4,7 @@ Manage LDAP data as a tree of LDIF files.
 import os, errno, sets
 from twisted.internet import defer, error
 from twisted.python import failure
-from ldaptor import entry, interfaces, attributeset
+from ldaptor import entry, interfaces, attributeset, entryhelpers
 from ldaptor.protocols import pureldap
 from ldaptor.protocols.ldap import ldifprotocol, distinguishedname, ldaperrors
 from twisted.mail.maildir import _generateMaildirName as tempName
@@ -104,8 +104,8 @@ def put(path, entry):
     return defer.execute(_put, path, entry)
 
 class LDIFTreeEntry(entry.EditableLDAPEntry,
-                    entry.DiffTreeMixin,
-                    entry.SubtreeFromChildrenMixin):
+                    entryhelpers.DiffTreeMixin,
+                    entryhelpers.SubtreeFromChildrenMixin):
     __implements__ = (interfaces.IConnectedLDAPEntry,
                       )
     def __init__(self, path, dn=None, *a, **kw):
