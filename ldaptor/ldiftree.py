@@ -1,7 +1,7 @@
 """
 Manage LDAP data as a tree of LDIF files.
 """
-import os, errno
+import os, errno, sets
 from twisted.internet import defer, error
 from twisted.python import failure
 from ldaptor import entry, interfaces, attributeset
