@@ -1,8 +1,8 @@
 import sets
 from twisted.internet import defer
-from ldaptor import delta
+from ldaptor import delta, ldapfilter
 from ldaptor.protocols import pureldap
-from ldaptor.protocols.ldap import ldapsyntax
+from ldaptor.protocols.ldap import ldapsyntax, ldaperrors
 
 class DiffTreeMixin(object):
     def _diffTree_gotMyChildren(self, myChildren, other, result):
@@ -210,3 +210,61 @@ class MatchMixin(object):
             return not self.match(filter.value)
         else:
             raise ldapsyntax.MatchNotImplemented, filter
+
+class SearchByTreeWalkingMixin(object):
+    def search(self,
+	       filterText=None,
+	       filterObject=None,
+	       attributes=(),
+	       scope=None,
+	       derefAliases=None,
+	       sizeLimit=0,
+	       timeLimit=0,
+	       typesOnly=0,
+	       callback=None):
+	if filterObject is None and filterText is None:
+	    filterObject=pureldap.LDAPFilterMatchAll
+	elif filterObject is None and filterText is not None:
+	    filterObject=ldapfilter.parseFilter(filterText)
+	elif filterObject is not None and filterText is None:
+	    pass
+	elif filterObject is not None and filterText is not None:
+	    f=ldapfilter.parseFilter(filterText)
+	    filterObject=pureldap.LDAPFilter_and((f, filterObject))
+
+        if scope is None:
+            scope = pureldap.LDAP_SCOPE_wholeSubtree
+        if derefAliases is None:
+            derefAliases = pureldap.LDAP_DEREF_neverDerefAliases
+
+        # choose iterator: base/children/subtree
+        if scope == pureldap.LDAP_SCOPE_wholeSubtree:
+            iterator = self.subtree
+        elif scope == pureldap.LDAP_SCOPE_singleLevel:
+            iterator = self.children
+        elif scope == pureldap.LDAP_SCOPE_baseObject:
+            def iterateSelf(callback):
+                callback(self)
+                return defer.succeed(None)
+            iterator = iterateSelf
+        else:
+            raise ldaperrors.LDAPProtocolError, \
+                  'unknown search scope: %r' % scope
+
+        results = []
+        if callback is None:
+            matchCallback = results.append
+        else:
+            matchCallback = callback
+
+        # gather results, send them
+        def _tryMatch(entry):
+            if entry.match(filterObject):
+                matchCallback(entry)
+
+        d = iterator(callback=_tryMatch)
+
+        if callback is None:
+            return defer.succeed(results)
+        else:
+            return defer.succeed(None)

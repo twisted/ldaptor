@@ -1,7 +1,6 @@
 from twisted.internet import defer, error
 from twisted.python.failure import Failure
-from ldaptor import interfaces, entry, ldapfilter, entryhelpers
-from ldaptor.protocols import pureldap
+from ldaptor import interfaces, entry, entryhelpers
 from ldaptor.protocols.ldap import distinguishedname, ldaperrors, ldifprotocol
 
 class LDAPCannotRemoveRootError(ldaperrors.LDAPNamingViolation):
@@ -11,6 +10,7 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
                                 entryhelpers.DiffTreeMixin,
                                 entryhelpers.SubtreeFromChildrenMixin,
                                 entryhelpers.MatchMixin,
+                                entryhelpers.SearchByTreeWalkingMixin,
                                 ):
     __implements__ = (interfaces.IConnectedLDAPEntry,
                       )
@@ -42,63 +42,6 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
                 return c.lookup(dn)
 
         return defer.fail(ldaperrors.LDAPNoSuchObject(dn))
-
-    def search(self,
-	       filterText=None,
-	       filterObject=None,
-	       attributes=(),
-	       scope=None,
-	       derefAliases=None,
-	       sizeLimit=0,
-	       timeLimit=0,
-	       typesOnly=0,
-	       callback=None):
-	if filterObject is None and filterText is None:
-	    filterObject=pureldap.LDAPFilterMatchAll
-	elif filterObject is None and filterText is not None:
-	    filterObject=ldapfilter.parseFilter(filterText)
-	elif filterObject is not None and filterText is None:
-	    pass
-	elif filterObject is not None and filterText is not None:
-	    f=ldapfilter.parseFilter(filterText)
-	    filterObject=pureldap.LDAPFilter_and((f, filterObject))
-
-        if scope is None:
-            scope = pureldap.LDAP_SCOPE_wholeSubtree
-        if derefAliases is None:
-            derefAliases = pureldap.LDAP_DEREF_neverDerefAliases
-
-        # choose iterator: base/children/subtree
-        if scope == pureldap.LDAP_SCOPE_wholeSubtree:
-            iterator = self.subtree
-        elif scope == pureldap.LDAP_SCOPE_singleLevel:
-            iterator = self.children
-        elif scope == pureldap.LDAP_SCOPE_baseObject:
-            def iterateSelf(callback):
-                callback(self)
-                return defer.succeed(None)
-            iterator = iterateSelf
-        else:
-            raise ldaperrors.LDAPProtocolError, \
-                  'unknown search scope: %r' % scope
-
-        results = []
-        if callback is None:
-            matchCallback = results.append
-        else:
-            matchCallback = callback
-
-        # gather results, send them
-        def _tryMatch(entry):
-            if entry.match(filterObject):
-                matchCallback(entry)
-
-        d = iterator(callback=_tryMatch)
-
-        if callback is None:
-            return defer.succeed(results)
-        else:
-            return defer.succeed(None)
 
     def fetch(self, *attributes):
         return defer.succeed(self)
