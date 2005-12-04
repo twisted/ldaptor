@@ -11,9 +11,9 @@ def s(*l):
     """Join all members of list to a string. Integer members are chr()ed"""
     r=''
     for e in l:
-	if isinstance(e, types.IntType):
-	    e=chr(e)
-	r=r+str(e)
+        if isinstance(e, types.IntType):
+            e=chr(e)
+        r=r+str(e)
     return r
 
 def l(s):
@@ -66,7 +66,7 @@ class RFC2254Examples(unittest.TestCase):
                          ])
         self.assertEquals(ldapfilter.parseFilter(text), filt)
         self.assertEquals(filt.asText(), text)
-                         
+
 
     def test_extensible_1(self):
         text = '(cn:1.2.3.4.5:=Fred Flintstone)'
@@ -339,7 +339,7 @@ class TestValid(unittest.TestCase):
             assertionValue=pureldap.LDAPAssertionValue(value='foo '))
         self.assertEquals(ldapfilter.parseFilter(text), filt)
         self.assertEquals(filt.asText(), text)
-                          
+
 
     def test_whitespace_afterEq(self):
         text = r'(cn= foo)'

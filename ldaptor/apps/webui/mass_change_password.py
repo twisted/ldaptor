@@ -18,7 +18,7 @@ class MassPasswordChangeStatus(object):
 class MassPasswordChangeForm(configurable.Configurable):
     def __init__(self, ldapObjects):
         super(MassPasswordChangeForm, self).__init__(None)
-	self.ldapObjects = {}
+        self.ldapObjects = {}
         for o in ldapObjects:
             assert o.dn not in self.ldapObjects
             self.ldapObjects[o.dn] = o
@@ -26,14 +26,14 @@ class MassPasswordChangeForm(configurable.Configurable):
         self.formFields=self._getFormFields()
 
     def _getFormFields(self):
-	r=[]
+        r=[]
         r.append(annotate.Argument('request',
                                    annotate.Request()))
-	for dn, e in self.ldapObjects.items():
+        for dn, e in self.ldapObjects.items():
             r.append(annotate.Argument('dn_%s' % dn,
                                        annotate.Boolean(label=dn,
                                                         description=e)))
-	return r
+        return r
 
     def getBindingNames(self, ctx):
         return ['generate']
@@ -56,9 +56,9 @@ class MassPasswordChangeForm(configurable.Configurable):
             assert k in self.ldapObjects
             entries.append(self.ldapObjects[k])
 
-	if not entries:
-	    return _('No passwords to change.')
-	d=generate_password.generate(reactor, len(entries))
+        if not entries:
+            return _('No passwords to change.')
+        d=generate_password.generate(reactor, len(entries))
 
         def _gotPasswords(passwords, entries):
             assert len(passwords)==len(entries)
@@ -83,8 +83,8 @@ class ReallyMassPasswordChangePage(rend.Page):
         templateDir=os.path.split(os.path.abspath(__file__))[0])
 
     def __init__(self, entries):
-	super(ReallyMassPasswordChangePage, self).__init__()
-	self.entries = entries
+        super(ReallyMassPasswordChangePage, self).__init__()
+        self.entries = entries
 
     def data_css(self, context, data):
         request = context.locate(inevow.IRequest)
@@ -103,14 +103,14 @@ class ReallyMassPasswordChangePage(rend.Page):
         u=url.URL.fromRequest(request)
         u=u.parent().parent()
         l=[]
-	l.append(tags.a(href=u.sibling("search"))[_("Search")])
-	l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
-	return l
+        l.append(tags.a(href=u.sibling("search"))[_("Search")])
+        l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
+        return l
 
     def configurable_(self, context):
         request = context.locate(inevow.IRequest)
         return MassPasswordChangeForm(self.entries)
-    
+
     def render_form(self, context, data):
         return webform.renderForms()[context.tag]
 

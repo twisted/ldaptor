@@ -30,8 +30,8 @@ class BaseLDAPServer(protocol.Protocol):
     debug = False
 
     def __init__(self):
-	self.buffer = ''
-	self.connected = None
+        self.buffer = ''
+        self.connected = None
 
     berdecoder = pureldap.LDAPBERDecoderContext_TopLevel(
         inherit=pureldap.LDAPBERDecoderContext_LDAPMessage(
@@ -39,35 +39,35 @@ class BaseLDAPServer(protocol.Protocol):
         inherit=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext())))
 
     def dataReceived(self, recd):
-	self.buffer += recd
-	while 1:
-	    try:
-		o, bytes=pureber.berDecodeObject(self.berdecoder, self.buffer)
-	    except pureldap.BERExceptionInsufficientData:
-		o, bytes=None, 0
+        self.buffer += recd
+        while 1:
+            try:
+                o, bytes=pureber.berDecodeObject(self.berdecoder, self.buffer)
+            except pureldap.BERExceptionInsufficientData:
+                o, bytes=None, 0
             self.buffer = self.buffer[bytes:]
-	    if o is None:
-		break
-	    self.handle(o)
+            if o is None:
+                break
+            self.handle(o)
 
     def connectionMade(self):
-	"""TCP connection has opened"""
-	self.connected = 1
+        """TCP connection has opened"""
+        self.connected = 1
 
     def connectionLost(self, reason=protocol.connectionDone):
-	"""Called when TCP connection has been lost"""
-	self.connected = 0
+        """Called when TCP connection has been lost"""
+        self.connected = 0
 
     def queue(self, id, op):
-	if not self.connected:
-	    raise LDAPServerConnectionLostException()
-	msg=pureldap.LDAPMessage(op, id=id)
+        if not self.connected:
+            raise LDAPServerConnectionLostException()
+        msg=pureldap.LDAPMessage(op, id=id)
         if self.debug:
             log.debug('S->C %s' % repr(msg))
-	self.transport.write(str(msg))
+        self.transport.write(str(msg))
 
     def unsolicitedNotification(self, msg):
-	log.msg("Got unsolicited notification: %s" % repr(msg))
+        log.msg("Got unsolicited notification: %s" % repr(msg))
 
     def checkControls(self, controls):
         if controls is not None:
@@ -78,10 +78,10 @@ class BaseLDAPServer(protocol.Protocol):
 
     def handleUnknown(self, request, controls, callback):
         log.msg('Unknown request: %r' % request)
-	msg = pureldap.LDAPExtendedResponse(resultCode=ldaperrors.LDAPProtocolError.resultCode,
+        msg = pureldap.LDAPExtendedResponse(resultCode=ldaperrors.LDAPProtocolError.resultCode,
                                             responseName='1.3.6.1.4.1.1466.20036',
                                             errorMessage='Unknown request')
-	return msg
+        return msg
 
     def _cbLDAPError(self, reason, name):
         reason.trap(ldaperrors.LDAPException)
@@ -108,13 +108,13 @@ class BaseLDAPServer(protocol.Protocol):
                                       errorMessage=reason.getErrorMessage())
 
     def handle(self, msg):
-	assert isinstance(msg.value, pureldap.LDAPProtocolRequest)
+        assert isinstance(msg.value, pureldap.LDAPProtocolRequest)
         if self.debug:
             log.debug('S<-C %s' % repr(msg))
 
-	if msg.id==0:
-	    self.unsolicitedNotification(msg.value)
-	else:
+        if msg.id==0:
+            self.unsolicitedNotification(msg.value)
+        else:
             name = msg.value.__class__.__name__
             handler = getattr(self, 'handle_'+name, self.handleUnknown)
             d = defer.maybeDeferred(handler,

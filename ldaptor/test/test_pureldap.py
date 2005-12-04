@@ -26,9 +26,9 @@ def s(*l):
     """Join all members of list to a string. Integer members are chr()ed"""
     r=''
     for e in l:
-	if isinstance(e, types.IntType):
-	    e=chr(e)
-	r=r+str(e)
+        if isinstance(e, types.IntType):
+            e=chr(e)
+        r=r+str(e)
     return r
 
 def l(s):
@@ -38,118 +38,118 @@ def l(s):
 class KnownValues(unittest.TestCase):
     knownValues=( # class, args, kwargs, expected_result
 
-	(pureldap.LDAPModification_delete,
-	 [],
+        (pureldap.LDAPModification_delete,
+         [],
          { "attributeType": 'bar',
-	   },
+           },
          None,
-	 [0x30, 0x0c]
-	 + [0x0a, 0x01, 0x01]
+         [0x30, 0x0c]
+         + [0x0a, 0x01, 0x01]
          + [0x30, 0x07]
-	 + [0x04, 0x03] + l("bar")
-	 + [0x31, 0x00]),
+         + [0x04, 0x03] + l("bar")
+         + [0x31, 0x00]),
 
-	(pureldap.LDAPModifyRequest,
-	 [],
-	 { "object": 'cn=foo, dc=example, dc=com',
-	   "modification": [pureldap.LDAPModification_delete('bar')]
-	   },
+        (pureldap.LDAPModifyRequest,
+         [],
+         { "object": 'cn=foo, dc=example, dc=com',
+           "modification": [pureldap.LDAPModification_delete('bar')]
+           },
          None,
-	 [0x66, 0x2c]
-	 + [0x04, 0x1a]
-	 + l("cn=foo, dc=example, dc=com")
-	 + [0x30, 0x0e]
-	 + [0x30, 0x0c]
-	 + [0x0a, 0x01, 0x01]
-	 + [0x30, 0x07]
-	 + [0x04, 0x03] + l("bar")
-	 + [0x31, 0x00]),
+         [0x66, 0x2c]
+         + [0x04, 0x1a]
+         + l("cn=foo, dc=example, dc=com")
+         + [0x30, 0x0e]
+         + [0x30, 0x0c]
+         + [0x0a, 0x01, 0x01]
+         + [0x30, 0x07]
+         + [0x04, 0x03] + l("bar")
+         + [0x31, 0x00]),
 
-	(pureldap.LDAPFilter_not,
-	 [],
-	 { "value": pureldap.LDAPFilter_present("foo"),
-	   },
+        (pureldap.LDAPFilter_not,
+         [],
+         { "value": pureldap.LDAPFilter_present("foo"),
+           },
          pureldap.LDAPBERDecoderContext_Filter(fallback=pureber.BERDecoderContext()),
-	 [0xa2, 0x05]
-	 + [0x87]
-	 + [len("foo")]
-	 + l("foo")),
+         [0xa2, 0x05]
+         + [0x87]
+         + [len("foo")]
+         + l("foo")),
 
-	(pureldap.LDAPFilter_or,
-	 [],
-	 { "value": [pureldap.LDAPFilter_equalityMatch(
+        (pureldap.LDAPFilter_or,
+         [],
+         { "value": [pureldap.LDAPFilter_equalityMatch(
         attributeDesc=pureldap.LDAPAttributeDescription(value='cn'),
         assertionValue=pureldap.LDAPAssertionValue(value='foo')),
                      pureldap.LDAPFilter_equalityMatch(
         attributeDesc=pureldap.LDAPAttributeDescription(value='uid'),
         assertionValue=pureldap.LDAPAssertionValue(value='foo')),
                      ]
-	   },
+           },
          pureldap.LDAPBERDecoderContext_Filter(fallback=pureber.BERDecoderContext()),
-	 [0xa1, 23]
-	 + [0xa3, 9]
-	 + [0x04] + [len("cn")] + l("cn")
-	 + [0x04] + [len("foo")] + l("foo")
-	 + [0xa3, 10]
-	 + [0x04] + [len("uid")] + l("uid")
-	 + [0x04] + [len("foo")] + l("foo"),
+         [0xa1, 23]
+         + [0xa3, 9]
+         + [0x04] + [len("cn")] + l("cn")
+         + [0x04] + [len("foo")] + l("foo")
+         + [0xa3, 10]
+         + [0x04] + [len("uid")] + l("uid")
+         + [0x04] + [len("foo")] + l("foo"),
          ),
 
-	(pureldap.LDAPFilter_and,
-	 [],
-	 { "value": [pureldap.LDAPFilter_equalityMatch(
+        (pureldap.LDAPFilter_and,
+         [],
+         { "value": [pureldap.LDAPFilter_equalityMatch(
         attributeDesc=pureldap.LDAPAttributeDescription(value='cn'),
         assertionValue=pureldap.LDAPAssertionValue(value='foo')),
                      pureldap.LDAPFilter_equalityMatch(
         attributeDesc=pureldap.LDAPAttributeDescription(value='uid'),
         assertionValue=pureldap.LDAPAssertionValue(value='foo')),
                      ]
-	   },
+           },
          pureldap.LDAPBERDecoderContext_Filter(fallback=pureber.BERDecoderContext()),
-	 [0xa0, 23]
-	 + [0xa3, 9]
-	 + [0x04] + [len("cn")] + l("cn")
-	 + [0x04] + [len("foo")] + l("foo")
-	 + [0xa3, 10]
-	 + [0x04] + [len("uid")] + l("uid")
-	 + [0x04] + [len("foo")] + l("foo"),
+         [0xa0, 23]
+         + [0xa3, 9]
+         + [0x04] + [len("cn")] + l("cn")
+         + [0x04] + [len("foo")] + l("foo")
+         + [0xa3, 10]
+         + [0x04] + [len("uid")] + l("uid")
+         + [0x04] + [len("foo")] + l("foo"),
          ),
 
-	(pureldap.LDAPModifyDNRequest,
-	 [],
-	 {'entry': 'cn=foo,dc=example,dc=com',
-	  'newrdn': 'uid=bar',
-	  'deleteoldrdn': 0,
-	  },
+        (pureldap.LDAPModifyDNRequest,
+         [],
+         {'entry': 'cn=foo,dc=example,dc=com',
+          'newrdn': 'uid=bar',
+          'deleteoldrdn': 0,
+          },
          None,
-	 [0x6c, 0x26]
-	 + [0x04]
-	 + [len("cn=foo,dc=example,dc=com")]
-	 + l("cn=foo,dc=example,dc=com")
-	 + [0x04]
-	 + [len("uid=bar")]
-	 + l("uid=bar")
-	 + [0x01, 0x01, 0x00]),
+         [0x6c, 0x26]
+         + [0x04]
+         + [len("cn=foo,dc=example,dc=com")]
+         + l("cn=foo,dc=example,dc=com")
+         + [0x04]
+         + [len("uid=bar")]
+         + l("uid=bar")
+         + [0x01, 0x01, 0x00]),
 
-	(pureldap.LDAPModifyDNRequest,
-	 [],
-	 {'entry': 'cn=aoue,dc=example,dc=com',
-	  'newrdn': 'uid=aoue',
-	  'deleteoldrdn': 0,
-	  'newSuperior': 'ou=People,dc=example,dc=com',
-	  },
+        (pureldap.LDAPModifyDNRequest,
+         [],
+         {'entry': 'cn=aoue,dc=example,dc=com',
+          'newrdn': 'uid=aoue',
+          'deleteoldrdn': 0,
+          'newSuperior': 'ou=People,dc=example,dc=com',
+          },
          None,
-	 [0x6c, 69]
-	 + [0x04]
-	 + [len("cn=aoue,dc=example,dc=com")]
-	 + l("cn=aoue,dc=example,dc=com")
-	 + [0x04]
-	 + [len("uid=aoue")]
-	 + l("uid=aoue")
-	 + [0x01, 0x01, 0x00]
-	 + [0x80]
-	 + [len("ou=People,dc=example,dc=com")]
-	 + l("ou=People,dc=example,dc=com")),
+         [0x6c, 69]
+         + [0x04]
+         + [len("cn=aoue,dc=example,dc=com")]
+         + l("cn=aoue,dc=example,dc=com")
+         + [0x04]
+         + [len("uid=aoue")]
+         + l("uid=aoue")
+         + [0x01, 0x01, 0x00]
+         + [0x80]
+         + [len("ou=People,dc=example,dc=com")]
+         + l("ou=People,dc=example,dc=com")),
 
         (pureldap.LDAPSearchRequest,
          [],
@@ -181,7 +181,7 @@ class KnownValues(unittest.TestCase):
          {},
          None,
          [0x42, 0x00]
-	),
+        ),
 
         (pureldap.LDAPSearchResultDone,
          [],
@@ -201,7 +201,7 @@ class KnownValues(unittest.TestCase):
          + l('')
          # referral, TODO
          + []
-	),
+        ),
 
         (pureldap.LDAPSearchResultDone,
          [],
@@ -222,7 +222,7 @@ class KnownValues(unittest.TestCase):
          + l('')
          # referral, TODO
          + []
-	),
+        ),
 
         (pureldap.LDAPSearchResultDone,
          [],
@@ -244,7 +244,7 @@ class KnownValues(unittest.TestCase):
          + l('the foobar was fubar',)
          # referral, TODO
          + []
-	),
+        ),
 
         (pureldap.LDAPSearchResultDone,
          [],
@@ -265,7 +265,7 @@ class KnownValues(unittest.TestCase):
          + l('the foobar was fubar',)
          # referral, TODO
          + []
-	),
+        ),
 
         (pureldap.LDAPMessage,
          [],
@@ -508,45 +508,45 @@ class KnownValues(unittest.TestCase):
         )
 
     def testToLDAP(self):
-	"""str(LDAPClass(...)) should give known result with known input"""
-	for klass, args, kwargs, decoder, encoded in self.knownValues:
-	    result = klass(*args, **kwargs)
-	    result = str(result)
-	    result = map(ord, result)
-	    if result!=encoded:
-		raise AssertionError, \
-		      "Class %s(*%s, **%s) doesn't encode properly: " \
-		      "%s != %s" % (klass.__name__,
-				    repr(args), repr(kwargs),
-				    repr(result), repr(encoded))
+        """str(LDAPClass(...)) should give known result with known input"""
+        for klass, args, kwargs, decoder, encoded in self.knownValues:
+            result = klass(*args, **kwargs)
+            result = str(result)
+            result = map(ord, result)
+            if result!=encoded:
+                raise AssertionError, \
+                      "Class %s(*%s, **%s) doesn't encode properly: " \
+                      "%s != %s" % (klass.__name__,
+                                    repr(args), repr(kwargs),
+                                    repr(result), repr(encoded))
 
     def testFromLDAP(self):
-	"""LDAPClass(encoded="...") should give known result with known input"""
-	for klass, args, kwargs, decoder, encoded in self.knownValues:
+        """LDAPClass(encoded="...") should give known result with known input"""
+        for klass, args, kwargs, decoder, encoded in self.knownValues:
             if decoder is None:
                 decoder = pureldap.LDAPBERDecoderContext(
                     fallback=pureber.BERDecoderContext())
-	    m=s(*encoded)
+            m=s(*encoded)
             result, bytes = pureber.berDecodeObject(decoder, m)
-	    self.assertEquals(bytes, len(m))
+            self.assertEquals(bytes, len(m))
 
-	    shouldBe = klass(*args, **kwargs)
-	    #TODO shouldn't use str below
-	    assert str(result)==str(shouldBe), \
-		   "Class %s(*%s, **%s) doesn't decode properly: " \
-		   "%s != %s" % (klass.__name__,
-				 repr(args), repr(kwargs),
-				 repr(result), repr(shouldBe))
+            shouldBe = klass(*args, **kwargs)
+            #TODO shouldn't use str below
+            assert str(result)==str(shouldBe), \
+                   "Class %s(*%s, **%s) doesn't decode properly: " \
+                   "%s != %s" % (klass.__name__,
+                                 repr(args), repr(kwargs),
+                                 repr(result), repr(shouldBe))
 
     def testPartial(self):
-	"""LDAPClass(encoded="...") with too short input should throw BERExceptionInsufficientData"""
-	for klass, args, kwargs, decoder, encoded in self.knownValues:
+        """LDAPClass(encoded="...") with too short input should throw BERExceptionInsufficientData"""
+        for klass, args, kwargs, decoder, encoded in self.knownValues:
             if decoder is None:
                 decoder = pureldap.LDAPBERDecoderContext(
                     fallback=pureber.BERDecoderContext())
-	    for i in xrange(1, len(encoded)):
-		m=s(*encoded)[:i]
-		self.assertRaises(pureber.BERExceptionInsufficientData,
+            for i in xrange(1, len(encoded)):
+                m=s(*encoded)[:i]
+                self.assertRaises(pureber.BERExceptionInsufficientData,
                                   pureber.berDecodeObject,
                                   decoder, m)
             self.assertEquals((None, 0), pureber.berDecodeObject(decoder, ''))
@@ -561,24 +561,24 @@ class TestEquality(unittest.TestCase):
          [ pureldap.LDAPAttributeDescription(value='cn'),
            pureldap.LDAPAssertionValue(value='bar'),
            ]),
-	(pureber.BERInteger, [0]),
-	)
+        (pureber.BERInteger, [0]),
+        )
 
     def testEquality(self):
-	"""LDAP objects equal LDAP objects with same type and content"""
-	for class_, args in self.valuesToTest:
-	    x=class_(*args)
-	    y=class_(*args)
-	    self.assertEquals(x, x)
-	    self.assertEquals(x, y)
+        """LDAP objects equal LDAP objects with same type and content"""
+        for class_, args in self.valuesToTest:
+            x=class_(*args)
+            y=class_(*args)
+            self.assertEquals(x, x)
+            self.assertEquals(x, y)
 
     def testInEquality(self):
-	"""LDAP objects do not equal LDAP objects with different type or content"""
-	for i in xrange(len(self.valuesToTest)):
-	    for j in xrange(len(self.valuesToTest)):
-		if i!=j:
-		    i_class, i_args = self.valuesToTest[i]
-		    j_class, j_args = self.valuesToTest[j]
-		    x=i_class(*i_args)
-		    y=j_class(*j_args)
-		    self.assertNotEquals(x, y)
+        """LDAP objects do not equal LDAP objects with different type or content"""
+        for i in xrange(len(self.valuesToTest)):
+            for j in xrange(len(self.valuesToTest)):
+                if i!=j:
+                    i_class, i_args = self.valuesToTest[i]
+                    j_class, j_args = self.valuesToTest[j]
+                    x=i_class(*i_args)
+                    y=j_class(*j_args)
+                    self.assertNotEquals(x, y)

@@ -27,7 +27,7 @@ class StoreParsedLDIF(ldifprotocol.LDIF):
     def __init__(self, deferred):
         self.deferred = deferred
         self.seen = []
-        
+
     def gotEntry(self, obj):
         self.seen.append(obj)
 

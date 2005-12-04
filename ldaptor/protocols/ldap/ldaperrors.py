@@ -42,13 +42,13 @@ class LDAPException(Exception, LDAPResult):
     def __init__(self, message=None):
         Exception.__init__(self)
         self.message=message
-        
+
     def __str__(self):
-	message=self.message
-	if message:
-	    return '%s: %s' % (self.name, message)
+        message=self.message
+        if message:
+            return '%s: %s' % (self.name, message)
         elif self.name:
-	    return self.name
+            return self.name
         else:
             return 'Unknown LDAP error %r' % self
 
@@ -63,11 +63,11 @@ class LDAPUnknownError(LDAPException):
         LDAPException.__init__(self, message)
 
     def __str__(self):
-	codeName='unknownError(%d)'%self.code
-	if self.message:
-	    return '%s: %s' % (codeName, self.message)
-	else:
-	    return codeName
+        codeName='unknownError(%d)'%self.code
+        if self.message:
+            return '%s: %s' % (codeName, self.message)
+        else:
+            return codeName
 
 import new
 def init(**errors):

@@ -42,7 +42,7 @@ class ConfirmDelete(rend.Page):
 
     def delete(self, request):
         user = request.getSession().getLoggedInRoot().loggedIn
-	e=ldapsyntax.LDAPEntry(client=user.client,
+        e=ldapsyntax.LDAPEntry(client=user.client,
                                dn=self.dn)
         d=e.delete()
         d.addCallbacks(
@@ -94,11 +94,11 @@ class ConfirmDelete(rend.Page):
         u=url.URL.fromRequest(request)
         u=u.parent().parent()
         l=[]
-	l.append(tags.a(href=u.sibling("search"))[_("Search")])
-	l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
+        l.append(tags.a(href=u.sibling("search"))[_("Search")])
+        l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
         l.append(tags.a(href=u.sibling("edit").child(str(self.dn)))[_("edit")])
         l.append(tags.a(href=u.sibling("delete").child(str(self.dn)))[_("delete")])
-	return l
+        return l
 
     def render_keyvalue(self, context, data):
         return weave.keyvalue(context, data)
@@ -125,8 +125,8 @@ class Deleted(rend.Page):
         u=url.URL.fromRequest(request)
         u=u.parent().parent()
         l=[]
-	l.append(tags.a(href=u.sibling("search"))[_("Search")])
-	l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
+        l.append(tags.a(href=u.sibling("search"))[_("Search")])
+        l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
         return l
 
     def render_passthrough(self, context, data):

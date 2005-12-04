@@ -53,8 +53,8 @@ def main(base, serviceLocationOverrides, numOfConnections=3, numOfSearches=3):
         d=c.connectAnonymously(base, serviceLocationOverrides)
 
         d.addCallback(_search, base, connection, numOfSearches)
-	d.addErrback(error)
-	l.append(d)
+        d.addErrback(error)
+        l.append(d)
     dl=defer.DeferredList(l)
     dl.addBoth(lambda dummy: reactor.stop())
     reactor.run()

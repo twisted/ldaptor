@@ -31,13 +31,13 @@ class Autofill_sum: #TODO baseclass
 
 class LDAPAutoFill_Simple(unittest.TestCase):
     def testSimpleSum(self):
-	"""A simple autofiller that calculates sums of attributes should work.."""
+        """A simple autofiller that calculates sums of attributes should work.."""
         client = LDAPClientTestDriver()
-	o=ldapsyntax.LDAPEntryWithAutoFill(client=client,
+        o=ldapsyntax.LDAPEntryWithAutoFill(client=client,
                                            dn='cn=foo,dc=example,dc=com',
                                            attributes={
-	    'objectClass': ['some', 'other'],
-	    })
+            'objectClass': ['some', 'other'],
+            })
         d = o.addAutofiller(Autofill_sum(resultAttr='sum',
                                          sumAttrs=['a', 'b']))
         val = deferredResult(d)
@@ -46,5 +46,5 @@ class LDAPAutoFill_Simple(unittest.TestCase):
         o['a'] = ['1']
         o['b'] = ['2', '3']
 
-	self.failUnless('sum' in o)
-	self.failUnlessEqual(o['sum'], ['6'])
+        self.failUnless('sum' in o)
+        self.failUnlessEqual(o['sum'], ['6'])

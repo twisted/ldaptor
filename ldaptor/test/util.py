@@ -67,7 +67,7 @@ class IOPump(FasterIOPump):
             and not self.serverTransport.disconnect_done):
             self.client.connectionLost(error.ConnectionDone)
             self.serverTransport.disconnect_done = True
-            
+
         if (self.clientTransport.disconnect_done
             and self.serverTransport.disconnect_done):
             self.active.remove(self)

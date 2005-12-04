@@ -4,7 +4,7 @@
 >>> dn
 DistinguishedName(listOfRDNs=(RelativeDistinguishedName(
 attributeTypesAndValues=(LDAPAttributeTypeAndValue(
-attributeType='dc', value='example'),)), 
+attributeType='dc', value='example'),)),
 RelativeDistinguishedName(attributeTypesAndValues=(
 LDAPAttributeTypeAndValue(attributeType='dc', value='com'),))))
 >>> str(dn)

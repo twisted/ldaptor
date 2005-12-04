@@ -6,41 +6,41 @@ from ldaptor.protocols import pureldap
 
 RFC2254:
 
-	filter     = "(" filtercomp ")"
-	filtercomp = and / or / not / item
-	and        = "&" filterlist
-	or         = "|" filterlist
-	not        = "!" filter
-	filterlist = 1*filter
-	item       = simple / present / substring / extensible
-	simple     = attr filtertype value
-	filtertype = equal / approx / greater / less
-	equal      = "="
-	approx     = "~="
-	greater    = ">="
-	less       = "<="
-	extensible = attr [":dn"] [":" matchingrule] ":=" value
-		     / [":dn"] ":" matchingrule ":=" value
-	present    = attr "=*"
-	substring  = attr "=" [initial] any [final]
-	initial    = value
-	any        = "*" *(value "*")
-	final      = value
-	attr       = AttributeDescription from Section 4.1.5 of [1]
-	matchingrule = MatchingRuleId from Section 4.1.9 of [1]
-	value      = AttributeValue from Section 4.1.6 of [1]
+        filter     = "(" filtercomp ")"
+        filtercomp = and / or / not / item
+        and        = "&" filterlist
+        or         = "|" filterlist
+        not        = "!" filter
+        filterlist = 1*filter
+        item       = simple / present / substring / extensible
+        simple     = attr filtertype value
+        filtertype = equal / approx / greater / less
+        equal      = "="
+        approx     = "~="
+        greater    = ">="
+        less       = "<="
+        extensible = attr [":dn"] [":" matchingrule] ":=" value
+                     / [":dn"] ":" matchingrule ":=" value
+        present    = attr "=*"
+        substring  = attr "=" [initial] any [final]
+        initial    = value
+        any        = "*" *(value "*")
+        final      = value
+        attr       = AttributeDescription from Section 4.1.5 of [1]
+        matchingrule = MatchingRuleId from Section 4.1.9 of [1]
+        value      = AttributeValue from Section 4.1.6 of [1]
 """
 
 class InvalidLDAPFilter(Exception):
     def __init__(self, msg, loc, text):
-	Exception.__init__(self)
-	self.msg=msg
-	self.loc=loc
-	self.text=text
+        Exception.__init__(self)
+        self.msg=msg
+        self.loc=loc
+        self.text=text
 
     def __str__(self):
-	return "Invalid LDAP filter: %s at point %d in %r" \
-	       % (self.msg, self.loc, self.text)
+        return "Invalid LDAP filter: %s at point %d in %r" \
+               % (self.msg, self.loc, self.text)
 
 def parseExtensible(attr, s):
     raise NotImplementedError
@@ -234,5 +234,5 @@ def parseMaybeSubstring(attrType, s):
 if __name__=='__main__':
     import sys
     for filt in sys.argv[1:]:
-	print repr(parseFilter(filt))
+        print repr(parseFilter(filt))
         print

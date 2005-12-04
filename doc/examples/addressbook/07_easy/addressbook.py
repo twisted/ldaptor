@@ -173,7 +173,7 @@ class AddressBookResource(rend.Page):
             # No divider after the last thing.
             content[-1] = content[-1][:-1]
         footers = context.allPatterns('footer')
-    
+
         return context.tag.clear()[ headers, content, footers ]
 
 def getSite(config):

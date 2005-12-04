@@ -213,24 +213,24 @@ class MatchMixin(object):
 
 class SearchByTreeWalkingMixin(object):
     def search(self,
-	       filterText=None,
-	       filterObject=None,
-	       attributes=(),
-	       scope=None,
-	       derefAliases=None,
-	       sizeLimit=0,
-	       timeLimit=0,
-	       typesOnly=0,
-	       callback=None):
-	if filterObject is None and filterText is None:
-	    filterObject=pureldap.LDAPFilterMatchAll
-	elif filterObject is None and filterText is not None:
-	    filterObject=ldapfilter.parseFilter(filterText)
-	elif filterObject is not None and filterText is None:
-	    pass
-	elif filterObject is not None and filterText is not None:
-	    f=ldapfilter.parseFilter(filterText)
-	    filterObject=pureldap.LDAPFilter_and((f, filterObject))
+               filterText=None,
+               filterObject=None,
+               attributes=(),
+               scope=None,
+               derefAliases=None,
+               sizeLimit=0,
+               timeLimit=0,
+               typesOnly=0,
+               callback=None):
+        if filterObject is None and filterText is None:
+            filterObject=pureldap.LDAPFilterMatchAll
+        elif filterObject is None and filterText is not None:
+            filterObject=ldapfilter.parseFilter(filterText)
+        elif filterObject is not None and filterText is None:
+            pass
+        elif filterObject is not None and filterText is not None:
+            f=ldapfilter.parseFilter(filterText)
+            filterObject=pureldap.LDAPFilter_and((f, filterObject))
 
         if scope is None:
             scope = pureldap.LDAP_SCOPE_wholeSubtree

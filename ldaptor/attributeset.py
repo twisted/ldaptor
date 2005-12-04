@@ -3,36 +3,36 @@ from copy import deepcopy
 
 class LDAPAttributeSet(sets.Set):
     def __init__(self, key, *a, **kw):
-	self.key = key
+        self.key = key
         super(LDAPAttributeSet, self).__init__(*a, **kw)
 
     def __repr__(self):
-	values=list(self)
-	values.sort()
-	attributes=', '.join([repr(x) for x in values])
-	return '%s(%r, [%s])' % (
+        values=list(self)
+        values.sort()
+        attributes=', '.join([repr(x) for x in values])
+        return '%s(%r, [%s])' % (
             self.__class__.__name__,
             self.key,
-	    attributes)
+            attributes)
 
     def __eq__(self, other):
-	"""
+        """
         Note that LDAPAttributeSets can also be compared against any
         iterator. In that case the attributeType will be ignored.
-	"""
-	if isinstance(other, LDAPAttributeSet):
+        """
+        if isinstance(other, LDAPAttributeSet):
             if self.key != other.key:
                 return False
-	    return super(LDAPAttributeSet, self).__eq__(other)
-	else:
-	    me=list(self)
-	    me.sort()
-	    him=list(other)
-	    him.sort()
-	    return me == him
+            return super(LDAPAttributeSet, self).__eq__(other)
+        else:
+            me=list(self)
+            me.sort()
+            him=list(other)
+            him.sort()
+            return me == him
 
     def __ne__(self, other):
-	return not self==other
+        return not self==other
 
     def difference(self, other):
         return sets.Set(self) - sets.Set(other)

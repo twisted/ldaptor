@@ -129,7 +129,7 @@ class InMemoryLDIFProtocol(ldifprotocol.LDIF):
         else:
             self._deferred.addCallback(self._addEntry, entry)
 
-    def lookupFailed(self, reason, entry): 
+    def lookupFailed(self, reason, entry):
         return reason # pass the error (abort) by default
 
     def addFailed(self, reason, entry):

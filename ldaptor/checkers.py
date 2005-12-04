@@ -67,8 +67,8 @@ class LDAPBindingChecker:
         except ldapfilter.InvalidLDAPFilter:
             return failure.Failure(error.UnauthorizedLogin("Couldn't create filter"))
 
-	c = ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
-	d = c.connect(baseDN, self.config.getServiceLocationOverrides())
+        c = ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
+        d = c.connect(baseDN, self.config.getServiceLocationOverrides())
         d.addCallback(self._connected, filt, credentials)
         def _err(reason):
             reason.trap(ldaperrors.LDAPInvalidCredentials,

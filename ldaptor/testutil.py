@@ -79,8 +79,8 @@ class LDAPClientTestDriver:
             shouldBeSent,
             self.sent)
         sentStr = ''.join([str(x) for x in self.sent])
-	shouldBeSentStr = ''.join([str(x) for x in shouldBeSent])
-	assert sentStr == shouldBeSentStr, \
+        shouldBeSentStr = ''.join([str(x) for x in shouldBeSent])
+        assert sentStr == shouldBeSentStr, \
                '%s expected to send data %r but sent %r' % (
             self.__class__.__name__,
             shouldBeSentStr,

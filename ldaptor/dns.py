@@ -7,32 +7,32 @@ def aton_octets(ip):
     octets=map(None, s)
     n=0L
     for o in octets:
-	n=n<<8
-	n+=ord(o)
+        n=n<<8
+        n+=ord(o)
     return n
 
 def aton_numbits(num):
     n=0L
     while num>0:
-	n>>=1
-	n |= 2**31
-	num-=1
+        n>>=1
+        n |= 2**31
+        num-=1
     return n
 
 def aton(ip):
     try:
-	i=int(ip)
+        i=int(ip)
     except ValueError:
-	return aton_octets(ip)
+        return aton_octets(ip)
     else:
-	return aton_numbits(i)
+        return aton_numbits(i)
 
 def ntoa(n):
     s=(
-	chr((n>>24)&0xFF)
-	+ chr((n>>16)&0xFF)
-	+ chr((n>>8)&0xFF)
-	+ chr(n&0xFF)
+        chr((n>>24)&0xFF)
+        + chr((n>>16)&0xFF)
+        + chr((n>>8)&0xFF)
+        + chr(n&0xFF)
        )
     ip=inet_ntoa(s)
     return ip

@@ -192,7 +192,7 @@ class TestCSS(SiteMixin, unittest.TestCase):
     def checkPage(self, url, cookies):
         data = self.getPage(url, cookies)
         self._checkResults(data, cookies)
-    
+
     def test_form_css(self):
         for u in self.urls:
             self.checkPage(u, cookies=True)
@@ -363,7 +363,7 @@ class TestDelete(SiteMixin, unittest.TestCase):
         # TODO support multipart/form-data, that's what the form tells us to use
 ##         self.assertEquals(form.getAttribute('enctype', 'application/x-www-form-urlencoded'),
 ##                           'application/x-www-form-urlencoded')
-	action = data['url'].clear().click(form.getAttribute('action'))
+        action = data['url'].clear().click(form.getAttribute('action'))
         data = self.getPage(action,
                             cookies=False,
                             method=form.getAttribute('method', 'get').upper(),

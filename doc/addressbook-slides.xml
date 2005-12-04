@@ -347,7 +347,7 @@
     <title>Attribute type</title>
     <programlisting>
 attributetype ( 2.5.4.4 NAME ( 'sn' 'surname' )
-	DESC 'RFC2256: last (family) name(s) for 
+	DESC 'RFC2256: last (family) name(s) for
               which the entity is known by'
 	SUP name )
     </programlisting>
@@ -376,7 +376,7 @@ objectclass ( 2.5.6.6 NAME 'person'
 	DESC 'RFC2256: a person'
 	SUP top STRUCTURAL
 	MUST ( sn $ cn )
-	MAY ( userPassword $ telephoneNumber 
+	MAY ( userPassword $ telephoneNumber
 		$ seeAlso $ description ) )
     </programlisting>
   </foil>
@@ -404,7 +404,7 @@ objectclass ( 2.5.6.6 NAME 'person'
   <foil>
     <title>Where to go from here?</title>
 
-    <para>Install <ulink 
+    <para>Install <ulink
     url="http://www.openldap.org/">OpenLDAP</ulink>.</para>
 
     <para>Install <ulink

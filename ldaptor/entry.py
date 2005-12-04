@@ -22,20 +22,20 @@ class BaseLDAPEntry(object):
     dn = None
 
     def __init__(self, dn, attributes={}):
-	"""
+        """
 
-	Initialize the object.
+        Initialize the object.
 
-	@param dn: Distinguished Name of the object, as a string.
+        @param dn: Distinguished Name of the object, as a string.
 
-	@param attributes: Attributes of the object. A dictionary of
-	attribute types to list of attribute values.
+        @param attributes: Attributes of the object. A dictionary of
+        attribute types to list of attribute values.
 
-	"""
-	self._attributes=InsensitiveDict()
-	self.dn = distinguishedname.DistinguishedName(dn)
+        """
+        self._attributes=InsensitiveDict()
+        self.dn = distinguishedname.DistinguishedName(dn)
 
-	for k,vs in attributes.items():
+        for k,vs in attributes.items():
             if k not in self._attributes:
                 self._attributes[k] = []
             self._attributes[k].extend(vs)
@@ -47,80 +47,80 @@ class BaseLDAPEntry(object):
         return attributeset.LDAPAttributeSet(key, values)
 
     def __getitem__(self, key):
-	return self._attributes[key]
+        return self._attributes[key]
 
     def get(self, key, default=None):
-	return self._attributes.get(key, default)
+        return self._attributes.get(key, default)
 
     def has_key(self, key):
-	return key in self._attributes
+        return key in self._attributes
 
     def __contains__(self, key):
         return self.has_key(key)
 
     def keys(self):
-	return self._attributes.keys()
+        return self._attributes.keys()
 
     def items(self):
-	return self._attributes.items()
+        return self._attributes.items()
 
     def __str__(self):
-	a=[]
+        a=[]
 
-	objectClasses = list(self.get('objectClass', []))
-	objectClasses.sort()
-	a.append(('objectClass', objectClasses))
+        objectClasses = list(self.get('objectClass', []))
+        objectClasses.sort()
+        a.append(('objectClass', objectClasses))
 
-	l=list(self.items())
-	l.sort()
-	for key, values in l:
-	    if key.lower() != 'objectclass':
+        l=list(self.items())
+        l.sort()
+        for key, values in l:
+            if key.lower() != 'objectclass':
                 vs = list(values)
                 vs.sort()
-		a.append((key, vs))
-	return ldif.asLDIF(self.dn, a)
+                a.append((key, vs))
+        return ldif.asLDIF(self.dn, a)
 
     def __eq__(self, other):
-	if not isinstance(other, self.__class__):
-	    return 0
-	if self.dn != other.dn:
-	    return 0
+        if not isinstance(other, self.__class__):
+            return 0
+        if self.dn != other.dn:
+            return 0
 
-	my=self.keys()
-	my.sort()
-	its=other.keys()
-	its.sort()
-	if my!=its:
-	    return 0
-	for key in my:
-	    myAttr=self[key]
-	    itsAttr=other[key]
-	    if myAttr!=itsAttr:
-		return 0
-	return 1
+        my=self.keys()
+        my.sort()
+        its=other.keys()
+        its.sort()
+        if my!=its:
+            return 0
+        for key in my:
+            myAttr=self[key]
+            itsAttr=other[key]
+            if myAttr!=itsAttr:
+                return 0
+        return 1
 
     def __ne__(self, other):
-	return not self==other
+        return not self==other
 
     def __len__(self):
-	return len(self.keys())
+        return len(self.keys())
 
     def __nonzero__(self):
         return True
 
     def __repr__(self):
-	x={}
-	for key in self.keys():
-	    x[key]=self[key]
-	keys=self.keys()
-	keys.sort()
-	a=[]
-	for key in keys:
-	    a.append('%s: %s' % (repr(key), repr(list(self[key]))))
-	attributes=', '.join(a)
-	return '%s(%s, {%s})' % (
-	    self.__class__.__name__,
-	    repr(str(self.dn)),
+        x={}
+        for key in self.keys():
+            x[key]=self[key]
+        keys=self.keys()
+        keys.sort()
+        a=[]
+        for key in keys:
+            a.append('%s: %s' % (repr(key), repr(list(self[key]))))
+        attributes=', '.join(a)
+        return '%s(%s, {%s})' % (
+            self.__class__.__name__,
+            repr(str(self.dn)),
             attributes)
 
     def diff(self, other):
@@ -179,7 +179,7 @@ class BaseLDAPEntry(object):
                 if got == digest:
                     return self
         raise ldaperrors.LDAPInvalidCredentials
-        
+
     def hasMember(self, dn):
         for memberDN in self.get('member', []):
             if memberDN == dn:
@@ -190,7 +190,7 @@ class EditableLDAPEntry(BaseLDAPEntry):
     __implements__ = (interfaces.IEditableLDAPEntry,)
 
     def __setitem__(self, key, value):
-	new=self.buildAttributeSet(key, value)
+        new=self.buildAttributeSet(key, value)
         self._attributes[key] = new
 
     def __delitem__(self, key):

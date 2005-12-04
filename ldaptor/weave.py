@@ -6,22 +6,22 @@ def keyvalue(context, data):
     """
     Render items in a mapping using patterns found in the children
     of the element.
-    
+
     Keyvalue recognizes the following patterns:
 
       - header: Rendered at the start, before the first item. If
         multiple header patterns are provided they are rendered
         together in the order they were defined.
-            
+
       - footer: Just like the header only renderer at the end, after
         the last item.
-    
+
       - item: Rendered once for each item in the sequence. Can contain
         subpatterns key and value.
 
         If multiple item patterns are provided then the pattern is
         cycled in the order defined.
-        
+
       - divider: Rendered once between each item in the
         sequence. Multiple divider patterns are cycled.
 
@@ -29,7 +29,7 @@ def keyvalue(context, data):
         sequence contains no items.
 
     Example::
-    
+
       <table nevow:render="sequence" nevow:data="peopleSeq">
         <tr nevow:pattern="header">
           <th>name</th>
@@ -74,7 +74,7 @@ def keyvalue_item(context, data):
 
 class _DictLike(object):
     __implements__ = inevow.IContainer
-    
+
     def __init__(self, original):
         self.original = original
 
@@ -109,20 +109,20 @@ flat.registerFlattener(dnSerializer,
 def entrySerializer(original, context):
     ul = tags.ul()
     for a,l in original.items():
-	if len(l)==0:
-	    ul[tags.li[a, ': none']]
-	elif len(l)==1:
+        if len(l)==0:
+            ul[tags.li[a, ': none']]
+        elif len(l)==1:
             for attr in l:
                 first = attr
                 break
-	    ul[tags.li[a, ': ', first]]
-	else:
+            ul[tags.li[a, ': ', first]]
+        else:
             li=tags.li[a, ':']
             ul[li]
             liul=tags.ul()
             li[liul]
-	    for i in l:
-		liul[tags.li[i]]
+            for i in l:
+                liul[tags.li[i]]
     return flat.serialize(ul, context)
 
 flat.registerFlattener(entrySerializer,

@@ -3,7 +3,7 @@ import urllib
 def uriQuote(uri):
     uri=str(uri)
     for c in '%;/?:@&+$':
-	uri=uri.replace(c, '%%%02x'%ord(c))
+        uri=uri.replace(c, '%%%02x'%ord(c))
     return uri
 
 def uriUnquote(q):

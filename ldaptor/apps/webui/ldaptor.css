@@ -11,7 +11,7 @@
  }
 
 #ldaptorPage-search #moveEntries .moveForms
-{ 
+{
   display: inline;
   margin-right: 0;
   position: absolute;
@@ -24,7 +24,7 @@
  }
 
 #ldaptorPage-search #moveEntries .moveForms form input
-{ 
+{
   font-size: 0.7em;
   }
 

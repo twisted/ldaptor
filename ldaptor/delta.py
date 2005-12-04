@@ -29,7 +29,7 @@ class Add(Modification):
             entry[self.key] = self
 
     def asLDAP(self):
-	return pureldap.LDAPModification_add(self.key, list(self))
+        return pureldap.LDAPModification_add(self.key, list(self))
 
     def asLDIF(self):
         r=[]
@@ -50,7 +50,7 @@ class Delete(Modification):
                 entry[self.key].remove(v)
 
     def asLDAP(self):
-	return pureldap.LDAPModification_delete(self.key, list(self))
+        return pureldap.LDAPModification_delete(self.key, list(self))
 
     def asLDIF(self):
         r=[]
@@ -73,7 +73,7 @@ class Replace(Modification):
                 pass
 
     def asLDAP(self):
-	return pureldap.LDAPModification_replace(self.key, list(self))
+        return pureldap.LDAPModification_replace(self.key, list(self))
 
     def asLDIF(self):
         r=[]
@@ -131,16 +131,16 @@ class ModifyOp(Operation):
                 + ')')
 
     def __eq__(self, other):
-	if not isinstance(other, self.__class__):
-	    return 0
-	if self.dn != other.dn:
-	    return 0
+        if not isinstance(other, self.__class__):
+            return 0
+        if self.dn != other.dn:
+            return 0
         if self.modifications != other.modifications:
             return 0
         return 1
 
     def __ne__(self, other):
-	return not self==other
+        return not self==other
 
 class AddOp(Operation):
     def __init__(self, entry):
@@ -166,14 +166,14 @@ class AddOp(Operation):
                 + ')')
 
     def __eq__(self, other):
-	if not isinstance(other, self.__class__):
-	    return False
-	if self.entry != other.entry:
-	    return False
+        if not isinstance(other, self.__class__):
+            return False
+        if self.entry != other.entry:
+            return False
         return True
 
     def __ne__(self, other):
-	return not self==other
+        return not self==other
 
 class DeleteOp(Operation):
     def __init__(self, dn):
@@ -200,12 +200,12 @@ class DeleteOp(Operation):
                 + ')')
 
     def __eq__(self, other):
-	if not isinstance(other, self.__class__):
-	    return False
-	if self.dn != other.dn:
-	    return False
+        if not isinstance(other, self.__class__):
+            return False
+        if self.dn != other.dn:
+            return False
         return True
 
     def __ne__(self, other):
-	return not self==other
+        return not self==other
 

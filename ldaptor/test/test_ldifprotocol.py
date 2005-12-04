@@ -39,15 +39,15 @@ class TestLDIFParsing(unittest.TestCase):
 
         o = proto.listOfCompleted.pop(0)
         self.failUnlessEqual(str(o.dn), 'cn=foo,dc=example,dc=com')
-	self.failUnlessEqual(o['objectClass'], ['a', 'b'])
-	self.failUnlessEqual(o['aValue'], ['a', 'b'])
-	self.failUnlessEqual(o['bValue'], ['c'])
+        self.failUnlessEqual(o['objectClass'], ['a', 'b'])
+        self.failUnlessEqual(o['aValue'], ['a', 'b'])
+        self.failUnlessEqual(o['bValue'], ['c'])
 
         o = proto.listOfCompleted.pop(0)
         self.failUnlessEqual(str(o.dn), 'cn=bar,dc=example,dc=com')
-	self.failUnlessEqual(o['objectClass'], ['c'])
-	self.failUnlessEqual(o['aValue'], [' FOO!', 'b'])
-	self.failUnlessEqual(o['bValue'], ['C'])
+        self.failUnlessEqual(o['objectClass'], ['c'])
+        self.failUnlessEqual(o['aValue'], [' FOO!', 'b'])
+        self.failUnlessEqual(o['bValue'], ['C'])
 
         self.failUnlessEqual(proto.listOfCompleted, [])
 
@@ -69,7 +69,7 @@ class TestLDIFParsing(unittest.TestCase):
 
         o = proto.listOfCompleted.pop(0)
         self.failUnlessEqual(str(o.dn), 'cn=foo,dc=example,dc=com')
-	self.failUnlessEqual(o['objectClass'], ['a', 'b'])
+        self.failUnlessEqual(o['objectClass'], ['a', 'b'])
 
         self.failUnlessEqual(proto.listOfCompleted, [])
 
@@ -89,9 +89,9 @@ aValUe: b
 
         o = proto.listOfCompleted.pop(0)
         self.failUnlessEqual(str(o.dn), 'cn=foo,dc=example,dc=com')
-	self.failUnlessEqual(o['objectClass'], ['a', 'b'])
-	self.failUnlessEqual(o['CN'], ['foo'])
-	self.failUnlessEqual(o['aValue'], ['a', 'b'])
+        self.failUnlessEqual(o['objectClass'], ['a', 'b'])
+        self.failUnlessEqual(o['CN'], ['foo'])
+        self.failUnlessEqual(o['aValue'], ['a', 'b'])
 
         self.failUnlessEqual(proto.listOfCompleted, [])
 
@@ -112,9 +112,9 @@ bValue: c
 
         o = proto.listOfCompleted.pop(0)
         self.failUnlessEqual(str(o.dn), 'cn=foo,dc=example,dc=com')
-	self.failUnlessEqual(o['objectClass'], ['a', 'b'])
-	self.failUnlessEqual(o['aValue'], ['a', 'b'])
-	self.failUnlessEqual(o['bValue'], ['c'])
+        self.failUnlessEqual(o['objectClass'], ['a', 'b'])
+        self.failUnlessEqual(o['aValue'], ['a', 'b'])
+        self.failUnlessEqual(o['bValue'], ['c'])
 
     def testVersionInvalid(self):
         proto = LDIFDriver()
@@ -162,9 +162,9 @@ aValUe:b
 
         o = proto.listOfCompleted.pop(0)
         self.failUnlessEqual(str(o.dn), 'cn=foo,dc=example,dc=com')
-	self.failUnlessEqual(o['objectClass'], ['a', 'b'])
-	self.failUnlessEqual(o['CN'], ['foo'])
-	self.failUnlessEqual(o['aValue'], ['a', 'b'])
+        self.failUnlessEqual(o['objectClass'], ['a', 'b'])
+        self.failUnlessEqual(o['CN'], ['foo'])
+        self.failUnlessEqual(o['aValue'], ['a', 'b'])
 
         self.failUnlessEqual(proto.listOfCompleted, [])
 
@@ -283,7 +283,7 @@ description:: V2hhdCBhIGNhcmVmdWwgcmVhZGVyIHlvdSBhcmUhICBUaGlzIHZhbHVlIGlzIGJhc2
                 'description': ['What a careful reader you are!  This value is base-64-encoded because it has a control character in it (a CR).\r  By the way, you should really get out more.'],
                 }),
             ]),
-                
+
         ]
 
     def testExamples(self):

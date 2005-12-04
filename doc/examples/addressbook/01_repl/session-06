@@ -1,9 +1,9 @@
 >>> results[0]
 LDAPEntry(dn=
-'givenName=John+sn=Smith,ou=People,dc=example,dc=com', 
-attributes={'description': ['Some text.'], 
-'facsimileTelephoneNumber': ['555-1235'], 'givenName': ['John'], 
-'objectClass': ['addressbookPerson'], 'sn': ['Smith'], 
+'givenName=John+sn=Smith,ou=People,dc=example,dc=com',
+attributes={'description': ['Some text.'],
+'facsimileTelephoneNumber': ['555-1235'], 'givenName': ['John'],
+'objectClass': ['addressbookPerson'], 'sn': ['Smith'],
 'telephoneNumber': ['555-1234']})
 >>> results[3]
 Traceback (most recent call last):

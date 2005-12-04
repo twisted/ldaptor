@@ -12,56 +12,56 @@ def escape(s):
     r_trailer=''
 
     if s and s[0] in escapedChars_leading:
-	r='\\'+s[0]
-	s=s[1:]
+        r='\\'+s[0]
+        s=s[1:]
 
     if s and s[-1] in escapedChars_trailing:
-	r_trailer='\\'+s[-1]
-	s=s[:-1]
+        r_trailer='\\'+s[-1]
+        s=s[:-1]
 
     for c in s:
-	if c in escapedChars:
-	    r=r+'\\'+c
-	elif ord(c)<=31:
-	    r=r+'\\%02X' % ord(c)
-	else:
-	    r=r+c
+        if c in escapedChars:
+            r=r+'\\'+c
+        elif ord(c)<=31:
+            r=r+'\\%02X' % ord(c)
+        else:
+            r=r+c
 
     return r+r_trailer
 
 def unescape(s):
     r=''
     while s:
-	if s[0]=='\\':
-	    if s[1] in '0123456789abcdef':
-		r=r+chr(int(s[1:3], 16))
-		s=s[3:]
-	    else:
-		r=r+s[1]
-		s=s[2:]
-	else:
-	    r=r+s[0]
-	    s=s[1:]
+        if s[0]=='\\':
+            if s[1] in '0123456789abcdef':
+                r=r+chr(int(s[1:3], 16))
+                s=s[3:]
+            else:
+                r=r+s[1]
+                s=s[2:]
+        else:
+            r=r+s[0]
+            s=s[1:]
     return r
 
 def _splitOnNotEscaped(s, separator):
     if not s:
-	return []
+        return []
 
     r=['']
     while s:
-	if s[0]=='\\':
-	    r[-1]=r[-1]+s[:2]
-	    s=s[2:]
-	else:
-	    if s[0] in separator:
-		r.append('')
-		s=s[1:]
-		while s[0]==' ':
-		    s=s[1:]
-	    else:
-		r[-1]=r[-1]+s[0]
-		s=s[1:]
+        if s[0]=='\\':
+            r[-1]=r[-1]+s[:2]
+            s=s[2:]
+        else:
+            if s[0] in separator:
+                r.append('')
+                s=s[1:]
+                while s[0]==' ':
+                    s=s[1:]
+            else:
+                r[-1]=r[-1]+s[0]
+                s=s[1:]
     return r
 
 class InvalidRelativeDistinguishedName(Exception):
@@ -82,43 +82,43 @@ class LDAPAttributeTypeAndValue:
 
     def __init__(self, stringValue=None, attributeType=None, value=None):
         if stringValue is None:
-	    assert attributeType is not None
-	    assert value is not None
-	    self.attributeType = attributeType
+            assert attributeType is not None
+            assert value is not None
+            self.attributeType = attributeType
             self.value = value
-	else:
-	    assert attributeType is None
-	    assert value is None
+        else:
+            assert attributeType is None
+            assert value is None
             if '=' not in stringValue:
                 raise InvalidRelativeDistinguishedName, stringValue
             self.attributeType, self.value = stringValue.split('=', 1)
 
     def __str__(self):
-	return '='.join((escape(self.attributeType), escape(self.value)))
+        return '='.join((escape(self.attributeType), escape(self.value)))
 
     def __repr__(self):
-	return (self.__class__.__name__
-		+ '(attributeType='
-		+ repr(self.attributeType)
-		+ ', value='
-		+ repr(self.value)
-		+ ')')
+        return (self.__class__.__name__
+                + '(attributeType='
+                + repr(self.attributeType)
+                + ', value='
+                + repr(self.value)
+                + ')')
 
     def __hash__(self):
-	return hash((self.attributeType, self.value))
+        return hash((self.attributeType, self.value))
 
     def __eq__(self, other):
-	if not isinstance(other, LDAPAttributeTypeAndValue):
-	    return NotImplemented
-	return (self.attributeType == other.attributeType
+        if not isinstance(other, LDAPAttributeTypeAndValue):
+            return NotImplemented
+        return (self.attributeType == other.attributeType
                 and self.value == other.value)
 
     def __ne__(self, other):
-	return not (self == other)
+        return not (self == other)
 
     def __lt__(self, other):
-	if not isinstance(other, self.__class__):
-	    return False
+        if not isinstance(other, self.__class__):
+            return False
         if self.attributeType != other.attributeType:
             return self.attributeType < other.attributeType
         else:
@@ -150,42 +150,42 @@ class RelativeDistinguishedName:
             else:
                 attributeTypesAndValues = magic
 
-	if stringValue is None:
-	    assert attributeTypesAndValues is not None
+        if stringValue is None:
+            assert attributeTypesAndValues is not None
             import types
             assert not isinstance(attributeTypesAndValues, types.StringType)
-	    self.attributeTypesAndValues = tuple(attributeTypesAndValues)
-	else:
-	    assert attributeTypesAndValues is None
-	    self.attributeTypesAndValues = tuple([LDAPAttributeTypeAndValue(stringValue=unescape(x))
-						  for x in _splitOnNotEscaped(stringValue, '+')])
+            self.attributeTypesAndValues = tuple(attributeTypesAndValues)
+        else:
+            assert attributeTypesAndValues is None
+            self.attributeTypesAndValues = tuple([LDAPAttributeTypeAndValue(stringValue=unescape(x))
+                                                  for x in _splitOnNotEscaped(stringValue, '+')])
 
     def split(self):
-	return self.attributeTypesAndValues
+        return self.attributeTypesAndValues
 
     def __str__(self):
-	return '+'.join([str(x) for x in self.attributeTypesAndValues])
+        return '+'.join([str(x) for x in self.attributeTypesAndValues])
 
     def __repr__(self):
-	return (self.__class__.__name__
-		+ '(attributeTypesAndValues='
-		+ repr(self.attributeTypesAndValues)
-		+ ')')
+        return (self.__class__.__name__
+                + '(attributeTypesAndValues='
+                + repr(self.attributeTypesAndValues)
+                + ')')
 
     def __hash__(self):
-	return hash(self.attributeTypesAndValues)
+        return hash(self.attributeTypesAndValues)
 
     def __eq__(self, other):
-	if not isinstance(other, RelativeDistinguishedName):
-	    return NotImplemented
-	return self.split() == other.split()
+        if not isinstance(other, RelativeDistinguishedName):
+            return NotImplemented
+        return self.split() == other.split()
 
     def __ne__(self, other):
-	return not (self == other)
+        return not (self == other)
 
     def __lt__(self, other):
-	if not isinstance(other, self.__class__):
-	    return False
+        if not isinstance(other, self.__class__):
+            return False
         return self.split() < other.split()
 
     def __gt__(self, other):
@@ -199,7 +199,7 @@ class RelativeDistinguishedName:
         return not self < other
 
     def count(self):
-	return len(self.attributeTypesAndValues)
+        return len(self.attributeTypesAndValues)
 
 
 class DistinguishedName:
@@ -219,81 +219,81 @@ class DistinguishedName:
             else:
                 listOfRDNs = magic
 
-	if stringValue is None:
-	    assert listOfRDNs is not None
-	    for x in listOfRDNs:
-		assert isinstance(x, RelativeDistinguishedName)
-	    self.listOfRDNs = tuple(listOfRDNs)
-	else:
-	    assert listOfRDNs is None
-	    self.listOfRDNs = tuple([RelativeDistinguishedName(stringValue=x)
-				     for x in _splitOnNotEscaped(stringValue, ',')])
+        if stringValue is None:
+            assert listOfRDNs is not None
+            for x in listOfRDNs:
+                assert isinstance(x, RelativeDistinguishedName)
+            self.listOfRDNs = tuple(listOfRDNs)
+        else:
+            assert listOfRDNs is None
+            self.listOfRDNs = tuple([RelativeDistinguishedName(stringValue=x)
+                                     for x in _splitOnNotEscaped(stringValue, ',')])
 
     def split(self):
-	return self.listOfRDNs
+        return self.listOfRDNs
 
     def up(self):
-	return DistinguishedName(listOfRDNs=self.listOfRDNs[1:])
+        return DistinguishedName(listOfRDNs=self.listOfRDNs[1:])
 
     def __str__(self):
-	return ','.join([str(x) for x in self.listOfRDNs])
+        return ','.join([str(x) for x in self.listOfRDNs])
 
     def __repr__(self):
-	return (self.__class__.__name__
-		+ '(listOfRDNs='
-		+ repr(self.listOfRDNs)
-		+ ')')
+        return (self.__class__.__name__
+                + '(listOfRDNs='
+                + repr(self.listOfRDNs)
+                + ')')
 
     def __hash__(self):
-	return hash(str(self))
+        return hash(str(self))
 
     def __eq__(self, other):
         if isinstance(other, basestring):
             return str(self) == other
-	if not isinstance(other, DistinguishedName):
-	    return NotImplemented
-	return self.split() == other.split()
+        if not isinstance(other, DistinguishedName):
+            return NotImplemented
+        return self.split() == other.split()
 
     def __ne__(self, other):
-	return not (self == other)
+        return not (self == other)
 
     def __cmp__(self, other):
         if isinstance(other, basestring):
             return cmp(str(self), other)
-	if not isinstance(other, DistinguishedName):
-	    return NotImplemented
+        if not isinstance(other, DistinguishedName):
+            return NotImplemented
         return cmp(self.split(), other.split())
 
     def getDomainName(self):
-	domainParts = []
-	l=list(self.listOfRDNs)
-	l.reverse()
-	for rdn in l:
-	    if rdn.count() != 1:
-		break
-	    attributeTypeAndValue = rdn.split()[0]
-	    if attributeTypeAndValue.attributeType.upper() != 'DC':
-		break
-	    domainParts.insert(0, attributeTypeAndValue.value)
-	if domainParts:
-	    return '.'.join(domainParts)
-	else:
-	    return None
+        domainParts = []
+        l=list(self.listOfRDNs)
+        l.reverse()
+        for rdn in l:
+            if rdn.count() != 1:
+                break
+            attributeTypeAndValue = rdn.split()[0]
+            if attributeTypeAndValue.attributeType.upper() != 'DC':
+                break
+            domainParts.insert(0, attributeTypeAndValue.value)
+        if domainParts:
+            return '.'.join(domainParts)
+        else:
+            return None
 
     def contains(self, other):
-	"""Does the tree rooted at DN contain or equal the other DN."""
-	if self == other:
-	    return 1
+        """Does the tree rooted at DN contain or equal the other DN."""
+        if self == other:
+            return 1
         if not isinstance(other, DistinguishedName):
             other=DistinguishedName(other)
-	its=list(other.split())
-	mine=list(self.split())
+        its=list(other.split())
+        mine=list(self.split())
 
-	while mine and its:
-	    m=mine.pop()
-	    i=its.pop()
-	    if m!=i:
-		return 0
-	if mine:
-	    return 0
-	return 1
+        while mine and its:
+            m=mine.pop()
+            i=its.pop()
+            if m!=i:
+                return 0
+        if mine:
+            return 0
+        return 1

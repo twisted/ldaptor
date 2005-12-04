@@ -69,7 +69,7 @@ tobedone() {
 	msgattrib --no-obsolete "$@" "$PO"
     done \
 	>"l10n-update.$$.tmp"
-    
+
     if [ -s "l10n-update.$$.tmp" ]; then
 	echo "# $DESCRIPTION"
 	cat "l10n-update.$$.tmp"

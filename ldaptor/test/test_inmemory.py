@@ -232,7 +232,7 @@ class TestInMemoryDatabase(unittest.TestCase):
         d = self.root.deleteChild('cn=not-exist')
         self.assertRaises(ldaperrors.LDAPNoSuchObject,
                           util.wait, d)
-        
+
     def test_setPassword(self):
         self.foo.setPassword('s3krit', salt='\xf2\x4a')
         self.failUnless('userPassword' in self.foo)
@@ -284,7 +284,7 @@ bValue: c
 
 ''')
         db = util.deferredResult(inmemory.fromLDIFFile(ldif))
-        
+
         self.assertEquals(
             db.dn,
             distinguishedname.DistinguishedName('cn=foo,dc=example,dc=com'))
@@ -305,7 +305,7 @@ cn: foo
 
 ''')
         db = util.deferredResult(inmemory.fromLDIFFile(ldif))
-        
+
         self.assertEquals(
             db.dn,
             distinguishedname.DistinguishedName('dc=example,dc=com'))
@@ -394,7 +394,7 @@ class TestDiff(unittest.TestCase):
             delta.Add('foo', ['bar']),
             ]),
             ])
-        
+
     def testAddChild(self):
         a = inmemory.ReadOnlyInMemoryLDAPEntry(
             dn=distinguishedname.DistinguishedName('dc=example,dc=com'))

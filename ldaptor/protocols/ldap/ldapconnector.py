@@ -8,15 +8,15 @@ except ImportError:
 
 class LDAPConnector(SRVConnector):
     def __init__(self, reactor, dn, factory,
-		 overrides=None):
+                 overrides=None):
         if not isinstance(dn, distinguishedname.DistinguishedName):
             dn = distinguishedname.DistinguishedName(stringValue=dn)
         if overrides is None:
             overrides={}
         self.override = self._findOverRide(dn, overrides)
 
-	domain = dn.getDomainName()
-	SRVConnector.__init__(self, reactor,
+        domain = dn.getDomainName()
+        SRVConnector.__init__(self, reactor,
                               'ldap', domain, factory)
 
     def __getstate__(self):
@@ -27,12 +27,12 @@ class LDAPConnector(SRVConnector):
 
     def _findOverRide(self, dn, overrides):
         while True:
-	    if overrides.has_key(dn):
-		return overrides[dn]
+            if overrides.has_key(dn):
+                return overrides[dn]
             if dn == '':
                 break
-	    dn = dn.up()
-	return None
+            dn = dn.up()
+        return None
 
     def _isQueryNeeded(self):
         """Is there both need to do an SRV query."""
@@ -54,8 +54,8 @@ class LDAPConnector(SRVConnector):
             self.factory.doStart()
             self.factory.startedConnecting(self)
             self._reallyConnect()
-	else:
-	    SRVConnector.connect(self)
+        else:
+            SRVConnector.connect(self)
 
     def pickServer(self):
         if self.override is None:
@@ -63,27 +63,27 @@ class LDAPConnector(SRVConnector):
         else:
             overriddenHost, overriddenPort = self.override
 
-	if (overriddenHost is not None
-	    and (overriddenPort is not None
-		 or self.domain is None)):
-	    host = overriddenHost
-	    port = overriddenPort
-	else:
-	    host, port = SRVConnector.pickServer(self)
-	    if overriddenHost is not None:
-		host = overriddenHost
-	    if overriddenPort is not None:
-		port = overriddenPort
+        if (overriddenHost is not None
+            and (overriddenPort is not None
+                 or self.domain is None)):
+            host = overriddenHost
+            port = overriddenPort
+        else:
+            host, port = SRVConnector.pickServer(self)
+            if overriddenHost is not None:
+                host = overriddenHost
+            if overriddenPort is not None:
+                port = overriddenPort
 
         try:
             port = int(port)
         except ValueError:
             pass
 
-	assert host is not None
-	if port is None:
-	    port = 389
-	return host, port
+        assert host is not None
+        if port is None:
+            port = 389
+        return host, port
 
 class LDAPClientCreator(protocol.ClientCreator):
     def connect(self, dn, overrides=None):

@@ -1,7 +1,7 @@
 >>> from twisted.trial.util import deferredResult
 >>> proto=deferredResult(d)
 >>> proto
-<ldaptor.protocols.ldap.ldapclient.LDAPClient 
+<ldaptor.protocols.ldap.ldapclient.LDAPClient
 instance at 0x40619dac>
 >>> from ldaptor.protocols.ldap import ldapsyntax
 >>> baseEntry=ldapsyntax.LDAPEntry(client=proto, dn=dn)

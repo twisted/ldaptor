@@ -22,29 +22,29 @@ class TestModifications(unittest.TestCase):
         mod = delta.Add('cn', ['quux'])
         mod.patch(self.foo)
 
-	self.failIf('stuff' in self.foo)
-	self.failUnlessEqual(self.foo['cn'], ['foo', 'thud', 'quux'])
+        self.failIf('stuff' in self.foo)
+        self.failUnlessEqual(self.foo['cn'], ['foo', 'thud', 'quux'])
 
     def testAddNew(self):
         mod = delta.Add('stuff', ['val1', 'val2'])
         mod.patch(self.foo)
 
-	self.failUnlessEqual(self.foo['stuff'], ['val1', 'val2'])
-	self.failUnlessEqual(self.foo['cn'], ['foo', 'thud'])
+        self.failUnlessEqual(self.foo['stuff'], ['val1', 'val2'])
+        self.failUnlessEqual(self.foo['cn'], ['foo', 'thud'])
 
     def testDelete(self):
         mod = delta.Delete('cn', ['thud'])
         mod.patch(self.foo)
 
         self.failIf('stuff' in self.foo)
-	self.failUnlessEqual(self.foo['cn'], ['foo'])
+        self.failUnlessEqual(self.foo['cn'], ['foo'])
 
     def testDeleteAll(self):
         mod = delta.Delete('more')
         mod.patch(self.foo)
 
         self.failIf('stuff' in self.foo)
-	self.failUnlessEqual(self.foo['cn'], ['foo', 'thud'])
+        self.failUnlessEqual(self.foo['cn'], ['foo', 'thud'])
 
     def testDelete_FailOnNonExistingAttributeType_All(self):
         mod = delta.Delete('notexist', [])
@@ -69,33 +69,33 @@ class TestModifications(unittest.TestCase):
         mod = delta.Replace('stuff', ['val1', 'val2'])
         mod.patch(self.foo)
 
-	self.failUnlessEqual(self.foo['stuff'], ['val1', 'val2'])
-	self.failUnlessEqual(self.foo['sn'], ['bar'])
-	self.failUnlessEqual(self.foo['more'], ['junk'])
+        self.failUnlessEqual(self.foo['stuff'], ['val1', 'val2'])
+        self.failUnlessEqual(self.foo['sn'], ['bar'])
+        self.failUnlessEqual(self.foo['more'], ['junk'])
 
     def testReplace_Modify(self):
         mod = delta.Replace('sn', ['baz'])
         mod.patch(self.foo)
 
-	self.failIf('stuff' in self.foo)
-	self.failUnlessEqual(self.foo['sn'], ['baz'])
-	self.failUnlessEqual(self.foo['more'], ['junk'])
+        self.failIf('stuff' in self.foo)
+        self.failUnlessEqual(self.foo['sn'], ['baz'])
+        self.failUnlessEqual(self.foo['more'], ['junk'])
 
     def testReplace_Delete_Existing(self):
         mod = delta.Replace('more', [])
         mod.patch(self.foo)
 
-	self.failIf('stuff' in self.foo)
-	self.failUnlessEqual(self.foo['sn'], ['bar'])
-	self.failIf('more' in self.foo)
+        self.failIf('stuff' in self.foo)
+        self.failUnlessEqual(self.foo['sn'], ['bar'])
+        self.failIf('more' in self.foo)
 
     def testReplace_Delete_NonExisting(self):
         mod = delta.Replace('nonExisting', [])
         mod.patch(self.foo)
 
-	self.failIf('stuff' in self.foo)
-	self.failUnlessEqual(self.foo['sn'], ['bar'])
-	self.failUnlessEqual(self.foo['more'], ['junk'])
+        self.failIf('stuff' in self.foo)
+        self.failUnlessEqual(self.foo['sn'], ['bar'])
+        self.failUnlessEqual(self.foo['more'], ['junk'])
 
 class TestModificationOpLDIF(unittest.TestCase):
     def testAdd(self):

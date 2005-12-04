@@ -122,29 +122,29 @@ class AddForm(configurable.Configurable):
     def __init__(self, chosenObjectClasses, attributeTypes, objectClasses):
         super(AddForm, self).__init__(None)
         self.chosenObjectClasses=chosenObjectClasses
-	self.nonUserEditableAttributeType_objectClass=[
+        self.nonUserEditableAttributeType_objectClass=[
             oc.name[0] for oc in self.chosenObjectClasses]
-	self.attributeTypes=attributeTypes
-	self.objectClasses=objectClasses
+        self.attributeTypes=attributeTypes
+        self.objectClasses=objectClasses
         self.formFields=self._getFormFields()
 
     def _nonUserEditableAttributeType_getFreeNumber(self, attributeType, context):
         cfg = context.locate(interfaces.ILDAPConfig)
         entry = context.locate(inevow.ISession).getLoggedInRoot().loggedIn
         client = entry.client
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn=cfg.getBaseDN())
-	d=numberalloc.getFreeNumber(ldapObject=o,
+        d=numberalloc.getFreeNumber(ldapObject=o,
                                     numberType=attributeType,
-				    min=1000)
-	d.addCallback(lambda x, a=attributeType: (a, [str(x)]))
-	return d
+                                    min=1000)
+        d.addCallback(lambda x, a=attributeType: (a, [str(x)]))
+        return d
 
     nonUserEditableAttributeType_uidNumber=_nonUserEditableAttributeType_getFreeNumber
     nonUserEditableAttributeType_gidNumber=_nonUserEditableAttributeType_getFreeNumber
 
     def _get_attrtype(self, name):
-	for a in self.attributeTypes:
+        for a in self.attributeTypes:
             for cur in a.name:
                 if name.upper() == cur.upper():
                     a.uiHint_multiline=0 #TODO
@@ -152,88 +152,88 @@ class AddForm(configurable.Configurable):
         raise UnknownAttributeType, name
 
     def _one_formfield(self, attr, result, must=False):
-	attrtype = self._get_attrtype(attr)
-	name=attr
-	if must:
-	    name=name+"*"
-	if attrtype.uiHint_multiline:
-	    if attrtype.single_value:
-		typed = annotate.Text(label=name,
+        attrtype = self._get_attrtype(attr)
+        name=attr
+        if must:
+            name=name+"*"
+        if attrtype.uiHint_multiline:
+            if attrtype.single_value:
+                typed = annotate.Text(label=name,
                                       description=attrtype.desc or '',
                                       required=must)
-	    else:
-		typed = annotate.Text(label=name,
+            else:
+                typed = annotate.Text(label=name,
                                       description=attrtype.desc or '',
                                       required=must)
-	else:
-	    if attrtype.single_value:
-		typed = annotate.String(label=name,
+        else:
+            if attrtype.single_value:
+                typed = annotate.String(label=name,
                                         description=attrtype.desc or '',
                                         required=must)
-	    else:
-		# TODO maybe use a string field+button to add entries,
-		# multiselection list+button to remove entries?
-		typed = annotate.Text(label=name,
+            else:
+                # TODO maybe use a string field+button to add entries,
+                # multiselection list+button to remove entries?
+                typed = annotate.Text(label=name,
                                       description=attrtype.desc or '',
                                       required=must)
 
         result.append(annotate.Argument('add_'+attr, typed))
 
     def _getFormFields(self):
-	r=[]
+        r=[]
         r.append(annotate.Argument('context',
                                    annotate.Context()))
 
-	process = {}
+        process = {}
 
-	# TODO sort objectclasses somehow?
+        # TODO sort objectclasses somehow?
         objectClasses = list(self.chosenObjectClasses)
-	objectClassesSeen = {}
+        objectClassesSeen = {}
 
-	self.nonUserEditableAttributes = []
-	while objectClasses:
+        self.nonUserEditableAttributes = []
+        while objectClasses:
             objectClass = objectClasses.pop()
-	    objclassName = objectClass.name[0]
+            objclassName = objectClass.name[0]
 
-	    if objectClassesSeen.has_key(objclassName):
-		continue
-	    objectClassesSeen[objclassName]=1
+            if objectClassesSeen.has_key(objclassName):
+                continue
+            objectClassesSeen[objclassName]=1
 
             for ocName in objectClass.sup or []:
                 objclass = mapNameToObjectClass(self.objectClasses, ocName)
                 assert objclass, "Objectclass %s must have schema" %objclassName
                 objectClasses.append(objclass)
 
-	    for attr_alias in objectClass.must:
-		real_attr = self._get_attrtype(str(attr_alias))
+            for attr_alias in objectClass.must:
+                real_attr = self._get_attrtype(str(attr_alias))
 
-		if hasattr(self, 'nonUserEditableAttributeType_'+real_attr.name[0]):
-		    self.nonUserEditableAttributes.append(real_attr.name[0])
-		else:
-		    for attr in real_attr.name:
-			if not process.has_key(attr.upper()):
-			    process[attr.upper()]=0
-			if not process[attr.upper()]:
-			    self._one_formfield(attr, result=r, must=True)
-			for name in real_attr.name:
-			    process[name.upper()]=1
+                if hasattr(self, 'nonUserEditableAttributeType_'+real_attr.name[0]):
+                    self.nonUserEditableAttributes.append(real_attr.name[0])
+                else:
+                    for attr in real_attr.name:
+                        if not process.has_key(attr.upper()):
+                            process[attr.upper()]=0
+                        if not process[attr.upper()]:
+                            self._one_formfield(attr, result=r, must=True)
+                        for name in real_attr.name:
+                            process[name.upper()]=1
 
-	    for attr_alias in objectClass.may:
-		real_attr = self._get_attrtype(str(attr_alias))
+            for attr_alias in objectClass.may:
+                real_attr = self._get_attrtype(str(attr_alias))
 
-		if hasattr(self, 'nonUserEditableAttributeType_'+real_attr.name[0]):
-		    self.nonUserEditableAttributes.append(real_attr.name[0])
-		else:
-		    for attr in real_attr.name:
-			if not process.has_key(attr.upper()):
-			    process[attr.upper()]=0
-			if not process[attr.upper()]:
-			    self._one_formfield(attr, result=r)
-			for name in real_attr.name:
-			    process[name.upper()]=1
+                if hasattr(self, 'nonUserEditableAttributeType_'+real_attr.name[0]):
+                    self.nonUserEditableAttributes.append(real_attr.name[0])
+                else:
+                    for attr in real_attr.name:
+                        if not process.has_key(attr.upper()):
+                            process[attr.upper()]=0
+                        if not process[attr.upper()]:
+                            self._one_formfield(attr, result=r)
+                        for name in real_attr.name:
+                            process[name.upper()]=1
 
-	assert [v==1 for k,v in process.items()], "TODO: %s"%process
-	return r
+        assert [v==1 for k,v in process.items()], "TODO: %s"%process
+        return r
 
 
     def getBindingNames(self, ctx):
@@ -247,7 +247,7 @@ class AddForm(configurable.Configurable):
             action=_('Add'))
 
     def _textarea_to_list(self, t):
-	return filter(lambda x: x, [x.strip() for x in t.split("\n")])
+        return filter(lambda x: x, [x.strip() for x in t.split("\n")])
 
     def _getDNAttr(self):
         attr_alias = self.chosenObjectClasses[0].must[0]
@@ -259,45 +259,45 @@ class AddForm(configurable.Configurable):
     def add(self, context, **kw):
         cfg = context.locate(interfaces.ILDAPConfig)
         dnAttr = self._getDNAttr()
-	assert kw.has_key('add_'+dnAttr), 'Must have attribute dn %s points to.' % dnAttr
-	assert kw['add_'+dnAttr], 'Attribute %s must have value.' % 'add_'+dnAttr
+        assert kw.has_key('add_'+dnAttr), 'Must have attribute dn %s points to.' % dnAttr
+        assert kw['add_'+dnAttr], 'Attribute %s must have value.' % 'add_'+dnAttr
         # TODO ugly
-	rdn=distinguishedname.RelativeDistinguishedName(
+        rdn=distinguishedname.RelativeDistinguishedName(
             attributeTypesAndValues=[
             distinguishedname.LDAPAttributeTypeAndValue(attributeType=dnAttr,
                                                         value=kw['add_'+dnAttr]),
             ])
 
-	#TODO verify
-	changes = []
-	for k,v in kw.items():
-	    if hasattr(self, "nonUserEditableAttributeType_"+k):
-		raise "Can't set attribute %s when adding." % k
-	    elif k[:len("add_")]=="add_":
+        #TODO verify
+        changes = []
+        for k,v in kw.items():
+            if hasattr(self, "nonUserEditableAttributeType_"+k):
+                raise "Can't set attribute %s when adding." % k
+            elif k[:len("add_")]=="add_":
                 if not v:
                     continue
-		attrtype = self._get_attrtype(k[len("add_"):])
-		assert attrtype
+                attrtype = self._get_attrtype(k[len("add_"):])
+                assert attrtype
 
-		if attrtype.single_value or attrtype.uiHint_multiline:
-		    v=[v]
-		else:
-		    v=self._textarea_to_list(v)
+                if attrtype.single_value or attrtype.uiHint_multiline:
+                    v=[v]
+                else:
+                    v=self._textarea_to_list(v)
 
-		if v and [1 for x in v if x]:
-		    attr=k[len("add_"):]
-		    changes.append(defer.succeed((attr, v)))
-		    #TODO
+                if v and [1 for x in v if x]:
+                    attr=k[len("add_"):]
+                    changes.append(defer.succeed((attr, v)))
+                    #TODO
 
-	for attributeType in self.nonUserEditableAttributes:
-	    thing=getattr(self, 'nonUserEditableAttributeType_'+attributeType)
-	    if callable(thing):
-		changes.append(thing(attributeType, context))
-	    else:
-		changes.append(defer.succeed((attributeType, thing)))
+        for attributeType in self.nonUserEditableAttributes:
+            thing=getattr(self, 'nonUserEditableAttributeType_'+attributeType)
+            if callable(thing):
+                changes.append(thing(attributeType, context))
+            else:
+                changes.append(defer.succeed((attributeType, thing)))
 
-	dl=defer.DeferredList(changes, fireOnOneErrback=1)
-	#dl.addErrback(lambda x: x[0]) # throw away index
+        dl=defer.DeferredList(changes, fireOnOneErrback=1)
+        #dl.addErrback(lambda x: x[0]) # throw away index
         def _pruneSuccessFlags(l):
             r=[]
             for succeeded,result in l:
@@ -305,15 +305,15 @@ class AddForm(configurable.Configurable):
                 r.append(result)
             return r
 
-	dl.addCallback(_pruneSuccessFlags)
-	dl.addCallback(self._process2, context, rdn, kw)
-	return dl
+        dl.addCallback(_pruneSuccessFlags)
+        dl.addCallback(self._process2, context, rdn, kw)
+        return dl
 
     def _process2(self, changes, context, rdn, kw):
         cfg = context.locate(interfaces.ILDAPConfig)
         user = context.locate(inevow.ISession).getLoggedInRoot().loggedIn
 
-	if not changes:
+        if not changes:
             return _("No changes!") #TODO
 
         changes_desc=""
@@ -333,7 +333,7 @@ class AddForm(configurable.Configurable):
         d = e.addChild(rdn, mod)
         #d.addCallback(lambda e: "Added %s successfully." % e.dn)
         d.addErrback(lambda reason: _("Failed: %s.") % reason.getErrorMessage())
-	return d
+        return d
 
 class ReallyAddPage(rend.Page):
     addSlash = True
@@ -357,11 +357,11 @@ class ReallyAddPage(rend.Page):
         u=url.URL.fromRequest(request)
         u=u.parent().parent().parent()
         l=[]
-	l.append(tags.a(href=u.sibling("search"))[_("Search")])
-	l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
-        
-	return l
-    
+        l.append(tags.a(href=u.sibling("search"))[_("Search")])
+        l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
+
+        return l
+
     def render_form(self, context, data):
         return webform.renderForms()
 
@@ -398,14 +398,14 @@ class ReallyAddPage(rend.Page):
             tags.a(href=u.sibling('change_password').child(uriQuote(e.dn)))[_('change password')],
             ']',
             ]
-            
+
     render_i18n = i18n.render()
 
 class SmartObjectAddPage(ReallyAddPage):
     def __init__(self, smartObject):
-	super(SmartObjectAddPage, self).__init__()
+        super(SmartObjectAddPage, self).__init__()
         self.smartObject = smartObject
-    
+
     def configurable_(self, context):
         return self.smartObject
 
@@ -415,12 +415,12 @@ class ManualAddPage(ReallyAddPage):
                  auxiliaryObjectClasses,
                  attributeTypes,
                  objectClasses):
-	super(ManualAddPage, self).__init__()
+        super(ManualAddPage, self).__init__()
         self.structuralObjectClass = structuralObjectClass
         self.auxiliaryObjectClasses = auxiliaryObjectClasses
         self.attributeTypes = attributeTypes
         self.objectClasses = objectClasses
-        
+
     def configurable_(self, context):
         a = AddForm(chosenObjectClasses=[self.structuralObjectClass]
                     + self.auxiliaryObjectClasses,
@@ -465,7 +465,7 @@ class AddPage(rend.Page):
         templateDir=os.path.split(os.path.abspath(__file__))[0])
 
     def __init__(self, attributeTypes, objectClasses):
-	super(AddPage, self).__init__()
+        super(AddPage, self).__init__()
         self.attributeTypes = attributeTypes
         self.objectClasses = objectClasses
 
@@ -499,18 +499,18 @@ class AddPage(rend.Page):
         u=url.URL.fromRequest(request)
         u=u.parent()
         l=[]
-	l.append(tags.a(href=u.sibling("search"))[_("Search")])
+        l.append(tags.a(href=u.sibling("search"))[_("Search")])
         return l
 
     def configurable_objectClass(self, context):
         return AddOCForm(self.objectClasses)
-    
+
     def render_objectClassForm(self, context, data):
         return webform.renderForms('objectClass')
 
     def configurable_smartObject(self, context):
         return ChooseSmartObject(self.listPlugins())
-    
+
     def render_smartObjectForm(self, context, data):
         if self.havePlugins():
             return webform.renderForms('smartObject')
@@ -568,7 +568,7 @@ class AddPage(rend.Page):
 def getResource(baseObject, request):
     entry = request.getSession().getLoggedInRoot().loggedIn
     client = entry.client
-    
+
     d = fetchschema.fetch(client, baseObject)
     def cbAddPage(schema):
         attributeTypes, objectClasses = schema

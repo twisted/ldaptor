@@ -80,11 +80,11 @@ objectClass: top
         return entry
 
     def testSimpleRead(self):
-	want = BaseLDAPEntry(dn='cn=foo,dc=example,dc=com',
+        want = BaseLDAPEntry(dn='cn=foo,dc=example,dc=com',
                              attributes={
-	    'objectClass': ['top'],
-	    'cn': ['foo'],
-	    })
+            'objectClass': ['top'],
+            'cn': ['foo'],
+            })
         e = self.get(want.dn)
         self.failUnlessEqual(e, want)
 
@@ -127,9 +127,9 @@ objectClass: top
     def testTreeBranches(self):
         want = BaseLDAPEntry(dn='cn=sales-thingie,ou=Sales,dc=example,dc=com',
                              attributes={
-	    'objectClass': ['top'],
-	    'cn': ['sales-thingie'],
-	    })
+            'objectClass': ['top'],
+            'cn': ['sales-thingie'],
+            })
         e = self.get(want.dn)
         self.failUnlessEqual(e, want)
 
@@ -157,11 +157,11 @@ objectClass: organizationalUnit
 """)
 
     def testSimpleWrite(self):
-	e = BaseLDAPEntry(dn='cn=foo,dc=example,dc=com',
+        e = BaseLDAPEntry(dn='cn=foo,dc=example,dc=com',
                           attributes={
-	    'objectClass': ['top'],
-	    'cn': ['foo'],
-	    })
+            'objectClass': ['top'],
+            'cn': ['foo'],
+            })
         d = ldiftree.put(self.tree, e)
         try:
             entry = util.deferredResult(d)
@@ -179,11 +179,11 @@ cn: foo
 """)
 
     def testDirCreation(self):
-	e = BaseLDAPEntry(dn='cn=create-me,ou=OrgUnit,dc=example,dc=com',
+        e = BaseLDAPEntry(dn='cn=create-me,ou=OrgUnit,dc=example,dc=com',
                           attributes={
-	    'objectClass': ['top'],
-	    'cn': ['create-me'],
-	    })
+            'objectClass': ['top'],
+            'cn': ['create-me'],
+            })
         d = ldiftree.put(self.tree, e)
         try:
             entry = util.deferredResult(d)
@@ -202,11 +202,11 @@ cn: create-me
 """)
 
     def testDirExists(self):
-	e = BaseLDAPEntry(dn='cn=create-me,ou=OrgUnit,dc=example,dc=com',
+        e = BaseLDAPEntry(dn='cn=create-me,ou=OrgUnit,dc=example,dc=com',
                           attributes={
-	    'objectClass': ['top'],
-	    'cn': ['create-me'],
-	    })
+            'objectClass': ['top'],
+            'cn': ['create-me'],
+            })
         dirpath = os.path.join(self.tree, 'dc=com.dir', 'dc=example.dir',
                                'ou=OrgUnit.dir')
         os.mkdir(dirpath)
@@ -227,11 +227,11 @@ cn: create-me
 """)
 
     def testMissingLinkError(self):
-	e = BaseLDAPEntry(dn='cn=bad-create,ou=NoSuchOrgUnit,dc=example,dc=com',
+        e = BaseLDAPEntry(dn='cn=bad-create,ou=NoSuchOrgUnit,dc=example,dc=com',
                           attributes={
-	    'objectClass': ['top'],
-	    'cn': ['bad-create'],
-	    })
+            'objectClass': ['top'],
+            'cn': ['bad-create'],
+            })
         d = ldiftree.put(self.tree, e)
         def block(d):
             try:
@@ -243,11 +243,11 @@ cn: create-me
             block, d)
 
     def testAddTopLevel(self):
-	e = BaseLDAPEntry(dn='dc=org',
+        e = BaseLDAPEntry(dn='dc=org',
                           attributes={
-	    'objectClass': ['dcObject'],
-	    'dc': ['org'],
-	    })
+            'objectClass': ['dcObject'],
+            'dc': ['org'],
+            })
         d = ldiftree.put(self.tree, e)
         try:
             entry = util.deferredResult(d)
@@ -598,7 +598,7 @@ objectClass: top
         d = self.root.deleteChild('cn=not-exist')
         self.assertRaises(ldaperrors.LDAPNoSuchObject,
                           util.wait, d)
-        
+
     def test_setPassword(self):
         self.foo.setPassword('s3krit', salt='\xf2\x4a')
         self.failUnless('userPassword' in self.foo)

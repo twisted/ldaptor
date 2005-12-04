@@ -262,7 +262,7 @@ class ServicePasswordChangeMixin(object):
                 continue
 
             x, pri, actionName = attrName.split('_', 2)
-                              
+
             if actionName == name:
                 return getattr(self, attrName)
         return None
@@ -405,11 +405,11 @@ class ConfirmChange(ServicePasswordChangeMixin, rend.Page):
         u=url.URL.fromRequest(request)
         u=u.parent().parent()
         l=[]
-	l.append(tags.a(href=u.sibling("search"))[_("Search")])
-	l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
+        l.append(tags.a(href=u.sibling("search"))[_("Search")])
+        l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
         l.append(tags.a(href=u.sibling("edit").child(str(self.dn)))[_("edit")])
         l.append(tags.a(href=u.sibling("delete").child(str(self.dn)))[_("delete")])
-	return l
+        return l
 
     def render_add(self, ctx, data):
         return webform.renderForms('add')

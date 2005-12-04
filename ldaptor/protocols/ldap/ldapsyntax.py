@@ -73,7 +73,7 @@ class MatchNotImplemented(NotImplementedError):
 
 class JournaledLDAPAttributeSet(attributeset.LDAPAttributeSet):
     def __init__(self, ldapObject, *a, **kw):
-	self.ldapObject = ldapObject
+        self.ldapObject = ldapObject
         super(JournaledLDAPAttributeSet, self).__init__(*a, **kw)
 
     def add(self, value):
@@ -86,7 +86,7 @@ class JournaledLDAPAttributeSet(attributeset.LDAPAttributeSet):
 
     def remove(self, value):
         if value not in self:
-	    raise LookupError, value
+            raise LookupError, value
         self.ldapObject._canRemove(self.key, value)
         self.ldapObject.journal(delta.Delete(self.key, [value]))
         super(JournaledLDAPAttributeSet, self).remove(value)
@@ -116,25 +116,25 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
     """
 
     def __init__(self, client, dn, attributes={}, complete=0):
-	"""
+        """
 
-	Initialize the object.
+        Initialize the object.
 
-	@param client: The LDAP client connection this object belongs
-	to.
+        @param client: The LDAP client connection this object belongs
+        to.
 
-	@param dn: Distinguished Name of the object, as a string.
+        @param dn: Distinguished Name of the object, as a string.
 
-	@param attributes: Attributes of the object. A dictionary of
-	attribute types to list of attribute values.
+        @param attributes: Attributes of the object. A dictionary of
+        attribute types to list of attribute values.
 
-	"""
+        """
 
         super(LDAPEntryWithClient, self).__init__(dn, attributes)
-	self.client=client
+        self.client=client
         self.complete = complete
 
-	self._journal=[]
+        self._journal=[]
 
         self._remoteData = entry.EditableLDAPEntry(dn, attributes)
         self._state = 'ready'
@@ -219,43 +219,43 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         return super(LDAPEntryWithClient, self).items()
 
     def __str__(self):
-	a=[]
+        a=[]
 
-	objectClasses = list(self.get('objectClass', []))
-	objectClasses.sort()
-	a.append(('objectClass', objectClasses))
+        objectClasses = list(self.get('objectClass', []))
+        objectClasses.sort()
+        a.append(('objectClass', objectClasses))
 
-	l=list(self.items())
-	l.sort()
-	for key, values in l:
-	    if key!='objectClass':
-		a.append((key, values))
-	return ldif.asLDIF(self.dn, a)
+        l=list(self.items())
+        l.sort()
+        for key, values in l:
+            if key!='objectClass':
+                a.append((key, values))
+        return ldif.asLDIF(self.dn, a)
 
     def __eq__(self, other):
-	if not isinstance(other, self.__class__):
-	    return 0
-	if self.dn != other.dn:
-	    return 0
+        if not isinstance(other, self.__class__):
+            return 0
+        if self.dn != other.dn:
+            return 0
 
-	my=self.keys()
-	my.sort()
-	its=other.keys()
-	its.sort()
-	if my!=its:
-	    return 0
-	for key in my:
-	    myAttr=self[key]
-	    itsAttr=other[key]
-	    if myAttr!=itsAttr:
-		return 0
-	return 1
+        my=self.keys()
+        my.sort()
+        its=other.keys()
+        its.sort()
+        if my!=its:
+            return 0
+        for key in my:
+            myAttr=self[key]
+            itsAttr=other[key]
+            if myAttr!=itsAttr:
+                return 0
+        return 1
 
     def __ne__(self, other):
-	return not self==other
+        return not self==other
 
     def __len__(self):
-	return len(self.keys())
+        return len(self.keys())
 
     def __nonzero__(self):
         return True
@@ -264,15 +264,15 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         r=pureldap.LDAPBindRequest(dn=str(self.dn), auth=password)
         d = self.client.send(r)
         d.addCallback(self._handle_bind_msg)
-	return d
+        return d
 
     def _handle_bind_msg(self, msg):
-	assert isinstance(msg, pureldap.LDAPBindResponse)
-	assert msg.referral is None #TODO
-	if msg.resultCode!=ldaperrors.Success.resultCode:
+        assert isinstance(msg, pureldap.LDAPBindResponse)
+        assert msg.referral is None #TODO
+        if msg.resultCode!=ldaperrors.Success.resultCode:
             raise ldaperrors.get(msg.resultCode, msg.errorMessage)
         return self
-        
+
 
     # end ILDAPEntry
 
@@ -281,7 +281,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         self._checkState()
         self._canRemoveAll(key)
 
-	new=JournaledLDAPAttributeSet(self, key, value)
+        new=JournaledLDAPAttributeSet(self, key, value)
         super(LDAPEntryWithClient, self).__setitem__(key, new)
         self.journal(delta.Replace(key, value))
 
@@ -294,21 +294,21 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 
     def undo(self):
         self._checkState()
-	self._attributes.clear()
+        self._attributes.clear()
         for k, vs in self._remoteData.items():
             self._attributes[k] = self.buildAttributeSet(k, vs)
-	self._journal=[]
+        self._journal=[]
 
     def _commit_success(self, msg):
-	assert isinstance(msg, pureldap.LDAPModifyResponse)
-	assert msg.referral is None #TODO
-	if msg.resultCode!=ldaperrors.Success.resultCode:
-	    raise ldaperrors.get(msg.resultCode, msg.errorMessage)
+        assert isinstance(msg, pureldap.LDAPModifyResponse)
+        assert msg.referral is None #TODO
+        if msg.resultCode!=ldaperrors.Success.resultCode:
+            raise ldaperrors.get(msg.resultCode, msg.errorMessage)
 
         assert msg.matchedDN==''
 
         self._remoteData = entry.EditableLDAPEntry(self.dn, self)
-	self._journal=[]
+        self._journal=[]
         return self
 
     def commit(self):
@@ -319,15 +319,15 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         op=pureldap.LDAPModifyRequest(
             object=str(self.dn),
             modification=[x.asLDAP() for x in self._journal])
-	d = defer.maybeDeferred(self.client.send, op)
+        d = defer.maybeDeferred(self.client.send, op)
         d.addCallback(self._commit_success)
-	return d
+        return d
 
     def _cbMoveDone(self, msg, newDN):
-	assert isinstance(msg, pureldap.LDAPModifyDNResponse)
-	assert msg.referral is None #TODO
-	if msg.resultCode!=ldaperrors.Success.resultCode:
-	    raise ldaperrors.get(msg.resultCode, msg.errorMessage)
+        assert isinstance(msg, pureldap.LDAPModifyDNResponse)
+        assert msg.referral is None #TODO
+        if msg.resultCode!=ldaperrors.Success.resultCode:
+            raise ldaperrors.get(msg.resultCode, msg.errorMessage)
 
         assert msg.matchedDN==''
         self.dn = newDN
@@ -337,24 +337,24 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         self._checkState()
         newDN = distinguishedname.DistinguishedName(newDN)
 
-	newrdn=newDN.split()[0]
-	newSuperior=distinguishedname.DistinguishedName(listOfRDNs=newDN.split()[1:])
+        newrdn=newDN.split()[0]
+        newSuperior=distinguishedname.DistinguishedName(listOfRDNs=newDN.split()[1:])
         newDN = distinguishedname.DistinguishedName((newrdn,) + newSuperior.split())
-	op = pureldap.LDAPModifyDNRequest(entry=str(self.dn),
-					  newrdn=str(newrdn),
-					  deleteoldrdn=1,
-					  newSuperior=str(newSuperior))
-	d = self.client.send(op)
+        op = pureldap.LDAPModifyDNRequest(entry=str(self.dn),
+                                          newrdn=str(newrdn),
+                                          deleteoldrdn=1,
+                                          newSuperior=str(newSuperior))
+        d = self.client.send(op)
         d.addCallback(self._cbMoveDone, newDN)
-	return d
+        return d
 
     def _cbDeleteDone(self, msg):
-	assert isinstance(msg, pureldap.LDAPResult)
+        assert isinstance(msg, pureldap.LDAPResult)
         if not isinstance(msg, pureldap.LDAPDelResponse):
             raise ldaperrors.get(msg.resultCode,
                                  msg.errorMessage)
-	assert msg.referral is None #TODO
-	if msg.resultCode!=ldaperrors.Success.resultCode:
+        assert msg.referral is None #TODO
+        if msg.resultCode!=ldaperrors.Success.resultCode:
             raise ldaperrors.get(msg.resultCode, msg.errorMessage)
 
         assert msg.matchedDN==''
@@ -363,16 +363,16 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
     def delete(self):
         self._checkState()
 
-	op = pureldap.LDAPDelRequest(entry=str(self.dn))
-	d = self.client.send(op)
+        op = pureldap.LDAPDelRequest(entry=str(self.dn))
+        d = self.client.send(op)
         d.addCallback(self._cbDeleteDone)
         self._state = 'deleted'
-	return d
+        return d
 
     def _cbAddDone(self, msg, dn):
-	assert isinstance(msg, pureldap.LDAPAddResponse)
-	assert msg.referral is None #TODO
-	if msg.resultCode!=ldaperrors.Success.resultCode:
+        assert isinstance(msg, pureldap.LDAPAddResponse)
+        assert msg.referral is None #TODO
+        if msg.resultCode!=ldaperrors.Success.resultCode:
             raise ldaperrors.get(msg.resultCode, msg.errorMessage)
 
         assert msg.matchedDN==''
@@ -395,16 +395,16 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             ldapValues = pureber.BERSet(l)
 
             ldapAttrs.append((ldapAttrType, ldapValues))
-	op=pureldap.LDAPAddRequest(entry=str(dn),
+        op=pureldap.LDAPAddRequest(entry=str(dn),
                                    attributes=ldapAttrs)
-	d = self.client.send(op)
-	d.addCallback(self._cbAddDone, dn)
-	return d
+        d = self.client.send(op)
+        d.addCallback(self._cbAddDone, dn)
+        return d
 
     def _cbSetPassword_ExtendedOperation(self, msg):
-	assert isinstance(msg, pureldap.LDAPExtendedResponse)
-	assert msg.referral is None #TODO
-	if msg.resultCode!=ldaperrors.Success.resultCode:
+        assert isinstance(msg, pureldap.LDAPExtendedResponse)
+        assert msg.referral is None #TODO
+        if msg.resultCode!=ldaperrors.Success.resultCode:
             raise ldaperrors.get(msg.resultCode, msg.errorMessage)
 
         assert msg.matchedDN==''
@@ -417,17 +417,17 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 
         @param newPasswd: A string containing the new password.
 
-	@return: A Deferred that will complete when the operation is
-	done.
-        
+        @return: A Deferred that will complete when the operation is
+        done.
+
         """
 
         self._checkState()
 
-	op = pureldap.LDAPPasswordModifyRequest(userIdentity=str(self.dn), newPasswd=newPasswd)
-	d = self.client.send(op)
+        op = pureldap.LDAPPasswordModifyRequest(userIdentity=str(self.dn), newPasswd=newPasswd)
+        d = self.client.send(op)
         d.addCallback(self._cbSetPassword_ExtendedOperation)
-	return d
+        return d
 
     _setPasswordPriority_ExtendedOperation=0
     setPasswordMaybe_ExtendedOperation = setPassword_ExtendedOperation
@@ -443,15 +443,15 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         None. Specifies the style of samba accounts used. None is
         default and is the same as 'sambaSamAccount'.
 
-	@return: A Deferred that will complete when the operation is
-	done.
-        
+        @return: A Deferred that will complete when the operation is
+        done.
+
         """
 
         self._checkState()
 
-	nthash=smbpassword.nthash(newPasswd)
-	lmhash=smbpassword.lmhash(newPasswd)
+        nthash=smbpassword.nthash(newPasswd)
+        lmhash=smbpassword.lmhash(newPasswd)
 
         if style is None:
             style = 'sambaSamAccount'
@@ -463,7 +463,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             self['lmPassword'] = [lmhash]
         else:
             raise RuntimeError, "Unknown samba password style %r" % style
-	return self.commit()
+        return self.commit()
 
     _setPasswordPriority_Samba=20
     def setPasswordMaybe_Samba(self, newPasswd):
@@ -474,8 +474,8 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 
         @param newPasswd: A string containing the new password.
 
-	@return: A Deferred that will complete when the operation is
-	done.
+        @return: A Deferred that will complete when the operation is
+        done.
 
         """
         if not self.complete and not self.has_key('objectClass'):
@@ -564,7 +564,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         d=o.search(filterText='(objectClass=*)',
                    scope=pureldap.LDAP_SCOPE_baseObject,
                    attributes=['namingContexts'])
-	d.addCallback(self._cbNamingContext_Entries)
+        d.addCallback(self._cbNamingContext_Entries)
         return d
 
     def _cbFetch(self, results, overWrite):
@@ -598,63 +598,63 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         return d
 
     def _cbSearchEntry(self, callback, objectName, attributes, complete):
-	attrib={}
-	for key, values in attributes:
-	    attrib[str(key)]=[str(x) for x in values]
-	o=LDAPEntry(client=self.client,
+        attrib={}
+        for key, values in attributes:
+            attrib[str(key)]=[str(x) for x in values]
+        o=LDAPEntry(client=self.client,
                     dn=objectName,
                     attributes=attrib,
                     complete=complete)
-	callback(o)
+        callback(o)
 
     def _cbSearchMsg(self, msg, d, callback, complete, sizeLimitIsNonFatal):
-	if isinstance(msg, pureldap.LDAPSearchResultDone):
-	    assert msg.referral is None #TODO
+        if isinstance(msg, pureldap.LDAPSearchResultDone):
+            assert msg.referral is None #TODO
             e = ldaperrors.get(msg.resultCode, msg.errorMessage)
             if not isinstance(e, ldaperrors.Success):
-		try:
+                try:
                     raise e
                 except ldaperrors.LDAPSizeLimitExceeded, e:
                     if sizeLimitIsNonFatal:
                         pass
-		except:
-		    d.errback(Failure())
+                except:
+                    d.errback(Failure())
                     return True
 
             # search ended successfully
             assert msg.matchedDN==''
             d.callback(None)
-	    return True
+            return True
         elif isinstance(msg, pureldap.LDAPSearchResultEntry):
-	    self._cbSearchEntry(callback, msg.objectName, msg.attributes,
+            self._cbSearchEntry(callback, msg.objectName, msg.attributes,
                                 complete=complete)
-	    return False
+            return False
         else:
             raise ldaperrors.LDAPProtocolError, \
                   'bad search response: %r' % msg
 
     def search(self,
-	       filterText=None,
-	       filterObject=None,
-	       attributes=(),
-	       scope=None,
-	       derefAliases=None,
-	       sizeLimit=0,
-	       sizeLimitIsNonFatal=False,
-	       timeLimit=0,
-	       typesOnly=0,
-	       callback=None):
+               filterText=None,
+               filterObject=None,
+               attributes=(),
+               scope=None,
+               derefAliases=None,
+               sizeLimit=0,
+               sizeLimitIsNonFatal=False,
+               timeLimit=0,
+               typesOnly=0,
+               callback=None):
         self._checkState()
-	d=defer.Deferred()
-	if filterObject is None and filterText is None:
-	    filterObject=pureldap.LDAPFilterMatchAll
-	elif filterObject is None and filterText is not None:
-	    filterObject=ldapfilter.parseFilter(filterText)
-	elif filterObject is not None and filterText is None:
-	    pass
-	elif filterObject is not None and filterText is not None:
-	    f=ldapfilter.parseFilter(filterText)
-	    filterObject=pureldap.LDAPFilter_and((f, filterObject))
+        d=defer.Deferred()
+        if filterObject is None and filterText is None:
+            filterObject=pureldap.LDAPFilterMatchAll
+        elif filterObject is None and filterText is not None:
+            filterObject=ldapfilter.parseFilter(filterText)
+        elif filterObject is not None and filterText is None:
+            pass
+        elif filterObject is not None and filterText is not None:
+            f=ldapfilter.parseFilter(filterText)
+            filterObject=pureldap.LDAPFilter_and((f, filterObject))
 
         if scope is None:
             scope = pureldap.LDAP_SCOPE_wholeSubtree
@@ -664,31 +664,31 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         if attributes is None:
             attributes = ['1.1']
 
-	results=[]
-	if callback is None:
-	    cb=results.append
-	else:
-	    cb=callback
-	try:
-	    op = pureldap.LDAPSearchRequest(
-		baseObject=str(self.dn),
-		scope=scope,
-		derefAliases=derefAliases,
-		sizeLimit=sizeLimit,
-		timeLimit=timeLimit,
-		typesOnly=typesOnly,
-		filter=filterObject,
-		attributes=attributes)
-	    self.client.send_multiResponse(
+        results=[]
+        if callback is None:
+            cb=results.append
+        else:
+            cb=callback
+        try:
+            op = pureldap.LDAPSearchRequest(
+                baseObject=str(self.dn),
+                scope=scope,
+                derefAliases=derefAliases,
+                sizeLimit=sizeLimit,
+                timeLimit=timeLimit,
+                typesOnly=typesOnly,
+                filter=filterObject,
+                attributes=attributes)
+            self.client.send_multiResponse(
                 op, self._cbSearchMsg,
                 d, cb, complete=not attributes,
                 sizeLimitIsNonFatal=sizeLimitIsNonFatal)
-	except ldapclient.LDAPClientConnectionLostException:
-	    d.errback(Failure())
-	else:
-	    if callback is None:
-		d.addCallback(lambda dummy: results)
-	return d
+        except ldapclient.LDAPClientConnectionLostException:
+            d.errback(Failure())
+        else:
+            if callback is None:
+                d.addCallback(lambda dummy: results)
+        return d
 
     def lookup(self, dn):
         e = self.__class__(self.client, dn)
@@ -698,19 +698,19 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
     # end IConnectedLDAPEntry
 
     def __repr__(self):
-	x={}
-	for key in super(LDAPEntryWithClient, self).keys():
-	    x[key]=self[key]
-	keys=x.keys()
-	keys.sort()
-	a=[]
-	for key in keys:
-	    a.append('%s: %s' % (repr(key), repr(self[key])))
-	attributes=', '.join(a)
-	return '%s(dn=%s, attributes={%s})' % (
-	    self.__class__.__name__,
-	    repr(str(self.dn)),
-	    attributes)
+        x={}
+        for key in super(LDAPEntryWithClient, self).keys():
+            x[key]=self[key]
+        keys=x.keys()
+        keys.sort()
+        a=[]
+        for key in keys:
+            a.append('%s: %s' % (repr(key), repr(self[key])))
+        attributes=', '.join(a)
+        return '%s(dn=%s, attributes={%s})' % (
+            self.__class__.__name__,
+            repr(str(self.dn)),
+            attributes)
 
 # API backwards compatibility
 LDAPEntry = LDAPEntryWithClient

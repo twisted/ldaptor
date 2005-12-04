@@ -3,4 +3,4 @@
 givenName=John+sn=Smith,ou=People,dc=example,dc=com
 >>> smith['givenName']
 ['John']
->>> 
+>>>

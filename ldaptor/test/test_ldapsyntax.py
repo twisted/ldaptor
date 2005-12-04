@@ -13,31 +13,31 @@ from twisted.trial.util import deferredResult, deferredError
 
 class LDAPSyntaxBasics(unittest.TestCase):
     def testCreation(self):
-	"""Creating an LDAP object should succeed."""
+        """Creating an LDAP object should succeed."""
         client = LDAPClientTestDriver()
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
-	    'objectClass': ['a', 'b'],
-	    'aValue': ['a'],
-	    'bValue': ['b'],
-	    })
-	self.failUnlessEqual(str(o.dn), 'cn=foo,dc=example,dc=com')
-	self.failUnlessEqual(o['objectClass'], ['a', 'b'])
-	self.failUnlessEqual(o['aValue'], ['a'])
-	self.failUnlessEqual(o['bValue'], ['b'])
+            'objectClass': ['a', 'b'],
+            'aValue': ['a'],
+            'bValue': ['b'],
+            })
+        self.failUnlessEqual(str(o.dn), 'cn=foo,dc=example,dc=com')
+        self.failUnlessEqual(o['objectClass'], ['a', 'b'])
+        self.failUnlessEqual(o['aValue'], ['a'])
+        self.failUnlessEqual(o['bValue'], ['b'])
         client.assertNothingSent()
 
     def testKeys(self):
-	"""Iterating over the keys of an LDAP object gives expected results."""
+        """Iterating over the keys of an LDAP object gives expected results."""
         client = LDAPClientTestDriver()
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
-	    'objectClass': ['a', 'b'],
-	    'aValue': ['a'],
-	    'bValue': ['b'],
-	    })
+            'objectClass': ['a', 'b'],
+            'aValue': ['a'],
+            'bValue': ['b'],
+            })
         seen={}
         for k in o.keys():
             assert not seen.has_key(k)
@@ -48,15 +48,15 @@ class LDAPSyntaxBasics(unittest.TestCase):
                         }
 
     def testItems(self):
-	"""Iterating over the items of an LDAP object gives expected results."""
+        """Iterating over the items of an LDAP object gives expected results."""
         client = LDAPClientTestDriver()
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
-	    'objectClass': ['a', 'b'],
-	    'aValue': ['a'],
-	    'bValue': ['b'],
-	    })
+            'objectClass': ['a', 'b'],
+            'aValue': ['a'],
+            'bValue': ['b'],
+            })
         seen={}
         for k,vs in o.items():
             assert not seen.has_key(k)
@@ -69,13 +69,13 @@ class LDAPSyntaxBasics(unittest.TestCase):
     def testIn(self):
         """Key in object gives expected results."""
         client=LDAPClientTestDriver()
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
-	    'objectClass': ['a', 'b'],
-	    'aValue': ['a'],
-	    'bValue': ['b'],
-	    })
+            'objectClass': ['a', 'b'],
+            'aValue': ['a'],
+            'bValue': ['b'],
+            })
         assert 'objectClass' in o
         assert 'aValue' in o
         assert 'bValue' in o
@@ -97,291 +97,291 @@ class LDAPSyntaxBasics(unittest.TestCase):
 class LDAPSyntaxAttributes(unittest.TestCase):
     def testAttributeSetting(self):
         client=LDAPClientTestDriver()
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
-	    'objectClass': ['a', 'b'],
-	    'aValue': ['a'],
-	    'bValue': ['b'],
-	    })
-	o['aValue']=['foo', 'bar']
-	self.failUnlessEqual(o['aValue'], ['foo', 'bar'])
-	o['aValue']=['quux']
-	self.failUnlessEqual(o['aValue'], ['quux'])
-	self.failUnlessEqual(o['bValue'], ['b'])
-	o['cValue']=['thud']
-	self.failUnlessEqual(o['aValue'], ['quux'])
-	self.failUnlessEqual(o['bValue'], ['b'])
-	self.failUnlessEqual(o['cValue'], ['thud'])
+            'objectClass': ['a', 'b'],
+            'aValue': ['a'],
+            'bValue': ['b'],
+            })
+        o['aValue']=['foo', 'bar']
+        self.failUnlessEqual(o['aValue'], ['foo', 'bar'])
+        o['aValue']=['quux']
+        self.failUnlessEqual(o['aValue'], ['quux'])
+        self.failUnlessEqual(o['bValue'], ['b'])
+        o['cValue']=['thud']
+        self.failUnlessEqual(o['aValue'], ['quux'])
+        self.failUnlessEqual(o['bValue'], ['b'])
+        self.failUnlessEqual(o['cValue'], ['thud'])
 
     def testAttributeDelete(self):
         client=LDAPClientTestDriver()
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
-	    'objectClass': ['a', 'b'],
-	    'aValue': ['a'],
-	    'bValue': ['b'],
-	    })
-	o['aValue']=['quux']
-	del o['aValue']
-	del o['bValue']
-	self.failIf(o.has_key('aValue'))
-	self.failIf(o.has_key('bValue'))
+            'objectClass': ['a', 'b'],
+            'aValue': ['a'],
+            'bValue': ['b'],
+            })
+        o['aValue']=['quux']
+        del o['aValue']
+        del o['bValue']
+        self.failIf(o.has_key('aValue'))
+        self.failIf(o.has_key('bValue'))
 
     def testAttributeAdd(self):
         client=LDAPClientTestDriver()
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
-	    'objectClass': ['a', 'b'],
-	    'aValue': ['a'],
-	    'bValue': ['b'],
-	    })
-	o['aValue'].add('foo')
-	self.failUnlessEqual(o['aValue'], ['a', 'foo'])
+            'objectClass': ['a', 'b'],
+            'aValue': ['a'],
+            'bValue': ['b'],
+            })
+        o['aValue'].add('foo')
+        self.failUnlessEqual(o['aValue'], ['a', 'foo'])
 
     def testAttributeItemDelete(self):
         client=LDAPClientTestDriver()
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
-	    'objectClass': ['a', 'b'],
-	    'aValue': ['a', 'b', 'c'],
-	    'bValue': ['b'],
-	    })
-	o['aValue'].remove('b')
-	self.failUnlessEqual(o['aValue'], ['a', 'c'])
+            'objectClass': ['a', 'b'],
+            'aValue': ['a', 'b', 'c'],
+            'bValue': ['b'],
+            })
+        o['aValue'].remove('b')
+        self.failUnlessEqual(o['aValue'], ['a', 'c'])
 
     def testUndo(self):
-	"""Undo should forget the modifications."""
+        """Undo should forget the modifications."""
         client=LDAPClientTestDriver()
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
-	    'objectClass': ['a', 'b'],
-	    'aValue': ['a'],
-	    'bValue': ['b'],
-	    'cValue': ['c'],
-	    })
-	o['aValue']=['foo', 'bar']
-	o['aValue']=['quux']
-	del o['cValue']
-	o.undo()
-	self.failUnlessEqual(o['aValue'], ['a'])
-	self.failUnlessEqual(o['bValue'], ['b'])
-	self.failUnlessEqual(o['cValue'], ['c'])
+            'objectClass': ['a', 'b'],
+            'aValue': ['a'],
+            'bValue': ['b'],
+            'cValue': ['c'],
+            })
+        o['aValue']=['foo', 'bar']
+        o['aValue']=['quux']
+        del o['cValue']
+        o.undo()
+        self.failUnlessEqual(o['aValue'], ['a'])
+        self.failUnlessEqual(o['bValue'], ['b'])
+        self.failUnlessEqual(o['cValue'], ['c'])
 
     def testUndoJournaling(self):
-	"""Journaling should still work after undo."""
+        """Journaling should still work after undo."""
         client=LDAPClientTestDriver(
             [ pureldap.LDAPModifyResponse(resultCode=0,
                                           matchedDN='',
                                           errorMessage=''),
             ])
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
-	    'objectClass': ['a', 'b'],
-	    'aValue': ['a'],
-	    'bValue': ['b'],
-	    'cValue': ['c'],
-	    })
-	o['aValue']=['foo', 'bar']
-	o['aValue']=['quux']
-	del o['cValue']
+            'objectClass': ['a', 'b'],
+            'aValue': ['a'],
+            'bValue': ['b'],
+            'cValue': ['c'],
+            })
+        o['aValue']=['foo', 'bar']
+        o['aValue']=['quux']
+        del o['cValue']
         o.undo()
-	o['aValue'].update(['newValue', 'anotherNewValue'])
-	d=o.commit()
+        o['aValue'].update(['newValue', 'anotherNewValue'])
+        d=o.commit()
         val = deferredResult(d)
-        
-	self.failUnlessEqual(o['aValue'], ['a', 'newValue', 'anotherNewValue'])
-	self.failUnlessEqual(o['bValue'], ['b'])
-	self.failUnlessEqual(o['cValue'], ['c'])
+
+        self.failUnlessEqual(o['aValue'], ['a', 'newValue', 'anotherNewValue'])
+        self.failUnlessEqual(o['bValue'], ['b'])
+        self.failUnlessEqual(o['cValue'], ['c'])
         client.assertSent(pureldap.LDAPModifyRequest(
-	    object='cn=foo,dc=example,dc=com',
-	    modification=[
-	    pureldap.LDAPModification_add(attributeType='aValue',
+            object='cn=foo,dc=example,dc=com',
+            modification=[
+            pureldap.LDAPModification_add(attributeType='aValue',
                                           vals=['newValue', 'anotherNewValue']),
-	    ]))
+            ]))
 
     def testUndoAfterCommit(self):
-	"""Undo should not undo things that have been commited."""
+        """Undo should not undo things that have been commited."""
 
         client=LDAPClientTestDriver(
             [ pureldap.LDAPModifyResponse(resultCode=0,
                                           matchedDN='',
                                           errorMessage=''),
             ])
-	o=ldapsyntax.LDAPEntry(
-	    client=client,
-	    dn='cn=foo,dc=example,dc=com',
-	    attributes={
-	    'objectClass': ['a', 'b'],
-	    'aValue': ['a'],
-	    'bValue': ['b'],
-	    'cValue': ['c'],
-	    })
-	o['aValue']=['foo', 'bar']
-	o['bValue']=['quux']
-	del o['cValue']
+        o=ldapsyntax.LDAPEntry(
+            client=client,
+            dn='cn=foo,dc=example,dc=com',
+            attributes={
+            'objectClass': ['a', 'b'],
+            'aValue': ['a'],
+            'bValue': ['b'],
+            'cValue': ['c'],
+            })
+        o['aValue']=['foo', 'bar']
+        o['bValue']=['quux']
+        del o['cValue']
 
-	d=o.commit()
+        d=o.commit()
         val = deferredResult(d)
 
-	o.undo()
-	self.failUnlessEqual(o['aValue'], ['foo', 'bar'])
-	self.failUnlessEqual(o['bValue'], ['quux'])
-	self.failIf(o.has_key('cValue'))
+        o.undo()
+        self.failUnlessEqual(o['aValue'], ['foo', 'bar'])
+        self.failUnlessEqual(o['bValue'], ['quux'])
+        self.failIf(o.has_key('cValue'))
 
 class LDAPSyntaxAttributesModificationOnWire(unittest.TestCase):
     def testAdd(self):
-	"""Modify & commit should write the right data to the server."""
+        """Modify & commit should write the right data to the server."""
 
         client = LDAPClientTestDriver(
-            [	pureldap.LDAPModifyResponse(resultCode=0,
+            [   pureldap.LDAPModifyResponse(resultCode=0,
                                             matchedDN='',
                                             errorMessage=''),
                 ])
 
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
-	    'objectClass': ['a', 'b'],
-	    'aValue': ['a'],
-	    })
-	o['aValue'].update(['newValue', 'anotherNewValue'])
+            'objectClass': ['a', 'b'],
+            'aValue': ['a'],
+            })
+        o['aValue'].update(['newValue', 'anotherNewValue'])
 
-	d=o.commit()
+        d=o.commit()
         val = deferredResult(d)
 
         client.assertSent(pureldap.LDAPModifyRequest(
-	    object='cn=foo,dc=example,dc=com',
-	    modification=[
-	    pureldap.LDAPModification_add(attributeType='aValue',
+            object='cn=foo,dc=example,dc=com',
+            modification=[
+            pureldap.LDAPModification_add(attributeType='aValue',
                                           vals=['newValue', 'anotherNewValue']),
-	    ]))
+            ]))
 
     def testAddSeparate(self):
-	"""Modify & commit should write the right data to the server."""
+        """Modify & commit should write the right data to the server."""
 
         client = LDAPClientTestDriver(
-            [	pureldap.LDAPModifyResponse(resultCode=0,
+            [   pureldap.LDAPModifyResponse(resultCode=0,
                                             matchedDN='',
                                             errorMessage=''),
                 ])
 
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
-	    'objectClass': ['a', 'b'],
-	    'aValue': ['a'],
-	    })
-	o['aValue'].add('newValue')
-	o['aValue'].add('anotherNewValue')
+            'objectClass': ['a', 'b'],
+            'aValue': ['a'],
+            })
+        o['aValue'].add('newValue')
+        o['aValue'].add('anotherNewValue')
 
-	d=o.commit()
+        d=o.commit()
         val = deferredResult(d)
 
         client.assertSent(pureldap.LDAPModifyRequest(
-	    object='cn=foo,dc=example,dc=com',
-	    modification=[
-	    pureldap.LDAPModification_add(attributeType='aValue',
+            object='cn=foo,dc=example,dc=com',
+            modification=[
+            pureldap.LDAPModification_add(attributeType='aValue',
                                           vals=['newValue']),
-	    pureldap.LDAPModification_add(attributeType='aValue',
+            pureldap.LDAPModification_add(attributeType='aValue',
                                           vals=['anotherNewValue']),
-	    ]))
+            ]))
 
     def testDeleteAttribute(self):
-	"""Modify & commit should write the right data to the server."""
+        """Modify & commit should write the right data to the server."""
 
         client = LDAPClientTestDriver(
-            [	pureldap.LDAPModifyResponse(resultCode=0,
+            [   pureldap.LDAPModifyResponse(resultCode=0,
                                             matchedDN='',
                                             errorMessage='')
                 ])
 
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
-	    'objectClass': ['a', 'b'],
-	    'aValue': ['a'],
-	    })
-	o['aValue'].remove('a')
+            'objectClass': ['a', 'b'],
+            'aValue': ['a'],
+            })
+        o['aValue'].remove('a')
 
-	d=o.commit()
+        d=o.commit()
         val = deferredResult(d)
 
-	client.assertSent(pureldap.LDAPModifyRequest(
-	    object='cn=foo,dc=example,dc=com',
-	    modification=[
-	    pureldap.LDAPModification_delete(attributeType='aValue',
+        client.assertSent(pureldap.LDAPModifyRequest(
+            object='cn=foo,dc=example,dc=com',
+            modification=[
+            pureldap.LDAPModification_delete(attributeType='aValue',
                                              vals=['a']),
-	    ]))
+            ]))
 
     def testDeleteAllAttribute(self):
-	"""Modify & commit should write the right data to the server."""
+        """Modify & commit should write the right data to the server."""
 
         client = LDAPClientTestDriver(
-            [	pureldap.LDAPModifyResponse(resultCode=0,
+            [   pureldap.LDAPModifyResponse(resultCode=0,
                                             matchedDN='',
                                             errorMessage=''),
                 ])
 
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
-	    'objectClass': ['a', 'b'],
-	    'aValue': ['a1', 'a2'],
-	    'bValue': ['b1', 'b2'],
-	    })
-	del o['aValue']
-	o['bValue'].clear()
+            'objectClass': ['a', 'b'],
+            'aValue': ['a1', 'a2'],
+            'bValue': ['b1', 'b2'],
+            })
+        del o['aValue']
+        o['bValue'].clear()
 
-	d=o.commit()
+        d=o.commit()
         val = deferredResult(d)
 
-	client.assertSent(pureldap.LDAPModifyRequest(
-	    object='cn=foo,dc=example,dc=com',
-	    modification=[
-	    pureldap.LDAPModification_delete('aValue'),
-	    pureldap.LDAPModification_delete('bValue'),
-	    ]))
+        client.assertSent(pureldap.LDAPModifyRequest(
+            object='cn=foo,dc=example,dc=com',
+            modification=[
+            pureldap.LDAPModification_delete('aValue'),
+            pureldap.LDAPModification_delete('bValue'),
+            ]))
 
 
     def testReplaceAttributes(self):
-	"""Modify & commit should write the right data to the server."""
+        """Modify & commit should write the right data to the server."""
 
         client = LDAPClientTestDriver(
-            [	pureldap.LDAPModifyResponse(resultCode=0,
+            [   pureldap.LDAPModifyResponse(resultCode=0,
                                             matchedDN='',
                                             errorMessage='')
                 ])
 
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
-	    'objectClass': ['a', 'b'],
-	    'aValue': ['a'],
-	    })
-	o['aValue']=['foo', 'bar']
+            'objectClass': ['a', 'b'],
+            'aValue': ['a'],
+            })
+        o['aValue']=['foo', 'bar']
 
-	d=o.commit()
+        d=o.commit()
         val = deferredResult(d)
 
         client.assertSent(pureldap.LDAPModifyRequest(
-	    object='cn=foo,dc=example,dc=com',
-	    modification=[
-	    pureldap.LDAPModification_replace(attributeType='aValue',
+            object='cn=foo,dc=example,dc=com',
+            modification=[
+            pureldap.LDAPModification_replace(attributeType='aValue',
                                               vals=['foo', 'bar']),
-	    ]))
+            ]))
 
 
 class LDAPSyntaxSearch(unittest.TestCase):
     def testSearch(self):
-	"""Test searches."""
+        """Test searches."""
 
-	client=LDAPClientTestDriver([
+        client=LDAPClientTestDriver([
             pureldap.LDAPSearchResultEntry(
             objectName='cn=foo,dc=example,dc=com',
             attributes=(('foo', ['a']),
@@ -400,51 +400,51 @@ class LDAPSyntaxSearch(unittest.TestCase):
             errorMessage='')
             ])
 
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='dc=example,dc=com',
                                attributes={
-	    'objectClass': ['organizationalUnit'],
-	    })
+            'objectClass': ['organizationalUnit'],
+            })
 
-	d=o.search(filterText='(foo=a)',
-		   attributes=['foo', 'bar'])
+        d=o.search(filterText='(foo=a)',
+                   attributes=['foo', 'bar'])
         val = deferredResult(d)
 
-	client.assertSent(pureldap.LDAPSearchRequest(
-	    baseObject='dc=example,dc=com',
-	    scope=pureldap.LDAP_SCOPE_wholeSubtree,
-	    derefAliases=pureldap.LDAP_DEREF_neverDerefAliases,
-	    sizeLimit=0,
-	    timeLimit=0,
-	    typesOnly=0,
-	    filter=pureldap.LDAPFilter_equalityMatch(
+        client.assertSent(pureldap.LDAPSearchRequest(
+            baseObject='dc=example,dc=com',
+            scope=pureldap.LDAP_SCOPE_wholeSubtree,
+            derefAliases=pureldap.LDAP_DEREF_neverDerefAliases,
+            sizeLimit=0,
+            timeLimit=0,
+            typesOnly=0,
+            filter=pureldap.LDAPFilter_equalityMatch(
             attributeDesc=pureldap.LDAPAttributeDescription(value='foo'),
             assertionValue=pureldap.LDAPAssertionValue(value='a')),
-	    attributes=['foo', 'bar']))
-	self.failUnlessEqual(len(val), 2)
+            attributes=['foo', 'bar']))
+        self.failUnlessEqual(len(val), 2)
 
-	self.failUnlessEqual(val[0],
-			     ldapsyntax.LDAPEntry(
-	    client=client,
-	    dn='cn=foo,dc=example,dc=com',
-	    attributes={
-	    'foo': ['a'],
-	    'bar': ['b', 'c'],
-	    }))
+        self.failUnlessEqual(val[0],
+                             ldapsyntax.LDAPEntry(
+            client=client,
+            dn='cn=foo,dc=example,dc=com',
+            attributes={
+            'foo': ['a'],
+            'bar': ['b', 'c'],
+            }))
 
-	self.failUnlessEqual(val[1],
-			     ldapsyntax.LDAPEntry(
-	    client=client,
-	    dn='cn=bar,dc=example,dc=com',
-	    attributes={
-	    'foo': ['a'],
-	    'bar': ['d', 'e'],
-	    }))
+        self.failUnlessEqual(val[1],
+                             ldapsyntax.LDAPEntry(
+            client=client,
+            dn='cn=bar,dc=example,dc=com',
+            attributes={
+            'foo': ['a'],
+            'bar': ['d', 'e'],
+            }))
 
     def testSearch_defaultAttributes(self):
-	"""Search without explicit list of attributes returns all attributes."""
+        """Search without explicit list of attributes returns all attributes."""
 
-	client=LDAPClientTestDriver([
+        client=LDAPClientTestDriver([
             pureldap.LDAPSearchResultEntry(
             objectName='cn=foo,dc=example,dc=com',
             attributes=(('foo', ['a']),
@@ -463,52 +463,52 @@ class LDAPSyntaxSearch(unittest.TestCase):
             errorMessage='')
             ])
 
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='dc=example,dc=com',
                                attributes={
-	    'objectClass': ['organizationalUnit'],
-	    })
+            'objectClass': ['organizationalUnit'],
+            })
 
-	d=o.search(filterText='(foo=a)')
+        d=o.search(filterText='(foo=a)')
         val = deferredResult(d)
 
-	client.assertSent(pureldap.LDAPSearchRequest(
-	    baseObject='dc=example,dc=com',
-	    scope=pureldap.LDAP_SCOPE_wholeSubtree,
-	    derefAliases=pureldap.LDAP_DEREF_neverDerefAliases,
-	    sizeLimit=0,
-	    timeLimit=0,
-	    typesOnly=0,
-	    filter=pureldap.LDAPFilter_equalityMatch(
+        client.assertSent(pureldap.LDAPSearchRequest(
+            baseObject='dc=example,dc=com',
+            scope=pureldap.LDAP_SCOPE_wholeSubtree,
+            derefAliases=pureldap.LDAP_DEREF_neverDerefAliases,
+            sizeLimit=0,
+            timeLimit=0,
+            typesOnly=0,
+            filter=pureldap.LDAPFilter_equalityMatch(
             attributeDesc=pureldap.LDAPAttributeDescription(value='foo'),
             assertionValue=pureldap.LDAPAssertionValue(value='a')),
-	    attributes=[]))
-	self.failUnlessEqual(len(val), 2)
+            attributes=[]))
+        self.failUnlessEqual(len(val), 2)
 
-	self.failUnlessEqual(val[0],
-			     ldapsyntax.LDAPEntry(
-	    client=client,
-	    dn='cn=foo,dc=example,dc=com',
-	    attributes={
-	    'foo': ['a'],
-	    'bar': ['b', 'c'],
-	    }))
-	self.failUnless(val[0].complete)
+        self.failUnlessEqual(val[0],
+                             ldapsyntax.LDAPEntry(
+            client=client,
+            dn='cn=foo,dc=example,dc=com',
+            attributes={
+            'foo': ['a'],
+            'bar': ['b', 'c'],
+            }))
+        self.failUnless(val[0].complete)
 
-	self.failUnlessEqual(val[1],
-			     ldapsyntax.LDAPEntry(
-	    client=client,
-	    dn='cn=bar,dc=example,dc=com',
-	    attributes={
-	    'foo': ['a'],
-	    'bar': ['d', 'e'],
-	    }))
-	self.failUnless(val[1].complete)
+        self.failUnlessEqual(val[1],
+                             ldapsyntax.LDAPEntry(
+            client=client,
+            dn='cn=bar,dc=example,dc=com',
+            attributes={
+            'foo': ['a'],
+            'bar': ['d', 'e'],
+            }))
+        self.failUnless(val[1].complete)
 
     def testSearch_noAttributes(self):
-	"""Search with attributes=None returns no attributes."""
+        """Search with attributes=None returns no attributes."""
 
-	client=LDAPClientTestDriver([
+        client=LDAPClientTestDriver([
             pureldap.LDAPSearchResultEntry('cn=foo,dc=example,dc=com',
                                            attributes=()),
             pureldap.LDAPSearchResultEntry('cn=bar,dc=example,dc=com',
@@ -519,45 +519,45 @@ class LDAPSyntaxSearch(unittest.TestCase):
             errorMessage='')
             ])
 
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='dc=example,dc=com',
                                attributes={
-	    'objectClass': ['organizationalUnit'],
-	    })
+            'objectClass': ['organizationalUnit'],
+            })
 
-	d=o.search(filterText='(foo=a)',
+        d=o.search(filterText='(foo=a)',
                    attributes=None)
         val = deferredResult(d)
 
-	client.assertSent(pureldap.LDAPSearchRequest(
-	    baseObject='dc=example,dc=com',
-	    scope=pureldap.LDAP_SCOPE_wholeSubtree,
-	    derefAliases=pureldap.LDAP_DEREF_neverDerefAliases,
-	    sizeLimit=0,
-	    timeLimit=0,
-	    typesOnly=0,
-	    filter=pureldap.LDAPFilter_equalityMatch(
+        client.assertSent(pureldap.LDAPSearchRequest(
+            baseObject='dc=example,dc=com',
+            scope=pureldap.LDAP_SCOPE_wholeSubtree,
+            derefAliases=pureldap.LDAP_DEREF_neverDerefAliases,
+            sizeLimit=0,
+            timeLimit=0,
+            typesOnly=0,
+            filter=pureldap.LDAPFilter_equalityMatch(
             attributeDesc=pureldap.LDAPAttributeDescription(value='foo'),
             assertionValue=pureldap.LDAPAssertionValue(value='a')),
-	    attributes=['1.1']))
-	self.failUnlessEqual(len(val), 2)
+            attributes=['1.1']))
+        self.failUnlessEqual(len(val), 2)
 
-	self.failUnlessEqual(val[0],
-			     ldapsyntax.LDAPEntry(
-	    client=client,
-	    dn='cn=foo,dc=example,dc=com'))
-	self.failIf(val[0].complete)
+        self.failUnlessEqual(val[0],
+                             ldapsyntax.LDAPEntry(
+            client=client,
+            dn='cn=foo,dc=example,dc=com'))
+        self.failIf(val[0].complete)
 
-	self.failUnlessEqual(val[1],
-			     ldapsyntax.LDAPEntry(
-	    client=client,
-	    dn='cn=bar,dc=example,dc=com'))
-	self.failIf(val[1].complete)
+        self.failUnlessEqual(val[1],
+                             ldapsyntax.LDAPEntry(
+            client=client,
+            dn='cn=bar,dc=example,dc=com'))
+        self.failIf(val[1].complete)
 
     def testSearch_ImmediateProcessing(self):
-	"""Test searches with the immediate processing feature."""
+        """Test searches with the immediate processing feature."""
 
-	client=LDAPClientTestDriver([
+        client=LDAPClientTestDriver([
             pureldap.LDAPSearchResultEntry(
             objectName='cn=foo,dc=example,dc=com',
             attributes=(('bar', ['b', 'c']),
@@ -576,72 +576,72 @@ class LDAPSyntaxSearch(unittest.TestCase):
             errorMessage='')
             ])
 
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='dc=example,dc=com',
                                attributes={
-	    'objectClass': ['organizationalUnit'],
-	    })
+            'objectClass': ['organizationalUnit'],
+            })
 
-	seen=[]
-	def process(o):
-	    seen.append(o)
+        seen=[]
+        def process(o):
+            seen.append(o)
 
-	d=o.search(filterText='(foo=a)',
-		   attributes=['bar'],
-		   callback=process)
+        d=o.search(filterText='(foo=a)',
+                   attributes=['bar'],
+                   callback=process)
         val = deferredResult(d)
 
-	self.assertEquals(val, None)
+        self.assertEquals(val, None)
 
         client.assertSent(pureldap.LDAPSearchRequest(
-	    baseObject='dc=example,dc=com',
-	    scope=pureldap.LDAP_SCOPE_wholeSubtree,
-	    derefAliases=pureldap.LDAP_DEREF_neverDerefAliases,
-	    sizeLimit=0,
-	    timeLimit=0,
-	    typesOnly=0,
-	    filter=pureldap.LDAPFilter_equalityMatch(
+            baseObject='dc=example,dc=com',
+            scope=pureldap.LDAP_SCOPE_wholeSubtree,
+            derefAliases=pureldap.LDAP_DEREF_neverDerefAliases,
+            sizeLimit=0,
+            timeLimit=0,
+            typesOnly=0,
+            filter=pureldap.LDAPFilter_equalityMatch(
             attributeDesc=pureldap.LDAPAttributeDescription(value='foo'),
             assertionValue=pureldap.LDAPAssertionValue(value='a')),
-	    attributes=['bar']))
+            attributes=['bar']))
 
-	self.failUnlessEqual(seen,
-			     [
-	    ldapsyntax.LDAPEntry(
-	    client=client,
-	    dn='cn=foo,dc=example,dc=com',
-	    attributes={
-	    'bar': ['b', 'c'],
-	    }),
-	    ldapsyntax.LDAPEntry(
-	    client=client,
-	    dn='cn=bar,dc=example,dc=com',
-	    attributes={
-	    'bar': ['b', 'c'],
-	    })])
+        self.failUnlessEqual(seen,
+                             [
+            ldapsyntax.LDAPEntry(
+            client=client,
+            dn='cn=foo,dc=example,dc=com',
+            attributes={
+            'bar': ['b', 'c'],
+            }),
+            ldapsyntax.LDAPEntry(
+            client=client,
+            dn='cn=bar,dc=example,dc=com',
+            attributes={
+            'bar': ['b', 'c'],
+            })])
 
     def testSearch_fail(self):
-	client=LDAPClientTestDriver([
+        client=LDAPClientTestDriver([
             pureldap.LDAPSearchResultDone(
             resultCode=ldaperrors.LDAPBusy.resultCode,
             matchedDN='',
             errorMessage='Go away')
             ])
 
-	o=ldapsyntax.LDAPEntry(client=client, dn='dc=example,dc=com')
-	d=o.search(filterText='(foo=a)')
+        o=ldapsyntax.LDAPEntry(client=client, dn='dc=example,dc=com')
+        d=o.search(filterText='(foo=a)')
         fail = deferredError(d)
         fail.trap(ldaperrors.LDAPBusy)
         self.assertEquals(fail.value.message, 'Go away')
 
-	client.assertSent(pureldap.LDAPSearchRequest(
-	    baseObject='dc=example,dc=com',
-	    scope=pureldap.LDAP_SCOPE_wholeSubtree,
-	    derefAliases=pureldap.LDAP_DEREF_neverDerefAliases,
-	    sizeLimit=0,
-	    timeLimit=0,
-	    typesOnly=0,
-	    filter=pureldap.LDAPFilter_equalityMatch(
+        client.assertSent(pureldap.LDAPSearchRequest(
+            baseObject='dc=example,dc=com',
+            scope=pureldap.LDAP_SCOPE_wholeSubtree,
+            derefAliases=pureldap.LDAP_DEREF_neverDerefAliases,
+            sizeLimit=0,
+            timeLimit=0,
+            typesOnly=0,
+            filter=pureldap.LDAPFilter_equalityMatch(
             attributeDesc=pureldap.LDAPAttributeDescription(value='foo'),
             assertionValue=pureldap.LDAPAssertionValue(value='a')),
             ))
@@ -649,55 +649,55 @@ class LDAPSyntaxSearch(unittest.TestCase):
 class LDAPSyntaxDNs(unittest.TestCase):
     def testDNKeyExistenceSuccess(self):
         client = LDAPClientTestDriver()
-	ldapsyntax.LDAPEntry(client=client,
+        ldapsyntax.LDAPEntry(client=client,
                              dn='cn=foo,dc=example,dc=com',
                              attributes={
-	    'cn': ['foo'],
-	    })
+            'cn': ['foo'],
+            })
 
     def TODOtestDNKeyExistenceFailure(self):
         client = LDAPClientTestDriver()
-	self.failUnlessRaises(ldapsyntax.DNNotPresentError,
-			      ldapsyntax.LDAPEntry,
-			      client=client,
-			      dn='cn=foo,dc=example,dc=com',
-			      attributes={
-	    'foo': ['bar'],
-	    })
+        self.failUnlessRaises(ldapsyntax.DNNotPresentError,
+                              ldapsyntax.LDAPEntry,
+                              client=client,
+                              dn='cn=foo,dc=example,dc=com',
+                              attributes={
+            'foo': ['bar'],
+            })
 
 class LDAPSyntaxLDIF(unittest.TestCase):
     def testLDIFConversion(self):
         client = LDAPClientTestDriver()
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
-	    'objectClass': ['a', 'b'],
-	    'aValue': ['a', 'b'],
-	    'bValue': ['c'],
-	    })
-	self.failUnlessEqual(str(o),
-			     '\n'.join((
-	    "dn: cn=foo,dc=example,dc=com",
-	    "objectClass: a",
-	    "objectClass: b",
-	    "aValue: a",
-	    "aValue: b",
-	    "bValue: c",
-	    "\n")))
+            'objectClass': ['a', 'b'],
+            'aValue': ['a', 'b'],
+            'bValue': ['c'],
+            })
+        self.failUnlessEqual(str(o),
+                             '\n'.join((
+            "dn: cn=foo,dc=example,dc=com",
+            "objectClass: a",
+            "objectClass: b",
+            "aValue: a",
+            "aValue: b",
+            "bValue: c",
+            "\n")))
 
 class LDAPSyntaxDelete(unittest.TestCase):
     def testDeleteInvalidates(self):
-	"""Deleting an LDAPEntry invalidates it."""
+        """Deleting an LDAPEntry invalidates it."""
         client = LDAPClientTestDriver(
             [pureldap.LDAPDelResponse(resultCode=0,
                                       matchedDN='',
                                       errorMessage=''),
              ])
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
-	    'objectClass': ['a'],
-	    })
+            'objectClass': ['a'],
+            })
         d=o.delete()
         val = deferredResult(d)
 
@@ -711,81 +711,81 @@ class LDAPSyntaxDelete(unittest.TestCase):
             'objectClass')
 
     def testDeleteOnWire(self):
-	"""LDAPEntry.delete should write the right data to the server."""
+        """LDAPEntry.delete should write the right data to the server."""
         client = LDAPClientTestDriver(
             [pureldap.LDAPDelResponse(resultCode=0,
                                       matchedDN='',
                                       errorMessage=''),
              ])
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
-	    'objectClass': ['a'],
-	    })
-	d=o.delete()
+            'objectClass': ['a'],
+            })
+        d=o.delete()
         val = deferredResult(d)
 
-	client.assertSent(pureldap.LDAPDelRequest(
-	    entry='cn=foo,dc=example,dc=com',
+        client.assertSent(pureldap.LDAPDelRequest(
+            entry='cn=foo,dc=example,dc=com',
             ))
 
     def testErrorHandling(self):
-	"""LDAPEntry.delete should pass LDAP errors to it's deferred."""
+        """LDAPEntry.delete should pass LDAP errors to it's deferred."""
         client = LDAPClientTestDriver(
             [pureldap.LDAPDelResponse(resultCode=ldaperrors.LDAPBusy.resultCode,
                                       matchedDN='',
                                       errorMessage='Go away'),
              ])
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
-	    'objectClass': ['a'],
-	    })
-	d=o.delete()
+            'objectClass': ['a'],
+            })
+        d=o.delete()
         fail = deferredError(d)
         fail.trap(ldaperrors.LDAPBusy)
         self.assertEquals(fail.value.message, 'Go away')
 
-	client.assertSent(pureldap.LDAPDelRequest(
-	    entry='cn=foo,dc=example,dc=com',
+        client.assertSent(pureldap.LDAPDelRequest(
+            entry='cn=foo,dc=example,dc=com',
             ))
 
     def testErrorHandling_extended(self):
-	"""LDAPEntry.delete should pass even non-LDAPDelResponse errors to it's deferred."""
+        """LDAPEntry.delete should pass even non-LDAPDelResponse errors to it's deferred."""
         client = LDAPClientTestDriver(
             [pureldap.LDAPExtendedResponse(resultCode=ldaperrors.LDAPProtocolError.resultCode,
                                                  responseName='1.3.6.1.4.1.1466.20036',
                                                  errorMessage='Unknown request')
              ])
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
-	    'objectClass': ['a'],
-	    })
-	d=o.delete()
+            'objectClass': ['a'],
+            })
+        d=o.delete()
         fail = deferredError(d)
         fail.trap(ldaperrors.LDAPProtocolError)
         self.assertEquals(fail.value.message, 'Unknown request')
 
-	client.assertSent(pureldap.LDAPDelRequest(
-	    entry='cn=foo,dc=example,dc=com',
+        client.assertSent(pureldap.LDAPDelRequest(
+            entry='cn=foo,dc=example,dc=com',
             ))
 
 class LDAPSyntaxAddChild(unittest.TestCase):
     def testAddChildOnWire(self):
-	"""LDAPEntry.addChild should write the right data to the server."""
+        """LDAPEntry.addChild should write the right data to the server."""
         client = LDAPClientTestDriver(
             [pureldap.LDAPAddResponse(resultCode=0,
                                       matchedDN='',
                                       errorMessage=''),
              ])
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='ou=things,dc=example,dc=com',
                                attributes={
-	    'objectClass': ['organizationalUnit'],
+            'objectClass': ['organizationalUnit'],
             'ou': ['things'],
-	    })
-	d=o.addChild(
+            })
+        d=o.addChild(
             rdn='givenName=Firstname+surname=Lastname',
             attributes={'objectClass': ['person', 'otherStuff'],
                         'givenName': ['Firstname'],
@@ -793,8 +793,8 @@ class LDAPSyntaxAddChild(unittest.TestCase):
                         })
         val = deferredResult(d)
 
-	client.assertSent(pureldap.LDAPAddRequest(
-	    entry='givenName=Firstname+surname=Lastname,ou=things,dc=example,dc=com',
+        client.assertSent(pureldap.LDAPAddRequest(
+            entry='givenName=Firstname+surname=Lastname,ou=things,dc=example,dc=com',
             attributes=[ (pureldap.LDAPAttributeDescription('objectClass'),
                           pureber.BERSet([pureldap.LDAPAttributeValue('person'),
                                           pureldap.LDAPAttributeValue('otherStuff'),
@@ -808,9 +808,9 @@ class LDAPSyntaxAddChild(unittest.TestCase):
 
 class LDAPSyntaxContainingNamingContext(unittest.TestCase):
     def testNamingContext(self):
-	"""LDAPEntry.namingContext returns the naming context that contains this object (via a Deferred)."""
-	client=LDAPClientTestDriver(
-            [	pureldap.LDAPSearchResultEntry(
+        """LDAPEntry.namingContext returns the naming context that contains this object (via a Deferred)."""
+        client=LDAPClientTestDriver(
+            [   pureldap.LDAPSearchResultEntry(
             objectName='',
             attributes=[('namingContexts',
                          ('dc=foo,dc=example',
@@ -823,11 +823,11 @@ class LDAPSyntaxContainingNamingContext(unittest.TestCase):
                                               errorMessage='')
             ])
 
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,ou=bar,dc=example,dc=com',
                                attributes={
-	    'objectClass': ['a'],
-	    })
+            'objectClass': ['a'],
+            })
         d=o.namingContext()
         val = deferredResult(d)
 
@@ -836,7 +836,7 @@ class LDAPSyntaxContainingNamingContext(unittest.TestCase):
         assert p.client == o.client
         assert str(p.dn) == 'dc=example,dc=com'
 
-	client.assertSent(pureldap.LDAPSearchRequest(
+        client.assertSent(pureldap.LDAPSearchRequest(
             baseObject='',
             scope=pureldap.LDAP_SCOPE_baseObject,
             filter=pureldap.LDAPFilter_present('objectClass'),
@@ -857,12 +857,12 @@ class LDAPSyntaxPasswords(unittest.TestCase):
                                            errorMessage='')],
             )
 
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com')
         d=o.setPassword_ExtendedOperation(newPasswd='new')
         val = deferredResult(d)
 
-	client.assertSent(pureldap.LDAPPasswordModifyRequest(
+        client.assertSent(pureldap.LDAPPasswordModifyRequest(
             userIdentity='cn=foo,dc=example,dc=com',
             newPasswd='new'),
                         )
@@ -876,17 +876,17 @@ class LDAPSyntaxPasswords(unittest.TestCase):
                                          errorMessage='')],
             )
 
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com')
         d=o.setPassword_Samba(newPasswd='new', style='sambaAccount')
         val = deferredResult(d)
 
-	client.assertSent(pureldap.LDAPModifyRequest(
-	    object='cn=foo,dc=example,dc=com',
-	    modification=[
-	    pureldap.LDAPModification_replace(attributeType='ntPassword',
+        client.assertSent(pureldap.LDAPModifyRequest(
+            object='cn=foo,dc=example,dc=com',
+            modification=[
+            pureldap.LDAPModification_replace(attributeType='ntPassword',
                                               vals=['89963F5042E5041A59C249282387A622']),
-	    pureldap.LDAPModification_replace(attributeType='lmPassword',
+            pureldap.LDAPModification_replace(attributeType='lmPassword',
                                               vals=['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
             ]))
 
@@ -898,17 +898,17 @@ class LDAPSyntaxPasswords(unittest.TestCase):
                                          errorMessage='')],
             )
 
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com')
         d=o.setPassword_Samba(newPasswd='new', style='sambaSamAccount')
         val = deferredResult(d)
 
-	client.assertSent(pureldap.LDAPModifyRequest(
-	    object='cn=foo,dc=example,dc=com',
-	    modification=[
-	    pureldap.LDAPModification_replace(attributeType='sambaNTPassword',
+        client.assertSent(pureldap.LDAPModifyRequest(
+            object='cn=foo,dc=example,dc=com',
+            modification=[
+            pureldap.LDAPModification_replace(attributeType='sambaNTPassword',
                                               vals=['89963F5042E5041A59C249282387A622']),
-	    pureldap.LDAPModification_replace(attributeType='sambaLMPassword',
+            pureldap.LDAPModification_replace(attributeType='sambaLMPassword',
                                               vals=['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
             ]))
 
@@ -920,17 +920,17 @@ class LDAPSyntaxPasswords(unittest.TestCase):
                                          errorMessage='')],
             )
 
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com')
         d=o.setPassword_Samba(newPasswd='new')
         val = deferredResult(d)
 
-	client.assertSent(pureldap.LDAPModifyRequest(
-	    object='cn=foo,dc=example,dc=com',
-	    modification=[
-	    pureldap.LDAPModification_replace(attributeType='sambaNTPassword',
+        client.assertSent(pureldap.LDAPModifyRequest(
+            object='cn=foo,dc=example,dc=com',
+            modification=[
+            pureldap.LDAPModification_replace(attributeType='sambaNTPassword',
                                               vals=['89963F5042E5041A59C249282387A622']),
-	    pureldap.LDAPModification_replace(attributeType='sambaLMPassword',
+            pureldap.LDAPModification_replace(attributeType='sambaLMPassword',
                                               vals=['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
             ]))
 
@@ -942,7 +942,7 @@ class LDAPSyntaxPasswords(unittest.TestCase):
                                          errorMessage='')],
             )
 
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com')
         d=defer.maybeDeferred(o.setPassword_Samba, newPasswd='new', style='foo')
         fail = deferredError(d)
@@ -959,7 +959,7 @@ class LDAPSyntaxPasswords(unittest.TestCase):
                                            errorMessage='')],
             )
 
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
             'objectClass': ['foo'],
@@ -968,7 +968,7 @@ class LDAPSyntaxPasswords(unittest.TestCase):
         d=o.setPassword(newPasswd='new')
         val = deferredResult(d)
 
-	client.assertSent(pureldap.LDAPPasswordModifyRequest(
+        client.assertSent(pureldap.LDAPPasswordModifyRequest(
             userIdentity='cn=foo,dc=example,dc=com',
             newPasswd='new'),
                           )
@@ -980,12 +980,12 @@ class LDAPSyntaxPasswords(unittest.TestCase):
             [pureldap.LDAPExtendedResponse(resultCode=0,
                                            matchedDN='',
                                            errorMessage='')],
-	    [pureldap.LDAPModifyResponse(resultCode=0,
+            [pureldap.LDAPModifyResponse(resultCode=0,
                                          matchedDN='',
                                          errorMessage='')],
             )
 
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
             'objectClass': ['foo', 'sambaAccount'],
@@ -994,15 +994,15 @@ class LDAPSyntaxPasswords(unittest.TestCase):
         d=o.setPassword(newPasswd='new')
         val = deferredResult(d)
 
-	client.assertSent(pureldap.LDAPPasswordModifyRequest(
+        client.assertSent(pureldap.LDAPPasswordModifyRequest(
             userIdentity='cn=foo,dc=example,dc=com',
             newPasswd='new'),
                           pureldap.LDAPModifyRequest(
-	    object='cn=foo,dc=example,dc=com',
-	    modification=[
-	    pureldap.LDAPModification_replace(attributeType='ntPassword',
+            object='cn=foo,dc=example,dc=com',
+            modification=[
+            pureldap.LDAPModification_replace(attributeType='ntPassword',
                                               vals=['89963F5042E5041A59C249282387A622']),
-	    pureldap.LDAPModification_replace(attributeType='lmPassword',
+            pureldap.LDAPModification_replace(attributeType='lmPassword',
                                               vals=['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
             ]))
 
@@ -1013,12 +1013,12 @@ class LDAPSyntaxPasswords(unittest.TestCase):
             [pureldap.LDAPExtendedResponse(resultCode=0,
                                            matchedDN='',
                                            errorMessage='')],
-	    [pureldap.LDAPModifyResponse(resultCode=0,
+            [pureldap.LDAPModifyResponse(resultCode=0,
                                          matchedDN='',
                                          errorMessage='')],
             )
 
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
             'objectClass': ['foo', 'sambaSamAccount'],
@@ -1027,15 +1027,15 @@ class LDAPSyntaxPasswords(unittest.TestCase):
         d=o.setPassword(newPasswd='new')
         val = deferredResult(d)
 
-	client.assertSent(pureldap.LDAPPasswordModifyRequest(
+        client.assertSent(pureldap.LDAPPasswordModifyRequest(
             userIdentity='cn=foo,dc=example,dc=com',
             newPasswd='new'),
                           pureldap.LDAPModifyRequest(
-	    object='cn=foo,dc=example,dc=com',
-	    modification=[
-	    pureldap.LDAPModification_replace(attributeType='sambaNTPassword',
+            object='cn=foo,dc=example,dc=com',
+            modification=[
+            pureldap.LDAPModification_replace(attributeType='sambaNTPassword',
                                               vals=['89963F5042E5041A59C249282387A622']),
-	    pureldap.LDAPModification_replace(attributeType='sambaLMPassword',
+            pureldap.LDAPModification_replace(attributeType='sambaLMPassword',
                                               vals=['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
             ]))
 
@@ -1046,12 +1046,12 @@ class LDAPSyntaxPasswords(unittest.TestCase):
             [pureldap.LDAPExtendedResponse(resultCode=0,
                                            matchedDN='',
                                            errorMessage='')],
-	    [pureldap.LDAPModifyResponse(resultCode=0,
+            [pureldap.LDAPModifyResponse(resultCode=0,
                                          matchedDN='',
                                          errorMessage='')],
             )
 
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
             'objectClass': ['foo', 'saMBaAccOuNT'],
@@ -1060,15 +1060,15 @@ class LDAPSyntaxPasswords(unittest.TestCase):
         d=o.setPassword(newPasswd='new')
         val = deferredResult(d)
 
-	client.assertSent(pureldap.LDAPPasswordModifyRequest(
+        client.assertSent(pureldap.LDAPPasswordModifyRequest(
             userIdentity='cn=foo,dc=example,dc=com',
             newPasswd='new'),
                           pureldap.LDAPModifyRequest(
-	    object='cn=foo,dc=example,dc=com',
-	    modification=[
-	    pureldap.LDAPModification_replace(attributeType='ntPassword',
+            object='cn=foo,dc=example,dc=com',
+            modification=[
+            pureldap.LDAPModification_replace(attributeType='ntPassword',
                                               vals=['89963F5042E5041A59C249282387A622']),
-	    pureldap.LDAPModification_replace(attributeType='lmPassword',
+            pureldap.LDAPModification_replace(attributeType='lmPassword',
                                               vals=['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
             ]))
 
@@ -1079,12 +1079,12 @@ class LDAPSyntaxPasswords(unittest.TestCase):
             [pureldap.LDAPExtendedResponse(resultCode=0,
                                            matchedDN='',
                                            errorMessage='')],
-	    [pureldap.LDAPModifyResponse(resultCode=0,
+            [pureldap.LDAPModifyResponse(resultCode=0,
                                          matchedDN='',
                                          errorMessage='')],
             )
 
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
             'objectClass': ['foo', 'sAmbASAmaccoUnt'],
@@ -1093,15 +1093,15 @@ class LDAPSyntaxPasswords(unittest.TestCase):
         d=o.setPassword(newPasswd='new')
         val = deferredResult(d)
 
-	client.assertSent(pureldap.LDAPPasswordModifyRequest(
+        client.assertSent(pureldap.LDAPPasswordModifyRequest(
             userIdentity='cn=foo,dc=example,dc=com',
             newPasswd='new'),
                           pureldap.LDAPModifyRequest(
-	    object='cn=foo,dc=example,dc=com',
-	    modification=[
-	    pureldap.LDAPModification_replace(attributeType='sambaNTPassword',
+            object='cn=foo,dc=example,dc=com',
+            modification=[
+            pureldap.LDAPModification_replace(attributeType='sambaNTPassword',
                                               vals=['89963F5042E5041A59C249282387A622']),
-	    pureldap.LDAPModification_replace(attributeType='sambaLMPassword',
+            pureldap.LDAPModification_replace(attributeType='sambaLMPassword',
                                               vals=['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
             ]))
 
@@ -1122,16 +1122,16 @@ class LDAPSyntaxPasswords(unittest.TestCase):
                                           matchedDN='',
                                           errorMessage=''),
             ],
-	    [pureldap.LDAPModifyResponse(resultCode=0,
+            [pureldap.LDAPModifyResponse(resultCode=0,
                                          matchedDN='',
                                          errorMessage='')],
             )
 
-	o=ldapsyntax.LDAPEntry(client=client, dn='cn=foo,dc=example,dc=com')
+        o=ldapsyntax.LDAPEntry(client=client, dn='cn=foo,dc=example,dc=com')
         d=o.setPassword(newPasswd='new')
         val = deferredResult(d)
 
-	client.assertSent(
+        client.assertSent(
             pureldap.LDAPPasswordModifyRequest(userIdentity='cn=foo,dc=example,dc=com',
                                                newPasswd='new'),
             pureldap.LDAPSearchRequest(baseObject='cn=foo,dc=example,dc=com',
@@ -1144,9 +1144,9 @@ class LDAPSyntaxPasswords(unittest.TestCase):
                                        attributes=('objectClass',)),
             pureldap.LDAPModifyRequest(object='cn=foo,dc=example,dc=com',
                                        modification=[
-	    pureldap.LDAPModification_replace(attributeType='ntPassword',
+            pureldap.LDAPModification_replace(attributeType='ntPassword',
                                               vals=['89963F5042E5041A59C249282387A622']),
-	    pureldap.LDAPModification_replace(attributeType='lmPassword',
+            pureldap.LDAPModification_replace(attributeType='lmPassword',
                                               vals=['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
             ]),
             )
@@ -1165,16 +1165,16 @@ class LDAPSyntaxPasswords(unittest.TestCase):
                                           matchedDN='',
                                           errorMessage=''),
             ],
-	    [pureldap.LDAPModifyResponse(resultCode=0,
+            [pureldap.LDAPModifyResponse(resultCode=0,
                                          matchedDN='',
                                          errorMessage='')],
             )
 
-	o=ldapsyntax.LDAPEntry(client=client, dn='cn=foo,dc=example,dc=com')
+        o=ldapsyntax.LDAPEntry(client=client, dn='cn=foo,dc=example,dc=com')
         d=o.setPassword(newPasswd='new')
         val = deferredResult(d)
 
-	client.assertSent(
+        client.assertSent(
             pureldap.LDAPPasswordModifyRequest(userIdentity='cn=foo,dc=example,dc=com',
                                                newPasswd='new'),
             pureldap.LDAPSearchRequest(baseObject='cn=foo,dc=example,dc=com',
@@ -1198,12 +1198,12 @@ class LDAPSyntaxPasswords(unittest.TestCase):
                                           matchedDN='',
                                           errorMessage=''),
             ],
-	    [pureldap.LDAPModifyResponse(resultCode=0,
+            [pureldap.LDAPModifyResponse(resultCode=0,
                                          matchedDN='',
                                          errorMessage='')],
             )
 
-	o=ldapsyntax.LDAPEntry(client=client, dn='cn=foo,dc=example,dc=com')
+        o=ldapsyntax.LDAPEntry(client=client, dn='cn=foo,dc=example,dc=com')
         d=o.setPassword(newPasswd='new')
 
         def checkError(fail):
@@ -1223,7 +1223,7 @@ class LDAPSyntaxPasswords(unittest.TestCase):
 
         self.assertEquals(val, 'This test run should succeed')
 
-	client.assertSent(
+        client.assertSent(
             pureldap.LDAPPasswordModifyRequest(userIdentity='cn=foo,dc=example,dc=com',
                                                newPasswd='new'),
             pureldap.LDAPSearchRequest(baseObject='cn=foo,dc=example,dc=com',
@@ -1244,7 +1244,7 @@ class LDAPSyntaxPasswords(unittest.TestCase):
                                            errorMessage='')],
             )
 
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
             'objectClass': ['foo', 'sambaAccount'],
@@ -1266,7 +1266,7 @@ class LDAPSyntaxPasswords(unittest.TestCase):
         assert isinstance(l[1][1], failure.Failure)
         l[1][1].trap(ldapsyntax.PasswordSetAborted)
 
-	client.assertSent(pureldap.LDAPPasswordModifyRequest(
+        client.assertSent(pureldap.LDAPPasswordModifyRequest(
             userIdentity='cn=foo,dc=example,dc=com',
             newPasswd='new'),
                           )
@@ -1276,7 +1276,7 @@ class LDAPSyntaxFetch(unittest.TestCase):
     def testFetch_WithDirtyJournal(self):
         """Trying to fetch attributes with a dirty journal fails."""
         client = LDAPClientTestDriver()
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com')
         o['x']=['foo']
 
@@ -1287,7 +1287,7 @@ class LDAPSyntaxFetch(unittest.TestCase):
     def testFetch_Empty(self):
         """Fetching attributes for a newly-created object works."""
         client = LDAPClientTestDriver(
-            [	pureldap.LDAPSearchResultEntry(objectName='cn=foo,dc=example,dc=com',
+            [   pureldap.LDAPSearchResultEntry(objectName='cn=foo,dc=example,dc=com',
                                                attributes=(
             ('foo', ['a']),
             ('bar', ['b', 'c']),
@@ -1296,12 +1296,12 @@ class LDAPSyntaxFetch(unittest.TestCase):
                                               matchedDN='',
                                               errorMessage=''),
                 ])
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com')
         d=o.fetch()
         val = deferredResult(d)
 
-	client.assertSent(pureldap.LDAPSearchRequest(
+        client.assertSent(pureldap.LDAPSearchRequest(
             baseObject='cn=foo,dc=example,dc=com',
             scope=pureldap.LDAP_SCOPE_baseObject,
             ))
@@ -1317,7 +1317,7 @@ class LDAPSyntaxFetch(unittest.TestCase):
     def testFetch_Prefilled(self):
         """Fetching attributes for a (partially) known object overwrites the old attributes."""
         client = LDAPClientTestDriver(
-	    [	pureldap.LDAPSearchResultEntry(objectName='cn=foo,dc=example,dc=com',
+            [   pureldap.LDAPSearchResultEntry(objectName='cn=foo,dc=example,dc=com',
                                                attributes=(
             ('foo', ['a']),
             ('bar', ['b', 'c']),
@@ -1326,7 +1326,7 @@ class LDAPSyntaxFetch(unittest.TestCase):
                                               matchedDN='',
                                               errorMessage=''),
                 ])
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
             'foo': ['x'],
@@ -1335,7 +1335,7 @@ class LDAPSyntaxFetch(unittest.TestCase):
         d=o.fetch()
         val = deferredResult(d)
 
-	client.assertSent(pureldap.LDAPSearchRequest(
+        client.assertSent(pureldap.LDAPSearchRequest(
             baseObject='cn=foo,dc=example,dc=com',
             scope=pureldap.LDAP_SCOPE_baseObject,
             ))
@@ -1351,7 +1351,7 @@ class LDAPSyntaxFetch(unittest.TestCase):
     def testFetch_Partial(self):
         """Fetching only some of the attributes does not overwrite existing values of different attribute types."""
         client = LDAPClientTestDriver(
-	    [	pureldap.LDAPSearchResultEntry(objectName='cn=foo,dc=example,dc=com',
+            [   pureldap.LDAPSearchResultEntry(objectName='cn=foo,dc=example,dc=com',
                                                attributes=(
             ('foo', ['a']),
             ('bar', ['b', 'c']),
@@ -1360,7 +1360,7 @@ class LDAPSyntaxFetch(unittest.TestCase):
                                               matchedDN='',
                                               errorMessage=''),
                 ])
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
             'foo': ['x'],
@@ -1385,50 +1385,50 @@ class LDAPSyntaxFetch(unittest.TestCase):
         self.assertEquals(o['quux'], ['baz', 'xyzzy'])
 
     def testCommitAndFetch(self):
-	"""Fetching after a commit works."""
+        """Fetching after a commit works."""
 
         client = LDAPClientTestDriver(
-            [	pureldap.LDAPModifyResponse(resultCode=0,
+            [   pureldap.LDAPModifyResponse(resultCode=0,
                                             matchedDN='',
                                             errorMessage='')
                 ],
-            [	pureldap.LDAPSearchResultEntry('cn=foo,dc=example,dc=com',
+            [   pureldap.LDAPSearchResultEntry('cn=foo,dc=example,dc=com',
                                                [('aValue', ['foo', 'bar'])],
                                                ),
                 pureldap.LDAPSearchResultDone(resultCode=0),
                 ])
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
-	    'objectClass': ['a', 'b'],
-	    'aValue': ['a'],
-	    })
+            'objectClass': ['a', 'b'],
+            'aValue': ['a'],
+            })
 
-	o['aValue']=['foo', 'bar']
-	d=o.commit()
+        o['aValue']=['foo', 'bar']
+        d=o.commit()
         val = deferredResult(d)
         self.assertIdentical(o, val)
 
-	d=o.fetch('aValue')
+        d=o.fetch('aValue')
         val2 = deferredResult(d)
         self.assertIdentical(o, val2)
 
         client.assertSent(pureldap.LDAPModifyRequest(
-	    object='cn=foo,dc=example,dc=com',
-	    modification=[
-	    pureldap.LDAPModification_replace(attributeType='aValue',
+            object='cn=foo,dc=example,dc=com',
+            modification=[
+            pureldap.LDAPModification_replace(attributeType='aValue',
                                               vals=['foo', 'bar']),
-	    ]),
+            ]),
                           pureldap.LDAPSearchRequest(
-	    baseObject='cn=foo,dc=example,dc=com',
+            baseObject='cn=foo,dc=example,dc=com',
             scope=pureldap.LDAP_SCOPE_baseObject,
             attributes=['aValue'],
-	    ))
+            ))
 
 class LDAPSyntaxRDNHandling(unittest.TestCase):
     def testRemovingRDNFails(self):
         """Removing RDN fails with CannotRemoveRDNError."""
-	o=ldapsyntax.LDAPEntry(client=None, dn='cn=foo,dc=example,dc=com',
+        o=ldapsyntax.LDAPEntry(client=None, dn='cn=foo,dc=example,dc=com',
                                attributes={
             'objectClass': ['someObjectClass'],
             'cn': ['foo', 'bar', 'baz'],
@@ -1458,23 +1458,23 @@ class LDAPSyntaxRDNHandling(unittest.TestCase):
 class LDAPSyntaxMove(unittest.TestCase):
     def test_move(self):
         client = LDAPClientTestDriver(
-            [	pureldap.LDAPModifyDNResponse(resultCode=0,
+            [   pureldap.LDAPModifyDNResponse(resultCode=0,
                                               matchedDN='',
                                               errorMessage=''),
                 ])
 
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
-	    'objectClass': ['a', 'b'],
+            'objectClass': ['a', 'b'],
             'cn': ['foo'],
-	    'aValue': ['a'],
-	    })
-	d = o.move('cn=bar,ou=somewhere,dc=example,dc=com')
+            'aValue': ['a'],
+            })
+        d = o.move('cn=bar,ou=somewhere,dc=example,dc=com')
         val = deferredResult(d)
 
         client.assertSent(pureldap.LDAPModifyDNRequest(
-	    entry='cn=foo,dc=example,dc=com',
+            entry='cn=foo,dc=example,dc=com',
             newrdn='cn=bar',
             deleteoldrdn=1,
             newSuperior='ou=somewhere,dc=example,dc=com',
@@ -1485,30 +1485,30 @@ class LDAPSyntaxMove(unittest.TestCase):
 class Bind(unittest.TestCase):
     def test_ok(self):
         client = LDAPClientTestDriver(
-            [	pureldap.LDAPBindResponse(resultCode=0,
+            [   pureldap.LDAPBindResponse(resultCode=0,
                                           matchedDN=''),
                 ])
 
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com')
-	d = defer.maybeDeferred(o.bind, 's3krit')
+        d = defer.maybeDeferred(o.bind, 's3krit')
         val = deferredResult(d)
 
         client.assertSent(pureldap.LDAPBindRequest(
-	    dn='cn=foo,dc=example,dc=com',
+            dn='cn=foo,dc=example,dc=com',
             auth='s3krit'))
 
         self.assertIdentical(val, o)
 
     def test_fail(self):
         client = LDAPClientTestDriver(
-            [	pureldap.LDAPBindResponse(
+            [   pureldap.LDAPBindResponse(
             resultCode=ldaperrors.LDAPInvalidCredentials.resultCode,
             matchedDN=''),
                 ])
 
-	o=ldapsyntax.LDAPEntry(client=client,
+        o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com')
-	d = defer.maybeDeferred(o.bind, 's3krit')
+        d = defer.maybeDeferred(o.bind, 's3krit')
         fail = deferredError(d)
         fail.trap(ldaperrors.LDAPInvalidCredentials)

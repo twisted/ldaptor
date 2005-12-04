@@ -112,8 +112,8 @@ class SearchForm(configurable.Configurable):
                                       label=_('Search')))
 
     def search(self, scope, searchfilter, **kw):
-	filt=[]
-	for k,v in kw.items():
+        filt=[]
+        for k,v in kw.items():
             assert k.startswith('search_')
             if not k.startswith("search_"):
                 continue
@@ -131,13 +131,13 @@ class SearchForm(configurable.Configurable):
         if searchfilter:
             filt.append(ldapfilter.parseFilter(searchfilter))
 
-	if filt:
-	    if len(filt)==1:
-		query=filt[0]
-	    else:
-		query=pureldap.LDAPFilter_and(filt)
-	else:
-	    query=pureldap.LDAPFilterMatchAll
+        if filt:
+            if len(filt)==1:
+                query=filt[0]
+            else:
+                query=pureldap.LDAPFilter_and(filt)
+        else:
+            query=pureldap.LDAPFilterMatchAll
 
         self.data.update(kw)
 
@@ -292,19 +292,19 @@ class SearchPage(rend.Page):
         u=url.URL.fromRequest(request)
         u=u.parent()
         l=[]
-	l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
-	return l
+        l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
+        return l
 
     def data_navilink(self, context, data):
         cfg = context.locate(interfaces.ILDAPConfig)
         dn = iwebui.ICurrentDN(context)
 
-	r=[]
-	while dn!=distinguishedname.DistinguishedName(stringValue=''): #TODO and while inside base?
-	    firstPart=dn.split()[0]
-	    r.append(('../../%s' % uriQuote(str(dn)),
+        r=[]
+        while dn!=distinguishedname.DistinguishedName(stringValue=''): #TODO and while inside base?
+            firstPart=dn.split()[0]
+            r.append(('../../%s' % uriQuote(str(dn)),
                       str(firstPart)))
-	    dn=dn.up()
+            dn=dn.up()
         return r
 
     def render_link(self, context, (url, desc)):
@@ -397,7 +397,7 @@ class SearchPage(rend.Page):
 
     def render_move(self, context, data):
         return webform.renderForms('move_%s' % data.dn)[context.tag]
-        
+
     render_i18n = i18n.render()
 
 def getSearchPage():

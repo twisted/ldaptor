@@ -22,8 +22,8 @@ def attributeAsLDIF_base64(attribute, value):
 
 def containsNonprintable(s):
     for c in s:
-	if ord(c) > 127 or c in ('\0', '\n', '\r'):
-	    return 1
+        if ord(c) > 127 or c in ('\0', '\n', '\r'):
+            return 1
     return 0
 
 def attributeAsLDIF(attribute, value):
@@ -35,15 +35,15 @@ def attributeAsLDIF(attribute, value):
        or value.startswith('<') \
        or value.endswith(' ') \
        or containsNonprintable(value):
-	return attributeAsLDIF_base64(attribute, value)
+        return attributeAsLDIF_base64(attribute, value)
     else:
-	return "%s: %s\n" % (attribute, value)
+        return "%s: %s\n" % (attribute, value)
 
 def asLDIF(dn, attributes):
     s="dn: %s\n"%dn
     for k,vs in attributes:
-	for v in vs:
-	    s=s+attributeAsLDIF(k, v)
+        for v in vs:
+            s=s+attributeAsLDIF(k, v)
     s=s+"\n"
     return s
 
@@ -53,5 +53,5 @@ def header():
 def manyAsLDIF(objects):
     s=[header()]
     for dn, attributes in objects:
-	s.append(asLDIF(dn, attributes))
+        s.append(asLDIF(dn, attributes))
     return ''.join(s)

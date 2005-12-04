@@ -16,27 +16,27 @@ def peekWord(text):
 
 class ASN1ParserThingie:
     def _to_list(self, text):
-	"""Split text into $-separated list."""
-	r=[]
-	for x in text.split("$"):
+        """Split text into $-separated list."""
+        r=[]
+        for x in text.split("$"):
             x = x.strip()
-	    assert x
-	    r.append(x)
-	return tuple(r)
+            assert x
+            r.append(x)
+        return tuple(r)
 
     def _strings_to_list(self, text):
-	"""Split ''-quoted strings into list."""
-	r=[]
-	while text:
+        """Split ''-quoted strings into list."""
+        r=[]
+        while text:
             text = text.lstrip()
-	    if not text:
-		break
-	    assert text[0]=="'", "Text %s must start with a single quote."%repr(text)
-	    text=text[1:]
-	    end=text.index("'")
-	    r.append(text[:end])
-	    text=text[end+1:]
-	return tuple(r)
+            if not text:
+                break
+            assert text[0]=="'", "Text %s must start with a single quote."%repr(text)
+            text=text[1:]
+            end=text.index("'")
+            r.append(text[:end])
+            text=text[end+1:]
+        return tuple(r)
 
     def _str_list(self, l):
         s = ' '.join([self._str(x) for x in l])
@@ -57,199 +57,199 @@ class ObjectClassDescription(ASN1ParserThingie):
     """
     ASN Syntax::
 
-	d               = "0" / "1" / "2" / "3" / "4" /
-			  "5" / "6" / "7" / "8" / "9"
+        d               = "0" / "1" / "2" / "3" / "4" /
+                          "5" / "6" / "7" / "8" / "9"
 
-	numericstring   = 1*d
+        numericstring   = 1*d
 
-	numericoid      = numericstring *( "." numericstring )
+        numericoid      = numericstring *( "." numericstring )
 
-	space           = 1*" "
+        space           = 1*" "
 
-	whsp            = [ space ]
+        whsp            = [ space ]
 
-	descr           = keystring
+        descr           = keystring
 
-	qdescr          = whsp "'" descr "'" whsp
+        qdescr          = whsp "'" descr "'" whsp
 
-	qdescrlist      = [ qdescr *( qdescr ) ]
+        qdescrlist      = [ qdescr *( qdescr ) ]
 
-	; object descriptors used as schema element names
-	qdescrs         = qdescr / ( whsp "(" qdescrlist ")" whsp )
+        ; object descriptors used as schema element names
+        qdescrs         = qdescr / ( whsp "(" qdescrlist ")" whsp )
 
-	dstring         = 1*utf8
+        dstring         = 1*utf8
 
-	qdstring        = whsp "'" dstring "'" whsp
+        qdstring        = whsp "'" dstring "'" whsp
 
-	descr           = keystring
+        descr           = keystring
 
-	oid             = descr / numericoid
+        oid             = descr / numericoid
 
-	woid            = whsp oid whsp
+        woid            = whsp oid whsp
 
-	; set of oids of either form
-	oids            = woid / ( "(" oidlist ")" )
+        ; set of oids of either form
+        oids            = woid / ( "(" oidlist ")" )
 
-	ObjectClassDescription = "(" whsp
-		numericoid whsp      ; ObjectClass identifier
-		[ "NAME" qdescrs ]
-		[ "DESC" qdstring ]
-		[ "OBSOLETE" whsp ]
-		[ "SUP" oids ]       ; Superior ObjectClasses
-		[ ( "ABSTRACT" / "STRUCTURAL" / "AUXILIARY" ) whsp ]
-				     ; default structural
-		[ "MUST" oids ]      ; AttributeTypes
-		[ "MAY" oids ]       ; AttributeTypes
-		whsp ")"
+        ObjectClassDescription = "(" whsp
+                numericoid whsp      ; ObjectClass identifier
+                [ "NAME" qdescrs ]
+                [ "DESC" qdstring ]
+                [ "OBSOLETE" whsp ]
+                [ "SUP" oids ]       ; Superior ObjectClasses
+                [ ( "ABSTRACT" / "STRUCTURAL" / "AUXILIARY" ) whsp ]
+                                     ; default structural
+                [ "MUST" oids ]      ; AttributeTypes
+                [ "MAY" oids ]       ; AttributeTypes
+                whsp ")"
     """
 
 
     def __init__(self, text):
-	self.oid=None
-	self.name=None
-	self.desc=None
-	self.obsolete=0
-	self.sup=[]
-	self.type=None
-	self.must=[]
-	self.may=[]
+        self.oid=None
+        self.name=None
+        self.desc=None
+        self.obsolete=0
+        self.sup=[]
+        self.type=None
+        self.must=[]
+        self.may=[]
 
         if text is not None:
             self._parse(text)
 
     def _parse(self, text):
-	assert text[0]=='(', "Text %s must be in parentheses."%repr(text)
-	assert text[-1]==')', "Text %s must be in parentheses."%repr(text)
-	text=text[1:-1]
+        assert text[0]=='(', "Text %s must be in parentheses."%repr(text)
+        assert text[-1]==')', "Text %s must be in parentheses."%repr(text)
+        text=text[1:-1]
         text = text.lstrip()
 
-	# oid
+        # oid
         self.oid, text = extractWord(text)
 
         text = text.lstrip()
 
-	if peekWord(text) == "NAME":
-	    text=text[len("NAME "):]
+        if peekWord(text) == "NAME":
+            text=text[len("NAME "):]
             text = text.lstrip()
-	    if text[0]=="'":
-		text=text[1:]
-		end=text.index("'")
-		self.name=(text[:end],)
-		text=text[end+1:]
-	    elif text[0]=="(":
-		text=text[1:]
+            if text[0]=="'":
+                text=text[1:]
+                end=text.index("'")
+                self.name=(text[:end],)
+                text=text[end+1:]
+            elif text[0]=="(":
+                text=text[1:]
                 text = text.lstrip()
-		end=text.index(")")
-		self.name=self._strings_to_list(text[:end])
-		text=text[end+1:]
-	    else:
-		raise "TODO"
+                end=text.index(")")
+                self.name=self._strings_to_list(text[:end])
+                text=text[end+1:]
+            else:
+                raise "TODO"
 
 
         text = text.lstrip()
 
-	if peekWord(text) == "DESC":
-	    text=text[len("DESC "):]
+        if peekWord(text) == "DESC":
+            text=text[len("DESC "):]
             text = text.lstrip()
-	    assert text[0]=="'"
-	    text=text[1:]
-	    end=text.index("'")
-	    self.desc=text[:end]
-	    text=text[end+1:]
+            assert text[0]=="'"
+            text=text[1:]
+            end=text.index("'")
+            self.desc=text[:end]
+            text=text[end+1:]
 
         text = text.lstrip()
 
-	if peekWord(text) == "OBSOLETE":
-	    self.obsolete=1
-	    text=text[len("OBSOLETE "):]
+        if peekWord(text) == "OBSOLETE":
+            self.obsolete=1
+            text=text[len("OBSOLETE "):]
 
         text = text.lstrip()
 
-	if peekWord(text) == "SUP":
-	    text=text[len("SUP "):]
+        if peekWord(text) == "SUP":
+            text=text[len("SUP "):]
             text = text.lstrip()
-	    if text[0]=="(":
-		text=text[1:]
+            if text[0]=="(":
+                text=text[1:]
                 text = text.lstrip()
-		end=text.index(")")
-		self.sup=self._to_list(text[:end])
-		text=text[end+1:]
-	    else:
+                end=text.index(")")
+                self.sup=self._to_list(text[:end])
+                text=text[end+1:]
+            else:
                 s, text = extractWord(text)
-		self.sup=[s]
+                self.sup=[s]
 
         text = text.lstrip()
 
-	if peekWord(text) == "ABSTRACT":
-	    assert self.type is None
-	    self.type="ABSTRACT"
-	    text=text[len("ABSTRACT "):]
+        if peekWord(text) == "ABSTRACT":
+            assert self.type is None
+            self.type="ABSTRACT"
+            text=text[len("ABSTRACT "):]
 
         text = text.lstrip()
 
-	if peekWord(text) == "STRUCTURAL":
-	    assert self.type is None
-	    self.type="STRUCTURAL"
-	    text=text[len("STRUCTURAL "):]
+        if peekWord(text) == "STRUCTURAL":
+            assert self.type is None
+            self.type="STRUCTURAL"
+            text=text[len("STRUCTURAL "):]
 
         text = text.lstrip()
 
-	if peekWord(text) == "AUXILIARY":
-	    assert self.type is None
-	    self.type="AUXILIARY"
-	    text=text[len("AUXILIARY "):]
+        if peekWord(text) == "AUXILIARY":
+            assert self.type is None
+            self.type="AUXILIARY"
+            text=text[len("AUXILIARY "):]
 
         text = text.lstrip()
 
-	if peekWord(text) == "MUST":
-	    text=text[len("MUST "):]
+        if peekWord(text) == "MUST":
+            text=text[len("MUST "):]
             text = text.lstrip()
-	    if text[0]=="(":
-		text=text[1:]
+            if text[0]=="(":
+                text=text[1:]
                 text = text.lstrip()
-		end=text.index(")")
-		self.must.extend(self._to_list(text[:end]))
-		text=text[end+1:]
-	    else:
+                end=text.index(")")
+                self.must.extend(self._to_list(text[:end]))
+                text=text[end+1:]
+            else:
                 s, text = extractWord(text)
-		self.must.append(s)
+                self.must.append(s)
 
         text = text.lstrip()
 
-	if peekWord(text) == "MAY":
-	    text=text[len("MAY "):]
+        if peekWord(text) == "MAY":
+            text=text[len("MAY "):]
             text = text.lstrip()
-	    if text[0]=="(":
-		text=text[1:]
+            if text[0]=="(":
+                text=text[1:]
                 text = text.lstrip()
-		end=text.index(")")
-		self.may.extend(self._to_list(text[:end]))
-		text=text[end+1:]
-	    else:
+                end=text.index(")")
+                self.may.extend(self._to_list(text[:end]))
+                text=text[end+1:]
+            else:
                 s, text = extractWord(text)
-		self.may.append(s)
+                self.may.append(s)
 
         text = text.lstrip()
 
-	assert text=="", "Text was not empty: %s"%repr(text)
+        assert text=="", "Text was not empty: %s"%repr(text)
 
-	if not self.type:
-	    self.type="STRUCTURAL"
+        if not self.type:
+            self.type="STRUCTURAL"
 
-	assert self.oid
-	for c in self.oid:
-	    assert c in "0123456789."
-	assert self.name is None or self.name
-	assert self.type in ("ABSTRACT", "STRUCTURAL", "AUXILIARY")
+        assert self.oid
+        for c in self.oid:
+            assert c in "0123456789."
+        assert self.name is None or self.name
+        assert self.type in ("ABSTRACT", "STRUCTURAL", "AUXILIARY")
 
     def __repr__(self):
-	nice = {}
-	for k,v in self.__dict__.items():
-	    nice[k]=repr(v)
-	return ("<%s instance at 0x%x"%(self.__class__.__name__, id(self))
-		+(" oid=%(oid)s name=%(name)s desc=%(desc)s"
-		  +" obsolete=%(obsolete)s sup=%(sup)s type=%(type)s"
-		  +" must=%(must)s may=%(may)s>")%nice)
+        nice = {}
+        for k,v in self.__dict__.items():
+            nice[k]=repr(v)
+        return ("<%s instance at 0x%x"%(self.__class__.__name__, id(self))
+                +(" oid=%(oid)s name=%(name)s desc=%(desc)s"
+                  +" obsolete=%(obsolete)s sup=%(sup)s type=%(type)s"
+                  +" must=%(must)s may=%(may)s>")%nice)
 
     def __str__(self):
         r=[]
@@ -311,198 +311,198 @@ class AttributeTypeDescription(ASN1ParserThingie):
     """
     ASN Syntax::
 
-	AttributeTypeDescription = "(" whsp
-		numericoid whsp                ; AttributeType identifier
-		[ "NAME" qdescrs ]             ; name used in AttributeType
-		[ "DESC" qdstring ]            ; description
-		[ "OBSOLETE" whsp ]
-		[ "SUP" woid ]                 ; derived from this other AttributeType
-		[ "EQUALITY" woid              ; Matching Rule name
-		[ "ORDERING" woid              ; Matching Rule name
-		[ "SUBSTR" woid ]              ; Matching Rule name
-		[ "SYNTAX" whsp noidlen whsp ] ; see section 4.3
-		[ "SINGLE-VALUE" whsp ]        ; default multi-valued
-		[ "COLLECTIVE" whsp ]          ; default not collective
-		[ "NO-USER-MODIFICATION" whsp ]; default user modifiable
-		[ "USAGE" whsp AttributeUsage ]; default userApplications
-		whsp ")"
+        AttributeTypeDescription = "(" whsp
+                numericoid whsp                ; AttributeType identifier
+                [ "NAME" qdescrs ]             ; name used in AttributeType
+                [ "DESC" qdstring ]            ; description
+                [ "OBSOLETE" whsp ]
+                [ "SUP" woid ]                 ; derived from this other AttributeType
+                [ "EQUALITY" woid              ; Matching Rule name
+                [ "ORDERING" woid              ; Matching Rule name
+                [ "SUBSTR" woid ]              ; Matching Rule name
+                [ "SYNTAX" whsp noidlen whsp ] ; see section 4.3
+                [ "SINGLE-VALUE" whsp ]        ; default multi-valued
+                [ "COLLECTIVE" whsp ]          ; default not collective
+                [ "NO-USER-MODIFICATION" whsp ]; default user modifiable
+                [ "USAGE" whsp AttributeUsage ]; default userApplications
+                whsp ")"
 
-	AttributeUsage =
-		"userApplications"     /
-		"directoryOperation"   /
-		"distributedOperation" / ; DSA-shared
-		"dSAOperation"          ; DSA-specific, value depends on server
+        AttributeUsage =
+                "userApplications"     /
+                "directoryOperation"   /
+                "distributedOperation" / ; DSA-shared
+                "dSAOperation"          ; DSA-specific, value depends on server
 
-	noidlen = numericoid [ "{" len "}" ]
+        noidlen = numericoid [ "{" len "}" ]
 
-	len     = numericstring
+        len     = numericstring
     """
 
     def __init__(self, text):
-	self.oid=None
-	self.name=None
-	self.desc=None
-	self.obsolete=0
-	self.sup=None
-	self.equality=None
-	self.ordering=None
-	self.substr=None
-	self.syntax=None
-	self.single_value=None
-	self.collective=None
-	self.no_user_modification=None
-	self.usage=None
+        self.oid=None
+        self.name=None
+        self.desc=None
+        self.obsolete=0
+        self.sup=None
+        self.equality=None
+        self.ordering=None
+        self.substr=None
+        self.syntax=None
+        self.single_value=None
+        self.collective=None
+        self.no_user_modification=None
+        self.usage=None
 
         if text is not None:
             self._parse(text)
 
     def _parse(self, text):
-	assert text[0]=='(', "Text %s must be in parentheses."%repr(text)
-	assert text[-1]==')', "Text %s must be in parentheses."%repr(text)
-	text=text[1:-1]
+        assert text[0]=='(', "Text %s must be in parentheses."%repr(text)
+        assert text[-1]==')', "Text %s must be in parentheses."%repr(text)
+        text=text[1:-1]
         text = text.lstrip()
 
-	# oid
+        # oid
         self.oid, text = extractWord(text)
 
         text = text.lstrip()
 
-	if peekWord(text) == "NAME":
-	    text=text[len("NAME "):]
+        if peekWord(text) == "NAME":
+            text=text[len("NAME "):]
             text = text.lstrip()
-	    if text[0]=="'":
-		text=text[1:]
-		end=text.index("'")
-		self.name=(text[:end],)
-		text=text[end+1:]
-	    elif text[0]=="(":
-		text=text[1:]
+            if text[0]=="'":
+                text=text[1:]
+                end=text.index("'")
+                self.name=(text[:end],)
+                text=text[end+1:]
+            elif text[0]=="(":
+                text=text[1:]
                 text = text.lstrip()
-		end=text.index(")")
-		self.name=self._strings_to_list(text[:end])
-		text=text[end+1:]
-	    else:
-		raise "TODO"
+                end=text.index(")")
+                self.name=self._strings_to_list(text[:end])
+                text=text[end+1:]
+            else:
+                raise "TODO"
 
 
         text = text.lstrip()
 
-	if peekWord(text) == "DESC":
-	    text=text[len("DESC "):]
+        if peekWord(text) == "DESC":
+            text=text[len("DESC "):]
             text = text.lstrip()
-	    assert text[0]=="'"
-	    text=text[1:]
-	    end=text.index("'")
-	    self.desc=text[:end]
-	    text=text[end+1:]
+            assert text[0]=="'"
+            text=text[1:]
+            end=text.index("'")
+            self.desc=text[:end]
+            text=text[end+1:]
 
         text = text.lstrip()
 
-	if peekWord(text) == "OBSOLETE":
-	    self.obsolete=1
-	    text=text[len("OBSOLETE "):]
+        if peekWord(text) == "OBSOLETE":
+            self.obsolete=1
+            text=text[len("OBSOLETE "):]
 
         text = text.lstrip()
 
-	if peekWord(text) == "SUP":
-	    text=text[len("SUP "):]
+        if peekWord(text) == "SUP":
+            text=text[len("SUP "):]
             text = text.lstrip()
-	    self.sup, text = extractWord(text)
+            self.sup, text = extractWord(text)
 
         text = text.lstrip()
 
-	if peekWord(text) == "EQUALITY":
-	    text=text[len("EQUALITY "):]
+        if peekWord(text) == "EQUALITY":
+            text=text[len("EQUALITY "):]
             text = text.lstrip()
-	    self.equality, text = extractWord(text)
+            self.equality, text = extractWord(text)
 
         text = text.lstrip()
 
-	if peekWord(text) == "ORDERING":
-	    text=text[len("ORDERING "):]
+        if peekWord(text) == "ORDERING":
+            text=text[len("ORDERING "):]
             text = text.lstrip()
-	    self.ordering, text = extractWord(text)
+            self.ordering, text = extractWord(text)
 
         text = text.lstrip()
 
-	if peekWord(text) == "SUBSTR":
-	    text=text[len("SUBSTR "):]
+        if peekWord(text) == "SUBSTR":
+            text=text[len("SUBSTR "):]
             text = text.lstrip()
-	    self.substr, text = extractWord(text)
+            self.substr, text = extractWord(text)
 
         text = text.lstrip()
 
-	if peekWord(text) == "SYNTAX":
-	    text=text[len("SYNTAX "):]
+        if peekWord(text) == "SYNTAX":
+            text=text[len("SYNTAX "):]
             text = text.lstrip()
-	    self.syntax, text = extractWord(text)
+            self.syntax, text = extractWord(text)
 
         text = text.lstrip()
 
-	if peekWord(text) == "SINGLE-VALUE":
-	    assert self.single_value is None
-	    self.single_value=1
-	    text=text[len("SINGLE-VALUE "):]
+        if peekWord(text) == "SINGLE-VALUE":
+            assert self.single_value is None
+            self.single_value=1
+            text=text[len("SINGLE-VALUE "):]
 
         text = text.lstrip()
 
-	if peekWord(text) == "COLLECTIVE":
-	    assert self.collective is None
-	    self.collective=1
-	    text=text[len("COLLECTIVE "):]
+        if peekWord(text) == "COLLECTIVE":
+            assert self.collective is None
+            self.collective=1
+            text=text[len("COLLECTIVE "):]
 
-	text = text.lstrip()
+        text = text.lstrip()
 
-	if peekWord(text) == "NO-USER-MODIFICATION":
-	    assert self.no_user_modification is None
-	    self.no_user_modification=1
-	    text=text[len("NO-USER-MODIFICATION "):]
+        if peekWord(text) == "NO-USER-MODIFICATION":
+            assert self.no_user_modification is None
+            self.no_user_modification=1
+            text=text[len("NO-USER-MODIFICATION "):]
 
-	text = text.lstrip()
+        text = text.lstrip()
 
-	if peekWord(text) == "USAGE":
-	    assert self.usage is None
-	    text=text[len("USAGE "):]
+        if peekWord(text) == "USAGE":
+            assert self.usage is None
+            text=text[len("USAGE "):]
             text = text.lstrip()
-	    self.usage, text = extractWord(text)
+            self.usage, text = extractWord(text)
 
-	text = text.lstrip()
+        text = text.lstrip()
 
-	assert text=="", "Text was not empty: %s"%repr(text)
+        assert text=="", "Text was not empty: %s"%repr(text)
 
-	if self.single_value is None:
-	    self.single_value=0
+        if self.single_value is None:
+            self.single_value=0
 
-	if self.collective is None:
-	    self.collective=0
+        if self.collective is None:
+            self.collective=0
 
-	if self.no_user_modification is None:
-	    self.no_user_modification=0
+        if self.no_user_modification is None:
+            self.no_user_modification=0
 
-	assert self.oid
-	for c in self.oid:
-	    assert c in "0123456789."
-	assert self.name is None or self.name
-	assert self.usage is None or self.usage in (
-	    "userApplications",
-	    "directoryOperation",
-	    "distributedOperation",
-	    "dSAOperation",
-	    )
+        assert self.oid
+        for c in self.oid:
+            assert c in "0123456789."
+        assert self.name is None or self.name
+        assert self.usage is None or self.usage in (
+            "userApplications",
+            "directoryOperation",
+            "distributedOperation",
+            "dSAOperation",
+            )
 
     def __repr__(self):
-	nice = {}
-	for k,v in self.__dict__.items():
-	    nice[k]=repr(v)
-	return ("<%s instance at 0x%x"%(self.__class__.__name__, id(self))
-		+(" oid=%(oid)s name=%(name)s desc=%(desc)s"
-		  +" obsolete=%(obsolete)s sup=%(sup)s"
-		  +" equality=%(equality)s ordering=%(ordering)s"
-		  +" substr=%(substr)s syntax=%(syntax)s"
-		  +" single_value=%(single_value)s"
-		  +" collective=%(collective)s"
-		  +" no_user_modification=%(no_user_modification)s"
-		  +" usage=%(usage)s>")%nice)
+        nice = {}
+        for k,v in self.__dict__.items():
+            nice[k]=repr(v)
+        return ("<%s instance at 0x%x"%(self.__class__.__name__, id(self))
+                +(" oid=%(oid)s name=%(name)s desc=%(desc)s"
+                  +" obsolete=%(obsolete)s sup=%(sup)s"
+                  +" equality=%(equality)s ordering=%(ordering)s"
+                  +" substr=%(substr)s syntax=%(syntax)s"
+                  +" single_value=%(single_value)s"
+                  +" collective=%(collective)s"
+                  +" no_user_modification=%(no_user_modification)s"
+                  +" usage=%(usage)s>")%nice)
 
     def __str__(self):
         r=[]
@@ -538,71 +538,71 @@ class SyntaxDescription(ASN1ParserThingie):
     """
     ASN Syntax::
 
-	SyntaxDescription = "(" whsp
-		numericoid whsp
-		[ "DESC" qdstring ]
-		whsp ")"
+        SyntaxDescription = "(" whsp
+                numericoid whsp
+                [ "DESC" qdstring ]
+                whsp ")"
     """
 
     def __init__(self, text):
-	self.oid=None
-	self.desc=None
+        self.oid=None
+        self.desc=None
 
-	assert text[0]=='('
-	assert text[-1]==')'
-	text=text[1:-1]
-	text = text.lstrip()
+        assert text[0]=='('
+        assert text[-1]==')'
+        text=text[1:-1]
+        text = text.lstrip()
 
-	# oid
+        # oid
         self.oid, text = extractWord(text)
 
-	text = text.lstrip()
+        text = text.lstrip()
 
-	if peekWord(text) == "DESC":
-	    text=text[len("DESC "):]
+        if peekWord(text) == "DESC":
+            text=text[len("DESC "):]
             text = text.lstrip()
-	    assert text[0]=="'"
-	    text=text[1:]
-	    end=text.index("'")
-	    self.desc=text[:end]
-	    text=text[end+1:]
+            assert text[0]=="'"
+            text=text[1:]
+            end=text.index("'")
+            self.desc=text[:end]
+            text=text[end+1:]
 
-	text = text.lstrip()
+        text = text.lstrip()
 
-	if peekWord(text) == "X-BINARY-TRANSFER-REQUIRED":
-	    text=text[len("X-BINARY-TRANSFER-REQUIRED "):]
+        if peekWord(text) == "X-BINARY-TRANSFER-REQUIRED":
+            text=text[len("X-BINARY-TRANSFER-REQUIRED "):]
             text = text.lstrip()
-	    assert text[0]=="'"
-	    text=text[1:]
-	    end=text.index("'")
-	    self.desc=text[:end]
-	    text=text[end+1:]
+            assert text[0]=="'"
+            text=text[1:]
+            end=text.index("'")
+            self.desc=text[:end]
+            text=text[end+1:]
 
-	text = text.lstrip()
+        text = text.lstrip()
 
-	if peekWord(text) == "X-NOT-HUMAN-READABLE":
-	    text=text[len("X-NOT-HUMAN-READABLE "):]
+        if peekWord(text) == "X-NOT-HUMAN-READABLE":
+            text=text[len("X-NOT-HUMAN-READABLE "):]
             text = text.lstrip()
-	    assert text[0]=="'"
-	    text=text[1:]
-	    end=text.index("'")
-	    self.desc=text[:end]
-	    text=text[end+1:]
+            assert text[0]=="'"
+            text=text[1:]
+            end=text.index("'")
+            self.desc=text[:end]
+            text=text[end+1:]
 
-	text = text.lstrip()
+        text = text.lstrip()
 
-	assert text=="", "Text was not empty: %s"%repr(text)
+        assert text=="", "Text was not empty: %s"%repr(text)
 
-	assert self.oid
-	for c in self.oid:
-	    assert c in "0123456789."
+        assert self.oid
+        for c in self.oid:
+            assert c in "0123456789."
 
     def __repr__(self):
-	nice = {}
-	for k,v in self.__dict__.items():
-	    nice[k]=repr(v)
-	return ("<%s instance at 0x%x"%(self.__class__.__name__, id(self))
-		+(" oid=%(oid)s desc=%(desc)s>")%nice)
+        nice = {}
+        for k,v in self.__dict__.items():
+            nice[k]=repr(v)
+        return ("<%s instance at 0x%x"%(self.__class__.__name__, id(self))
+                +(" oid=%(oid)s desc=%(desc)s>")%nice)
 
 
 
@@ -610,87 +610,87 @@ class MatchingRuleDescription(ASN1ParserThingie):
     """
     ASN Syntax::
 
-	MatchingRuleDescription = "(" whsp
-		numericoid whsp  ; MatchingRule identifier
-		[ "NAME" qdescrs ]
-		[ "DESC" qdstring ]
-		[ "OBSOLETE" whsp ]
-		"SYNTAX" numericoid
-		whsp ")"
+        MatchingRuleDescription = "(" whsp
+                numericoid whsp  ; MatchingRule identifier
+                [ "NAME" qdescrs ]
+                [ "DESC" qdstring ]
+                [ "OBSOLETE" whsp ]
+                "SYNTAX" numericoid
+                whsp ")"
     """
 
     def __init__(self, text):
-	self.oid=None
-	self.name=None
-	self.desc=None
-	self.obsolete=None
-	self.syntax=None
+        self.oid=None
+        self.name=None
+        self.desc=None
+        self.obsolete=None
+        self.syntax=None
 
-	assert text[0]=='('
-	assert text[-1]==')'
-	text=text[1:-1]
-	text = text.lstrip()
+        assert text[0]=='('
+        assert text[-1]==')'
+        text=text[1:-1]
+        text = text.lstrip()
 
-	# oid
+        # oid
         self.oid, text = extractWord(text)
 
-	text = text.lstrip()
+        text = text.lstrip()
 
-	if peekWord(text) == "NAME":
-	    text=text[len("NAME "):]
+        if peekWord(text) == "NAME":
+            text=text[len("NAME "):]
             text = text.lstrip()
-	    if text[0]=="'":
-		text=text[1:]
-		end=text.index("'")
-		self.name=(text[:end],)
-		text=text[end+1:]
-	    elif text[0]=="(":
-		text=text[1:]
+            if text[0]=="'":
+                text=text[1:]
+                end=text.index("'")
+                self.name=(text[:end],)
+                text=text[end+1:]
+            elif text[0]=="(":
+                text=text[1:]
                 text = text.lstrip()
-		end=text.index(")")
-		self.name=self._strings_to_list(text[:end])
-		text=text[end+1:]
-	    else:
-		raise "TODO"
+                end=text.index(")")
+                self.name=self._strings_to_list(text[:end])
+                text=text[end+1:]
+            else:
+                raise "TODO"
 
-	text = text.lstrip()
+        text = text.lstrip()
 
-	if peekWord(text) == "DESC":
-	    text=text[len("DESC "):]
+        if peekWord(text) == "DESC":
+            text=text[len("DESC "):]
             text = text.lstrip()
-	    assert text[0]=="'"
-	    text=text[1:]
-	    end=text.index("'")
-	    self.desc=text[:end]
-	    text=text[end+1:]
+            assert text[0]=="'"
+            text=text[1:]
+            end=text.index("'")
+            self.desc=text[:end]
+            text=text[end+1:]
 
-	text = text.lstrip()
+        text = text.lstrip()
 
-	if peekWord(text) == "OBSOLETE":
-	    self.obsolete=1
-	    text=text[len("OBSOLETE "):]
+        if peekWord(text) == "OBSOLETE":
+            self.obsolete=1
+            text=text[len("OBSOLETE "):]
 
-	text = text.lstrip()
+        text = text.lstrip()
 
-	if peekWord(text) == "SYNTAX":
-	    text=text[len("SYNTAX "):]
+        if peekWord(text) == "SYNTAX":
+            text=text[len("SYNTAX "):]
             text = text.lstrip()
-	    self.syntax, text = extractWord(text)
+            self.syntax, text = extractWord(text)
 
-	text = text.lstrip()
+        text = text.lstrip()
 
-	assert text=="", "Text was not empty: %s"%repr(text)
+        assert text=="", "Text was not empty: %s"%repr(text)
 
-	if self.obsolete is None:
-	    self.obsolete=0
-	assert self.oid
-	for c in self.oid:
-	    assert c in "0123456789."
-	assert self.syntax
+        if self.obsolete is None:
+            self.obsolete=0
+        assert self.oid
+        for c in self.oid:
+            assert c in "0123456789."
+        assert self.syntax
 
     def __repr__(self):
-	nice = {}
-	for k,v in self.__dict__.items():
-	    nice[k]=repr(v)
-	return ("<%s instance at 0x%x"%(self.__class__.__name__, id(self))
-		+(" oid=%(oid)s desc=%(desc)s>")%nice)
+        nice = {}
+        for k,v in self.__dict__.items():
+            nice[k]=repr(v)
+        return ("<%s instance at 0x%x"%(self.__class__.__name__, id(self))
+                +(" oid=%(oid)s desc=%(desc)s>")%nice)

@@ -92,7 +92,7 @@ class LdaptorWebUIGadget(rend.Page):
         templateDir=os.path.split(os.path.abspath(__file__))[0])
 
     def __init__(self, loggedIn, config):
-	super(LdaptorWebUIGadget, self).__init__()
+        super(LdaptorWebUIGadget, self).__init__()
         self.loggedIn = loggedIn
         self.config = config
         self.putChild('form.css', webform.defaultCSS)

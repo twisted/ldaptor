@@ -42,7 +42,7 @@ class build_locale(cmd.Command):
                     continue
                 else:
                     raise
-            
+
             for po in l:
                 if not po.endswith('.po'):
                     continue

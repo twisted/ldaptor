@@ -41,7 +41,7 @@ class LDAPServerTest(unittest.TestCase):
         server.transport = proto_helpers.StringTransport()
         server.connectionMade()
         self.server = server
-    
+
     def test_bind(self):
         self.server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(), id=4)))
         self.assertEquals(self.server.transport.value(),
@@ -366,7 +366,7 @@ class TestSchema(unittest.TestCase):
                                        test_schema.OBJECTCLASSES['organizationalUnit'],
                                        ],
                      })
-        
+
         class LDAPServerFactory(protocol.ServerFactory):
             protocol = ldapserver.LDAPServer
             def __init__(self, root):
@@ -390,7 +390,7 @@ class TestSchema(unittest.TestCase):
             test_schema.AttributeType_KnownValues.knownValues[0][0],
             ]])
 
-	self.failUnlessEqual([str(x) for x in objectClasses],
+        self.failUnlessEqual([str(x) for x in objectClasses],
                              [str(schema.ObjectClassDescription(x)) for x in [
             test_schema.OBJECTCLASSES['organization'],
             test_schema.OBJECTCLASSES['organizationalUnit'],
