@@ -20,7 +20,7 @@ def error(fail):
     exitStatus=1
 
 def main(cfg, fromDN, toDN,
-	 binddn, bindPassword):
+         binddn, bindPassword):
     fromDN = distinguishedname.DistinguishedName(stringValue=fromDN)
     toDN = distinguishedname.DistinguishedName(stringValue=toDN)
 
@@ -30,13 +30,13 @@ def main(cfg, fromDN, toDN,
                   overrides=cfg.getServiceLocationOverrides())
 
     def _bind(proto, binddn, bindPassword):
-	if binddn:
-	    pwd = bindPassword
-	    if pwd is None:
-		pwd = getpass.getpass('Password for %s: ' % binddn)
-	    d=proto.bind(binddn, pwd)
-	else:
-	    d=proto.bind()
+        if binddn:
+            pwd = bindPassword
+            if pwd is None:
+                pwd = getpass.getpass('Password for %s: ' % binddn)
+            d=proto.bind(binddn, pwd)
+        else:
+            d=proto.bind()
         d.addCallback(lambda _: proto)
         return d
     d.addCallback(_bind, binddn, bindPassword)
@@ -52,16 +52,16 @@ class MyOptions(usage.Options, usage.Options_service_location, usage.Options_bin
     """LDAPtor object rename utility"""
 
     def parseArgs(self, fromDN, toDN):
-	self.opts['from'] = fromDN
-	self.opts['to'] = toDN
+        self.opts['from'] = fromDN
+        self.opts['to'] = toDN
 
 if __name__ == "__main__":
     try:
-	opts = MyOptions()
-	opts.parseOptions()
+        opts = MyOptions()
+        opts.parseOptions()
     except usage.UsageError, ue:
-	sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
-	sys.exit(1)
+        sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
+        sys.exit(1)
 
     from twisted.python import log
     log.startLogging(sys.stderr, setStdout=0)
@@ -70,14 +70,14 @@ if __name__ == "__main__":
 
     bindPassword=None
     if opts['bind-auth-fd']:
-	f=os.fdopen(opts['bind-auth-fd'])
-	bindPassword=f.readline()
-	assert bindPassword[-1]=='\n'
-	bindPassword=bindPassword[:-1]
-	f.close()
+        f=os.fdopen(opts['bind-auth-fd'])
+        bindPassword=f.readline()
+        assert bindPassword[-1]=='\n'
+        bindPassword=bindPassword[:-1]
+        f.close()
 
     main(cfg,
-	 opts['from'],
-	 opts['to'],
-	 opts['binddn'],
-	 bindPassword)
+         opts['from'],
+         opts['to'],
+         opts['binddn'],
+         bindPassword)

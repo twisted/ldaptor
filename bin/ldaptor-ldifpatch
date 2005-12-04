@@ -46,11 +46,11 @@ class MyOptions(usage.Options):
 
 if __name__ == "__main__":
     try:
-	config = MyOptions()
-	config.parseOptions()
+        config = MyOptions()
+        config.parseOptions()
     except usage.UsageError, ue:
-	sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
-	sys.exit(1)
+        sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
+        sys.exit(1)
 
     data = open(config['data'])
     main(data, sys.stdin, sys.stdout)

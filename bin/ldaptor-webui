@@ -15,28 +15,28 @@ class MyOptions(usage.Options):
     """LDAPtor Web User Interface"""
 
     def __init__(self, *args, **kwargs):
-	usage.Options.__init__(self, *args, **kwargs)
+        usage.Options.__init__(self, *args, **kwargs)
 
     optParameters = (
-	('http-port', None, '38980', # think "ldap and http"
-	 "listen on this port"),
-	)
+        ('http-port', None, '38980', # think "ldap and http"
+         "listen on this port"),
+        )
 
     def postOptions_httpport(self):
-	try:
-	    val = int(self.opts['http-port'])
-	except ValueError:
-	    raise usage.UsageError, "%s value must be numeric" % 'http-port'
-	self.opts['http-port'] = val
+        try:
+            val = int(self.opts['http-port'])
+        except ValueError:
+            raise usage.UsageError, "%s value must be numeric" % 'http-port'
+        self.opts['http-port'] = val
 
 if __name__ == '__main__':
     import sys
     try:
-	opts = MyOptions()
-	opts.parseOptions()
+        opts = MyOptions()
+        opts.parseOptions()
     except usage.UsageError, ue:
-	sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
-	sys.exit(1)
+        sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
+        sys.exit(1)
     log.startLogging(sys.stderr, setStdout=0)
     resource = main.getResource()
 

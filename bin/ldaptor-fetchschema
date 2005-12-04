@@ -56,11 +56,11 @@ if __name__ == "__main__":
     log.startLogging(sys.stderr, setStdout=0)
 
     try:
-	opts = MyOptions()
-	opts.parseOptions()
+        opts = MyOptions()
+        opts.parseOptions()
     except usage.UsageError, ue:
-	sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
-	sys.exit(1)
+        sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
+        sys.exit(1)
 
     cfg = config.LDAPConfig(baseDN=opts['base'],
                             serviceLocationOverrides=opts['service-location'])

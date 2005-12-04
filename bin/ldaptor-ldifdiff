@@ -42,17 +42,17 @@ class MyOptions(usage.Options, usage.Options_service_location, usage.Options_bin
     """LDAPtor object rename utility"""
 
     def parseArgs(self, file1, file2):
-	self.opts['file1'] = file1
-	self.opts['file2'] = file2
+        self.opts['file1'] = file1
+        self.opts['file2'] = file2
 
 if __name__ == "__main__":
     try:
-	config = MyOptions()
-	config.parseOptions()
+        config = MyOptions()
+        config.parseOptions()
     except usage.UsageError, ue:
-	sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
-	sys.exit(1)
+        sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
+        sys.exit(1)
 
     main(config.opts['file1'],
-	 config.opts['file2'],
-	 sys.stdout)
+         config.opts['file2'],
+         sys.stdout)

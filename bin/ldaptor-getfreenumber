@@ -25,10 +25,10 @@ def main(cfg):
     d= c.connectAnonymously(dn=baseDN,
                             overrides=cfg.getServiceLocationOverrides())
     def _cbBound(client, baseDN):
-	o=ldapsyntax.LDAPEntry(client=client, dn=baseDN)
-	return numberalloc.getFreeNumber(o,
-					 'uidNumber',
-					 min=1000)
+        o=ldapsyntax.LDAPEntry(client=client, dn=baseDN)
+        return numberalloc.getFreeNumber(o,
+                                         'uidNumber',
+                                         min=1000)
     d.addCallback(_cbBound, baseDN)
     d.addCallback(lambda num: sys.stdout.write('%s\n' % repr(num)))
     d.addErrback(error)
@@ -45,11 +45,11 @@ if __name__ == "__main__":
     log.startLogging(sys.stderr, setStdout=0)
 
     try:
-	opts = MyOptions()
-	opts.parseOptions()
+        opts = MyOptions()
+        opts.parseOptions()
     except usage.UsageError, ue:
-	sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
-	sys.exit(1)
+        sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
+        sys.exit(1)
 
     cfg = config.LDAPConfig(
         baseDN=opts['base'],

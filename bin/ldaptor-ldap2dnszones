@@ -17,47 +17,47 @@ def formatPTR(name, ip):
 
 class HostIPAddress:
     def __init__(self, host, ipAddress):
-	self.host=host
-	self.ipAddress=ipAddress
+        self.host=host
+        self.ipAddress=ipAddress
 
     def getForward(self, domain):
-	return ((';  %s\n' % self.host.dn)
+        return ((';  %s\n' % self.host.dn)
                 + formatIPAddress(self.host.name+'.'+domain,
                                   self.ipAddress))
 
     def getReverse(self, domain):
-	return ((';  %s\n' % self.host.dn)
+        return ((';  %s\n' % self.host.dn)
                 + formatPTR(self.host.name+'.'+domain, self.ipAddress))
 
     def __repr__(self):
-	return (self.__class__.__name__
-		+'('
-		+'host=%r, ' % self.host.name
-		+'ipAddress=%s' % repr(self.ipAddress)
-		+')')
+        return (self.__class__.__name__
+                +'('
+                +'host=%r, ' % self.host.name
+                +'ipAddress=%s' % repr(self.ipAddress)
+                +')')
 
 class Host:
     def __init__(self, dn, name, ipAddresses):
-	self.dn=dn
-	self.name=name
-	self.ipAddresses=[HostIPAddress(self, ip) for ip in ipAddresses]
+        self.dn=dn
+        self.name=name
+        self.ipAddresses=[HostIPAddress(self, ip) for ip in ipAddresses]
 
     def __repr__(self):
-	return (self.__class__.__name__
-		+'('
-		+'dn=%s, ' % repr(self.dn)
-		+'name=%s, ' % repr(self.name)
-		+'ipAddresses=%s' % repr(self.ipAddresses)
-		+')')
+        return (self.__class__.__name__
+                +'('
+                +'dn=%s, ' % repr(self.dn)
+                +'name=%s, ' % repr(self.name)
+                +'ipAddresses=%s' % repr(self.ipAddresses)
+                +')')
 
 class Net:
     reverseZone = None
 
     def __init__(self, dn, name, address, mask):
-	self.dn=dn
-	self.name=name
-	self.address=address
-	self.mask=mask
+        self.dn=dn
+        self.name=name
+        self.address=address
+        self.mask=mask
 
     def isInNet(self, ipAddress):
         try:
@@ -68,38 +68,38 @@ class Net:
             # no need to log here, higher levels will log a warning
             # when they see the address is in no net
             return False
-	if ip&mask == net:
-	    return True
-	return False
+        if ip&mask == net:
+            return True
+        return False
 
     def getForward(self):
-	ip = dns.aton(self.address)
-	mask = dns.aton(self.mask)
-	ipmask = dns.ntoa(mask)
-	broadcast = dns.ntoa(ip|~mask)
+        ip = dns.aton(self.address)
+        mask = dns.aton(self.mask)
+        ipmask = dns.ntoa(mask)
+        broadcast = dns.ntoa(ip|~mask)
 
-	return (('; %s\n' % self.dn)
+        return (('; %s\n' % self.dn)
                 + formatIPAddress(self.name, self.address)
                 + formatIPAddress('netmask.'+self.name, ipmask)
                 + formatIPAddress('broadcast.'+self.name, broadcast))
 
     def getReverse(self, domain):
-	ip = dns.aton(self.address)
-	mask = dns.aton(self.mask)
-	broadcast = dns.ntoa(ip|~mask)
+        ip = dns.aton(self.address)
+        mask = dns.aton(self.mask)
+        broadcast = dns.ntoa(ip|~mask)
 
-	return (('; %s\n' % self.dn)
+        return (('; %s\n' % self.dn)
                 + formatPTR(self.name+'.'+domain, self.address)
                 + formatPTR('broadcast.'+self.name+'.'+domain, broadcast))
 
     def __repr__(self):
-	return (self.__class__.__name__
-		+'('
-		+'dn=%s, ' % repr(self.dn)
-		+'name=%s, ' % repr(self.name)
-		+'address=%s, ' % repr(self.address)
-		+'mask=%s' % repr(self.mask)
-		+')')
+        return (self.__class__.__name__
+                +'('
+                +'dn=%s, ' % repr(self.dn)
+                +'name=%s, ' % repr(self.name)
+                +'address=%s, ' % repr(self.address)
+                +'mask=%s' % repr(self.mask)
+                +')')
 
 
 
@@ -231,9 +231,9 @@ def main(cfg, domain, forward, reverse, filter_text):
         sys.exit(1)
 
     if filter_text is not None:
-	filt = ldapfilter.parseFilter(filter_text)
+        filt = ldapfilter.parseFilter(filter_text)
     else:
-	filt = None
+        filt = None
 
     forwardTmp = '%s.%d.tmp' % (forward, os.getpid())
     forwardFile = file(forwardTmp, 'w')
@@ -291,16 +291,16 @@ class MyOptions(usage.Options, usage.Options_service_location, usage.Options_bas
     def parseArgs(self, domain, forward, filter=None):
         self.opts['domain'] = domain
         self.opts['forward'] = forward
-	self.opts['filter'] = filter
+        self.opts['filter'] = filter
 
 if __name__ == "__main__":
     import sys
     try:
-	opts = MyOptions()
-	opts.parseOptions()
+        opts = MyOptions()
+        opts.parseOptions()
     except usage.UsageError, ue:
-	sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
-	sys.exit(1)
+        sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
+        sys.exit(1)
 
     cfg = config.LDAPConfig(baseDN=opts['base'],
                             serviceLocationOverrides=opts['service-location'])

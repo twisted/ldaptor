@@ -28,61 +28,61 @@ def my_aton_octets(ip):
     octets=map(None, s)
     n=0L
     for o in octets:
-	n=n<<8
-	n+=ord(o)
+        n=n<<8
+        n+=ord(o)
     return n
 
 def my_aton_numbits(num):
     n=0L
     while num>0:
-	n>>=1
-	n |= 2**31
-	num-=1
+        n>>=1
+        n |= 2**31
+        num-=1
     return n
 
 def my_aton(ip):
     try:
-	i=int(ip)
+        i=int(ip)
     except ValueError:
-	return my_aton_octets(ip)
+        return my_aton_octets(ip)
     else:
-	return my_aton_numbits(i)
+        return my_aton_numbits(i)
 
 def my_ntoa(n):
     s=(
-	chr((n>>24)&0xFF)
-	+ chr((n>>16)&0xFF)
-	+ chr((n>>8)&0xFF)
-	+ chr(n&0xFF)
+        chr((n>>24)&0xFF)
+        + chr((n>>16)&0xFF)
+        + chr((n>>8)&0xFF)
+        + chr(n&0xFF)
        )
     ip=inet_ntoa(s)
     return ip
 
 class HostIPAddress:
     def __init__(self, host, ipAddress):
-	self.host=host
-	self.ipAddress=ipAddress
+        self.host=host
+        self.ipAddress=ipAddress
 
     def printDHCP(self, domain, prefix=''):
         def output():
-	    yield '# %s' % self.host.dn
-	    yield 'host %s.%s {' % (self.host.name, domain)
+            yield '# %s' % self.host.dn
+            yield 'host %s.%s {' % (self.host.name, domain)
             for mac in self.host.macAddresses:
                 yield '\thardware ethernet %s;' % mac
             yield '\tfixed-address %s;' % self.ipAddress
             if self.host.bootFile is not None:
                 # TODO quote bootFile
                 yield '\tfilename "%s";' % self.host.bootFile
-	    yield '}'
+            yield '}'
 
-	print '\n'.join([prefix+line for line in output()])
+        print '\n'.join([prefix+line for line in output()])
 
     def __repr__(self):
-	return (self.__class__.__name__
-		+'('
-		+'host=%s, ' % id(self.host)
-		+'ipAddress=%s' % repr(self.ipAddress)
-		+')')
+        return (self.__class__.__name__
+                +'('
+                +'host=%s, ' % id(self.host)
+                +'ipAddress=%s' % repr(self.ipAddress)
+                +')')
 
 class Group:
     def __init__(self, dn, bootFile=None):
@@ -124,72 +124,72 @@ class Host:
 
     def __init__(self, dn, name, ipAddresses, macAddresses=(),
                  bootFile=None):
-	self.dn=dn
-	self.name=name
-	self.ipAddresses=[HostIPAddress(self, ip) for ip in ipAddresses]
-	self.macAddresses=macAddresses
+        self.dn=dn
+        self.name=name
+        self.ipAddresses=[HostIPAddress(self, ip) for ip in ipAddresses]
+        self.macAddresses=macAddresses
         self.bootFile = bootFile
 
     def __repr__(self):
-	return (self.__class__.__name__
-		+'('
-		+'dn=%s, ' % repr(self.dn)
-		+'name=%s, ' % repr(self.name)
-		+'ipAddresses=%s, ' % repr(self.ipAddresses)
-		+'macAddresses=%s, ' % repr(self.macAddresses)
-		+'bootFile=%s' % repr(self.bootFile)
-		+')')
+        return (self.__class__.__name__
+                +'('
+                +'dn=%s, ' % repr(self.dn)
+                +'name=%s, ' % repr(self.name)
+                +'ipAddresses=%s, ' % repr(self.ipAddresses)
+                +'macAddresses=%s, ' % repr(self.macAddresses)
+                +'bootFile=%s' % repr(self.bootFile)
+                +')')
 
 class Net:
     def __init__(self, dn, name, address, mask,
-		 routers=(),
-		 dhcpRanges=(),
-		 winsServers=(),
-		 domainNameServers=(),
-		 ):
-	self.dn=dn
-	self.name=name
-	self.address=address
-	self.mask=mask
-	self.routers=routers
-	self.dhcpRanges=dhcpRanges
-	self.winsServers=winsServers
-	self.domainNameServers=domainNameServers
-	self.hosts=[]
+                 routers=(),
+                 dhcpRanges=(),
+                 winsServers=(),
+                 domainNameServers=(),
+                 ):
+        self.dn=dn
+        self.name=name
+        self.address=address
+        self.mask=mask
+        self.routers=routers
+        self.dhcpRanges=dhcpRanges
+        self.winsServers=winsServers
+        self.domainNameServers=domainNameServers
+        self.hosts=[]
 
     def isInNet(self, ipAddress):
-	net = my_aton(self.address)
-	mask = my_aton(self.mask)
-	ip = my_aton(ipAddress)
-	if ip&mask == net:
-	    return 1
-	return 0
+        net = my_aton(self.address)
+        mask = my_aton(self.mask)
+        ip = my_aton(ipAddress)
+        if ip&mask == net:
+            return 1
+        return 0
 
     def addHost(self, host):
-	assert self.isInNet(host.ipAddress)
-	self.hosts.append(host)
+        assert self.isInNet(host.ipAddress)
+        self.hosts.append(host)
 
     def printDHCP(self, domain, prefix=''):
-	nm = self.mask
-	nm = my_aton(nm)
-	nm = my_ntoa(nm)
-	r = ['# %s' % self.dn,
-	     'subnet %s netmask %s {' % (self.address, nm),
-	     '\toption domain-name "%s.%s";' % (self.name, domain)]
-	if self.routers:
-	    r.append('\toption routers %s;' % (', '.join(self.routers)))
-	for dhcpRange in self.dhcpRanges:
-	    r.append('\trange %s;' % dhcpRange)
-	if self.winsServers:
-	    r.append('\toption netbios-name-servers %s;' % (', '.join(self.winsServers)))
-	if self.domainNameServers:
-	    r.append('\toption domain-name-servers %s;' % (', '.join(self.domainNameServers)))
-	r.append('}')
+        nm = self.mask
+        nm = my_aton(nm)
+        nm = my_ntoa(nm)
+        r = ['# %s' % self.dn,
+             'subnet %s netmask %s {' % (self.address, nm),
+             '\toption domain-name "%s.%s";' % (self.name, domain)]
+        if self.routers:
+            r.append('\toption routers %s;' % (', '.join(self.routers)))
+        for dhcpRange in self.dhcpRanges:
+            r.append('\trange %s;' % dhcpRange)
+        if self.winsServers:
+            r.append('\toption netbios-name-servers %s;' % (', '.join(self.winsServers)))
+        if self.domainNameServers:
+            r.append('\toption domain-name-servers %s;' % (', '.join(self.domainNameServers)))
+        r.append('}')
 
-	print '\n'.join([prefix+line for line in r])
+        print '\n'.join([prefix+line for line in r])
 
         addrs = sets.Set()
-	for addr in self.hosts:
+        for addr in self.hosts:
             addrs.add(addr)
 
         for addr in self.hosts:
@@ -201,31 +201,31 @@ class Net:
 
         while addrs:
             addr = addrs.pop()
-	    addr.printDHCP(self.name+'.'+domain, prefix=prefix)
+            addr.printDHCP(self.name+'.'+domain, prefix=prefix)
 
     def __repr__(self):
-	return (self.__class__.__name__
-		+'('
-		+'dn=%s, ' % repr(self.dn)
-		+'name=%s, ' % repr(self.name)
-		+'address=%s, ' % repr(self.address)
-		+'mask=%s' % repr(self.mask)
-		+')')
+        return (self.__class__.__name__
+                +'('
+                +'dn=%s, ' % repr(self.dn)
+                +'name=%s, ' % repr(self.name)
+                +'address=%s, ' % repr(self.address)
+                +'mask=%s' % repr(self.mask)
+                +')')
 
 class SharedNet:
     def __init__(self, name):
-	self.name=name
-	self.nets=[]
+        self.name=name
+        self.nets=[]
 
     def addNet(self, net):
-	self.nets.append(net)
+        self.nets.append(net)
 
     def printDHCP(self, domain):
-	print 'shared-network "%s" {' % self.name
-	for net in self.nets:
-	    net.printDHCP(domain, prefix='\t')
-	print '}'
-	print
+        print 'shared-network "%s" {' % self.name
+        for net in self.nets:
+            net.printDHCP(domain, prefix='\t')
+        print '}'
+        print
 
 def _cbGetGroups(entries, hosts):
     dnToHost = {}
@@ -316,7 +316,7 @@ def _cbGetHosts(entries):
     hosts = []
     for e in entries:
         cn = only(e, 'cn')
-	hosts.append(Host(str(e.dn),
+        hosts.append(Host(str(e.dn),
                           str(cn),
                           map(str, e['ipHostNumber']),
                           map(str, e.get('macAddress', ())),
@@ -418,9 +418,9 @@ def main(cfg, filter_text, dnsDomain):
     log.startLogging(sys.stderr, setStdout=0)
 
     if filter_text is not None:
-	filt = ldapfilter.parseFilter(filter_text)
+        filt = ldapfilter.parseFilter(filter_text)
     else:
-	filt = None
+        filt = None
 
     c = ldapconnector.LDAPClientCreator(reactor,
                                         ldapclient.LDAPClient)
@@ -439,25 +439,25 @@ class MyOptions(usage.Options,
     """LDAPtor dhcpd config file exporter"""
 
     optParameters = (
-	('dns-domain', None, 'example.com',
-	 "DNS domain name"),
-	)
+        ('dns-domain', None, 'example.com',
+         "DNS domain name"),
+        )
 
     def parseArgs(self, filter=None):
-	self.opts['filter'] = filter
+        self.opts['filter'] = filter
 
 if __name__ == "__main__":
     import sys
     try:
-	opts = MyOptions()
-	opts.parseOptions()
+        opts = MyOptions()
+        opts.parseOptions()
     except usage.UsageError, ue:
-	sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
-	sys.exit(1)
+        sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
+        sys.exit(1)
 
     cfg = config.LDAPConfig(baseDN=opts['base'],
                             serviceLocationOverrides=opts['service-location'])
     main(cfg,
-	 opts['filter'],
-	 opts['dns-domain'],
-	 )
+         opts['filter'],
+         opts['dns-domain'],
+         )

@@ -52,9 +52,9 @@ def main(cfg, filter_text):
 
     filt = ldapfilter.parseFilter('(objectClass=posixAccount)')
     if filter_text is not None:
-	filt = pureldap.LDAPFilter_and([
-	    filt,
-	    ldapfilter.parseFilter(filter_text)])
+        filt = pureldap.LDAPFilter_and([
+            filt,
+            ldapfilter.parseFilter(filter_text)])
 
     c = ldapconnector.LDAPClientCreator(reactor,
                                         ldapclient.LDAPClient)
@@ -71,15 +71,15 @@ class MyOptions(usage.Options, usage.Options_service_location, usage.Options_bas
     """LDAPtor command line search utility"""
 
     def parseArgs(self, filter=None):
-	self.opts['filter'] = filter
+        self.opts['filter'] = filter
 
 if __name__ == "__main__":
     try:
-	opts = MyOptions()
-	opts.parseOptions()
+        opts = MyOptions()
+        opts.parseOptions()
     except usage.UsageError, ue:
-	sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
-	sys.exit(1)
+        sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
+        sys.exit(1)
 
     cfg = config.LDAPConfig(baseDN=opts['base'],
                             serviceLocationOverrides=opts['service-location'])
