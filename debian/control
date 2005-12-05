@@ -3,7 +3,7 @@ Section: admin
 Priority: optional
 Maintainer: Tommi Virtanen <tv@debian.org>
 Standards-Version: 3.6.1
-Build-Depends-Indep: python, python2.3-dev, python2.4-dev, cdbs, debhelper (>= 4.1.68), docbook-slides (>= 3.2.0), xsltproc, source-highlight, python-epydoc, dia (>= 0.93-2), python2.3-twisted (>= 1.3.0), python2.3-nevow (>= 0.3.0), python2.3-pyparsing, python2.3-pyopenssl, python2.3-crypto, python2.4-twisted (>= 1.3.0), python2.4-nevow (>= 0.3.0), python2.4-pyparsing, python2.4-pyopenssl, python2.4-crypto
+Build-Depends-Indep: python, python2.3-dev, python2.4-dev, cdbs, debhelper (>= 4.1.68), docbook-slides (>= 3.2.0), xsltproc, source-highlight, python-epydoc, dia (>= 0.93-2), python2.3-twisted (>= 2.0), python2.3-nevow (>= 0.6.0), python2.3-pyparsing, python2.3-pyopenssl, python2.3-crypto, python2.4-twisted (>= 2.0), python2.4-nevow (>= 0.6.0), python2.4-pyparsing, python2.4-pyopenssl, python2.4-crypto
 
 Package: ldaptor-utils
 Section: admin
@@ -50,7 +50,7 @@ Description: Command-line LDAP utilities
 Package: ldaptor-webui
 Section: admin
 Architecture: all
-Depends: ${python:Depends}, python2.3-nevow (>= 0.3.0), python2.3-ldaptor
+Depends: ${python:Depends}, python2.3-nevow (>= 0.6.0), python2.3-ldaptor
 Description: Web user interface for editing LDAP directories
  A web-based user interface to search and edit information in an LDAP
  directory.
@@ -58,7 +58,7 @@ Description: Web user interface for editing LDAP directories
 Package: python-ldaptor
 Section: python
 Architecture: all
-Depends: ${python:Depends}, python-twisted (>= 1.3.0), python-pyparsing
+Depends: ${python:Depends}, python-twisted (>= 2.0), python-pyparsing
 Description: Pure-Python library for LDAP
  Ldaptor is a pure-Python library that implements
  .
@@ -79,7 +79,7 @@ Description: Pure-Python library for LDAP
 Package: python2.3-ldaptor
 Section: python
 Architecture: all
-Depends: ${python:Depends}, ldaptor-common, python2.3-twisted (>= 1.3.0), python2.3-pyparsing, pwgen, python2.3-pyopenssl, python2.3-crypto
+Depends: ${python:Depends}, ldaptor-common, python2.3-twisted (>= 2.0), python2.3-pyparsing, pwgen, python2.3-pyopenssl, python2.3-crypto
 Description: Pure-Python library for LDAP
  Ldaptor is a pure-Python library that implements
  .
@@ -99,7 +99,7 @@ Description: Pure-Python library for LDAP
 Package: python2.4-ldaptor
 Section: python
 Architecture: all
-Depends: ${python:Depends}, ldaptor-common, python2.4-twisted (>= 1.3.0), python2.4-pyparsing, pwgen, python2.4-pyopenssl, python2.4-crypto
+Depends: ${python:Depends}, ldaptor-common, python2.4-twisted (>= 2.0), python2.4-pyparsing, pwgen, python2.4-pyopenssl, python2.4-crypto
 Description: Pure-Python library for LDAP
  Ldaptor is a pure-Python library that implements
  .
