@@ -1,0 +1,140 @@
+#!/usr/bin/python2.4
+import os, sys, shutil, subprocess, socket, errno, signal
+
+def waitUntilListening(port):
+    s = socket.socket()
+    while True:
+        try:
+            s.connect(('127.0.0.1', port))
+        except socket.error, e:
+            if e.args[0] == errno.ECONNREFUSED:
+                pass
+            else:
+                s.close()
+                raise
+        else:
+            s.close()
+            break
+
+def mustNotListenYet(port):
+    s = socket.socket()
+    try:
+        s.connect(('127.0.0.1', port))
+    except socket.error, e:
+        if e.args[0] == errno.ECONNREFUSED:
+            pass
+        else:
+            s.close()
+            raise
+    else:
+        s.close()
+        print >>sys.stderr, '%s: port %d must not be listening yet.' % (sys.argv[0], port)
+        sys.exit(1)
+
+def run():
+    testroots = sys.argv[1:]
+    if not testroots:
+        testroots = ['ldaptor/test']
+
+    tests = []
+    for testroot in testroots:
+        if testroot.endswith('.twill'):
+            tests.append(testroot)
+            continue
+        for root, dirs, files in os.walk(testroot):
+            dirs[:] = [d for d in dirs
+                       if not d.startswith('.')
+                       and not d.startswith('_')]
+
+            l = []
+            for test in files:
+                if (test.startswith('.')
+                    or test.startswith('_')):
+                    continue
+                if not test.endswith('.twill'):
+                    continue
+                l.append(os.path.join(root, test))
+            tests.extend(l)
+
+    if not tests:
+        raise RuntimeError('No tests found.')
+
+    twillEnv = {}
+    twillEnv.update(os.environ)
+    twillEnv['PYTHONPATH'] = ':'.join(['.',
+                                       # TODO work around missing twill features,
+                                       # needs my hacked twill
+                                       os.path.expanduser('~/src/twill/trunk'),
+                                       twillEnv.get('PYTHONPATH', '.')])
+    returncode = subprocess.call(args=[
+        os.path.expanduser('twill-sh'),
+        '--url', 'http://localhost:38980/',
+        '--',
+        ] + tests,
+                                 env=twillEnv)
+
+    if returncode < 0:
+        print >>sys.stderr, "%s: twill exited with signal %d" % (
+            sys.argv[0], -returncode)
+        sys.exit(1)
+    elif returncode >0:
+        print >>sys.stderr, "%s: twill exited with code %d" % (
+            sys.argv[0], returncode)
+        sys.exit(1)
+
+
+
+mustNotListenYet(10389)
+mustNotListenYet(38980)
+
+ldapsrv = subprocess.Popen(args=['twistd',
+                                 '-n', '-o', '-y',
+                                 'test-ldapserver.tac',
+                                 '--pidfile', 'test-ldapserver.pid'],
+                           close_fds=True,
+                           env=os.environ)
+
+try:
+    waitUntilListening(10389)
+
+    twistdEnv = {}
+    twistdEnv.update(os.environ)
+    twistdEnv['PYTHONPATH'] = ':'.join(['.',
+                                        # TODO work around nevow 0.4.1 bug, fixed in r1510.
+                                        os.path.expanduser('~/src/nevow/trunk'),
+                                        twistdEnv.get('PYTHONPATH', '.')])
+    twistd = subprocess.Popen(args=['twistd',
+                                    '-n', '-o', '-y',
+                                    'test-webui.tac',
+                                    '--pidfile', 'test-webui.pid'],
+                              close_fds=True,
+                              env=twistdEnv)
+
+    try:
+        waitUntilListening(38980)
+        run()
+    finally:
+        os.kill(twistd.pid, signal.SIGTERM)
+        returncode = twistd.wait()
+        if returncode < 0:
+            if returncode != -signal.SIGTERM:
+                print >>sys.stderr, "%s: twistd exited with signal %d" % (
+                    sys.argv[0], -returncode)
+                sys.exit(1)
+        elif returncode >0:
+            print >>sys.stderr, "%s: twistd exited with code %d" % (
+                sys.argv[0], returncode)
+            sys.exit(1)
+
+finally:
+    os.kill(ldapsrv.pid, signal.SIGTERM)
+    returncode = ldapsrv.wait()
+    if returncode < 0:
+        if returncode != -signal.SIGTERM:
+            print >>sys.stderr, "%s: ldapsrv exited with signal %d" % (
+                sys.argv[0], -returncode)
+            sys.exit(1)
+    elif returncode >0:
+        print >>sys.stderr, "%s: ldapsrv exited with code %d" % (
+            sys.argv[0], returncode)
+        sys.exit(1)

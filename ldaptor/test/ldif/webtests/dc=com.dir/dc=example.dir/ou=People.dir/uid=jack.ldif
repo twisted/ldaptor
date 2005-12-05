@@ -1,0 +1,4 @@
+dn: uid=jack,ou=People,dc=example,dc=com
+uid: jack
+objectClass: posixAccount
+

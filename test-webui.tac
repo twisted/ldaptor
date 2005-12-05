@@ -7,26 +7,17 @@ from ldaptor.apps.webui import main, i18n
 application = service.Application("ldaptor-webui")
 myService = service.IServiceCollection(application)
 
-resource = main.getResource()
+cp = config.loadConfig(configFiles=[])
+cp.add_section('webui')
+cp.set('webui', 'search-field 1 Name',
+       '(|(cn=%(input)s)(uid=%(input)s))')
 
-class Wrap(object):
-    __implements__ = inevow.IResource,
+cfg = config.LDAPConfig(serviceLocationOverrides={
+    'dc=example,dc=com': ('localhost', 10389),
+    })
+resource = main.getResource(cfg)
 
-    def __init__(self, resource):
-        super(Wrap, self).__init__()
-        self.resource = resource
-
-    def locateChild(self, ctx, segments):
-        ctx.remember(i18n.I18NConfig(localeDir='build/locale'))
-        ctx.remember(['fi'], i18n.ILanguages)
-        return self.resource, segments
-
-    def renderHTTP(self, ctx):
-        ctx.remember(i18n.I18NConfig(localeDir='build/locale'))
-        ctx.remember(['fi'], i18n.ILanguages)
-        return self.resource.renderHTTP(ctx)
-
-site = appserver.NevowSite(Wrap(resource))
+site = appserver.NevowSite(resource)
 
 myServer = internet.TCPServer(38980, site)
 myServer.setServiceParent(myService)

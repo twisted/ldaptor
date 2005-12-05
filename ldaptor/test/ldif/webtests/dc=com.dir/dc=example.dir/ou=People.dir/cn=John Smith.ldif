@@ -1,0 +1,4 @@
+dn: cn=John Smith,ou=People,dc=example,dc=com
+cn: John Smith
+objectClass: person
+

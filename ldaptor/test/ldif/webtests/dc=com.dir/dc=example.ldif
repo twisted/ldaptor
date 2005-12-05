@@ -1,0 +1,4 @@
+dn: dc=example,dc=com
+objectClass: dcObject
+dc: example
+
