@@ -90,6 +90,7 @@ class SearchForm(configurable.Configurable):
 
     def bind_search(self, ctx):
         l = []
+        l.append(annotate.Argument('ctx', annotate.Context()))
         for field in config.getSearchFieldNames():
             l.append(annotate.Argument('search_%s' % field,
                                        annotate.String(label=field)))
@@ -111,7 +112,7 @@ class SearchForm(configurable.Configurable):
             typeValue=annotate.Method(arguments=l,
                                       label=_('Search')))
 
-    def search(self, scope, searchfilter, **kw):
+    def search(self, ctx, scope, searchfilter, **kw):
         filt=[]
         for k,v in kw.items():
             assert k.startswith('search_')
@@ -129,7 +130,12 @@ class SearchForm(configurable.Configurable):
             filter_ = config.getSearchFieldByName(k, vars={'input': v})
             filt.append(ldapfilter.parseFilter(filter_))
         if searchfilter:
-            filt.append(ldapfilter.parseFilter(searchfilter))
+            try:
+                filt.append(ldapfilter.parseFilter(searchfilter))
+            except ldapfilter.InvalidLDAPFilter, e:
+                raise annotate.ValidateError(
+                    {'searchfilter': str(e), },
+                    partialForm=inevow.IRequest(ctx).args)
 
         if filt:
             if len(filt)==1:

@@ -1,0 +1,11 @@
+formvalue go baseDN dc=example,dc=com
+submit
+code 200
+title "Ldaptor Search Page"
+formvalue search searchfilter broke
+submit
+code 200
+notfind Exception
+notfind InvalidLDAPFilter
+find '<div.class="freeform-error">Invalid.LDAP.filter:.Expected."\(".at.point.0.in.\'broke\'</div>'
+
