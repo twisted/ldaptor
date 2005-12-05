@@ -9,21 +9,11 @@ import os
 from nevow import rend, inevow, loaders, url, tags
 from formless import annotate, webform, iformless
 
-class IDelete(annotate.TypedInterface):
-    def delete(self, ctx=annotate.Context()):
-        pass
-    delete = annotate.autocallable(delete,
-                                   action=_('Delete'),
-                                   label=_('Confirm delete'),
-                                   )
-
 class ErrorWrapper:
     def __init__(self, value):
         self.value = value
 
 class ConfirmDelete(rend.Page):
-    implements(IDelete)
-
     docFactory = loaders.xmlfile(
         'delete.xhtml',
         templateDir=os.path.split(os.path.abspath(__file__))[0])
@@ -31,6 +21,18 @@ class ConfirmDelete(rend.Page):
     def __init__(self, dn):
         super(ConfirmDelete, self).__init__()
         self.dn = dn
+
+    def getBindingNames(self, ctx):
+        return ['delete']
+
+    def bind_delete(self, ctx):
+        return annotate.MethodBinding(
+            'delete',
+            annotate.Method(arguments=[
+            annotate.Argument('ctx', annotate.Context()),
+            ],
+                            label=_('Confirm delete')),
+            action=_('Delete'))
 
     def data_css(self, ctx, data):
         u = (url.URL.fromContext(ctx).clear().parentdir().parentdir()

@@ -435,20 +435,23 @@ def strObjectClass(oc):
     else:
         return '%s' % (oc.name[0],)
 
-class IChooseSmartObject(annotate.TypedInterface):
-    def add(self,
-            context=annotate.Context(),
-            smartObjectClass=annotate.Choice(choicesAttribute='plugins')):
-        pass
-    add = annotate.autocallable(add,
-                                label=_('Add'))
-
 class ChooseSmartObject(object):
-    implements(IChooseSmartObject)
-
     def __init__(self, pluginNames):
         self.plugins = list(pluginNames)
         self.plugins.sort()
+
+    def getBindingNames(self, ctx):
+        return ['add']
+
+    def bind_add(self, ctx):
+        return annotate.MethodBinding(
+            'add',
+            annotate.Method(arguments=[
+            annotate.Argument('context', annotate.Context()),
+            annotate.Argument('smartObjectClass', annotate.Choice(choicesAttribute='plugins')),
+            ],
+                            label=_('Add')),
+            action=_('Add'))
 
     def add(self, context, smartObjectClass):
         request = context.locate(inevow.IRequest)

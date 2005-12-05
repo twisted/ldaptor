@@ -11,7 +11,7 @@ from ldaptor.apps.webui import i18n
 
 import os
 from nevow import rend, inevow, loaders, url, tags
-from formless import annotate, webform, iformless
+from formless import annotate, webform, iformless, configurable
 
 def getEntry(ctx, dn):
     user = ctx.locate(inevow.ISession).getLoggedInRoot().loggedIn
@@ -40,55 +40,21 @@ def checkPasswordTypos(newPassword, again):
             {},
             formErrorMessage=_('Passwords do not match.'))
 
-class IPasswordChange(annotate.TypedInterface):
-    def setPassword(self,
-                    ctx=annotate.Context(),
-                    newPassword=annotate.PasswordEntry(required=True,
-                                                       label=_('New password')),
-                    again=annotate.PasswordEntry(required=True,
-                                                 label=_('Again'))):
-        pass
-    setPassword = annotate.autocallable(setPassword,
-                                        label=_('Set password'))
-
-    def generateRandom(self,
-                       ctx=annotate.Context()):
-        pass
-    generateRandom = annotate.autocallable(generateRandom,
-                                           label=_('Generate random'))
-
-class IRemoveServicePassword(annotate.TypedInterface):
-    def remove(self,
-               ctx=annotate.Context()):
-        pass
-    remove = annotate.autocallable(remove,
-                                   label=_('Remove'))
-
-class ISetServicePassword(annotate.TypedInterface):
-    def setServicePassword(self,
-                           ctx=annotate.Context(),
-                           newPassword=annotate.PasswordEntry(required=True,
-                                                              label=_('New password')),
-                           again=annotate.PasswordEntry(required=True,
-                                                        label=_('Again')),
-                           ):
-        pass
-    setServicePassword = annotate.autocallable(setServicePassword,
-                                               label=_('Set password'))
-
-class ISetRandomServicePassword(annotate.TypedInterface):
-    def generateRandom(self,
-                       ctx=annotate.Context()):
-        pass
-    generateRandom = annotate.autocallable(generateRandom,
-                                           label=_('Generate random'))
-
-class RemoveServicePassword(object):
-    implements(IRemoveServicePassword)
-
+class RemoveServicePassword(configurable.Configurable):
     def __init__(self, dn):
-        super(RemoveServicePassword, self).__init__()
+        super(RemoveServicePassword, self).__init__(None)
         self.dn = dn
+
+    def getBindingNames(self, ctx):
+        return ['remove']
+
+    def bind_remove(self, ctx):
+        return annotate.MethodBinding(
+            'remove',
+            annotate.Method(arguments=[
+            annotate.Argument('ctx', annotate.Context()),
+            ],
+                            label=_('Remove')))
 
     def remove(self, ctx):
         e = getEntry(ctx, self.dn)
@@ -106,12 +72,25 @@ class RemoveServicePassword(object):
 
         return d
 
-class SetServicePassword(object):
-    implements(ISetServicePassword)
-
+class SetServicePassword(configurable.Configurable):
     def __init__(self, dn):
-        super(SetServicePassword, self).__init__()
+        super(SetServicePassword, self).__init__(None)
         self.dn = dn
+
+    def getBindingNames(self, ctx):
+        return ['setServicePassword']
+
+    def bind_setServicePassword(self, ctx):
+        return annotate.MethodBinding(
+            'setServicePassword',
+            annotate.Method(arguments=[
+            annotate.Argument('ctx', annotate.Context()),
+            annotate.Argument('newPassword', annotate.PasswordEntry(required=True,
+                                                                    label=_('New password'))),
+            annotate.Argument('again', annotate.PasswordEntry(required=True,
+                                                              label=_('Again'))),
+            ],
+                            label=_('Set password')))
 
     def _isPasswordAcceptable(self, ctx, newPassword, again):
         return checkPasswordTypos(newPassword, again)
@@ -135,12 +114,21 @@ class SetServicePassword(object):
 
         return d
 
-class SetRandomServicePassword(object):
-    implements(ISetRandomServicePassword)
-
+class SetRandomServicePassword(configurable.Configurable):
     def __init__(self, dn):
-        super(SetRandomServicePassword, self).__init__()
+        super(SetRandomServicePassword, self).__init__(None)
         self.dn = dn
+
+    def getBindingNames(self, ctx):
+        return ['generateRandom']
+
+    def bind_generateRandom(self, ctx):
+        return annotate.MethodBinding(
+            'generateRandom',
+            annotate.Method(arguments=[
+            annotate.Argument('ctx', annotate.Context()),
+            ],
+                            label=_('Generate random')))
 
     def generateRandom(self, ctx):
         d=generate_password.generate(reactor)
@@ -167,27 +155,28 @@ class SetRandomServicePassword(object):
         d.addCallback(_setPass, ctx)
         return d
 
-class IAddService(annotate.TypedInterface):
-    def add(self,
-            ctx=annotate.Context(),
-            serviceName=annotate.String(required=True,
-                                        label=_('Service name')),
-            newPassword=annotate.PasswordEntry(required=False,
-                                               label=_('New password'),
-                                               description=_("Leave empty to generate random password.")),
-            again=annotate.PasswordEntry(required=False,
-                                         label=_('Again')),
-            ):
-        pass
-    add = annotate.autocallable(add,
-                                label=_('Add'))
-
-class AddService(object):
-    implements(IAddService)
-
+class AddService(configurable.Configurable):
     def __init__(self, dn):
-        super(AddService, self).__init__()
+        super(AddService, self).__init__(None)
         self.dn = dn
+
+    def getBindingNames(self, ctx):
+        return ['add']
+
+    def bind_add(self, ctx):
+        return annotate.MethodBinding(
+            'add',
+            annotate.Method(arguments=[
+            annotate.Argument('ctx', annotate.Context()),
+            annotate.Argument('serviceName', annotate.String(required=True,
+                                                             label=_('Service name'))),
+            annotate.Argument('newPassword', annotate.PasswordEntry(required=False,
+                                                                    label=_('New password'),
+                                                                    description=_("Leave empty to generate random password."))),
+            annotate.Argument('again', annotate.PasswordEntry(required=False,
+                                                              label=_('Again'))),
+            ],
+                            label=_('Add')))
 
     def add(self, ctx, serviceName, newPassword, again):
         if newPassword or again:
@@ -329,12 +318,34 @@ class ServicePasswordChangeMixin(object):
 
 
 class ConfirmChange(ServicePasswordChangeMixin, rend.Page):
-    implements(IPasswordChange)
     addSlash = True
 
     docFactory = loaders.xmlfile(
         'change_password.xhtml',
         templateDir=os.path.split(os.path.abspath(__file__))[0])
+
+    def getBindingNames(self, ctx):
+        return ['setPassword']
+
+    def bind_setPassword(self, ctx):
+        return annotate.MethodBinding(
+            'setPassword',
+            annotate.Method(arguments=[
+            annotate.Argument('ctx', annotate.Context()),
+            annotate.Argument('newPassword', annotate.PasswordEntry(required=True,
+                                                                    label=_('New password'))),
+            annotate.Argument('again', annotate.PasswordEntry(required=True,
+                                                              label=_('Again'))),
+            ],
+                            label=_('Set password')))
+
+    def bind_generateRandom(self, ctx):
+        return annotate.MethodBinding(
+            'generateRandom',
+            annotate.Method(arguments=[
+            annotate.Argument('ctx', annotate.Context()),
+            ],
+                            label=_('Generate random')))
 
     servicePasswordAction_10_remove = RemoveServicePassword
     servicePasswordAction_20_set = SetServicePassword

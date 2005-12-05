@@ -65,25 +65,6 @@ class LDAPDN(annotate.String):
                   "%r is not a valid LDAP DN: %s" % (val, e)
         return dn
 
-class IBaseDN(annotate.TypedInterface):
-    def go(self,
-           ctx=annotate.Context(),
-           baseDN=LDAPDN(
-        label=_('Base DN'),
-        description=_("The top-level LDAP DN you want"
-                      " to browse, e.g. dc=example,dc=com"))):
-        pass
-    go = annotate.autocallable(go,
-                               label=_('Go'))
-
-class BaseDN(object):
-    implements(IBaseDN)
-
-    def go(self, ctx, baseDN):
-        u = url.URL.fromContext(ctx)
-        u = u.child(str(baseDN))
-        return u
-
 class LdaptorWebUIGadget(rend.Page):
     addSlash = True
 
@@ -101,8 +82,26 @@ class LdaptorWebUIGadget(rend.Page):
         self.putChild('ldaptor.css', static.File(
             os.path.join(dirname, 'ldaptor.css')))
 
-    def configurable_(self, context):
-        return BaseDN()
+    def getBindingNames(self, ctx):
+        return ['go']
+
+    def bind_go(self, ctx):
+        return annotate.MethodBinding(
+            'go',
+            annotate.Method(arguments=[
+            annotate.Argument('ctx', annotate.Context()),
+            annotate.Argument('baseDN', LDAPDN(
+            label=_('Base DN'),
+            description=_("The top-level LDAP DN you want"
+                          " to browse, e.g. dc=example,dc=com"))),
+            ],
+                            label=_('Go')),
+            )
+
+    def go(self, ctx, baseDN):
+        u = url.URL.fromContext(ctx)
+        u = u.child(str(baseDN))
+        return u
 
     def render_form(self, context, data):
         return webform.renderForms()

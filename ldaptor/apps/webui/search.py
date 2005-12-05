@@ -20,25 +20,27 @@ class IMove(components.Interface):
     """Entries being moved in the tree."""
     pass
 
-class IMoveItem(annotate.TypedInterface):
-    def move(self,
-             context=annotate.Context()):
-        pass
-    move = annotate.autocallable(move,
-                                 label=_('Move'))
+class MoveItem(configurable.Configurable):
+    def getBindingNames(self, ctx):
+        return ['move', 'cancel']
 
-    def cancel(self,
-               context=annotate.Context()):
-        pass
-    cancel = annotate.autocallable(cancel,
-                                   label=_('Cancel'))
+    def bind_move(self, ctx):
+        return annotate.MethodBinding(
+            'move',
+            annotate.Method(arguments=[
+            annotate.Argument('context', annotate.Context()),
+            ],
+                            label=_('Move')),
+            action=_('Move'))
 
-class MoveItem(object):
-    implements(IMoveItem)
-
-    def __init__(self, entry):
-        super(MoveItem, self).__init__()
-        self.entry = entry
+    def bind_cancel(self, ctx):
+        return annotate.MethodBinding(
+            'cancel',
+            annotate.Method(arguments=[
+            annotate.Argument('context', annotate.Context()),
+            ],
+                            label=_('Cancel')),
+            action=_('Cancel'))
 
     def _remove(self, context):
         session = context.locate(inevow.ISession)
@@ -46,17 +48,17 @@ class MoveItem(object):
         if move is None:
             return
         try:
-            move.remove(self.entry)
+            move.remove(self.original)
         except ValueError:
             pass
 
     def move(self, context):
         cfg = context.locate(interfaces.ILDAPConfig)
         newDN = distinguishedname.DistinguishedName(
-            self.entry.dn.split()[:1]
+            self.original.dn.split()[:1]
             + iwebui.ICurrentDN(context).split())
-        d = self.entry.move(newDN)
-        d.addCallback(lambda dummy: _('Moved %s to %s.') % (self.entry.dn, newDN))
+        d = self.original.move(newDN)
+        d.addCallback(lambda dummy: _('Moved %s to %s.') % (self.original.dn, newDN))
         def _cb(r, context):
             self._remove(context)
             return r
@@ -65,7 +67,7 @@ class MoveItem(object):
 
     def cancel(self, context):
         self._remove(context)
-        return _('Cancelled move of %s') % self.entry.dn
+        return _('Cancelled move of %s') % self.original.dn
 
 def strScope(scope):
     if scope == pureldap.LDAP_SCOPE_wholeSubtree:
