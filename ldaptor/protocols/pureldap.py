@@ -418,7 +418,7 @@ class LDAPFilter_substrings(BERSequence):
         assert len(l[1])>=1
 
         r = klass(type=l[0].value,
-                  substrings=l[1],
+                  substrings=list(l[1]),
                   tag=tag)
         return r
     fromBER = classmethod(fromBER)

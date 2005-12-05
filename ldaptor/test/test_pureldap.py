@@ -582,3 +582,20 @@ class TestEquality(unittest.TestCase):
                     x=i_class(*i_args)
                     y=j_class(*j_args)
                     self.assertNotEquals(x, y)
+
+class Substrings(unittest.TestCase):
+    def test_length(self):
+        """LDAPFilter_substrings.substrings behaves like a proper list."""
+        decoder = pureldap.LDAPBERDecoderContext(
+            fallback=pureber.BERDecoderContext())
+        filt = pureldap.LDAPFilter_substrings.fromBER(
+            tag=pureldap.LDAPFilter_substrings.tag,
+            content=s(0x04, 4, 'mail',
+                      0x30, 6,
+                      0x80, 4, 'foo@'),
+            berdecoder=decoder)
+        # The confusion that used to occur here was because
+        # filt.substrings was left as a BERSequence, which under the
+        # current str()-to-wire-protocol system had len() > 1 even
+        # when empty, and that tripped e.g. entry.match()
+        self.assertEquals(len(filt.substrings), 1)
