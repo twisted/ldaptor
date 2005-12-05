@@ -1,3 +1,4 @@
+from zope.interface import implements
 from twisted.internet import reactor
 from twisted.internet import defer
 from ldaptor.protocols import pureldap
@@ -83,7 +84,7 @@ class ISetRandomServicePassword(annotate.TypedInterface):
                                            label=_('Generate random'))
 
 class RemoveServicePassword(object):
-    __implements__ = IRemoveServicePassword
+    implements(IRemoveServicePassword)
 
     def __init__(self, dn):
         super(RemoveServicePassword, self).__init__()
@@ -106,7 +107,7 @@ class RemoveServicePassword(object):
         return d
 
 class SetServicePassword(object):
-    __implements__ = ISetServicePassword
+    implements(ISetServicePassword)
 
     def __init__(self, dn):
         super(SetServicePassword, self).__init__()
@@ -135,7 +136,7 @@ class SetServicePassword(object):
         return d
 
 class SetRandomServicePassword(object):
-    __implements__ = ISetRandomServicePassword
+    implements(ISetRandomServicePassword)
 
     def __init__(self, dn):
         super(SetRandomServicePassword, self).__init__()
@@ -182,7 +183,7 @@ class IAddService(annotate.TypedInterface):
                                 label=_('Add'))
 
 class AddService(object):
-    __implements__ = IAddService
+    implements(IAddService)
 
     def __init__(self, dn):
         super(AddService, self).__init__()
@@ -328,7 +329,7 @@ class ServicePasswordChangeMixin(object):
 
 
 class ConfirmChange(ServicePasswordChangeMixin, rend.Page):
-    __implements__ = rend.Page.__implements__, IPasswordChange
+    implements(IPasswordChange)
     addSlash = True
 
     docFactory = loaders.xmlfile(
@@ -340,8 +341,8 @@ class ConfirmChange(ServicePasswordChangeMixin, rend.Page):
     servicePasswordAction_30_random = SetRandomServicePassword
 
     def data_css(self, ctx, data):
-        request = ctx.locate(inevow.IRequest)
-        root = url.URL.fromRequest(request).clear().parent().parent().parent()
+        root = (url.URL.fromContext(ctx).clear()
+                .parentdir().parentdir().parentdir())
         return [
             root.child('form.css'),
             root.child('ldaptor.css'),
@@ -401,9 +402,8 @@ class ConfirmChange(ServicePasswordChangeMixin, rend.Page):
         return ctx.tag.clear()[data]
 
     def data_header(self, ctx, data):
-        request = ctx.locate(inevow.IRequest)
-        u=url.URL.fromRequest(request)
-        u=u.parent().parent()
+        u=url.URL.fromContext(ctx)
+        u=u.parentdir().parentdir()
         l=[]
         l.append(tags.a(href=u.sibling("search"))[_("Search")])
         l.append(tags.a(href=u.sibling("add"))[_("add new entry")])

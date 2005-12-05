@@ -1,5 +1,6 @@
 import os.path
 import ConfigParser
+from zope.interface import implements
 from ldaptor import interfaces
 from ldaptor.insensitive import InsensitiveString
 from ldaptor.protocols.ldap import distinguishedname
@@ -11,7 +12,8 @@ class MissingBaseDNError(Exception):
         return self.__doc__
 
 class LDAPConfig(object):
-    __implements__ = interfaces.ILDAPConfig
+    implements(interfaces.ILDAPConfig)
+
     baseDN = None
     identityBaseDN = None
     identitySearch = None

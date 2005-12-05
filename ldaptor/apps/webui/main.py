@@ -1,3 +1,4 @@
+from zope.interface import implements
 from twisted.cred import portal, checkers, credentials
 from nevow import guard, inevow
 from ldaptor.config import LDAPConfig
@@ -5,7 +6,7 @@ from ldaptor.apps.webui import gadget
 from ldaptor.checkers import LDAPBindingChecker
 
 class TODOGetRidOfMeRealm:
-    __implements__ = portal.IRealm,
+    implements(portal.IRealm)
 
     def __init__(self, *args, **kwargs):
         self.args = args

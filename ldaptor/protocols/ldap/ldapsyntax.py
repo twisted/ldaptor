@@ -1,5 +1,6 @@
 """Pythonic API for LDAP operations."""
 
+from zope.interface import implements
 from twisted.internet import defer
 from twisted.python.failure import Failure
 from ldaptor.protocols.ldap import ldapclient, ldif, distinguishedname, ldaperrors
@@ -97,10 +98,10 @@ class JournaledLDAPAttributeSet(attributeset.LDAPAttributeSet):
         self.ldapObject.journal(delta.Delete(self.key))
 
 class LDAPEntryWithClient(entry.EditableLDAPEntry):
-    __implements__ = (interfaces.ILDAPEntry,
-                      interfaces.IEditableLDAPEntry,
-                      interfaces.IConnectedLDAPEntry,
-                      )
+    implements(interfaces.ILDAPEntry,
+               interfaces.IEditableLDAPEntry,
+               interfaces.IConnectedLDAPEntry,
+               )
 
     _state = 'invalid'
     """

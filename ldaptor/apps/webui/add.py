@@ -1,3 +1,4 @@
+from zope.interface import implements
 from twisted.internet import defer
 from twisted.python import plugin
 
@@ -72,6 +73,8 @@ class AddOCForm(configurable.Configurable):
                 return self.name[0]
 
         formFields = [
+            annotate.Argument('ctx',
+                              annotate.Context()),
             annotate.Argument('request',
                               annotate.Request()),
             annotate.Argument('structuralObjectClass',
@@ -96,7 +99,7 @@ class AddOCForm(configurable.Configurable):
                             label=_('Add')),
             action=_('Add'))
 
-    def add(self, request, structuralObjectClass, **kw):
+    def add(self, ctx, request, structuralObjectClass, **kw):
         assert structuralObjectClass is not None
         structuralObjectClass = str(structuralObjectClass)
         auxiliaryObjectClasses = []
@@ -106,7 +109,7 @@ class AddOCForm(configurable.Configurable):
                 k = k[len('auxiliary_'):]
                 if v:
                     auxiliaryObjectClasses.append(k)
-        u = url.URL.fromRequest(request)
+        u = url.URL.fromContext(ctx)
         request.setComponent(
             iformless.IRedirectAfterPost,
             u.child('manual').child('+'.join([structuralObjectClass]
@@ -342,9 +345,9 @@ class ReallyAddPage(rend.Page):
         'add-really.xhtml',
         templateDir=os.path.split(os.path.abspath(__file__))[0])
 
-    def data_css(self, context, data):
-        request = context.locate(inevow.IRequest)
-        u = (url.URL.fromRequest(request).clear().parent().parent().parent().parent()
+    def data_css(self, ctx, data):
+        u = (url.URL.fromContext(ctx).clear().parentdir().parentdir()
+             .parentdir().parentdir()
              .child('form.css'))
         return [ u ]
 
@@ -352,10 +355,9 @@ class ReallyAddPage(rend.Page):
         context.fillSlots('url', data)
         return context.tag
 
-    def data_header(self, context, data):
-        request = context.locate(inevow.IRequest)
-        u=url.URL.fromRequest(request)
-        u=u.parent().parent().parent()
+    def data_header(self, ctx, data):
+        u=url.URL.fromContext(ctx)
+        u=u.parentdir().parentdir().parentdir()
         l=[]
         l.append(tags.a(href=u.sibling("search"))[_("Search")])
         l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
@@ -378,13 +380,12 @@ class ReallyAddPage(rend.Page):
         if e is None:
             return context.tag.clear()[obj]
 
-        request = context.locate(inevow.IRequest)
-        u=url.URL.fromRequest(request)
-        u=u.parent().parent().parent()
+        u=url.URL.fromContext(context)
+        u=u.parentdir().parentdir().parentdir()
 
         return context.tag.clear()[
             _("Added "),
-            tags.a(href=u.parent().child(e.dn).child("search"))[e.dn],
+            tags.a(href=u.parentdir().child(e.dn).child("search"))[e.dn],
             _(" successfully. "),
 
             # TODO share implementation with entryLinks
@@ -443,7 +444,7 @@ class IChooseSmartObject(annotate.TypedInterface):
                                 label=_('Add'))
 
 class ChooseSmartObject(object):
-    __implements__ = IChooseSmartObject
+    implements(IChooseSmartObject)
 
     def __init__(self, pluginNames):
         self.plugins = list(pluginNames)
@@ -451,7 +452,7 @@ class ChooseSmartObject(object):
 
     def add(self, context, smartObjectClass):
         request = context.locate(inevow.IRequest)
-        u = url.URL.fromRequest(request)
+        u = url.URL.fromContext(context)
         request.setComponent(
             iformless.IRedirectAfterPost,
             u.child('smart').child(smartObjectClass))
@@ -484,9 +485,8 @@ class AddPage(rend.Page):
                 return plug
         raise KeyError, name
 
-    def data_css(self, context, data):
-        request = context.locate(inevow.IRequest)
-        u = (url.URL.fromRequest(request).clear().parent().parent()
+    def data_css(self, ctx, data):
+        u = (url.URL.fromContext(ctx).clear().parentdir().parentdir()
              .child('form.css'))
         return [ u ]
 
@@ -494,10 +494,9 @@ class AddPage(rend.Page):
         context.fillSlots('url', data)
         return context.tag
 
-    def data_header(self, context, data):
-        request = context.locate(inevow.IRequest)
-        u=url.URL.fromRequest(request)
-        u=u.parent()
+    def data_header(self, ctx, data):
+        u=url.URL.fromContext(ctx)
+        u=u.parentdir()
         l=[]
         l.append(tags.a(href=u.sibling("search"))[_("Search")])
         return l

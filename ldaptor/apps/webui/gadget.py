@@ -1,3 +1,4 @@
+from zope.interface import implements
 from ldaptor.apps.webui import login, search, edit, add, delete, mass_change_password, change_password, move, iwebui
 from ldaptor.protocols.ldap import distinguishedname
 from ldaptor.apps.webui.uriquote import uriUnquote
@@ -66,7 +67,7 @@ class LDAPDN(annotate.String):
 
 class IBaseDN(annotate.TypedInterface):
     def go(self,
-           request=annotate.Request(),
+           ctx=annotate.Context(),
            baseDN=LDAPDN(
         label=_('Base DN'),
         description=_("The top-level LDAP DN you want"
@@ -76,13 +77,12 @@ class IBaseDN(annotate.TypedInterface):
                                label=_('Go'))
 
 class BaseDN(object):
-    __implements__ = IBaseDN
+    implements(IBaseDN)
 
-    def go(self, request, baseDN):
-        u = url.URL.fromRequest(request)
+    def go(self, ctx, baseDN):
+        u = url.URL.fromContext(ctx)
         u = u.child(str(baseDN))
-        request.setComponent(iformless.IRedirectAfterPost, u)
-        return _('Redirecting...')
+        return u
 
 class LdaptorWebUIGadget(rend.Page):
     addSlash = True
@@ -107,8 +107,8 @@ class LdaptorWebUIGadget(rend.Page):
     def render_form(self, context, data):
         return webform.renderForms()
 
-    def locateChild(self, request, segments):
-        ret = super(LdaptorWebUIGadget, self).locateChild(request, segments)
+    def locateChild(self, ctx, segments):
+        ret = super(LdaptorWebUIGadget, self).locateChild(ctx, segments)
         if ret != rend.NotFound:
             return ret
 
@@ -118,7 +118,7 @@ class LdaptorWebUIGadget(rend.Page):
             dn = distinguishedname.DistinguishedName(stringValue=unquoted)
         except distinguishedname.InvalidRelativeDistinguishedName, e:
             # TODO There's no way to throw a FormException at this stage.
-            u = url.URL.fromRequest(request)
+            u = url.URL.fromContext(ctx)
 
             # TODO protect against guard bug, see
             # http://divmod.org/users/roundup.twistd/nevow/issue74

@@ -86,9 +86,9 @@ class ReallyMassPasswordChangePage(rend.Page):
         super(ReallyMassPasswordChangePage, self).__init__()
         self.entries = entries
 
-    def data_css(self, context, data):
-        request = context.locate(inevow.IRequest)
-        u = url.URL.fromRequest(request).clear().parent().parent().parent()
+    def data_css(self, ctx, data):
+        u = (url.URL.fromContext(ctx).clear()
+             .parentdir().parentdir().parentdir())
         return [
             u.child('form.css'),
             u.child('ldaptor.css'),
@@ -98,10 +98,9 @@ class ReallyMassPasswordChangePage(rend.Page):
         context.fillSlots('url', data)
         return context.tag
 
-    def data_header(self, context, data):
-        request = context.locate(inevow.IRequest)
-        u=url.URL.fromRequest(request)
-        u=u.parent().parent()
+    def data_header(self, ctx, data):
+        u=url.URL.fromContext(ctx)
+        u=u.parentdir().parentdir()
         l=[]
         l.append(tags.a(href=u.sibling("search"))[_("Search")])
         l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
@@ -151,9 +150,8 @@ class MassPasswordChangePage(rend.Page):
         self.baseObject = baseObject
 
     def render_url(self, context, data):
-        request = context.locate(inevow.IRequest)
-        u = url.URL.fromRequest(request)
-        return context.tag(href=u.parent().child('search'))
+        u = url.URL.fromContext(context)
+        return context.tag(href=u.parentdir().child('search'))
 
     def childFactory(self, context, name):
         entry = inevow.ISession(context).getLoggedInRoot().loggedIn

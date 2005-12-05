@@ -1,3 +1,4 @@
+from zope.interface import implements
 from ldaptor.protocols.ldap import ldapsyntax, distinguishedname
 from ldaptor.apps.webui.uriquote import uriUnquote
 from ldaptor.apps.webui.i18n import _
@@ -9,7 +10,7 @@ from nevow import rend, inevow, loaders, url, tags
 from formless import annotate, webform, iformless
 
 class IDelete(annotate.TypedInterface):
-    def delete(self, request=annotate.Request()):
+    def delete(self, ctx=annotate.Context()):
         pass
     delete = annotate.autocallable(delete,
                                    action=_('Delete'),
@@ -21,7 +22,8 @@ class ErrorWrapper:
         self.value = value
 
 class ConfirmDelete(rend.Page):
-    __implements__ = rend.Page.__implements__, IDelete
+    implements(IDelete)
+
     docFactory = loaders.xmlfile(
         'delete.xhtml',
         templateDir=os.path.split(os.path.abspath(__file__))[0])
@@ -30,9 +32,8 @@ class ConfirmDelete(rend.Page):
         super(ConfirmDelete, self).__init__()
         self.dn = dn
 
-    def data_css(self, context, data):
-        request = context.locate(inevow.IRequest)
-        u = (url.URL.fromRequest(request).clear().parent().parent()
+    def data_css(self, ctx, data):
+        u = (url.URL.fromContext(ctx).clear().parentdir().parentdir()
              .child('form.css'))
         return [ u ]
 
@@ -40,7 +41,8 @@ class ConfirmDelete(rend.Page):
         context.fillSlots('url', data)
         return context.tag
 
-    def delete(self, request):
+    def delete(self, ctx):
+        request = inevow.IRequest(ctx)
         user = request.getSession().getLoggedInRoot().loggedIn
         e=ldapsyntax.LDAPEntry(client=user.client,
                                dn=self.dn)
@@ -50,7 +52,7 @@ class ConfirmDelete(rend.Page):
             errback=lambda fail: _("Failed: %s.")
             % fail.getErrorMessage())
         def _redirect(r):
-            u = url.URL.fromRequest(request)
+            u = url.URL.fromContext(ctx)
             u = u.child('deleted')
             request.setComponent(iformless.IRedirectAfterPost, u)
             return r
@@ -89,10 +91,9 @@ class ConfirmDelete(rend.Page):
     def render_passthrough(self, context, data):
         return context.tag.clear()[data]
 
-    def data_header(self, context, data):
-        request = context.locate(inevow.IRequest)
-        u=url.URL.fromRequest(request)
-        u=u.parent().parent()
+    def data_header(self, ctx, data):
+        u=url.URL.fromContext(ctx)
+        u=u.parentdir().parentdir()
         l=[]
         l.append(tags.a(href=u.sibling("search"))[_("Search")])
         l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
@@ -120,10 +121,9 @@ class Deleted(rend.Page):
     def data_dn(self, context, data):
         return self.dn
 
-    def data_header(self, context, data):
-        request = context.locate(inevow.IRequest)
-        u=url.URL.fromRequest(request)
-        u=u.parent().parent()
+    def data_header(self, ctx, data):
+        u=url.URL.fromContext(ctx)
+        u=u.parentdir().parentdir()
         l=[]
         l.append(tags.a(href=u.sibling("search"))[_("Search")])
         l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
@@ -151,9 +151,8 @@ class GetDN(rend.Page):
         templateDir=os.path.split(os.path.abspath(__file__))[0])
 
     def render_url(self, context, data):
-        request = context.locate(inevow.IRequest)
-        u = url.URL.fromRequest(request)
-        return context.tag(href=u.parent().child('search'))
+        u = url.URL.fromContext(context)
+        return context.tag(href=u.parentdir().child('search'))
 
     def childFactory(self, context, name):
         unquoted=uriUnquote(name)

@@ -1,3 +1,4 @@
+from zope.interface import implements
 from nevow import tags, compy, inevow, flat
 from ldaptor.protocols.ldap import ldapsyntax, distinguishedname
 from ldaptor import interfaces
@@ -73,7 +74,7 @@ def keyvalue_item(context, data):
     return context.tag.clear()[ k(data=key), v(data=value) ]
 
 class _DictLike(object):
-    __implements__ = inevow.IContainer
+    implements(inevow.IContainer)
 
     def __init__(self, original):
         self.original = original
@@ -85,7 +86,7 @@ class _DictLike(object):
         return self.original.items()
 
 class LDAPEntryContainer(object):
-    __implements__ = inevow.IContainer
+    implements(inevow.IContainer)
 
     def __init__(self, original):
         self.original = original

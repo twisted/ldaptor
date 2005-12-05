@@ -1,3 +1,4 @@
+from zope.interface import implements
 from twisted.cred import checkers, credentials, error
 from twisted.internet import reactor
 from twisted.python import failure
@@ -26,7 +27,7 @@ class LDAPBindingChecker:
 
     """
 
-    __implements__ = checkers.ICredentialsChecker
+    implements(checkers.ICredentialsChecker)
     credentialInterfaces = (credentials.IUsernamePassword,)
 
     def __init__(self, cfg):

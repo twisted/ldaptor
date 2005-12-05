@@ -1,4 +1,5 @@
 import sets, random, sha, base64
+from zope.interface import implements
 from twisted.internet import defer
 from twisted.python.util import InsensitiveDict
 from ldaptor import interfaces, attributeset, delta
@@ -18,7 +19,7 @@ def sshaDigest(passphrase, salt=None):
     return crypt
 
 class BaseLDAPEntry(object):
-    __implements__ = (interfaces.ILDAPEntry,)
+    implements(interfaces.ILDAPEntry)
     dn = None
 
     def __init__(self, dn, attributes={}):
@@ -187,7 +188,7 @@ class BaseLDAPEntry(object):
         return False
 
 class EditableLDAPEntry(BaseLDAPEntry):
-    __implements__ = (interfaces.IEditableLDAPEntry,)
+    implements(interfaces.IEditableLDAPEntry)
 
     def __setitem__(self, key, value):
         new=self.buildAttributeSet(key, value)

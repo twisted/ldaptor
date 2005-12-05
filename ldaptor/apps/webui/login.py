@@ -8,7 +8,7 @@ def getActionURL(current, history):
         action = action.here()
     else:
         for element in history[1:]:
-            action = action.parent()
+            action = action.parentdir()
 
     action = action.child(guard.LOGIN_AVATAR)
     for element in history:
@@ -30,8 +30,7 @@ class LoginPage(rend.Page):
         return LoginPage(self.history + list(segments)), []
 
     def render_form(self, context, data):
-        request = context.locate(inevow.IRequest)
-        current = url.URL.fromRequest(request)
+        current = url.URL.fromContext(context)
         action = getActionURL(current, self.history)
         context.fillSlots('action-url', str(action))
         return context.tag

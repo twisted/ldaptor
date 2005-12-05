@@ -13,10 +13,9 @@ class MovePage(rend.Page):
         'move.xhtml',
         templateDir=os.path.split(os.path.abspath(__file__))[0])
 
-    def render_url(self, context, data):
-        request = context.locate(inevow.IRequest)
-        u = url.URL.fromRequest(request)
-        return context.tag(href=u.parent().child('search'))
+    def render_url(self, ctx, data):
+        u = url.URL.fromContext(ctx)
+        return ctx.tag(href=u.parentdir().child('search'))
 
     def childFactory(self, context, name):
         dn = uriUnquote(name)
@@ -31,7 +30,7 @@ class MovePage(rend.Page):
         e = ldapsyntax.LDAPEntryWithClient(dn=dn,
                                            client=userEntry.client)
         move.append(e)
-        u = url.URL.fromRequest(inevow.IRequest(context)).sibling('search')
+        u = url.URL.fromContext(context).sibling('search')
         return u
 
     render_i18n = i18n.render()

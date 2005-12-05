@@ -324,7 +324,7 @@ class EditForm(configurable.Configurable):
             d.addCallback(_move)
             def _redirect(r, ctx, newDN):
                 request = inevow.IRequest(ctx)
-                u = url.URL.fromRequest(request).curdir()
+                u = url.URL.fromContext(ctx).curdir()
                 u = u.child(uriQuote(newDN))
                 request.setComponent(iformless.IRedirectAfterPost, u)
                 return r
@@ -368,9 +368,9 @@ class ReallyEditPage(rend.Page):
         self.attributeTypes = attributeTypes
         self.objectClasses = objectClasses
 
-    def data_css(self, context, data):
-        request = context.locate(inevow.IRequest)
-        u = (url.URL.fromRequest(request).clear().parent().parent().parent()
+    def data_css(self, ctx, data):
+        u = (url.URL.fromContext(ctx).clear()
+             .parentdir().parentdir().parentdir()
              .child('form.css'))
         return [ u ]
 
@@ -378,10 +378,9 @@ class ReallyEditPage(rend.Page):
         context.fillSlots('url', data)
         return context.tag
 
-    def data_header(self, context, data):
-        request = context.locate(inevow.IRequest)
-        u=url.URL.fromRequest(request)
-        u=u.parent().parent()
+    def data_header(self, ctx, data):
+        u=url.URL.fromContext(ctx)
+        u=u.parentdir().parentdir()
         l=[]
         l.append(tags.a(href=u.sibling("search"))[_("Search")])
         l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
@@ -408,13 +407,14 @@ class ReallyEditPage(rend.Page):
         if not isinstance(obj, EditStatus):
             return context.tag.clear()[obj]
 
-        request = context.locate(inevow.IRequest)
-        u=url.URL.fromRequest(request)
-        u=u.parent().parent()
+        u=url.URL.fromContext(context)
+        u=u.parentdir().parentdir()
 
         return context.tag.clear()[
             _("Edited "),
-            tags.a(href=u.parent().child(obj.entry.dn).child("search"))[obj.entry.dn],
+            tags.a(href=u.parentdir()
+                   .child(obj.entry.dn)
+                   .child("search"))[obj.entry.dn],
             _(" successfully. "),
 
             # TODO share implementation with entryLinks
@@ -438,10 +438,9 @@ class EditPage(rend.Page):
         'edit.xhtml',
         templateDir=os.path.split(os.path.abspath(__file__))[0])
 
-    def render_url(self, context, data):
-        request = context.locate(inevow.IRequest)
-        u = url.URL.fromRequest(request)
-        return context.tag(href=u.parent().child('search'))
+    def render_url(self, ctx, data):
+        u = url.URL.fromContext(ctx)
+        return ctx.tag(href=u.parentdir().child('search'))
 
     def childFactory(self, context, name):
         dn = uriUnquote(name)

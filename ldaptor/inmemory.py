@@ -1,3 +1,4 @@
+from zope.interface import implements
 from twisted.internet import defer, error
 from twisted.python.failure import Failure
 from ldaptor import interfaces, entry, entryhelpers
@@ -12,8 +13,7 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
                                 entryhelpers.MatchMixin,
                                 entryhelpers.SearchByTreeWalkingMixin,
                                 ):
-    __implements__ = (interfaces.IConnectedLDAPEntry,
-                      )
+    implements(interfaces.IConnectedLDAPEntry)
 
     def __init__(self, *a, **kw):
         entry.BaseLDAPEntry.__init__(self, *a, **kw)

@@ -1,3 +1,4 @@
+from zope.interface import implements
 from twisted.internet import defer
 from twisted.python import components
 from ldaptor.protocols.ldap import ldapclient, ldapsyntax
@@ -33,7 +34,7 @@ class IMoveItem(annotate.TypedInterface):
                                    label=_('Cancel'))
 
 class MoveItem(object):
-    __implements__ = IMoveItem
+    implements(IMoveItem)
 
     def __init__(self, entry):
         super(MoveItem, self).__init__()
@@ -77,7 +78,7 @@ def strScope(scope):
         raise RuntimeError, 'scope is not known: %r' % scope
 
 class SearchForm(configurable.Configurable):
-    __implements__ = configurable.Configurable.__implements__, inevow.IContainer
+    implements(inevow.IContainer)
 
     filter = None
 
@@ -228,9 +229,8 @@ class SearchPage(rend.Page):
     def __init__(self):
         super(SearchPage, self).__init__()
 
-    def data_css(self, context, data):
-        request = context.locate(inevow.IRequest)
-        root = url.URL.fromRequest(request).clear().parent().parent()
+    def data_css(self, ctx, data):
+        root = url.URL.fromContext(ctx).clear().parentdir().parentdir()
         return [
             root.child('form.css'),
             root.child('ldaptor.css'),
@@ -293,10 +293,9 @@ class SearchPage(rend.Page):
         configurable = self.locateConfigurable(context, '')
         return configurable
 
-    def data_header(self, context, data):
-        request = context.locate(inevow.IRequest)
-        u=url.URL.fromRequest(request)
-        u=u.parent()
+    def data_header(self, ctx, data):
+        u=url.URL.fromContext(ctx)
+        u=u.parentdir()
         l=[]
         l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
         return l
@@ -328,7 +327,7 @@ class SearchPage(rend.Page):
                and dn!=distinguishedname.DistinguishedName(stringValue='')):
             firstPart=dn.split()[0]
 
-            u = url.here.parent().parent().child(dn)
+            u = url.here.parentdir().parentdir().child(dn)
             segments = inevow.ICurrentSegments(ctx)
             if segments[-1] == '':
                 u = u.child(segments[-2]).child(segments[-1])
@@ -342,19 +341,18 @@ class SearchPage(rend.Page):
         ctx.tag['%s\n' % str(dn)]
         return ctx.tag
 
-    def render_entryLinks(self, context, data):
-        request = context.locate(inevow.IRequest)
-        u = url.URL.fromRequest(request)
-        l = [ (u.parent().sibling('edit').child(uriQuote(data)),
+    def render_entryLinks(self, ctx, data):
+        u = url.URL.fromContext(ctx)
+        l = [ (u.parentdir().sibling('edit').child(uriQuote(data)),
                _('edit')),
-              (u.parent().sibling('move').child(uriQuote(data)),
+              (u.parentdir().sibling('move').child(uriQuote(data)),
                _('move')),
-              (u.parent().sibling('delete').child(uriQuote(data)),
+              (u.parentdir().sibling('delete').child(uriQuote(data)),
                _('delete')),
-              (u.parent().sibling('change_password').child(uriQuote(data)),
+              (u.parentdir().sibling('change_password').child(uriQuote(data)),
                _('change password')),
               ]
-        return self.render_sequence(context, l)
+        return self.render_sequence(ctx, l)
 
     def render_listLen(self, context, data):
         if data is None:
@@ -363,12 +361,11 @@ class SearchPage(rend.Page):
             length = len(data)
             return context.tag.clear()[length]
 
-    def render_mass_change_password(self, context, data):
-        request = context.locate(inevow.IRequest)
-        u = url.URL.fromRequest(request)
-        u = u.parent().sibling("mass_change_password")
+    def render_mass_change_password(self, ctx, data):
+        u = url.URL.fromContext(ctx)
+        u = u.parentdir().sibling("mass_change_password")
         u = u.child(uriQuote(data))
-        return context.tag(href=u)
+        return ctx.tag(href=u)
 
     def data_move(self, context, data):
         session = context.locate(inevow.ISession)
