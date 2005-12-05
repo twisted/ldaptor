@@ -8,8 +8,7 @@ from ldaptor.protocols import pureldap, pureber
 from ldaptor.protocols.ldap import ldapsyntax
 
 class TestEntryMatch(unittest.TestCase):
-    def TODOtest_matchAll(self):
-        # TODO must be case-independent
+    def test_matchAll(self):
         o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
                                              attributes={
             'objectClass': ['a', 'b'],
@@ -123,6 +122,18 @@ class TestEntryMatch(unittest.TestCase):
             assertionValue=pureber.BEROctetString('a')))
         self.assertEquals(result, True)
 
+    def test_equality_match_caseInsensitive(self):
+        o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+            'objectClass': ['a', 'b'],
+            'aValue': ['a'],
+            'bValue': ['b'],
+            })
+        result = o.match(pureldap.LDAPFilter_equalityMatch(
+            attributeDesc=pureber.BEROctetString('avaLUe'),
+            assertionValue=pureber.BEROctetString('A')))
+        self.assertEquals(result, True)
+
 
     def test_equality_noMatch(self):
         o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
@@ -214,6 +225,37 @@ class TestEntryMatch(unittest.TestCase):
             pureldap.LDAPFilter_substrings_any('c'),
             pureldap.LDAPFilter_substrings_any('d'),
             pureldap.LDAPFilter_substrings_final('e'),
+            ]))
+        self.assertEquals(result, True)
+
+    def test_substrings_match6(self):
+        o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+            'objectClass': ['a', 'b'],
+            'aValue': ['aBCdE'],
+            'bValue': ['b'],
+            })
+        result = o.match(pureldap.LDAPFilter_substrings(
+            type='aValue',
+            substrings=[
+            pureldap.LDAPFilter_substrings_initial('A'),
+            pureldap.LDAPFilter_substrings_any('b'),
+            pureldap.LDAPFilter_substrings_any('C'),
+            pureldap.LDAPFilter_substrings_any('D'),
+            pureldap.LDAPFilter_substrings_final('e'),
+            ]))
+        self.assertEquals(result, True)
+
+    def test_substrings_match7(self):
+        o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
+                                             attributes={
+            'objectClass': ['a', 'b'],
+            'aValue': ['Foo'],
+            })
+        result = o.match(pureldap.LDAPFilter_substrings(
+            type='aValue',
+            substrings=[
+            pureldap.LDAPFilter_substrings_initial('f'),
             ]))
         self.assertEquals(result, True)
 

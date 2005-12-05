@@ -138,10 +138,10 @@ class MatchMixin(object):
         if isinstance(filter, pureldap.LDAPFilter_present):
             return filter.value in self
         elif isinstance(filter, pureldap.LDAPFilter_equalityMatch):
-            # TODO case insensitivity etc, different attribute syntaxes
-            if filter.attributeDesc.value not in self:
-                return False
-            if filter.assertionValue.value in self[filter.attributeDesc.value]:
+            # TODO case insensitivity depends on different attribute syntaxes
+            if (filter.assertionValue.value.lower() in
+                [val.lower()
+                 for val in self.get(filter.attributeDesc.value, [])]):
                 return True
             return False
         elif isinstance(filter, pureldap.LDAPFilter_substrings):
@@ -156,7 +156,7 @@ class MatchMixin(object):
                 possibleMatches = [
                     x[len(filter.substrings[0].value):]
                     for x in possibleMatches
-                    if x.startswith(filter.substrings[0].value)
+                    if x.lower().startswith(filter.substrings[0].value.lower())
                     ]
                 del substrings[0]
 
@@ -166,7 +166,7 @@ class MatchMixin(object):
                 possibleMatches = [
                     x[:-len(filter.substrings[0].value)]
                     for x in possibleMatches
-                    if x.endswith(filter.substrings[-1].value)
+                    if x.lower().endswith(filter.substrings[-1].value.lower())
                     ]
                 del substrings[-1]
 
@@ -174,7 +174,7 @@ class MatchMixin(object):
                 assert isinstance(substrings[0], pureldap.LDAPFilter_substrings_any)
                 r = []
                 for possible in possibleMatches:
-                    i = possible.find(substrings[0].value)
+                    i = possible.lower().find(substrings[0].value.lower())
                     if i >= 0:
                         r.append(possible[i:])
                 possibleMatches = r
