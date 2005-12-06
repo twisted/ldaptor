@@ -1,4 +1,6 @@
 dn: uid=jack,ou=People,dc=example,dc=com
 uid: jack
 objectClass: posixAccount
+# "secret"
+userPassword: {SSHA}yVLLj62rFf3kDAbzwEU0zYAVvbWrze8=
 
