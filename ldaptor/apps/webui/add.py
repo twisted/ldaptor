@@ -110,16 +110,9 @@ class AddOCForm(configurable.Configurable):
                 if v:
                     auxiliaryObjectClasses.append(k)
         u = url.URL.fromContext(ctx)
-        request.setComponent(
-            iformless.IRedirectAfterPost,
-            u.child('manual').child('+'.join([structuralObjectClass]
-                                             + auxiliaryObjectClasses)))
-        if auxiliaryObjectClasses:
-            return _('Using objectclasses %s and %s.') % (
-                structuralObjectClass,
-                ', '.join(auxiliaryObjectClasses))
-        else:
-            return _('Using objectclass %s.') % structuralObjectClass
+        u = u.child('manual').child('+'.join([structuralObjectClass]
+                                             + auxiliaryObjectClasses))
+        return u
 
 class AddForm(configurable.Configurable):
     def __init__(self, chosenObjectClasses, attributeTypes, objectClasses):
@@ -410,6 +403,9 @@ class SmartObjectAddPage(ReallyAddPage):
     def configurable_(self, context):
         return self.smartObject
 
+    def render_overview(self, ctx, data):
+        return tags.invisible()
+
 class ManualAddPage(ReallyAddPage):
     def __init__(self,
                  structuralObjectClass,
@@ -428,6 +424,19 @@ class ManualAddPage(ReallyAddPage):
                     attributeTypes=self.attributeTypes,
                     objectClasses=self.objectClasses)
         return a
+
+    def render_overview(self, ctx, data):
+        if self.auxiliaryObjectClasses:
+            return ctx.tag.clear()[
+                _('Using objectclasses %s and %s.') % (
+                self.structuralObjectClass.name[0],
+                ', '.join([oc.name[0] for oc in self.auxiliaryObjectClasses]),
+                )]
+        else:
+            return ctx.tag.clear()[
+                _('Using objectclass %s.') % (
+                self.structuralObjectClass.name[0],
+                )]
 
 def strObjectClass(oc):
     if oc.desc is not None:
