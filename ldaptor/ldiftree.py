@@ -251,7 +251,8 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
         if self.dn == '': ##TODO DistinguishedName __nonzero__
             raise LDAPCannotRemoveRootError
         if self._sync_children():
-            raise ldaperrors.LDAPNotAllowedOnNonLeaf, self.dn
+            raise ldaperrors.LDAPNotAllowedOnNonLeaf(
+                'Cannot remove entry with children: %s' % self.dn)
         assert self.path.endswith('.dir')
         entryPath = '%s.ldif' % self.path[:-len('.dir')]
         os.remove(entryPath)
