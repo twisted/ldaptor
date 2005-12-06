@@ -371,7 +371,7 @@ class TestDelete(SiteMixin, unittest.TestCase):
                             )
 
         self.assertEquals(data['title'], 'Ldaptor Search Page')
-        self.failUnless('Success' in data['page'])
+        self.failUnless('Deleted uid=foo,dc=example,dc=com.' in data['page'])
 
         d = self.example.children()
         children = util.pumpingDeferredResult(d)

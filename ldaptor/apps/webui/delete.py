@@ -50,7 +50,7 @@ class ConfirmDelete(rend.Page):
                                dn=self.dn)
         d=e.delete()
         d.addCallbacks(
-            callback=lambda dummy: _("Success."),
+            callback=lambda dummy: _("Deleted %s.") % self.dn,
             errback=lambda fail: _("Failed: %s.")
             % fail.getErrorMessage())
         def _redirect(r):
