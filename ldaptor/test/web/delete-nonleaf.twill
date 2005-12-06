@@ -17,4 +17,7 @@ formvalue delete delete dummy
 submit
 code 200
 
-find 'Failed:.notAllowedOnNonLeaf:.Cannot.remove.entry.with.children:.ou=People,dc=example,dc=com\.'
+# we do not want to get redirected away on error
+title "Ldaptor Delete Page"
+
+find '<div>Failed:.notAllowedOnNonLeaf:.Cannot.remove.entry.with.children:.ou=People,dc=example,dc=com\.</div>'

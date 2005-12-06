@@ -49,11 +49,7 @@ class ConfirmDelete(rend.Page):
         e=ldapsyntax.LDAPEntry(client=user.client,
                                dn=self.dn)
         d=e.delete()
-        d.addCallbacks(
-            callback=lambda dummy: _("Deleted %s.") % self.dn,
-            errback=lambda fail: _("Failed: %s.")
-            % fail.getErrorMessage())
-        def _redirect(r):
+        def cb(dummy):
             basedn = iwebui.ICurrentDN(ctx)
             while (basedn != ''
                    and self.dn.contains(basedn)):
@@ -63,8 +59,10 @@ class ConfirmDelete(rend.Page):
             if basedn != '':
                 u=u.child(basedn).child('search')
             request.setComponent(iformless.IRedirectAfterPost, u)
-            return r
-        d.addBoth(_redirect)
+            return _("Deleted %s.") % self.dn
+        def eb(fail):
+            return _("Failed: %s.") % fail.getErrorMessage()
+        d.addCallbacks(cb, eb)
         return d
 
     def data_status(self, ctx, data):
