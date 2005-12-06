@@ -25,24 +25,25 @@ class LDAPCannotRemoveRootError(ldaperrors.LDAPNamingViolation):
 
 
 class StoreParsedLDIF(ldifprotocol.LDIF):
-    def __init__(self, deferred):
-        self.deferred = deferred
+    def __init__(self):
+        self.done = False
         self.seen = []
 
     def gotEntry(self, obj):
         self.seen.append(obj)
 
     def connectionLost(self, reason):
-        self.deferred.callback(self.seen)
+        self.done = True
 
 def get(path, dn):
+    return defer.maybeDeferred(_get, path, dn)
+def _get(path, dn):
     dn = distinguishedname.DistinguishedName(dn)
     l = list(dn.split())
     assert len(l) >= 1
     l.reverse()
 
-    d = defer.Deferred()
-    parser = StoreParsedLDIF(d)
+    parser = StoreParsedLDIF()
 
     entry = os.path.join(path,
                          *['%s.dir'%rdn for rdn in l[:-1]])
@@ -55,15 +56,14 @@ def get(path, dn):
         parser.dataReceived(data)
     parser.connectionLost(failure.Failure(error.ConnectionDone))
 
-    def _thereCanOnlyBeOne(entries):
-        if len(entries) == 0:
-            raise LDIFTreeEntryContainsNoEntries
-        elif len(entries) > 1:
-            raise LDIFTreeEntryContainsMultipleEntries, entries
-        else:
-            return entries[0]
-    d.addCallback(_thereCanOnlyBeOne)
-    return d
+    assert parser.done
+    entries = parser.seen
+    if len(entries) == 0:
+        raise LDIFTreeEntryContainsNoEntries
+    elif len(entries) > 1:
+        raise LDIFTreeEntryContainsMultipleEntries, entries
+    else:
+        return entries[0]
 
 def _putEntry(fileName, entry):
     """fileName is without extension."""
@@ -123,8 +123,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
         assert self.path.endswith('.dir')
         entryPath = '%s.ldif' % self.path[:-len('.dir')]
 
-        d = defer.Deferred()
-        parser = StoreParsedLDIF(d)
+        parser = StoreParsedLDIF()
 
         try:
             f = file(entryPath)
@@ -139,22 +138,17 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
                 break
             parser.dataReceived(data)
         parser.connectionLost(failure.Failure(error.ConnectionDone))
+        assert parser.done
 
-        def _thereCanOnlyBeOne(entries):
-            if len(entries) == 0:
-                raise LDIFTreeEntryContainsNoEntries
-            elif len(entries) > 1:
-                raise LDIFTreeEntryContainsMultipleEntries, entries
-            else:
-                return entries[0]
-        d.addCallback(_thereCanOnlyBeOne)
-
-        # TODO ugliness and all of its friends
-        assert d.called
-        from twisted.trial import util
-        e = util.wait(d)
-        for k,v in e.items():
-            self._attributes[k] = attributeset.LDAPAttributeSet(k, v)
+        entries = parser.seen
+        if len(entries) == 0:
+            raise LDIFTreeEntryContainsNoEntries
+        elif len(entries) > 1:
+            raise LDIFTreeEntryContainsMultipleEntries, entries
+        else:
+            # TODO ugliness and all of its friends
+            for k,v in entries[0].items():
+                self._attributes[k] = attributeset.LDAPAttributeSet(k, v)
 
     def parent(self):
         # TODO add __nonzero__ to DistinguishedName

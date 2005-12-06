@@ -2,7 +2,8 @@
 Test cases for ldaptor.protocols.ldap.delta
 """
 
-from twisted.trial import unittest, util
+from twisted.trial import unittest
+from ldaptor import testutil
 from ldaptor import delta, entry, attributeset, inmemory
 from ldaptor.protocols.ldap import ldapsyntax, distinguishedname, ldaperrors
 
@@ -274,18 +275,24 @@ class TestOperations(unittest.TestCase):
                         'quux': ['thud']})
         op = delta.AddOp(foo2)
         d = op.patch(self.root)
-        self.assertRaises(ldaperrors.LDAPEntryAlreadyExists,
-                          util.wait, d)
+        def eb(fail):
+            fail.trap(ldaperrors.LDAPEntryAlreadyExists)
+        d.addCallbacks(testutil.mustRaise, eb)
+        return d
 
     def testDeleteOp_DNNotFound(self):
         op = delta.DeleteOp('cn=nope,dc=example,dc=com')
         d = op.patch(self.root)
-        self.assertRaises(ldaperrors.LDAPNoSuchObject,
-                          util.wait, d)
+        def eb(fail):
+            fail.trap(ldaperrors.LDAPNoSuchObject)
+        d.addCallbacks(testutil.mustRaise, eb)
+        return d
 
     def testModifyOp_DNNotFound(self):
         op = delta.ModifyOp('cn=nope,dc=example,dc=com',
                             [delta.Add('foo', ['bar'])])
         d = op.patch(self.root)
-        self.assertRaises(ldaperrors.LDAPNoSuchObject,
-                          util.wait, d)
+        def eb(fail):
+            fail.trap(ldaperrors.LDAPNoSuchObject)
+        d.addCallbacks(testutil.mustRaise, eb)
+        return d

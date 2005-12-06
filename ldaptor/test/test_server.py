@@ -3,7 +3,6 @@ Test cases for ldaptor.protocols.ldap.ldapserver module.
 """
 
 from twisted.trial import unittest
-from twisted.trial.util import deferredResult
 from twisted.internet import protocol, address
 from twisted.python import components
 from ldaptor import inmemory, interfaces, schema
@@ -304,8 +303,8 @@ class LDAPServerTest(unittest.TestCase):
             id=2)),
                           )
         d = self.stuff.children()
-        children = deferredResult(d)
-        self.assertEquals(children, [self.another])
+        d.addCallback(self.assertEquals, [self.another])
+        return d
 
     def test_unknownRequest(self):
         # make server miss one of the handle_* attributes

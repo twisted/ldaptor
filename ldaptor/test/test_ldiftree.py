@@ -2,10 +2,9 @@
 Test cases for LDIF directory tree writing/reading.
 """
 
-from twisted.trial import unittest, util
-from twisted.python import failure
+from twisted.trial import unittest
 import os, random, errno, shutil
-from ldaptor import ldiftree, entry, delta
+from ldaptor import ldiftree, entry, delta, testutil
 from ldaptor.entry import BaseLDAPEntry
 from ldaptor.protocols.ldap import ldaperrors, ldifprotocol
 
@@ -71,22 +70,15 @@ objectClass: top
 
 """)
 
-    def get(self, dn):
-        d = ldiftree.get(self.tree, dn)
-        try:
-            entry = util.deferredResult(d)
-        except failure.Failure, e:
-            raise e.value
-        return entry
-
     def testSimpleRead(self):
         want = BaseLDAPEntry(dn='cn=foo,dc=example,dc=com',
                              attributes={
             'objectClass': ['top'],
             'cn': ['foo'],
             })
-        e = self.get(want.dn)
-        self.failUnlessEqual(e, want)
+        d = ldiftree.get(self.tree, want.dn)
+        d.addCallback(self.failUnlessEqual, want)
+        return d
 
     def testNoAccess(self):
         os.chmod(os.path.join(self.tree,
@@ -94,35 +86,39 @@ objectClass: top
                               'dc=example.dir',
                               'cn=foo.ldif'),
                  0)
-        e = self.assertRaises(
-            IOError,
-            self.get,
-            'cn=foo,dc=example,dc=com')
-        self.assertEquals(e.errno, errno.EACCES)
+        d = ldiftree.get(self.tree, 'cn=foo,dc=example,dc=com')
+        def eb(fail):
+            fail.trap(IOError)
+            self.assertEquals(fail.value.errno, errno.EACCES)
+        d.addCallbacks(testutil.mustRaise, eb)
+        return d
+
+    def gettingDNRaises(self, dn, exceptionClass):
+        d = ldiftree.get(self.tree, dn)
+        def eb(fail):
+            fail.trap(exceptionClass)
+        d.addCallbacks(testutil.mustRaise, eb)
+        return d
 
     def testMultipleError(self):
-        self.assertRaises(
-            ldiftree.LDIFTreeEntryContainsMultipleEntries,
-            self.get,
-            'cn=bad-two-entries,dc=example,dc=com')
+        return self.gettingDNRaises(
+            'cn=bad-two-entries,dc=example,dc=com',
+            ldiftree.LDIFTreeEntryContainsMultipleEntries)
 
     def testMissingEndError(self):
-        self.assertRaises(
-            ldiftree.LDIFTreeEntryContainsNoEntries,
-            self.get,
-            'cn=bad-missing-end,dc=example,dc=com')
+        return self.gettingDNRaises(
+            'cn=bad-missing-end,dc=example,dc=com',
+            ldiftree.LDIFTreeEntryContainsNoEntries)
 
     def testEmptyError(self):
-        self.assertRaises(
-            ldiftree.LDIFTreeEntryContainsNoEntries,
-            self.get,
-            'cn=bad-empty,dc=example,dc=com')
+        return self.gettingDNRaises(
+            'cn=bad-empty,dc=example,dc=com',
+            ldiftree.LDIFTreeEntryContainsNoEntries)
 
     def testOnlyNewlineError(self):
-        self.assertRaises(
-            ldifprotocol.LDIFLineWithoutSemicolonError,
-            self.get,
-            'cn=bad-only-newline,dc=example,dc=com')
+        return self.gettingDNRaises(
+            'cn=bad-only-newline,dc=example,dc=com',
+            ldifprotocol.LDIFLineWithoutSemicolonError)
 
     def testTreeBranches(self):
         want = BaseLDAPEntry(dn='cn=sales-thingie,ou=Sales,dc=example,dc=com',
@@ -130,8 +126,9 @@ objectClass: top
             'objectClass': ['top'],
             'cn': ['sales-thingie'],
             })
-        e = self.get(want.dn)
-        self.failUnlessEqual(e, want)
+        d = ldiftree.get(self.tree, want.dn)
+        d.addCallback(self.failUnlessEqual, want)
+        return d
 
 class LDIF2Dir(RandomizeListdirMixin, unittest.TestCase):
     def setUp(self):
@@ -163,11 +160,10 @@ objectClass: organizationalUnit
             'cn': ['foo'],
             })
         d = ldiftree.put(self.tree, e)
-        try:
-            entry = util.deferredResult(d)
-        except failure.Failure, exc:
-            raise exc.value
+        d.addCallback(self._cb_testSimpleWrite)
+        return d
 
+    def _cb_testSimpleWrite(self, entry):
         path = os.path.join(self.tree, 'dc=com.dir', 'dc=example.dir', 'cn=foo.ldif')
         self.failUnless(os.path.isfile(path))
         self.failUnlessEqual(file(path).read(),
@@ -185,11 +181,10 @@ cn: foo
             'cn': ['create-me'],
             })
         d = ldiftree.put(self.tree, e)
-        try:
-            entry = util.deferredResult(d)
-        except failure.Failure, exc:
-            raise exc.value
+        d.addCallback(self._cb_testDirCreation)
+        return d
 
+    def _cb_testDirCreation(self, entry):
         path = os.path.join(self.tree, 'dc=com.dir', 'dc=example.dir',
                             'ou=OrgUnit.dir', 'cn=create-me.ldif')
         self.failUnless(os.path.isfile(path))
@@ -211,11 +206,10 @@ cn: create-me
                                'ou=OrgUnit.dir')
         os.mkdir(dirpath)
         d = ldiftree.put(self.tree, e)
-        try:
-            entry = util.deferredResult(d)
-        except failure.Failure, exc:
-            raise exc.value
+        d.addCallback(self._cb_testDirExists, dirpath)
+        return d
 
+    def _cb_testDirExists(self, entry, dirpath):
         path = os.path.join(dirpath, 'cn=create-me.ldif')
         self.failUnless(os.path.isfile(path))
         self.failUnlessEqual(file(path).read(),
@@ -233,14 +227,14 @@ cn: create-me
             'cn': ['bad-create'],
             })
         d = ldiftree.put(self.tree, e)
-        def block(d):
-            try:
-                util.deferredResult(d)
-            except failure.Failure, e:
-                raise e.value
-        self.assertRaises(
-            ldiftree.LDIFTreeNoSuchObject,
-            block, d)
+        d.addCallbacks(self._cb_testMissingLinkError,
+                       self._eb_testMissingLinkError)
+        return d
+
+    def _cb_testMissingLinkError(self):
+        raise unittest.FailTest('Should have raised an exception.')
+    def _eb_testMissingLinkError(self, fail):
+        fail.trap(ldiftree.LDIFTreeNoSuchObject)
 
     def testAddTopLevel(self):
         e = BaseLDAPEntry(dn='dc=org',
@@ -249,11 +243,10 @@ cn: create-me
             'dc': ['org'],
             })
         d = ldiftree.put(self.tree, e)
-        try:
-            entry = util.deferredResult(d)
-        except failure.Failure, exc:
-            raise exc.value
+        d.addCallback(self._cb_testAddTopLevel)
+        return d
 
+    def _cb_testAddTopLevel(self, entry):
         path = os.path.join(self.tree, 'dc=org.ldif')
         self.failUnless(os.path.isfile(path))
         self.failUnlessEqual(file(path).read(),
@@ -342,12 +335,17 @@ cn: theChild
 
     def test_children_empty(self):
         d = self.empty.children()
-        children = util.deferredResult(d)
-        self.assertEquals(children, [])
+        def cb(children):
+            self.assertEquals(children, [])
+        d.addCallback(cb)
+        return d
 
     def test_children_oneChild(self):
         d = self.oneChild.children()
-        children = util.deferredResult(d)
+        d.addCallback(self._cb_test_children_oneChild)
+        return d
+
+    def _cb_test_children_oneChild(self, children):
         self.assertEquals(len(children), 1)
         got = [e.dn for e in children]
         want = ['cn=theChild,ou=oneChild,dc=example,dc=com']
@@ -358,18 +356,27 @@ cn: theChild
     def test_children_repeat(self):
         """Test that .children() returns a copy of the data so that modifying it does not affect behaviour."""
         d = self.oneChild.children()
-        children1 = util.deferredResult(d)
+        d.addCallback(self._cb_test_children_repeat_1)
+        return d
+
+    def _cb_test_children_repeat_1(self, children1):
         self.assertEquals(len(children1), 1)
 
         children1.pop()
 
         d = self.oneChild.children()
-        children2 = util.deferredResult(d)
+        d.addCallback(self._cb_test_children_repeat_2)
+        return d
+
+    def _cb_test_children_repeat_2(self, children2):
         self.assertEquals(len(children2), 1)
 
     def test_children_twoChildren(self):
         d = self.meta.children()
-        children = util.deferredResult(d)
+        d.addCallback(self._cb_test_children_twoChildren)
+        return d
+
+    def _cb_test_children_twoChildren(self, children):
         self.assertEquals(len(children), 2)
         want = [
             'cn=foo,ou=metasyntactic,dc=example,dc=com',
@@ -383,7 +390,10 @@ cn: theChild
     def test_children_twoChildren_callback(self):
         children = []
         d = self.meta.children(callback=children.append)
-        r = util.deferredResult(d)
+        d.addCallback(self._cb_test_children_twoChildren_callback, children)
+        return d
+
+    def _cb_test_children_twoChildren_callback(self, r, children):
         self.assertIdentical(r, None)
         self.assertEquals(len(children), 2)
         want = [
@@ -398,25 +408,31 @@ cn: theChild
     def test_children_noAccess_dir_noRead(self):
         os.chmod(self.meta.path, 0300)
         d = self.meta.children()
-        e = self.assertRaises(OSError,
-                              util.wait, d)
-        self.assertEquals(e.errno, errno.EACCES)
-        os.chmod(self.meta.path, 0755)
+        def eb(fail):
+            fail.trap(OSError)
+            self.assertEquals(fail.value.errno, errno.EACCES)
+            os.chmod(self.meta.path, 0755)
+        d.addCallbacks(testutil.mustRaise, eb)
+        return d
 
     def test_children_noAccess_dir_noExec(self):
         os.chmod(self.meta.path, 0600)
         d = self.meta.children()
-        e = self.assertRaises(IOError,
-                              util.wait, d)
-        self.assertEquals(e.errno, errno.EACCES)
-        os.chmod(self.meta.path, 0755)
+        def eb(fail):
+            fail.trap(IOError)
+            self.assertEquals(fail.value.errno, errno.EACCES)
+            os.chmod(self.meta.path, 0755)
+        d.addCallbacks(testutil.mustRaise, eb)
+        return d
 
     def test_children_noAccess_file(self):
         os.chmod(os.path.join(self.meta.path, 'cn=foo.ldif'), 0)
         d = self.meta.children()
-        e = self.assertRaises(IOError,
-                              util.wait, d)
-        self.assertEquals(e.errno, errno.EACCES)
+        def eb(fail):
+            fail.trap(IOError)
+            self.assertEquals(fail.value.errno, errno.EACCES)
+        d.addCallbacks(testutil.mustRaise, eb)
+        return d
 
     def test_addChild(self):
         self.empty.addChild(
@@ -426,7 +442,10 @@ cn: theChild
             'a': 'b',
             })
         d = self.empty.children()
-        children = util.deferredResult(d)
+        d.addCallback(self._cb_test_addChild)
+        return d
+
+    def _cb_test_addChild(self, children):
         self.assertEquals(len(children), 1)
         got = [e.dn for e in children]
         want = [
@@ -453,12 +472,18 @@ cn: theChild
 
     def test_subtree_empty(self):
         d = self.empty.subtree()
-        entries = util.deferredResult(d)
+        d.addCallback(self._cb_test_subtree_empty)
+        return d
+
+    def _cb_test_subtree_empty(self, entries):
         self.assertEquals(len(entries), 1)
 
     def test_subtree_oneChild(self):
         d = self.oneChild.subtree()
-        results = util.deferredResult(d)
+        d.addCallback(self._cb_test_subtree_oneChild)
+        return d
+
+    def _cb_test_subtree_oneChild(self, results):
         got = results
         want = [
             self.oneChild,
@@ -469,7 +494,10 @@ cn: theChild
     def test_subtree_oneChild_cb(self):
         got = []
         d = self.oneChild.subtree(got.append)
-        r = util.deferredResult(d)
+        d.addCallback(self._cb_test_subtree_oneChild_cb, got)
+        return d
+
+    def _cb_test_subtree_oneChild_cb(self, r, got):
         self.assertEquals(r, None)
 
         want = [
@@ -480,7 +508,10 @@ cn: theChild
 
     def test_subtree_many(self):
         d = self.example.subtree()
-        results = util.deferredResult(d)
+        d.addCallback(self._cb_test_subtree_many)
+        return d
+
+    def _cb_test_subtree_many(self, results):
         got = results
         want = [
             self.example,
@@ -498,7 +529,10 @@ cn: theChild
     def test_subtree_many_cb(self):
         got = []
         d = self.example.subtree(callback=got.append)
-        r = util.deferredResult(d)
+        d.addCallback(self._cb_test_subtree_many_cb, got)
+        return d
+
+    def _cb_test_subtree_many_cb(self, r, got):
         self.assertEquals(r, None)
 
         want = [
@@ -517,23 +551,28 @@ cn: theChild
     def test_lookup_fail(self):
         dn = 'cn=thud,ou=metasyntactic,dc=example,dc=com'
         d = self.root.lookup(dn)
-        failure = util.deferredError(d)
-        failure.trap(ldaperrors.LDAPNoSuchObject)
-        self.assertEquals(failure.value.message, dn)
+        def eb(fail):
+            fail.trap(ldaperrors.LDAPNoSuchObject)
+            self.assertEquals(fail.value.message, dn)
+        d.addCallbacks(testutil.mustRaise, eb)
+        return d
 
     def test_lookup_fail_outOfTree(self):
         dn = 'dc=invalid'
         d = self.root.lookup(dn)
-        failure = util.deferredError(d)
-        failure.trap(ldaperrors.LDAPNoSuchObject)
-        self.assertEquals(failure.value.message, dn)
+        def eb(fail):
+            fail.trap(ldaperrors.LDAPNoSuchObject)
+            self.assertEquals(fail.value.message, dn)
+        d.addCallbacks(testutil.mustRaise, eb)
+        return d
 
     def test_lookup_fail_outOfTree_2(self):
         dn = 'dc=invalid'
         d = self.example.lookup(dn)
-        failure = util.deferredError(d)
-        failure.trap(ldaperrors.LDAPNoSuchObject)
-        self.assertEquals(failure.value.message, dn)
+        def eb(fail):
+            fail.trap(ldaperrors.LDAPNoSuchObject)
+            self.assertEquals(fail.value.message, dn)
+        d.addCallbacks(testutil.mustRaise, eb)
 
     def test_lookup_fail_multipleError(self):
         writeFile(os.path.join(self.example.path,
@@ -565,39 +604,60 @@ objectClass: top
     def test_lookup_deep(self):
         dn = 'cn=bar,ou=metasyntactic,dc=example,dc=com'
         d = self.root.lookup(dn)
-        r = util.deferredResult(d)
+        d.addCallback(self._cb_test_lookup_deep)
+        return d
+
+    def _cb_test_lookup_deep(self, r):
         self.assertEquals(r, self.bar)
 
     def test_delete_root(self):
         d = self.root.delete()
-        self.assertRaises(ldiftree.LDAPCannotRemoveRootError,
-                          util.wait, d)
+        def eb(fail):
+            fail.trap(ldiftree.LDAPCannotRemoveRootError)
+        d.addCallbacks(testutil.mustRaise, eb)
+        return d
 
     def test_delete_nonLeaf(self):
         d = self.meta.delete()
-        self.assertRaises(ldaperrors.LDAPNotAllowedOnNonLeaf,
-                          util.wait, d)
+        def eb(fail):
+            fail.trap(ldaperrors.LDAPNotAllowedOnNonLeaf)
+        d.addCallbacks(testutil.mustRaise, eb)
+        return d
 
     def test_delete(self):
         d = self.foo.delete()
-        r = util.deferredResult(d)
+        d.addCallback(self._cb_test_delete_1)
+        return d
+
+    def _cb_test_delete_1(self, r):
         self.assertEquals(r, self.foo)
         d = self.meta.children()
-        r = util.deferredResult(d)
+        d.addCallback(self._cb_test_delete_2)
+        return d
+
+    def _cb_test_delete_2(self, r):
         self.assertEquals(r, [self.bar])
 
     def test_deleteChild(self):
         d = self.meta.deleteChild('cn=bar')
-        r = util.deferredResult(d)
+        d.addCallback(self._cb_test_deleteChild_1)
+        return d
+
+    def _cb_test_deleteChild_1(self, r):
         self.assertEquals(r, self.bar)
         d = self.meta.children()
-        r = util.deferredResult(d)
+        d.addCallback(self._cb_test_deleteChild_2)
+        return d
+
+    def _cb_test_deleteChild_2(self, r):
         self.assertEquals(r, [self.foo])
 
     def test_deleteChild_NonExisting(self):
         d = self.root.deleteChild('cn=not-exist')
-        self.assertRaises(ldaperrors.LDAPNoSuchObject,
-                          util.wait, d)
+        def eb(fail):
+            fail.trap(ldaperrors.LDAPNoSuchObject)
+        d.addCallbacks(testutil.mustRaise, eb)
+        return d
 
     def test_setPassword(self):
         self.foo.setPassword('s3krit', salt='\xf2\x4a')
@@ -609,24 +669,25 @@ objectClass: top
         self.foo.setPassword('s3krit')
         self.failUnless('userPassword' in self.foo)
         d = self.foo.bind('s3krit')
-        r = util.deferredResult(d)
-        self.assertIdentical(r, self.foo)
-        d = self.foo.bind('s4krit')
-        fail = util.deferredError(d)
-        fail.trap(ldaperrors.LDAPInvalidCredentials)
+        d.addCallback(self.assertIdentical, self.foo)
+        d.addCallback(lambda _: self.foo.bind('s4krit'))
+        def eb(fail):
+            fail.trap(ldaperrors.LDAPInvalidCredentials)
+        d.addCallbacks(testutil.mustRaise, eb)
+        return d
 
     def test_diffTree_self(self):
         d = self.root.diffTree(self.root)
-        r = util.deferredResult(d)
-        self.assertEquals(r, [])
+        d.addCallback(self.assertEquals, [])
+        return d
 
     def test_diffTree_copy(self):
         otherDir = self.mktemp()
         shutil.copytree(self.tree, otherDir)
         other = ldiftree.LDIFTreeEntry(otherDir)
         d = self.root.diffTree(other)
-        r = util.deferredResult(d)
-        self.assertEquals(r, [])
+        d.addCallback(self.assertEquals, [])
+        return d
 
     def test_diffTree_addChild(self):
         otherDir = self.mktemp()
@@ -634,14 +695,17 @@ objectClass: top
         other = ldiftree.LDIFTreeEntry(otherDir)
         e = entry.BaseLDAPEntry(dn='cn=foo,dc=example,dc=com')
         d = ldiftree.put(otherDir, e)
-        r = util.deferredResult(d)
 
-        d = other.lookup('cn=foo,dc=example,dc=com')
-        r = util.deferredResult(d)
+        def cb1(dummy):
+            return other.lookup('cn=foo,dc=example,dc=com')
+        d.addCallback(cb1)
 
-        d = self.root.diffTree(other)
-        got = util.deferredResult(d)
-        self.assertEquals(got, [delta.AddOp(r)])
+        def cb2(r):
+            d = self.root.diffTree(other)
+            d.addCallback(self.assertEquals, [delta.AddOp(r)])
+            return d
+        d.addCallback(cb2)
+        return d
 
 
     def test_diffTree_delChild(self):
@@ -650,13 +714,16 @@ objectClass: top
         other = ldiftree.LDIFTreeEntry(otherDir)
 
         d = other.lookup('ou=empty,dc=example,dc=com')
-        otherEmpty = util.deferredResult(d)
-        d = otherEmpty.delete()
-        util.deferredResult(d)
-
-        d = self.root.diffTree(other)
-        got = util.deferredResult(d)
-        self.assertEquals(got, [delta.DeleteOp(self.empty)])
+        def cb1(otherEmpty):
+            return otherEmpty.delete()
+        d.addCallback(cb1)
+        def cb2(dummy):
+            return self.root.diffTree(other)
+        d.addCallback(cb2)
+        def cb3(got):
+            self.assertEquals(got, [delta.DeleteOp(self.empty)])
+        d.addCallback(cb3)
+        return d
 
     def test_diffTree_edit(self):
         otherDir = self.mktemp()
@@ -664,15 +731,21 @@ objectClass: top
         other = ldiftree.LDIFTreeEntry(otherDir)
 
         d = other.lookup('ou=empty,dc=example,dc=com')
-        otherEmpty = util.deferredResult(d)
-        otherEmpty['foo'] = ['bar']
-        d = otherEmpty.commit()
-        util.deferredResult(d)
+        def cb1(otherEmpty):
+            otherEmpty['foo'] = ['bar']
+            return otherEmpty.commit()
+        d.addCallback(cb1)
 
-        d = self.root.diffTree(other)
-        got = util.deferredResult(d)
-        self.assertEquals(got, [
-            delta.ModifyOp(self.empty.dn,
-                           [delta.Add('foo', ['bar'])],
-                           ),
-            ])
+        def cb2(dummy):
+            return self.root.diffTree(other)
+        d.addCallback(cb2)
+
+        def cb3(got):
+            self.assertEquals(got, [
+                delta.ModifyOp(self.empty.dn,
+                               [delta.Add('foo', ['bar'])],
+                               ),
+                ])
+        d.addCallback(cb3)
+        return d
+

@@ -2,9 +2,9 @@
 Test cases for ldaptor.inmemory module.
 """
 
-from twisted.trial import unittest, util
+from twisted.trial import unittest
 from cStringIO import StringIO
-from ldaptor import inmemory, delta
+from ldaptor import inmemory, delta, testutil
 from ldaptor.protocols.ldap import distinguishedname, ldaperrors
 
 class TestInMemoryDatabase(unittest.TestCase):
@@ -52,41 +52,50 @@ class TestInMemoryDatabase(unittest.TestCase):
 
     def test_children_empty(self):
         d = self.empty.children()
-        children = util.deferredResult(d)
-        self.assertEquals(children, [])
+        d.addCallback(self.assertEquals, [])
+        return d
 
     def test_children_oneChild(self):
         d = self.oneChild.children()
-        children = util.deferredResult(d)
-        self.assertEquals(len(children), 1)
-        got = [e.dn for e in children]
-        want = [distinguishedname.DistinguishedName('cn=theChild,ou=oneChild,dc=example,dc=com')]
-        got.sort()
-        want.sort()
-        self.assertEquals(got, want)
+        def cb(children):
+            self.assertEquals(len(children), 1)
+            got = [e.dn for e in children]
+            want = [distinguishedname.DistinguishedName('cn=theChild,ou=oneChild,dc=example,dc=com')]
+            got.sort()
+            want.sort()
+            self.assertEquals(got, want)
+        d.addCallback(cb)
+        return d
 
     def test_children_repeat(self):
         """Test that .children() returns a copy of the data so that modifying it does not affect behaviour."""
         d = self.oneChild.children()
-        children1 = util.deferredResult(d)
-        self.assertEquals(len(children1), 1)
+        def cb1(children1):
+            self.assertEquals(len(children1), 1)
 
-        children1.pop()
+            children1.pop()
 
-        d = self.oneChild.children()
-        children2 = util.deferredResult(d)
-        self.assertEquals(len(children2), 1)
+            d = self.oneChild.children()
+            return d
+        d.addCallback(cb1)
+
+        def cb2(children2):
+            self.assertEquals(len(children2), 1)
+        d.addCallback(cb2)
+        return d
 
     def test_children_twoChildren(self):
         d = self.meta.children()
-        children = util.deferredResult(d)
-        self.assertEquals(len(children), 2)
-        want = [
-            distinguishedname.DistinguishedName('cn=foo,ou=metasyntactic,dc=example,dc=com'),
-            distinguishedname.DistinguishedName('cn=bar,ou=metasyntactic,dc=example,dc=com'),
-            ]
-        got = [e.dn for e in children]
-        self.assertEquals(got, want)
+        def cb(children):
+            self.assertEquals(len(children), 2)
+            want = [
+                distinguishedname.DistinguishedName('cn=foo,ou=metasyntactic,dc=example,dc=com'),
+                distinguishedname.DistinguishedName('cn=bar,ou=metasyntactic,dc=example,dc=com'),
+                ]
+            got = [e.dn for e in children]
+            self.assertEquals(got, want)
+        d.addCallback(cb)
+        return d
 
     def test_addChild(self):
         self.empty.addChild(
@@ -96,15 +105,17 @@ class TestInMemoryDatabase(unittest.TestCase):
             'a': 'b',
             })
         d = self.empty.children()
-        children = util.deferredResult(d)
-        self.assertEquals(len(children), 1)
-        got = [e.dn for e in children]
-        want = [
-            distinguishedname.DistinguishedName('a=b,ou=empty,dc=example,dc=com'),
-            ]
-        got.sort()
-        want.sort()
-        self.assertEquals(got, want)
+        def cb(children):
+            self.assertEquals(len(children), 1)
+            got = [e.dn for e in children]
+            want = [
+                distinguishedname.DistinguishedName('a=b,ou=empty,dc=example,dc=com'),
+                ]
+            got.sort()
+            want.sort()
+            self.assertEquals(got, want)
+        d.addCallback(cb)
+        return d
 
     def test_addChild_Exists(self):
         self.assertRaises(ldaperrors.LDAPEntryAlreadyExists,
@@ -123,115 +134,128 @@ class TestInMemoryDatabase(unittest.TestCase):
 
     def test_subtree_empty(self):
         d = self.empty.subtree()
-        entries = util.deferredResult(d)
-        self.assertEquals(len(entries), 1)
+        def cb(entries):
+            self.assertEquals(len(entries), 1)
+        d.addCallback(cb)
+        return d
 
     def test_subtree_oneChild(self):
         d = self.oneChild.subtree()
-        results = util.deferredResult(d)
-        got = results
-        want = [
+        d.addCallback(self.assertEquals, [
             self.oneChild,
             self.theChild,
-            ]
-        self.assertEquals(got, want)
+            ])
+        return d
 
     def test_subtree_oneChild_cb(self):
         got = []
         d = self.oneChild.subtree(got.append)
-        r = util.deferredResult(d)
-        self.assertEquals(r, None)
-
-        want = [
-            self.oneChild,
-            self.theChild,
-            ]
-        self.assertEquals(got, want)
+        d.addCallback(self.assertEquals, None)
+        def cb(dummy):
+            want = [
+                self.oneChild,
+                self.theChild,
+                ]
+            self.assertEquals(got, want)
+        d.addCallback(cb)
+        return d
 
     def test_subtree_many(self):
         d = self.root.subtree()
-        results = util.deferredResult(d)
-        got = results
-        want = [
-            self.root,
-            self.oneChild,
-            self.theChild,
-            self.empty,
-            self.meta,
-            self.bar,
-            self.foo,
-            ]
-        self.assertEquals(got, want)
+        def cb(results):
+            got = results
+            want = [
+                self.root,
+                self.oneChild,
+                self.theChild,
+                self.empty,
+                self.meta,
+                self.bar,
+                self.foo,
+                ]
+            self.assertEquals(got, want)
+        d.addCallback(cb)
+        return d
 
     def test_subtree_many_cb(self):
         got = []
         d = self.root.subtree(callback=got.append)
-        r = util.deferredResult(d)
-        self.assertEquals(r, None)
+        def cb(r):
+            self.assertEquals(r, None)
 
-        want = [
-            self.root,
-            self.oneChild,
-            self.theChild,
-            self.empty,
-            self.meta,
-            self.bar,
-            self.foo,
-            ]
-        self.assertEquals(got, want)
+            want = [
+                self.root,
+                self.oneChild,
+                self.theChild,
+                self.empty,
+                self.meta,
+                self.bar,
+                self.foo,
+                ]
+            self.assertEquals(got, want)
+        d.addCallback(cb)
+        return d
 
     def test_lookup_fail(self):
         dn = distinguishedname.DistinguishedName('cn=thud,ou=metasyntactic,dc=example,dc=com')
         d = self.root.lookup(dn)
-        failure = util.deferredError(d)
-        failure.trap(ldaperrors.LDAPNoSuchObject)
-        self.assertEquals(failure.value.message, dn)
+        def eb(fail):
+            fail.trap(ldaperrors.LDAPNoSuchObject)
+            self.assertEquals(fail.value.message, dn)
+        d.addCallbacks(testutil.mustRaise, eb)
+        return d
 
     def test_lookup_fail_outOfTree(self):
         dn = distinguishedname.DistinguishedName('dc=invalid')
         d = self.root.lookup(dn)
-        failure = util.deferredError(d)
-        failure.trap(ldaperrors.LDAPNoSuchObject)
-        self.assertEquals(failure.value.message, dn)
+        def eb(fail):
+            fail.trap(ldaperrors.LDAPNoSuchObject)
+            self.assertEquals(fail.value.message, dn)
+        d.addCallbacks(testutil.mustRaise, eb)
+        return d
 
     def test_lookup_deep(self):
         dn = distinguishedname.DistinguishedName('cn=bar,ou=metasyntactic,dc=example,dc=com')
         d = self.root.lookup(dn)
-        r = util.deferredResult(d)
-        self.assertEquals(r, self.bar)
+        d.addCallback(self.assertEquals, self.bar)
+        return d
 
     def test_delete_root(self):
         newRoot = inmemory.ReadOnlyInMemoryLDAPEntry(
             dn=distinguishedname.DistinguishedName('dc=example,dc=com'))
         d = newRoot.delete()
-        self.assertRaises(inmemory.LDAPCannotRemoveRootError,
-                          util.wait, d)
+        def eb(fail):
+            fail.trap(inmemory.LDAPCannotRemoveRootError)
+        d.addCallbacks(testutil.mustRaise, eb)
+        return d
 
     def test_delete_nonLeaf(self):
         d = self.meta.delete()
-        self.assertRaises(ldaperrors.LDAPNotAllowedOnNonLeaf,
-                          util.wait, d)
+        def eb(fail):
+            fail.trap(ldaperrors.LDAPNotAllowedOnNonLeaf)
+        d.addCallbacks(testutil.mustRaise, eb)
+        return d
 
     def test_delete(self):
         d = self.foo.delete()
-        r = util.deferredResult(d)
-        self.assertEquals(r, self.foo)
-        d = self.meta.children()
-        r = util.deferredResult(d)
-        self.assertEquals(r, [self.bar])
+        d.addCallback(self.assertEquals, self.foo)
+        d.addCallback(lambda _: self.meta.children())
+        d.addCallback(self.assertEquals, [self.bar])
+        return d
 
     def test_deleteChild(self):
         d = self.meta.deleteChild('cn=bar')
-        r = util.deferredResult(d)
-        self.assertEquals(r, self.bar)
-        d = self.meta.children()
-        r = util.deferredResult(d)
-        self.assertEquals(r, [self.foo])
+        d.addCallback(self.assertEquals, self.bar)
+        d.addCallback(lambda _: self.meta.children())
+        d.addCallback(self.assertEquals, [self.foo])
+        return d
 
     def test_deleteChild_NonExisting(self):
         d = self.root.deleteChild('cn=not-exist')
-        self.assertRaises(ldaperrors.LDAPNoSuchObject,
-                          util.wait, d)
+        def eb(fail):
+            fail.trap(ldaperrors.LDAPNoSuchObject)
+        d.addCallbacks(testutil.mustRaise, eb)
+        return d
 
     def test_setPassword(self):
         self.foo.setPassword('s3krit', salt='\xf2\x4a')
@@ -243,34 +267,35 @@ class TestInMemoryDatabase(unittest.TestCase):
         self.foo.setPassword('s3krit')
         self.failUnless('userPassword' in self.foo)
         d = self.foo.bind('s3krit')
-        r = util.deferredResult(d)
-        self.assertIdentical(r, self.foo)
-        d = self.foo.bind('s4krit')
-        fail = util.deferredError(d)
-        fail.trap(ldaperrors.LDAPInvalidCredentials)
+        d.addCallback(self.assertIdentical, self.foo)
+        d.addCallback(lambda _: self.foo.bind('s4krit'))
+        def eb(fail):
+            fail.trap(ldaperrors.LDAPInvalidCredentials)
+        d.addCallbacks(testutil.mustRaise, eb)
+        return d
 
     def testSearch_withCallback(self):
         got = []
         d = self.root.search(filterText='(|(cn=foo)(cn=bar))',
                              callback=got.append)
-        r = util.deferredResult(d)
-        self.assertEquals(r, None)
+        def cb(r):
+            self.assertEquals(r, None)
 
-        want = [
-            self.bar,
-            self.foo,
-            ]
-        self.assertEquals(got, want)
+            want = [
+                self.bar,
+                self.foo,
+                ]
+            self.assertEquals(got, want)
+        d.addCallback(cb)
+        return d
 
     def testSearch_withoutCallback(self):
         d = self.root.search(filterText='(|(cn=foo)(cn=bar))')
-        got = util.deferredResult(d)
-
-        want = [
+        d.addCallback(self.assertEquals, [
             self.bar,
             self.foo,
-            ]
-        self.assertEquals(got, want)
+            ])
+        return d
 
 class FromLDIF(unittest.TestCase):
     def test_single(self):
@@ -283,15 +308,15 @@ aValue: b
 bValue: c
 
 ''')
-        db = util.deferredResult(inmemory.fromLDIFFile(ldif))
-
-        self.assertEquals(
-            db.dn,
-            distinguishedname.DistinguishedName('cn=foo,dc=example,dc=com'))
-
-        d = db.children()
-        children = util.deferredResult(d)
-        self.assertEquals(children, [])
+        d = inmemory.fromLDIFFile(ldif)
+        def cb1(db):
+            self.assertEquals(
+                db.dn,
+                distinguishedname.DistinguishedName('cn=foo,dc=example,dc=com'))
+            return db.children()
+        d.addCallback(cb1)
+        d.addCallback(self.assertEquals, [])
+        return d
 
     def test_two(self):
         ldif = StringIO('''\
@@ -304,21 +329,23 @@ objectClass: a
 cn: foo
 
 ''')
-        db = util.deferredResult(inmemory.fromLDIFFile(ldif))
-
-        self.assertEquals(
-            db.dn,
-            distinguishedname.DistinguishedName('dc=example,dc=com'))
-
-        d = db.subtree()
-        children = util.deferredResult(d)
-        self.assertEquals(len(children), 2)
-        want = [
-            distinguishedname.DistinguishedName('dc=example,dc=com'),
-            distinguishedname.DistinguishedName('cn=foo,dc=example,dc=com'),
-            ]
-        got = [e.dn for e in children]
-        self.assertEquals(got, want)
+        d = inmemory.fromLDIFFile(ldif)
+        def cb1(db):
+            self.assertEquals(
+                db.dn,
+                distinguishedname.DistinguishedName('dc=example,dc=com'))
+            return db.subtree()
+        d.addCallback(cb1)
+        def cb2(children):
+            self.assertEquals(len(children), 2)
+            want = [
+                distinguishedname.DistinguishedName('dc=example,dc=com'),
+                distinguishedname.DistinguishedName('cn=foo,dc=example,dc=com'),
+                ]
+            got = [e.dn for e in children]
+            self.assertEquals(got, want)
+        d.addCallback(cb2)
+        return d
 
     def test_missingNode(self):
         ldif = StringIO('''\
@@ -331,11 +358,15 @@ objectClass: a
 cn: foo
 
 ''')
-        reason = util.deferredError(inmemory.fromLDIFFile(ldif))
+        d = inmemory.fromLDIFFile(ldif)
+        def eb(fail):
+            fail.trap(ldaperrors.LDAPNoSuchObject)
+            self.failUnlessEqual(
+                str(fail.value),
+                'noSuchObject: ou=nonexisting,dc=example,dc=com')
+        d.addCallbacks(testutil.mustRaise, eb)
+        return d
 
-        self.failUnless(reason.check(ldaperrors.LDAPNoSuchObject))
-        self.failUnlessEqual(str(reason.value),
-                             'noSuchObject: ou=nonexisting,dc=example,dc=com')
 
 class TestDiff(unittest.TestCase):
     def testNoChange(self):
@@ -348,8 +379,8 @@ class TestDiff(unittest.TestCase):
             'dc': ['example'],
             })
         d = a.diffTree(b)
-        result = util.deferredResult(d)
-        self.assertEquals(result, [])
+        d.addCallback(self.assertEquals, [])
+        return d
 
     def testRootChange_Add(self):
         a = inmemory.ReadOnlyInMemoryLDAPEntry('dc=example,dc=com',
@@ -362,13 +393,13 @@ class TestDiff(unittest.TestCase):
             'foo': ['bar'],
             })
         d = a.diffTree(b)
-        result = util.deferredResult(d)
-        self.assertEquals(result,
-                          [ delta.ModifyOp('dc=example,dc=com',
-                                           [
+        d.addCallback(self.assertEquals,
+                      [ delta.ModifyOp('dc=example,dc=com',
+                                       [
             delta.Add('foo', ['bar']),
             ]),
-            ])
+                        ])
+        return d
 
     def testChildChange_Add(self):
         a = inmemory.ReadOnlyInMemoryLDAPEntry('dc=example,dc=com',
@@ -387,13 +418,13 @@ class TestDiff(unittest.TestCase):
                      'foo': ['bar'],
                      })
         d = a.diffTree(b)
-        result = util.deferredResult(d)
-        self.assertEquals(result,
-                          [ delta.ModifyOp('cn=foo,dc=example,dc=com',
-                                           [
+        d.addCallback(self.assertEquals,
+                      [ delta.ModifyOp('cn=foo,dc=example,dc=com',
+                                       [
             delta.Add('foo', ['bar']),
             ]),
-            ])
+                        ])
+        return d
 
     def testAddChild(self):
         a = inmemory.ReadOnlyInMemoryLDAPEntry(
@@ -415,11 +446,11 @@ class TestDiff(unittest.TestCase):
             })
 
         d = a.diffTree(b)
-        result = util.deferredResult(d)
-        self.assertEquals(result, [
+        d.addCallback(self.assertEquals, [
             delta.AddOp(bar),
             delta.AddOp(foo),
             ])
+        return d
 
     def testAddSubtree(self):
         a = inmemory.ReadOnlyInMemoryLDAPEntry(
@@ -447,12 +478,12 @@ class TestDiff(unittest.TestCase):
             })
 
         d = a.diffTree(b)
-        result = util.deferredResult(d)
-        self.assertEquals(result, [
+        d.addCallback(self.assertEquals, [
             delta.AddOp(bar),
             delta.AddOp(foo),
             delta.AddOp(baz),
             ])
+        return d
 
     def testDeleteChild(self):
         a = inmemory.ReadOnlyInMemoryLDAPEntry(
@@ -474,11 +505,11 @@ class TestDiff(unittest.TestCase):
             })
 
         d = a.diffTree(b)
-        result = util.deferredResult(d)
-        self.assertEquals(result, [
+        d.addCallback(self.assertEquals, [
             delta.DeleteOp(bar),
             delta.DeleteOp(foo),
             ])
+        return d
 
     def testDeleteSubtree(self):
         a = inmemory.ReadOnlyInMemoryLDAPEntry(
@@ -506,9 +537,9 @@ class TestDiff(unittest.TestCase):
             })
 
         d = a.diffTree(b)
-        result = util.deferredResult(d)
-        self.assertEquals(result, [
+        d.addCallback(self.assertEquals, [
             delta.DeleteOp(bar),
             delta.DeleteOp(baz),
             delta.DeleteOp(foo),
             ])
+        return d

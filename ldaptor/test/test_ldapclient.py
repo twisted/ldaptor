@@ -3,10 +3,11 @@ Test cases for ldaptor.protocols.ldap.ldapsyntax module.
 """
 
 from twisted.trial import unittest
-from twisted.trial import util
 from twisted.test import proto_helpers
+from twisted.internet import defer
 
 from ldaptor.protocols.ldap import ldapclient
+from ldaptor import testutil
 
 class SillyMessage(object):
     needs_answer = True
@@ -27,11 +28,11 @@ class ConnectionLost(unittest.TestCase):
         d2 = c.send(SillyMessage('bar'))
         c.connectionLost(SillyError())
 
-        self.failUnless(d1.called, 'Connection lost must trigger error: %r' % d1)
-        self.failUnless(d2.called, 'Connection lost must trigger error: %r' % d2)
-
-        fail = util.deferredError(d1)
-        fail.trap(SillyError)
-
-        fail = util.deferredError(d2)
-        fail.trap(SillyError)
+        def eb(fail):
+            fail.trap(SillyError)
+        d1.addCallbacks(testutil.mustRaise, eb)
+        d2.addCallbacks(testutil.mustRaise, eb)
+        d = defer.DeferredList([d1, d2])
+        
+        return defer.DeferredList([d1, d2],
+                                  fireOnOneErrback=True)

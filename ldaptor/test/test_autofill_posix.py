@@ -7,7 +7,6 @@ from ldaptor.protocols.ldap import ldapsyntax, autofill
 from ldaptor.protocols import pureldap
 from ldaptor.protocols.ldap.autofill import posixAccount
 from ldaptor.testutil import LDAPClientTestDriver
-from twisted.trial.util import deferredResult, deferredError
 
 class LDAPAutoFill_Posix(unittest.TestCase):
     def testMustHaveObjectClass(self):
@@ -20,11 +19,15 @@ class LDAPAutoFill_Posix(unittest.TestCase):
             })
         autoFiller = posixAccount.Autofill_posix(baseDN='dc=example,dc=com')
         d = o.addAutofiller(autoFiller)
-
-        val = deferredError(d)
-        client.assertNothingSent()
-
-        val.trap(autofill.ObjectMissingObjectClassException)
+        def _cbMustRaise(_):
+            raise unittest.FailTest('Should have raised an exception')
+        def _eb(fail):
+            client.assertNothingSent()
+            fail.trap(autofill.ObjectMissingObjectClassException)
+            return None
+        d.addCallbacks(_cbMustRaise,
+                       _eb)
+        return d
 
     def testDefaultSetting(self):
         """Test that fields get their default values."""
@@ -121,8 +124,10 @@ class LDAPAutoFill_Posix(unittest.TestCase):
             })
 
         d = o.addAutofiller(posixAccount.Autofill_posix(baseDN='dc=example,dc=com'))
-        val = deferredResult(d)
+        d.addCallback(self._cb_testDefaultSetting, client, o)
+        return d
 
+    def _cb_testDefaultSetting(self, val, client, o):
         client.assertSent(
             *[
 

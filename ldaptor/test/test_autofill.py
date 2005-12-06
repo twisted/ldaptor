@@ -5,7 +5,6 @@ Test cases for ldaptor.protocols.ldap.autofill module.
 from twisted.trial import unittest
 from ldaptor.protocols.ldap import ldapsyntax
 from ldaptor.testutil import LDAPClientTestDriver
-from twisted.trial.util import deferredResult
 
 class Autofill_sum: #TODO baseclass
     def __init__(self, resultAttr, sumAttrs):
@@ -40,11 +39,13 @@ class LDAPAutoFill_Simple(unittest.TestCase):
             })
         d = o.addAutofiller(Autofill_sum(resultAttr='sum',
                                          sumAttrs=['a', 'b']))
-        val = deferredResult(d)
-        client.assertNothingSent()
+        def cb(dummy):
+            client.assertNothingSent()
 
-        o['a'] = ['1']
-        o['b'] = ['2', '3']
+            o['a'] = ['1']
+            o['b'] = ['2', '3']
 
-        self.failUnless('sum' in o)
-        self.failUnlessEqual(o['sum'], ['6'])
+            self.failUnless('sum' in o)
+            self.failUnlessEqual(o['sum'], ['6'])
+        d.addCallback(cb)
+        return d

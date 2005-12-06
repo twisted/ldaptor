@@ -262,21 +262,21 @@ if __name__ == '__main__':
     log.startLogging(sys.stderr)
 
     from twisted.python import components
-    from twisted.trial import util
     from ldaptor import inmemory
-
-    d = inmemory.fromLDIFFile(sys.stdin)
-    db = util.deferredResult(d)
 
     class LDAPServerFactory(protocol.ServerFactory):
         def __init__(self, root):
             self.root = root
-
     components.registerAdapter(lambda x: x.root,
                                LDAPServerFactory,
                                interfaces.IConnectedLDAPEntry)
 
-    factory = LDAPServerFactory(db)
-    factory.protocol = LDAPServer
-    reactor.listenTCP(10389, factory)
+    def start(db):
+        factory = LDAPServerFactory(db)
+        factory.protocol = LDAPServer
+        reactor.listenTCP(10389, factory)
+
+    d = inmemory.fromLDIFFile(sys.stdin)
+    d.addCallback(start)
+    d.addErrback(log.err)
     reactor.run()

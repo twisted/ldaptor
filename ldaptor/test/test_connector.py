@@ -1,4 +1,4 @@
-from twisted.trial import unittest, util
+from twisted.trial import unittest
 from twisted.internet import reactor, protocol, address
 from ldaptor.protocols.ldap import ldapconnector, distinguishedname
 
@@ -19,8 +19,10 @@ class TestCallableOverride(unittest.TestCase):
             factory.startedConnecting(c)
             proto = factory.buildProtocol(address.IPv4Address('TCP', 'localhost', '1'))
         d = c.connect(dn, overrides={ dn: _doConnect, })
-        r = util.deferredResult(d)
-        self.failUnless(isinstance(r, FakeProto))
+        def cb(r):
+            self.failUnless(isinstance(r, FakeProto))
+        d.addCallback(cb)
+        return d
 
     def testFindOverride_plainString(self):
         """Plain strings work as override keys."""

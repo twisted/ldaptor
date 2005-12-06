@@ -7,7 +7,6 @@ from ldaptor.protocols.ldap import fetchschema
 from ldaptor import schema
 from ldaptor.protocols import pureldap
 from ldaptor.testutil import LDAPClientTestDriver
-from twisted.trial.util import deferredResult
 
 class OnWire(unittest.TestCase):
     cn = """( 2.5.4.3 NAME ( 'cn' 'commonName' ) DESC 'RFC2256: common name(s) for which the entity is known by' SUP name )"""
@@ -41,8 +40,10 @@ class OnWire(unittest.TestCase):
                                     )
 
         d=fetchschema.fetch(client, 'dc=example,dc=com')
-        val = deferredResult(d)
+        d.addCallback(self._cb_testSimple, client)
+        return d
 
+    def _cb_testSimple(self, val, client):
         client.assertSent(pureldap.LDAPSearchRequest(
             baseObject='dc=example,dc=com',
             scope=pureldap.LDAP_SCOPE_baseObject,

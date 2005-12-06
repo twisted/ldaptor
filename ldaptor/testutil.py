@@ -1,8 +1,12 @@
 """Utilities for writing Twistedy unit tests and debugging."""
 
 from twisted.internet import defer
+from twisted.trial import unittest
 from twisted.test import proto_helpers
 from ldaptor import config
+
+def mustRaise(dummy):
+    raise unittest.FailTest('Should have raised an exception.')
 
 def calltrace():
     """Print out all function calls. For debug use only."""
