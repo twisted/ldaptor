@@ -22,6 +22,12 @@
     nevow:pattern="divider">|</span><span
     nevow:pattern="footer">]</span></p>
 
+    <nevow:invisible nevow:render="if" nevow:data="status">
+      <div nevow:pattern="True" nevow:render="data">
+	Status message goes here.
+      </div>
+    </nevow:invisible>
+
     <p><nevow:invisible nevow:render="i18n">Remove</nevow:invisible> <span nevow:data="dn" nevow:render="string"/>?</p>
 
     <div nevow:data="entry" nevow:render="error_or_pass">

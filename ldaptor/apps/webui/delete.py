@@ -2,7 +2,7 @@ from zope.interface import implements
 from ldaptor.protocols.ldap import ldapsyntax, distinguishedname
 from ldaptor.apps.webui.uriquote import uriUnquote
 from ldaptor.apps.webui.i18n import _
-from ldaptor.apps.webui import i18n
+from ldaptor.apps.webui import i18n, iwebui
 from ldaptor import weave
 
 import os
@@ -54,15 +54,28 @@ class ConfirmDelete(rend.Page):
             errback=lambda fail: _("Failed: %s.")
             % fail.getErrorMessage())
         def _redirect(r):
-            u = url.URL.fromContext(ctx)
-            u = u.child('deleted')
+            basedn = iwebui.ICurrentDN(ctx)
+            while (basedn != ''
+                   and self.dn.contains(basedn)):
+                basedn = basedn.up()
+            u=url.URL.fromContext(ctx)
+            u=u.parentdir().parentdir()
+            if basedn != '':
+                u=u.child(basedn).child('search')
             request.setComponent(iformless.IRedirectAfterPost, u)
             return r
         d.addBoth(_redirect)
         return d
 
-    def child_deleted(self, request):
-        return Deleted(self.dn)
+    def data_status(self, ctx, data):
+        try:
+            return ctx.locate(inevow.IStatusMessage)
+        except KeyError:
+            return None
+
+    def render_if(self, context, data):
+        r=context.tag.allPatterns(str(bool(data)))
+        return context.tag.clear()[r]
 
     def data_entry(self, context, data):
         user = context.locate(inevow.ISession).getLoggedInRoot().loggedIn
@@ -108,40 +121,6 @@ class ConfirmDelete(rend.Page):
         return weave.keyvalue_item(context, data)
 
     render_i18n = i18n.render()
-
-class Deleted(rend.Page):
-    docFactory = loaders.xmlfile(
-        'delete-done.xhtml',
-        templateDir=os.path.split(os.path.abspath(__file__))[0])
-
-    def __init__(self, dn):
-        super(Deleted, self).__init__()
-        self.dn = dn
-
-    def data_dn(self, context, data):
-        return self.dn
-
-    def data_header(self, ctx, data):
-        u=url.URL.fromContext(ctx)
-        u=u.parentdir().parentdir()
-        l=[]
-        l.append(tags.a(href=u.sibling("search"))[_("Search")])
-        l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
-        return l
-
-    def render_passthrough(self, context, data):
-        return context.tag.clear()[data]
-
-    def data_status(self, context, data):
-        try:
-            return context.locate(inevow.IStatusMessage)
-        except KeyError:
-            return _('Internal error, no status to display.')
-
-    render_i18n = i18n.render()
-
-    def render_data(self, ctx, data):
-        return ctx.tag.clear()[data]
 
 class GetDN(rend.Page):
     addSlash = True

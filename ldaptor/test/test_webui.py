@@ -370,7 +370,7 @@ class TestDelete(SiteMixin, unittest.TestCase):
                             headers={'Content-Type': 'application/x-www-form-urlencoded'},
                             )
 
-        self.assertEquals(data['title'], 'Ldaptor Deleting Entry')
+        self.assertEquals(data['title'], 'Ldaptor Search Page')
         self.failUnless('Success' in data['page'])
 
         d = self.example.children()
