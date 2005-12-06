@@ -121,7 +121,6 @@ class BaseLDAPServer(protocol.Protocol):
                                     msg.value,
                                     msg.controls,
                                     lambda response: self._cbHandle(response, msg.id))
-            assert isinstance(d, defer.Deferred)
             d.addErrback(self._cbLDAPError, name)
             d.addErrback(defer.logError)
             d.addErrback(self._cbOtherError, name)
