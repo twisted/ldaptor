@@ -465,10 +465,7 @@ class ChooseSmartObject(object):
     def add(self, context, smartObjectClass):
         request = context.locate(inevow.IRequest)
         u = url.URL.fromContext(context)
-        request.setComponent(
-            iformless.IRedirectAfterPost,
-            u.child('smart').child(smartObjectClass))
-        return _('Using smart objectclass %s.') % smartObjectClass
+        return u.child('smart').child(smartObjectClass)
 
 class AddPage(rend.Page):
     addSlash = True
