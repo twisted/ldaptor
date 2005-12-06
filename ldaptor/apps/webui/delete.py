@@ -100,7 +100,6 @@ class ConfirmDelete(rend.Page):
         l.append(tags.a(href=u.sibling("search"))[_("Search")])
         l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
         l.append(tags.a(href=u.sibling("edit").child(str(self.dn)))[_("edit")])
-        l.append(tags.a(href=u.sibling("delete").child(str(self.dn)))[_("delete")])
         return l
 
     def render_keyvalue(self, context, data):
