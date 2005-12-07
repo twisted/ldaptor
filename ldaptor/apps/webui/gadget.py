@@ -96,7 +96,7 @@ class LdaptorWebUIGadget(rend.Page):
                           " to browse, e.g. dc=example,dc=com"))),
             ],
                             label=_('Go')),
-            )
+            action=_('Go'))
 
     def go(self, ctx, baseDN):
         u = url.URL.fromContext(ctx)

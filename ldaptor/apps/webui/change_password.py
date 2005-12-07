@@ -54,7 +54,8 @@ class RemoveServicePassword(configurable.Configurable):
             annotate.Method(arguments=[
             annotate.Argument('ctx', annotate.Context()),
             ],
-                            label=_('Remove')))
+                            label=_('Remove')),
+            action=_('Remove'))
 
     def remove(self, ctx):
         e = getEntry(ctx, self.dn)
@@ -90,7 +91,8 @@ class SetServicePassword(configurable.Configurable):
             annotate.Argument('again', annotate.PasswordEntry(required=True,
                                                               label=_('Again'))),
             ],
-                            label=_('Set password')))
+                            label=_('Set password')),
+            action=_('Set password'))
 
     def _isPasswordAcceptable(self, ctx, newPassword, again):
         return checkPasswordTypos(newPassword, again)
@@ -128,7 +130,8 @@ class SetRandomServicePassword(configurable.Configurable):
             annotate.Method(arguments=[
             annotate.Argument('ctx', annotate.Context()),
             ],
-                            label=_('Generate random')))
+                            label=_('Generate random')),
+            action=_('Generate random'))
 
     def generateRandom(self, ctx):
         d=generate_password.generate(reactor)
@@ -176,7 +179,8 @@ class AddService(configurable.Configurable):
             annotate.Argument('again', annotate.PasswordEntry(required=False,
                                                               label=_('Again'))),
             ],
-                            label=_('Add')))
+                            label=_('Add')),
+            action=_('Add'))
 
     def add(self, ctx, serviceName, newPassword, again):
         if newPassword or again:
@@ -325,7 +329,7 @@ class ConfirmChange(ServicePasswordChangeMixin, rend.Page):
         templateDir=os.path.split(os.path.abspath(__file__))[0])
 
     def getBindingNames(self, ctx):
-        return ['setPassword']
+        return ['setPassword', 'generateRandom']
 
     def bind_setPassword(self, ctx):
         return annotate.MethodBinding(
@@ -337,7 +341,8 @@ class ConfirmChange(ServicePasswordChangeMixin, rend.Page):
             annotate.Argument('again', annotate.PasswordEntry(required=True,
                                                               label=_('Again'))),
             ],
-                            label=_('Set password')))
+                            label=_('Set password')),
+            action=_('Set password'))
 
     def bind_generateRandom(self, ctx):
         return annotate.MethodBinding(
@@ -345,7 +350,8 @@ class ConfirmChange(ServicePasswordChangeMixin, rend.Page):
             annotate.Method(arguments=[
             annotate.Argument('ctx', annotate.Context()),
             ],
-                            label=_('Generate random')))
+                            label=_('Generate random')),
+            action=_('Generate random'))
 
     servicePasswordAction_10_remove = RemoveServicePassword
     servicePasswordAction_20_set = SetServicePassword
