@@ -974,17 +974,17 @@ class LDAPAddRequest(LDAPProtocolRequest, BERSequence):
         Example usage::
 
                 l=LDAPAddRequest(entry='cn=foo,dc=example,dc=com',
-                        attributes=(LDAPAttributeDescription("attrFoo"),
+                        attributes=[(LDAPAttributeDescription("attrFoo"),
                              BERSet(value=(
                                  LDAPAttributeValue("value1"),
                                  LDAPAttributeValue("value2"),
-                             )),
-                             LDAPAttributeDescription("attrBar"),
+                             ))),
+                             (LDAPAttributeDescription("attrBar"),
                              BERSet(value=(
                                  LDAPAttributeValue("value1"),
                                  LDAPAttributeValue("value2"),
-                             )),
-                             ))
+                             ))),
+                             ])
 """
 
         LDAPProtocolRequest.__init__(self)
