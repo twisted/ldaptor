@@ -100,7 +100,7 @@ class ReallyMassPasswordChangePage(rend.Page):
 
     def data_header(self, ctx, data):
         u=url.URL.fromContext(ctx)
-        u=u.parentdir().parentdir()
+        u=u.parentdir().parentdir().clear()
         l=[]
         l.append(tags.a(href=u.sibling("search"))[_("Search")])
         l.append(tags.a(href=u.sibling("add"))[_("add new entry")])

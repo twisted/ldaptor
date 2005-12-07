@@ -380,7 +380,7 @@ class ReallyEditPage(rend.Page):
 
     def data_header(self, ctx, data):
         u=url.URL.fromContext(ctx)
-        u=u.parentdir().parentdir()
+        u=u.parentdir().parentdir().clear()
         l=[]
         l.append(tags.a(href=u.sibling("search"))[_("Search")])
         l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
@@ -408,7 +408,7 @@ class ReallyEditPage(rend.Page):
             return context.tag.clear()[obj]
 
         u=url.URL.fromContext(context)
-        u=u.parentdir().parentdir()
+        u=u.parentdir().parentdir().clear()
 
         return context.tag.clear()[
             _("Edited "),

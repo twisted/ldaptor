@@ -297,7 +297,7 @@ class SearchPage(rend.Page):
 
     def data_header(self, ctx, data):
         u=url.URL.fromContext(ctx)
-        u=u.parentdir()
+        u=u.parentdir().clear()
         l=[]
         l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
         return l
@@ -344,14 +344,14 @@ class SearchPage(rend.Page):
         return ctx.tag
 
     def render_entryLinks(self, ctx, data):
-        u = url.URL.fromContext(ctx)
-        l = [ (u.parentdir().sibling('edit').child(uriQuote(data)),
+        u = url.URL.fromContext(ctx).parentdir().clear()
+        l = [ (u.sibling('edit').child(uriQuote(data)),
                _('edit')),
-              (u.parentdir().sibling('move').child(uriQuote(data)),
+              (u.sibling('move').child(uriQuote(data)),
                _('move')),
-              (u.parentdir().sibling('delete').child(uriQuote(data)),
+              (u.sibling('delete').child(uriQuote(data)),
                _('delete')),
-              (u.parentdir().sibling('change_password').child(uriQuote(data)),
+              (u.sibling('change_password').child(uriQuote(data)),
                _('change password')),
               ]
         return self.render_sequence(ctx, l)

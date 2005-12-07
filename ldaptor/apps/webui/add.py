@@ -350,7 +350,7 @@ class ReallyAddPage(rend.Page):
 
     def data_header(self, ctx, data):
         u=url.URL.fromContext(ctx)
-        u=u.parentdir().parentdir().parentdir()
+        u=u.parentdir().parentdir().parentdir().clear()
         l=[]
         l.append(tags.a(href=u.sibling("search"))[_("Search")])
         l.append(tags.a(href=u.sibling("add"))[_("add new entry")])
@@ -374,7 +374,7 @@ class ReallyAddPage(rend.Page):
             return context.tag.clear()[obj]
 
         u=url.URL.fromContext(context)
-        u=u.parentdir().parentdir().parentdir()
+        u=u.parentdir().parentdir().parentdir().clear()
 
         return context.tag.clear()[
             _("Added "),
@@ -505,7 +505,7 @@ class AddPage(rend.Page):
 
     def data_header(self, ctx, data):
         u=url.URL.fromContext(ctx)
-        u=u.parentdir()
+        u=u.parentdir().clear()
         l=[]
         l.append(tags.a(href=u.sibling("search"))[_("Search")])
         return l
