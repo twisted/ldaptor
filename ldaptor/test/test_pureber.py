@@ -165,12 +165,16 @@ class BERIntegerSanityCheck(unittest.TestCase):
 
 
 
+class ObjectThatCanStringify(object):
+    def __str__(self):
+        return "bar"
 
 class BEROctetStringKnownValues(unittest.TestCase):
     knownValues=(
         ("", [0x04, 0]),
         ("foo", [0x04, 3]+l("foo")),
         (100*"x", [0x04, 100]+l(100*"x")),
+        (ObjectThatCanStringify(), [0x04, 3]+l("bar")),
         )
 
     def testToBEROctetStringKnownValues(self):

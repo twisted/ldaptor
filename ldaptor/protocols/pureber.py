@@ -207,9 +207,10 @@ class BEROctetString(BERBase):
         self.value=value
 
     def __str__(self):
+        value = str(self.value)
         return chr(self.identification()) \
-               +int2berlen(len(self.value)) \
-               +self.value
+               +int2berlen(len(value)) \
+               +value
 
     def __repr__(self):
         if self.tag==self.__class__.tag:
