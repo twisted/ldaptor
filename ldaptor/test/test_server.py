@@ -7,7 +7,7 @@ from twisted.internet import protocol, address
 from twisted.python import components
 from ldaptor import inmemory, interfaces, schema
 from ldaptor.protocols.ldap import ldapserver, ldapclient, ldaperrors, fetchschema
-from ldaptor.protocols import pureldap
+from ldaptor.protocols import pureldap, pureber
 from twisted.test import proto_helpers
 from ldaptor.test import util, test_schema
 
@@ -304,6 +304,54 @@ class LDAPServerTest(unittest.TestCase):
                           )
         d = self.stuff.children()
         d.addCallback(self.assertEquals, [self.another])
+        return d
+
+    def test_add_success(self):
+        dn = 'cn=new,ou=stuff,dc=example,dc=com'
+        self.server.dataReceived(str(pureldap.LDAPMessage(
+            pureldap.LDAPAddRequest(entry=dn,
+                                    attributes=[
+            (pureldap.LDAPAttributeDescription("objectClass"),
+             pureber.BERSet(value=[
+            pureldap.LDAPAttributeValue('something'),
+            ])),
+            ]), id=2)))
+        self.assertEquals(self.server.transport.value(),
+                          str(pureldap.LDAPMessage(
+            pureldap.LDAPAddResponse(
+            resultCode=ldaperrors.Success.resultCode),
+            id=2)),
+                          )
+        # tree changed
+        d = self.stuff.children()
+        d.addCallback(self.assertEquals, [
+            self.thingie,
+            self.another,
+            inmemory.ReadOnlyInMemoryLDAPEntry(
+            'cn=new,ou=stuff,dc=example,dc=com',
+            {'objectClass': ['something']}),
+            ])
+        return d
+
+    def test_add_fail_existsAlready(self):
+        self.server.dataReceived(str(pureldap.LDAPMessage(
+            pureldap.LDAPAddRequest(entry=str(self.thingie.dn),
+                                    attributes=[
+            (pureldap.LDAPAttributeDescription("objectClass"),
+             pureber.BERSet(value=[
+            pureldap.LDAPAttributeValue('something'),
+            ])),
+            ]), id=2)))
+        self.assertEquals(self.server.transport.value(),
+                          str(pureldap.LDAPMessage(
+            pureldap.LDAPAddResponse(
+            resultCode=ldaperrors.LDAPEntryAlreadyExists.resultCode,
+            errorMessage=str(self.thingie.dn)),
+            id=2)),
+                          )
+        # tree did not change
+        d = self.stuff.children()
+        d.addCallback(self.assertEquals, [self.thingie, self.another])
         return d
 
     def test_unknownRequest(self):
