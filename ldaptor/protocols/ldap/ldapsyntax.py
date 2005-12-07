@@ -371,7 +371,8 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         return d
 
     def _cbAddDone(self, msg, dn):
-        assert isinstance(msg, pureldap.LDAPAddResponse)
+        assert isinstance(msg, pureldap.LDAPAddResponse), \
+               "LDAPRequest response was not an LDAPAddResponse: %r" % msg
         assert msg.referral is None #TODO
         if msg.resultCode!=ldaperrors.Success.resultCode:
             raise ldaperrors.get(msg.resultCode, msg.errorMessage)
