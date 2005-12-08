@@ -1,4 +1,5 @@
 dn: ou=People,dc=example,dc=com
 objectClass: organizationalUnit
 ou: People
+subschemaSubentry: cn=Subschema
 
