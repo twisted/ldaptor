@@ -275,6 +275,35 @@ class LDAPServer(BaseLDAPServer):
         d.addCallback(_report)
         return d
 
+    fail_LDAPModifyDNRequest = pureldap.LDAPModifyDNResponse
+
+    def handle_LDAPModifyDNRequest(self, request, controls, reply):
+        self.checkControls(controls)
+
+        dn = distinguishedname.DistinguishedName(request.entry)
+        newrdn = distinguishedname.RelativeDistinguishedName(request.newrdn)
+        deleteoldrdn = bool(request.deleteoldrdn)
+        assert deleteoldrdn is True     #TODO
+        newSuperior = request.newSuperior
+        if newSuperior is None:
+            newSuperior = dn.up()
+        else:
+            newSuperior = distinguishedname.DistinguishedName(newSuperior)
+        newdn = distinguishedname.DistinguishedName(
+            listOfRDNs=(newrdn,)+newSuperior.split())
+
+        #TODO make this more atomic
+        root = interfaces.IConnectedLDAPEntry(self.factory)
+        d = root.lookup(dn)
+        def _gotEntry(entry):
+            d = entry.move(newdn)
+            return d
+        d.addCallback(_gotEntry)
+        def _report(entry):
+            return pureldap.LDAPModifyDNResponse(resultCode=0)
+        d.addCallback(_report)
+        return d
+
 if __name__ == '__main__':
     """
     Demonstration LDAP server; reads LDIF from stdin and

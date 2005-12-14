@@ -3,6 +3,7 @@ Test cases for ldaptor.protocols.ldap.ldapserver module.
 """
 
 from twisted.trial import unittest
+import sets
 from twisted.internet import protocol, address
 from twisted.python import components
 from ldaptor import inmemory, interfaces, schema
@@ -353,6 +354,55 @@ class LDAPServerTest(unittest.TestCase):
         d = self.stuff.children()
         d.addCallback(self.assertEquals, [self.thingie, self.another])
         return d
+
+    def test_modifyDN_rdnOnly_deleteOldRDN_success(self):
+        newrdn = 'cn=thingamagic'
+        self.server.dataReceived(str(pureldap.LDAPMessage(
+            pureldap.LDAPModifyDNRequest(entry=self.thingie.dn,
+                                         newrdn=newrdn,
+                                         deleteoldrdn=True),
+            id=2)))
+        self.assertEquals(self.server.transport.value(),
+                          str(pureldap.LDAPMessage(
+            pureldap.LDAPModifyDNResponse(
+            resultCode=ldaperrors.Success.resultCode),
+            id=2)),
+                          )
+        # tree changed
+        d = self.stuff.children()
+        d.addCallback(self.assertEquals, [
+            inmemory.ReadOnlyInMemoryLDAPEntry(
+            '%s,ou=stuff,dc=example,dc=com' % newrdn,
+            {'objectClass': ['a', 'b'],
+             'cn': ['thingamagic']}),
+            self.another,
+            ])
+        return d
+
+    def test_modifyDN_rdnOnly_noDeleteOldRDN_success(self):
+        newrdn = 'cn=thingamagic'
+        self.server.dataReceived(str(pureldap.LDAPMessage(
+            pureldap.LDAPModifyDNRequest(entry=self.thingie.dn,
+                                         newrdn=newrdn,
+                                         deleteoldrdn=False),
+            id=2)))
+        self.assertEquals(self.server.transport.value(),
+                          str(pureldap.LDAPMessage(
+            pureldap.LDAPModifyDNResponse(
+            resultCode=ldaperrors.Success.resultCode),
+            id=2)),
+                          )
+        # tree changed
+        d = self.stuff.children()
+        d.addCallback(self.assertEquals, sets.Set([
+            self.another,
+            inmemory.ReadOnlyInMemoryLDAPEntry(
+            '%s,ou=stuff,dc=example,dc=com' % newrdn,
+            {'objectClass': ['a', 'b'],
+             'cn': ['thingamagic', 'thingie']}),
+            ]))
+        return d
+    test_modifyDN_rdnOnly_noDeleteOldRDN_success.todo = 'Not supported yet.'
 
     def test_unknownRequest(self):
         # make server miss one of the handle_* attributes
