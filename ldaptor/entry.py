@@ -82,7 +82,7 @@ class BaseLDAPEntry(object):
         return ldif.asLDIF(self.dn, a)
 
     def __eq__(self, other):
-        if not isinstance(other, self.__class__):
+        if not isinstance(other, BaseLDAPEntry):
             return 0
         if self.dn != other.dn:
             return 0
@@ -186,6 +186,9 @@ class BaseLDAPEntry(object):
             if memberDN == dn:
                 return True
         return False
+
+    def __hash__(self):
+        return hash(self.dn)
 
 class EditableLDAPEntry(BaseLDAPEntry):
     implements(interfaces.IEditableLDAPEntry)

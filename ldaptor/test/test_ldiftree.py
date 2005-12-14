@@ -3,7 +3,7 @@ Test cases for LDIF directory tree writing/reading.
 """
 
 from twisted.trial import unittest
-import os, random, errno, shutil
+import os, random, errno, shutil, sets
 from ldaptor import ldiftree, entry, delta, testutil
 from ldaptor.entry import BaseLDAPEntry
 from ldaptor.protocols.ldap import ldaperrors, ldifprotocol
@@ -749,3 +749,84 @@ objectClass: top
         d.addCallback(cb3)
         return d
 
+
+    def test_move_noChildren_sameSuperior(self):
+        d = self.empty.move('ou=moved,dc=example,dc=com')
+        def getChildren(dummy):
+            return self.example.children()
+        d.addCallback(getChildren)
+        d.addCallback(sets.Set)
+        d.addCallback(self.assertEquals, sets.Set([
+            self.meta,
+            BaseLDAPEntry(
+            dn='ou=moved,dc=example,dc=com',
+            attributes={ 'objectClass': ['a', 'b'],
+                         'ou': ['moved'],
+            }),
+            self.oneChild,
+            ]))
+        return d
+
+    def test_move_children_sameSuperior(self):
+        d = self.meta.move('ou=moved,dc=example,dc=com')
+        def getChildren(dummy):
+            return self.example.children()
+        d.addCallback(getChildren)
+        d.addCallback(sets.Set)
+        d.addCallback(self.assertEquals, sets.Set([
+            BaseLDAPEntry(dn='ou=moved,dc=example,dc=com',
+                          attributes={ 'objectClass': ['a', 'b'],
+                                       'ou': ['moved'],
+                                       }),
+            self.empty,
+            self.oneChild,
+            ]))
+        return d
+
+
+    def test_move_noChildren_newSuperior(self):
+        d = self.empty.move('ou=moved,ou=oneChild,dc=example,dc=com')
+        def getChildren(dummy):
+            return self.example.children()
+        d.addCallback(getChildren)
+        d.addCallback(sets.Set)
+        d.addCallback(self.assertEquals, sets.Set([
+            self.meta,
+            self.oneChild,
+            ]))
+        def getChildren2(dummy):
+            return self.oneChild.children()
+        d.addCallback(getChildren2)
+        d.addCallback(sets.Set)
+        d.addCallback(self.assertEquals, sets.Set([
+            self.theChild,
+            BaseLDAPEntry(
+            dn='ou=moved,ou=oneChild,dc=example,dc=com',
+            attributes={ 'objectClass': ['a', 'b'],
+                         'ou': ['moved'],
+            }),
+            ]))
+        return d
+
+    def test_move_children_newSuperior(self):
+        d = self.meta.move('ou=moved,ou=oneChild,dc=example,dc=com')
+        def getChildren(dummy):
+            return self.example.children()
+        d.addCallback(getChildren)
+        d.addCallback(sets.Set)
+        d.addCallback(self.assertEquals, sets.Set([
+            self.empty,
+            self.oneChild,
+            ]))
+        def getChildren2(dummy):
+            return self.oneChild.children()
+        d.addCallback(getChildren2)
+        d.addCallback(sets.Set)
+        d.addCallback(self.assertEquals, sets.Set([
+            self.theChild,
+            BaseLDAPEntry(dn='ou=moved,ou=oneChild,dc=example,dc=com',
+                          attributes={ 'objectClass': ['a', 'b'],
+                                       'ou': ['moved'],
+                                       }),
+            ]))
+        return d

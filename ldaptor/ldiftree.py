@@ -287,6 +287,57 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
         entryPath = self.path[:-len('.dir')]
         return defer.maybeDeferred(_putEntry, entryPath, self)
 
+    def move(self, newDN):
+        return defer.maybeDeferred(self._move, newDN)
+
+    def _move(self, newDN):
+        if not isinstance(newDN, distinguishedname.DistinguishedName):
+            newDN = distinguishedname.DistinguishedName(stringValue=newDN)
+        if newDN.up() != self.dn.up():
+            # climb up the tree to root
+            rootDN = self.dn
+            rootPath = self.path
+            while rootDN != '':
+                rootDN = rootDN.up()
+                rootPath = os.path.dirname(rootPath)
+            root = self.__class__(path=rootPath, dn=rootDN)
+            d = defer.maybeDeferred(root.lookup, newDN.up())
+        else:
+            d = defer.succeed(None)
+        d.addCallback(self._move2, newDN)
+        return d
+
+    def _move2(self, newParent, newDN):
+        # remove old RDN attributes
+        for attr in self.dn.split()[0].split():
+            self[attr.attributeType].remove(attr.value)
+        # add new RDN attributes
+        for attr in newDN.split()[0].split():
+            # TODO what if the key does not exist?
+            self[attr.attributeType].add(attr.value)
+        newRDN = newDN.split()[0]
+        srcdir = os.path.dirname(self.path)
+        if newParent is None:
+            dstdir = srcdir
+        else:
+            dstdir = newParent.path
+
+        newpath = os.path.join(dstdir, '%s.dir' % newRDN)
+        try:
+            os.rename(self.path, newpath)
+        except OSError, e:
+            if e.errno == errno.ENOENT:
+                pass
+            else:
+                raise
+        basename, ext = os.path.splitext(self.path)
+        assert ext == '.dir'
+        os.rename('%s.ldif' % basename,
+                  os.path.join(dstdir, '%s.ldif' % newRDN))
+        self.dn = newDN
+        self.path = newpath
+        return self.commit()
+
 if __name__ == '__main__':
     """
     Demonstration LDAP server; serves an LDIFTree from given directory
