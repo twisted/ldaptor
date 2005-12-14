@@ -31,9 +31,9 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
                 callback(c)
             return defer.succeed(None)
 
-    def lookup(self, dn):
+    def _lookup(self, dn):
         if not self.dn.contains(dn):
-            return defer.fail(ldaperrors.LDAPNoSuchObject(dn))
+            raise ldaperrors.LDAPNoSuchObject(dn)
         if dn == self.dn:
             return defer.succeed(self)
 
@@ -41,7 +41,10 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
             if c.dn.contains(dn):
                 return c.lookup(dn)
 
-        return defer.fail(ldaperrors.LDAPNoSuchObject(dn))
+        raise ldaperrors.LDAPNoSuchObject(dn)
+
+    def lookup(self, dn):
+        return defer.maybeDeferred(self._lookup, dn)
 
     def fetch(self, *attributes):
         return defer.succeed(self)
