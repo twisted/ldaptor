@@ -57,8 +57,9 @@ class MoveItem(configurable.Configurable):
         newDN = distinguishedname.DistinguishedName(
             self.original.dn.split()[:1]
             + iwebui.ICurrentDN(context).split())
+        origDN = self.original.dn
         d = self.original.move(newDN)
-        d.addCallback(lambda dummy: _('Moved %s to %s.') % (self.original.dn, newDN))
+        d.addCallback(lambda dummy: _('Moved %s to %s.') % (origDN, newDN))
         def _cb(r, context):
             self._remove(context)
             return r
