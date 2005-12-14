@@ -82,6 +82,36 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
     def deleteChild(self, rdn):
         return defer.maybeDeferred(self._deleteChild, rdn)
 
+    def _move(self, newDN):
+        if not isinstance(newDN, distinguishedname.DistinguishedName):
+            newDN = distinguishedname.DistinguishedName(stringValue=newDN)
+        if newDN.up() != self.dn.up():
+            # climb up the tree to root
+            root = self
+            while root._parent is not None:
+                root = root._parent
+            d = defer.maybeDeferred(root.lookup, newDN.up())
+        else:
+            d = defer.succeed(None)
+        d.addCallback(self._move2, newDN)
+        return d
+
+    def _move2(self, newParent, newDN):
+        if newParent is not None:
+            newParent._children.append(self)
+            self._parent._children.remove(self)
+        # remove old RDN attributes
+        for attr in self.dn.split()[0].split():
+            self[attr.attributeType].remove(attr.value)
+        # add new RDN attributes
+        for attr in newDN.split()[0].split():
+            # TODO what if the key does not exist?
+            self[attr.attributeType].add(attr.value)
+        self.dn = newDN
+        return self
+
+    def move(self, newDN):
+        return defer.maybeDeferred(self._move, newDN)
 
 class InMemoryLDIFProtocol(ldifprotocol.LDIF):
 

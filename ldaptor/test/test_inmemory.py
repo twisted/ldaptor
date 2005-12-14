@@ -297,6 +297,83 @@ class TestInMemoryDatabase(unittest.TestCase):
             ])
         return d
 
+    def test_move_noChildren_sameSuperior(self):
+        d = self.empty.move('ou=moved,dc=example,dc=com')
+        def getChildren(dummy):
+            return self.root.children()
+        d.addCallback(getChildren)
+        d.addCallback(self.assertEquals, [
+            self.meta,
+            inmemory.ReadOnlyInMemoryLDAPEntry(
+            dn='ou=moved,dc=example,dc=com',
+            attributes={ 'objectClass': ['a', 'b'],
+                         'ou': ['moved'],
+            }),
+            self.oneChild,
+            ])
+        return d
+
+    def test_move_children_sameSuperior(self):
+        d = self.meta.move('ou=moved,dc=example,dc=com')
+        def getChildren(dummy):
+            return self.root.children()
+        d.addCallback(getChildren)
+        d.addCallback(self.assertEquals, [
+            inmemory.ReadOnlyInMemoryLDAPEntry(
+            dn='ou=moved,dc=example,dc=com',
+            attributes={ 'objectClass': ['a', 'b'],
+                         'ou': ['moved'],
+            }),
+            self.empty,
+            self.oneChild,
+            ])
+        return d
+
+
+    def test_move_noChildren_newSuperior(self):
+        d = self.empty.move('ou=moved,ou=oneChild,dc=example,dc=com')
+        def getChildren(dummy):
+            return self.root.children()
+        d.addCallback(getChildren)
+        d.addCallback(self.assertEquals, [
+            self.meta,
+            self.oneChild,
+            ])
+        def getChildren2(dummy):
+            return self.oneChild.children()
+        d.addCallback(getChildren2)
+        d.addCallback(self.assertEquals, [
+            self.theChild,
+            inmemory.ReadOnlyInMemoryLDAPEntry(
+            dn='ou=moved,ou=oneChild,dc=example,dc=com',
+            attributes={ 'objectClass': ['a', 'b'],
+                         'ou': ['moved'],
+            }),
+            ])
+        return d
+
+    def test_move_children_newSuperior(self):
+        d = self.meta.move('ou=moved,ou=oneChild,dc=example,dc=com')
+        def getChildren(dummy):
+            return self.root.children()
+        d.addCallback(getChildren)
+        d.addCallback(self.assertEquals, [
+            self.empty,
+            self.oneChild,
+            ])
+        def getChildren2(dummy):
+            return self.oneChild.children()
+        d.addCallback(getChildren2)
+        d.addCallback(self.assertEquals, [
+            self.theChild,
+            inmemory.ReadOnlyInMemoryLDAPEntry(
+            dn='ou=moved,ou=oneChild,dc=example,dc=com',
+            attributes={ 'objectClass': ['a', 'b'],
+                         'ou': ['moved'],
+            }),
+            ])
+        return d
+
 class FromLDIF(unittest.TestCase):
     def test_single(self):
         ldif = StringIO('''\
