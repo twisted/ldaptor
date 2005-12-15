@@ -38,32 +38,58 @@ def l(s):
 class KnownValues(unittest.TestCase):
     knownValues=( # class, args, kwargs, expected_result
 
-        (pureldap.LDAPModification_delete,
+        (pureldap.LDAPModifyRequest,
          [],
-         { "attributeType": 'bar',
+         { "object": 'cn=foo, dc=example, dc=com',
+           "modification": [
+                      pureber.BERSequence([
+                        pureber.BEREnumerated(0),
+                        pureber.BERSequence([
+                          pureldap.LDAPAttributeDescription('bar'),
+                          pureber.BERSet([
+                            pureldap.LDAPString('a'),
+                            pureldap.LDAPString('b'),
+                            ]),
+                          ]),
+                        ]),
+                      ],
            },
          None,
-         [0x30, 0x0c]
-         + [0x0a, 0x01, 0x01]
-         + [0x30, 0x07]
-         + [0x04, 0x03] + l("bar")
-         + [0x31, 0x00]),
+         [0x66, 50]
+         + ([0x04, 0x1a] + l("cn=foo, dc=example, dc=com")
+            + [0x30, 20]
+            + ([0x30, 18]
+               + ([0x0a, 0x01, 0x00]
+                  + [0x30, 13]
+                  + ([0x04, len("bar")] + l("bar")
+                     + [0x31, 0x06]
+                     + ([0x04, len("a")] + l("a")
+                        + [0x04, len("b")] + l("b"))))))
+            ),
 
         (pureldap.LDAPModifyRequest,
          [],
          { "object": 'cn=foo, dc=example, dc=com',
-           "modification": [pureldap.LDAPModification_delete('bar')]
+           "modification": [
+                      pureber.BERSequence([
+                        pureber.BEREnumerated(1L),
+                        pureber.BERSequence([
+                          pureber.BEROctetString('bar'),
+                          pureber.BERSet([]),
+                          ]),
+                        ]),
+                      ],
            },
          None,
          [0x66, 0x2c]
-         + [0x04, 0x1a]
-         + l("cn=foo, dc=example, dc=com")
-         + [0x30, 0x0e]
-         + [0x30, 0x0c]
-         + [0x0a, 0x01, 0x01]
-         + [0x30, 0x07]
-         + [0x04, 0x03] + l("bar")
-         + [0x31, 0x00]),
+         + ([0x04, 0x1a] + l("cn=foo, dc=example, dc=com")
+            + [0x30, 0x0e]
+            + ([0x30, 0x0c]
+               + ([0x0a, 0x01, 0x01]
+                  + [0x30, 0x07]
+                  + ([0x04, 0x03] + l("bar")
+                     + [0x31, 0x00]))))
+        ),
 
         (pureldap.LDAPFilter_not,
          [],
