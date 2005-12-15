@@ -7,8 +7,8 @@ find '<label class="freeform-label" for="search-scope">Search depth</label><span
 formvalue search scope 0
 submit
 code 200
-find '<p><span>1</span> entries matched.</p>'
-find '<p>Used.filter.<span>\(objectClass=dcObject\)</span></p>'
+find '<p><span>1</span> entries matched\.</p>'
+find '<p>Used filter <span>\(objectClass=dcObject\)</span></p>'
 
 
 formvalue search searchfilter ''
@@ -17,5 +17,5 @@ find '<label class="freeform-label" for="search-scope">Search depth</label><span
 formvalue search scope 2
 submit
 code 200
-find '<p><span>2</span> entries matched.</p>'
-find '<p>Used.filter.<span>\(\|\(cn=j\*\)\(uid=j\*\)\)</span></p>'
+find '<p><span>2</span> entries matched\.</p>'
+find '<p>Used filter <span>\(\|\(cn=j\*\)\(uid=j\*\)\)</span></p>'

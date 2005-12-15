@@ -7,5 +7,4 @@ submit
 code 200
 notfind Exception
 notfind InvalidLDAPFilter
-find '<div.class="freeform-error">Invalid.LDAP.filter:.Expected."\(".at.point.0.in.\'broke\'</div>'
-
+find '<div class="freeform-error">Invalid LDAP filter: Expected "\(" at point 0 in \'broke\'</div>'

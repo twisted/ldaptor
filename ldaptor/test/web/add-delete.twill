@@ -21,7 +21,7 @@ formvalue add add_uid justfortest
 submit
 code 200
 
-find 'Added.<a.href="[^"]*">uid=justfortest,ou=People,dc=example,dc=com</a>.successfully\.'
+find 'Added <a href="[^"]*">uid=justfortest,ou=People,dc=example,dc=com</a> successfully\.'
 
 follow Search
 code 200
@@ -31,22 +31,22 @@ formvalue search search_Name justfortest
 submit
 code 200
 
-find "<p><span>1</span>.entries.matched\.</p>"
+find "<p><span>1</span> entries matched\.</p>"
 follow /ou%3DPeople%2Cdc%3Dexample%2Cdc%3Dcom/delete/uid%3Djustfortest%2Cou%3DPeople%2Cdc%3Dexample%2Cdc%3Dcom$
 
 code 200
 title "Ldaptor Delete Page"
-find "<p>Remove.<span>uid=justfortest,ou=People,dc=example,dc=com</span>\?</p>"
+find "<p>Remove <span>uid=justfortest,ou=People,dc=example,dc=com</span>\?</p>"
 
 formvalue delete delete dummy
 submit
 code 200
 title "Ldaptor Search Page"
 
-find '<p>Deleted.uid=justfortest,ou=People,dc=example,dc=com\.</p>'
+find '<p>Deleted uid=justfortest,ou=People,dc=example,dc=com\.</p>'
 
 formvalue search search_Name justfortest
 submit
 code 200
 
-find "<p><span>0</span>.entries.matched\.</p>"
+find "<p><span>0</span> entries matched\.</p>"

@@ -11,7 +11,7 @@ formvalue login password secret
 submit
 code 200
 title "Ldaptor Delete Page"
-find "<p>Remove.<span>ou=People,dc=example,dc=com</span>\?</p>"
+find "<p>Remove <span>ou=People,dc=example,dc=com</span>\?</p>"
 
 formvalue delete delete dummy
 submit
@@ -20,4 +20,4 @@ code 200
 # we do not want to get redirected away on error
 title "Ldaptor Delete Page"
 
-find '<div>Failed:.notAllowedOnNonLeaf:.Cannot.remove.entry.with.children:.ou=People,dc=example,dc=com\.</div>'
+find '<div>Failed: notAllowedOnNonLeaf: Cannot remove entry with children: ou=People,dc=example,dc=com\.</div>'
