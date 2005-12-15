@@ -1,0 +1,27 @@
+formvalue go baseDN ou=People,dc=example,dc=com
+submit
+code 200
+
+follow "add new entry"
+code 200
+title "Login"
+
+formvalue login name jack
+formvalue login password secret
+submit
+code 200
+title "Ldaptor Add Page"
+
+formvalue add structuralObjectClass account
+formvalue add auxiliary_posixAccount True
+submit
+code 200
+title "Ldaptor Add Page"
+
+
+# required fields for posixAccount are enforced
+formvalue add add_uid justfortest
+submit
+code 200
+find '<div class="freeform-form-error">Error:</div>'
+find '<span class="freeform-input"><input id="add-add_homeDirectory" type="text" class="freeform-input-text" value="" name="add_homeDirectory" /></span><div class="freeform-error">Please enter a string\.</div>'
