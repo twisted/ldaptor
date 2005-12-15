@@ -1,0 +1,15 @@
+go dc=example,dc=com/delete/dc=example,dc=com
+code 200
+title "Login"
+
+formvalue login name jack
+formvalue login password secret
+submit
+code 200
+
+# Make sure the authentication worked
+title "Ldaptor Delete Page"
+find "<p>Remove <span>dc=example,dc=com</span>\?</p>"
+
+go invaliddn
+code 404
