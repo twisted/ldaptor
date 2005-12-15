@@ -1,0 +1,15 @@
+go dc=example,dc=com/delete
+code 200
+title "Login"
+
+formvalue login name jack
+formvalue login password secret
+submit
+code 200
+
+title 'Ldaptor Delete Page'
+find '<strong>Missing DN to delete.</strong>'
+follow 'search page'
+code 200
+
+title 'Ldaptor Search Page'
