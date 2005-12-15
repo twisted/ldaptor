@@ -11,8 +11,8 @@ cp = config.loadConfig(configFiles=[])
 cp.add_section('webui')
 cp.set('webui', 'search-field 1 Name',
        '(|(cn=%(input)s)(uid=%(input)s))')
-cp.add_section('authentication')
-cp.set('authentication', 'identity-base',
+cp.add_section('ldap')
+cp.set('ldap', 'base',
        'dc=example,dc=com')
 
 cfg = config.LDAPConfig(serviceLocationOverrides={
