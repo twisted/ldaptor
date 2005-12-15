@@ -10,6 +10,6 @@ code 200
 title "Ldaptor Web Interface"
 find '<span class="freeform-input"><input id="go-baseDN" type="text" class="freeform-input-text" value="" name="baseDN" /></span>'
 find 'No error for error key: go'
-find 'No error for error key: go.baseDN'
+find 'No error for error key: go\.baseDN'
 
 url ^http://localhost:\d+/$

@@ -2,7 +2,7 @@ formvalue go baseDN ou=People,dc=example,dc=com
 submit
 code 200
 
-follow "add.new.entry"
+follow "add new entry"
 code 200
 title "Login"
 
@@ -10,7 +10,7 @@ formvalue login name jack
 formvalue login password secret
 submit
 code 200
-title "Ldaptor.Add.Page"
+title "Ldaptor Add Page"
 
 formvalue add structuralObjectClass account
 formvalue add auxiliary_posixAccount True
