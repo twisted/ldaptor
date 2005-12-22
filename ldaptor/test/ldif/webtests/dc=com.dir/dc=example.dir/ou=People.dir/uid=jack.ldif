@@ -1,6 +1,11 @@
 dn: uid=jack,ou=People,dc=example,dc=com
-uid: jack
 objectClass: posixAccount
+uid: jack
+cn: Jack Black
+uidNumber: 1234
+gidNumber: 1234
+homeDirectory: /home/jack
 # "secret"
 userPassword: {SSHA}yVLLj62rFf3kDAbzwEU0zYAVvbWrze8=
+subschemaSubentry: cn=Subschema
 
