@@ -1,0 +1,5 @@
+dn: cn=missing-must-fields,ou=People,dc=example,dc=com
+cn: missing-must-fields
+objectClass: person
+subschemaSubentry: cn=Subschema
+

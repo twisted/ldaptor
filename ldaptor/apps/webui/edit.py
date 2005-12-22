@@ -9,6 +9,7 @@ import os
 from nevow import rend, loaders, inevow, url, tags
 from formless import iformless, configurable, annotate, webform
 from twisted.internet import defer
+from twisted.python import log
 
 class EditStatus(object):
     def __init__(self, entry, changes):
@@ -118,14 +119,15 @@ class EditForm(configurable.Configurable):
                                       default="\n".join(values),
                                       required=required,
                                       )))
-                    result.append(annotate.Argument(
-                        'old_'+attr,
-                        annotate.String(label=attr,
-                                        description=attrtype.desc or '',
-                                        default="\n".join(values),
-                                        required=required,
-                                        hidden=True,
-                                        )))
+                    if values:
+                        result.append(annotate.Argument(
+                            'old_'+attr,
+                            annotate.String(label=attr,
+                                            description=attrtype.desc or '',
+                                            default="\n".join(values),
+                                            required=required,
+                                            hidden=True,
+                                            )))
 
     def _getFormFields(self):
         r=[]
@@ -170,7 +172,11 @@ class EditForm(configurable.Configurable):
                                 process[name.upper()]=None
 
                 if not found_one:
-                    raise "Object doesn't have required attribute %s: %s"%(attr, self.entry)
+                    log.msg("Object doesn't have required attribute %s:\n%s"%(attr, self.entry))
+                    self._one_formfield(real_attr.name[0],
+                                        [],
+                                        required=True,
+                                        result=r)
 
             for attr_alias in objclass.may:
                 found_one=0
@@ -212,6 +218,8 @@ class EditForm(configurable.Configurable):
 
     def _prune_changes(self, old, new):
         """Prune non-changes when old and new state is known."""
+        if old is None:
+            old = []
         o={}
         n={}
         for x in old:
@@ -248,10 +256,7 @@ class EditForm(configurable.Configurable):
             if v is None:
                 v = ''
             if k[:len("edit_")]=="edit_":
-                old=kw["old_"+k[len("edit_"):]]
-                if old is None:
-                    old = ''
-
+                old=kw.get("old_"+k[len("edit_"):])
                 attrtype = self._get_attrtype(k[len("edit_"):])
                 assert attrtype
 
@@ -259,16 +264,22 @@ class EditForm(configurable.Configurable):
                     v=v.replace('\r\n', '\n')
                     v=v.strip()
                     v=[v]
-                    old=old.replace('\r\n', '\n')
-                    old=old.strip()
-                    old=[old]
+                    if v == ['']:
+                        v = []
+                    if old is not None:
+                        old=old.replace('\r\n', '\n')
+                        old=old.strip()
+                        old=[old]
                 else:
                     v=self._textarea_to_list(v)
-                    old=self._textarea_to_list(old)
+                    if old is not None:
+                        old=self._textarea_to_list(old)
 
-                old, v = self._prune_changes(old, v)
+                o, v = self._prune_changes(old, v)
 
-                if old or v:
+                if ((old is None and v)
+                    or (old is not None
+                        and (o or v))):
                     attr=k[len("edit_"):]
                     changes.append((attr, old, v))
                     #TODO
@@ -281,6 +292,7 @@ class EditForm(configurable.Configurable):
         for rdn in self.entry.dn.split()[0].split():
             for attr,old,new in changes:
                 if (rdn.attributeType == attr
+                    and old is not None
                     and rdn.value in old):
                     # Need to change the rdn
                     if newRDN is None:
