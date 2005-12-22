@@ -312,6 +312,9 @@ class LDAPServer(BaseLDAPServer):
         root = interfaces.IConnectedLDAPEntry(self.factory)
         mod = delta.ModifyOp.fromLDAP(request)
         d = mod.patch(root)
+        def _patched(entry):
+            return entry.commit()
+        d.addCallback(_patched)
         def _report(entry):
             return pureldap.LDAPModifyResponse(resultCode=0)
         d.addCallback(_report)
