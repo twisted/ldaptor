@@ -159,6 +159,7 @@ class ModifyOp(Operation):
         def gotEntry(entry, modifications):
             for mod in self.modifications:
                 mod.patch(entry)
+            return entry.commit()
         d.addCallback(gotEntry, self.modifications)
         return d
 
