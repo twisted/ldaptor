@@ -38,7 +38,7 @@ notfind Exception
 notfind traceback
 
 
-find '<strong>\s*<span>Edited <a href="http://localhost:38980/uid%3Djack%2Cou%3DPeople%2Cdc%3Dexample%2Cdc%3Dcom/search">uid=jack,ou=People,dc=example,dc=com</a> successfully\. \[[^]]+\]<p><ul><li>changing cn</li><ul><li>remove \'Jack Black\'</li><li>add \'Jack R\. Black\'</li></ul></ul></p></span>\s*</strong>'
+find '<strong>\s*<span>Edited <a href="http://[^/]+/uid%3Djack%2Cou%3DPeople%2Cdc%3Dexample%2Cdc%3Dcom/search">uid=jack,ou=People,dc=example,dc=com</a> successfully\. \[[^]]+\]<p><ul><li>changing cn</li><ul><li>remove \'Jack Black\'</li><li>add \'Jack R\. Black\'</li></ul></ul></p></span>\s*</strong>'
 
 find '\sNo error for error key: edit\s'
 find '<span class="freeform-input"><textarea id="edit-edit_cn" rows="8" class="freeform-textarea" name="edit_cn" cols="40">Jack R\. Black</textarea></span>'
@@ -72,7 +72,7 @@ title "Ldaptor Edit Page"
 notfind Exception
 notfind traceback
 
-find '<strong>\s*<span>Edited <a href="http://localhost:38980/uid%3Djack%2Cou%3DPeople%2Cdc%3Dexample%2Cdc%3Dcom/search">uid=jack,ou=People,dc=example,dc=com</a> successfully\. \[[^]]+\]<p><ul><li>changing cn</li><ul><li>remove \'Jack R\. Black\'</li><li>add \'Jack Black\'</li></ul></ul></p></span>\s*</strong>'
+find '<strong>\s*<span>Edited <a href="http://[^/]+/uid%3Djack%2Cou%3DPeople%2Cdc%3Dexample%2Cdc%3Dcom/search">uid=jack,ou=People,dc=example,dc=com</a> successfully\. \[[^]]+\]<p><ul><li>changing cn</li><ul><li>remove \'Jack R\. Black\'</li><li>add \'Jack Black\'</li></ul></ul></p></span>\s*</strong>'
 
 find '\sNo error for error key: edit\s'
 find '<span class="freeform-input"><textarea id="edit-edit_cn" rows="8" class="freeform-textarea" name="edit_cn" cols="40">Jack Black</textarea></span>'
