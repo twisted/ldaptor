@@ -6,15 +6,25 @@ changing of location in tree)
 """
 
 from ldaptor import attributeset
-from ldaptor.protocols import pureldap
+from ldaptor.protocols import pureldap, pureber
 from ldaptor.protocols.ldap import ldif, distinguishedname
 
 class Modification(attributeset.LDAPAttributeSet):
     def patch(self, entry):
         raise NotImplementedError
 
+    _LDAP_OP = None
+
     def asLDAP(self):
-        raise NotImplementedError
+        if self._LDAP_OP is None:
+            raise NotImplementedError("%s.asLDAP not implemented"
+                                      % self.__class__.__name__)
+        return str(pureber.BERSequence([
+            pureber.BEREnumerated(self._LDAP_OP),
+            pureber.BERSequence([ pureldap.LDAPAttributeDescription(self.key),
+                                  pureber.BERSet(map(pureldap.LDAPString, list(self))),
+                                  ]),
+            ]))
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
@@ -22,14 +32,13 @@ class Modification(attributeset.LDAPAttributeSet):
         return super(Modification, self).__eq__(other)
 
 class Add(Modification):
+    _LDAP_OP = 0
+
     def patch(self, entry):
         if self.key in entry:
             entry[self.key].update(self)
         else:
             entry[self.key] = self
-
-    def asLDAP(self):
-        return pureldap.LDAPModification_add(self.key, list(self))
 
     def asLDIF(self):
         r=[]
@@ -42,15 +51,14 @@ class Add(Modification):
         return ''.join(r)
 
 class Delete(Modification):
+    _LDAP_OP = 1
+
     def patch(self, entry):
         if not self:
             del entry[self.key]
         else:
             for v in self:
                 entry[self.key].remove(v)
-
-    def asLDAP(self):
-        return pureldap.LDAPModification_delete(self.key, list(self))
 
     def asLDIF(self):
         r=[]
@@ -63,6 +71,8 @@ class Delete(Modification):
         return ''.join(r)
 
 class Replace(Modification):
+    _LDAP_OP = 2
+
     def patch(self, entry):
         if self:
             entry[self.key] = self
@@ -71,9 +81,6 @@ class Replace(Modification):
                 del entry[self.key]
             except KeyError:
                 pass
-
-    def asLDAP(self):
-        return pureldap.LDAPModification_replace(self.key, list(self))
 
     def asLDIF(self):
         r=[]
@@ -113,6 +120,39 @@ class ModifyOp(Operation):
             r.append(m.asLDIF())
         r.append("\n")
         return ''.join(r)
+
+    def asLDAP(self):
+        return pureldap.LDAPModifyRequest(
+            object=str(self.dn),
+            modification=[x.asLDAP() for x in self.modifications])
+
+    def _getClassFromOp(class_, op):
+        for mod in [Add, Delete, Replace]:
+            if op == mod._LDAP_OP:
+                return mod
+        return None
+    _getClassFromOp = classmethod(_getClassFromOp)
+
+    def fromLDAP(class_, request):
+        if not isinstance(request, pureldap.LDAPModifyRequest):
+            raise RuntimeError("%s.fromLDAP needs an LDAPModifyRequest"
+                               % class_.__name__)
+        dn = request.object
+        result = []
+        for op, mods in request.modification:
+            op = op.value
+            klass = class_._getClassFromOp(op)
+            if klass is None:
+                raise RuntimeError("Unknown LDAP op number %r in %s.fromLDAP"
+                                   % (op, class_.__name__))
+
+            key, vals = mods
+            key = key.value
+            vals = [x.value for x in vals]
+            m = klass(key, vals)
+            result.append(m)
+        return class_(dn, result)
+    fromLDAP = classmethod(fromLDAP)
 
     def patch(self, root):
         d = root.lookup(self.dn)

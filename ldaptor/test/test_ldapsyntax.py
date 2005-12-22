@@ -3,7 +3,7 @@ Test cases for ldaptor.protocols.ldap.ldapsyntax module.
 """
 
 from twisted.trial import unittest
-from ldaptor import config, testutil
+from ldaptor import config, testutil, delta
 from ldaptor.protocols.ldap import ldapsyntax, ldaperrors
 from ldaptor.protocols import pureldap, pureber
 from twisted.internet import defer
@@ -196,12 +196,9 @@ class LDAPSyntaxAttributes(unittest.TestCase):
             self.failUnlessEqual(o['aValue'], ['a', 'newValue', 'anotherNewValue'])
             self.failUnlessEqual(o['bValue'], ['b'])
             self.failUnlessEqual(o['cValue'], ['c'])
-            client.assertSent(pureldap.LDAPModifyRequest(
-                object='cn=foo,dc=example,dc=com',
-                modification=[
-                pureldap.LDAPModification_add(attributeType='aValue',
-                                              vals=['newValue', 'anotherNewValue']),
-                ]))
+            client.assertSent(delta.ModifyOp('cn=foo,dc=example,dc=com', [
+                delta.Add('aValue', ['newValue', 'anotherNewValue']),
+                ]).asLDAP())
         d.addCallback(cb)
         return d
 
@@ -255,12 +252,9 @@ class LDAPSyntaxAttributesModificationOnWire(unittest.TestCase):
 
         d=o.commit()
         def cb(dummy):
-            client.assertSent(pureldap.LDAPModifyRequest(
-                object='cn=foo,dc=example,dc=com',
-                modification=[
-                pureldap.LDAPModification_add(attributeType='aValue',
-                                              vals=['newValue', 'anotherNewValue']),
-                ]))
+            client.assertSent(delta.ModifyOp('cn=foo,dc=example,dc=com', [
+                delta.Add('aValue', ['newValue', 'anotherNewValue']),
+                ]).asLDAP())
         d.addCallback(cb)
         return d
 
@@ -284,14 +278,10 @@ class LDAPSyntaxAttributesModificationOnWire(unittest.TestCase):
 
         d=o.commit()
         def cb(dummy):
-            client.assertSent(pureldap.LDAPModifyRequest(
-                object='cn=foo,dc=example,dc=com',
-                modification=[
-                pureldap.LDAPModification_add(attributeType='aValue',
-                                              vals=['newValue']),
-                pureldap.LDAPModification_add(attributeType='aValue',
-                                              vals=['anotherNewValue']),
-                ]))
+            client.assertSent(delta.ModifyOp('cn=foo,dc=example,dc=com', [
+                delta.Add('aValue', ['newValue']),
+                delta.Add('aValue', ['anotherNewValue']),
+                ]).asLDAP())
         d.addCallback(cb)
         return d
 
@@ -314,12 +304,9 @@ class LDAPSyntaxAttributesModificationOnWire(unittest.TestCase):
 
         d=o.commit()
         def cb(dummy):
-            client.assertSent(pureldap.LDAPModifyRequest(
-                object='cn=foo,dc=example,dc=com',
-                modification=[
-                pureldap.LDAPModification_delete(attributeType='aValue',
-                                                 vals=['a']),
-                ]))
+            client.assertSent(delta.ModifyOp('cn=foo,dc=example,dc=com', [
+                delta.Delete('aValue', ['a']),
+                ]).asLDAP())
         d.addCallback(cb)
         return d
 
@@ -344,12 +331,10 @@ class LDAPSyntaxAttributesModificationOnWire(unittest.TestCase):
 
         d=o.commit()
         def cb(dummy):
-            client.assertSent(pureldap.LDAPModifyRequest(
-                object='cn=foo,dc=example,dc=com',
-                modification=[
-                pureldap.LDAPModification_delete('aValue'),
-                pureldap.LDAPModification_delete('bValue'),
-                ]))
+            client.assertSent(delta.ModifyOp('cn=foo,dc=example,dc=com', [
+                delta.Delete('aValue'),
+                delta.Delete('bValue'),
+                ]).asLDAP())
         d.addCallback(cb)
         return d
 
@@ -373,12 +358,9 @@ class LDAPSyntaxAttributesModificationOnWire(unittest.TestCase):
 
         d=o.commit()
         def cb(dummy):
-            client.assertSent(pureldap.LDAPModifyRequest(
-                object='cn=foo,dc=example,dc=com',
-                modification=[
-                pureldap.LDAPModification_replace(attributeType='aValue',
-                                                  vals=['foo', 'bar']),
-                ]))
+            client.assertSent(delta.ModifyOp('cn=foo,dc=example,dc=com', [
+                delta.Replace('aValue', ['foo', 'bar']),
+                ]).asLDAP())
         d.addCallback(cb)
         return d
 
@@ -901,14 +883,12 @@ class LDAPSyntaxPasswords(unittest.TestCase):
                                dn='cn=foo,dc=example,dc=com')
         d=o.setPassword_Samba(newPasswd='new', style='sambaAccount')
         def cb(dummy):
-            client.assertSent(pureldap.LDAPModifyRequest(
-                object='cn=foo,dc=example,dc=com',
-                modification=[
-                pureldap.LDAPModification_replace(attributeType='ntPassword',
-                                                  vals=['89963F5042E5041A59C249282387A622']),
-                pureldap.LDAPModification_replace(attributeType='lmPassword',
-                                                  vals=['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
-                ]))
+            client.assertSent(delta.ModifyOp('cn=foo,dc=example,dc=com', [
+                delta.Replace('ntPassword',
+                              ['89963F5042E5041A59C249282387A622']),
+                delta.Replace('lmPassword',
+                              ['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
+                ]).asLDAP())
         d.addCallback(cb)
         return d
 
@@ -924,14 +904,12 @@ class LDAPSyntaxPasswords(unittest.TestCase):
                                dn='cn=foo,dc=example,dc=com')
         d=o.setPassword_Samba(newPasswd='new', style='sambaSamAccount')
         def cb(dummy):
-            client.assertSent(pureldap.LDAPModifyRequest(
-                object='cn=foo,dc=example,dc=com',
-                modification=[
-                pureldap.LDAPModification_replace(attributeType='sambaNTPassword',
-                                                  vals=['89963F5042E5041A59C249282387A622']),
-                pureldap.LDAPModification_replace(attributeType='sambaLMPassword',
-                                                  vals=['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
-                ]))
+            client.assertSent(delta.ModifyOp('cn=foo,dc=example,dc=com', [
+                delta.Replace('sambaNTPassword',
+                              ['89963F5042E5041A59C249282387A622']),
+                delta.Replace('sambaLMPassword',
+                              ['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
+                ]).asLDAP())
         d.addCallback(cb)
         return d
 
@@ -947,14 +925,12 @@ class LDAPSyntaxPasswords(unittest.TestCase):
                                dn='cn=foo,dc=example,dc=com')
         d=o.setPassword_Samba(newPasswd='new')
         def cb(dummy):
-            client.assertSent(pureldap.LDAPModifyRequest(
-                object='cn=foo,dc=example,dc=com',
-                modification=[
-                pureldap.LDAPModification_replace(attributeType='sambaNTPassword',
-                                                  vals=['89963F5042E5041A59C249282387A622']),
-                pureldap.LDAPModification_replace(attributeType='sambaLMPassword',
-                                                  vals=['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
-                ]))
+            client.assertSent(delta.ModifyOp('cn=foo,dc=example,dc=com', [
+                delta.Replace('sambaNTPassword',
+                              ['89963F5042E5041A59C249282387A622']),
+                            delta.Replace('sambaLMPassword',
+                                          ['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
+                ]).asLDAP())
         d.addCallback(cb)
         return d
 
@@ -1023,14 +999,12 @@ class LDAPSyntaxPasswords(unittest.TestCase):
             client.assertSent(pureldap.LDAPPasswordModifyRequest(
                 userIdentity='cn=foo,dc=example,dc=com',
                 newPasswd='new'),
-                              pureldap.LDAPModifyRequest(
-                object='cn=foo,dc=example,dc=com',
-                modification=[
-                pureldap.LDAPModification_replace(attributeType='ntPassword',
-                                                  vals=['89963F5042E5041A59C249282387A622']),
-                pureldap.LDAPModification_replace(attributeType='lmPassword',
-                                                  vals=['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
-                ]))
+                              delta.ModifyOp('cn=foo,dc=example,dc=com', [
+                delta.Replace('ntPassword',
+                              ['89963F5042E5041A59C249282387A622']),
+                delta.Replace('lmPassword',
+                              ['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
+                ]).asLDAP())
         d.addCallback(cb)
         return d
 
@@ -1057,14 +1031,12 @@ class LDAPSyntaxPasswords(unittest.TestCase):
             client.assertSent(pureldap.LDAPPasswordModifyRequest(
                 userIdentity='cn=foo,dc=example,dc=com',
                 newPasswd='new'),
-                              pureldap.LDAPModifyRequest(
-                object='cn=foo,dc=example,dc=com',
-                modification=[
-                pureldap.LDAPModification_replace(attributeType='sambaNTPassword',
-                                                  vals=['89963F5042E5041A59C249282387A622']),
-                pureldap.LDAPModification_replace(attributeType='sambaLMPassword',
-                                                  vals=['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
-                ]))
+                              delta.ModifyOp('cn=foo,dc=example,dc=com', [
+                delta.Replace('sambaNTPassword',
+                              ['89963F5042E5041A59C249282387A622']),
+                delta.Replace('sambaLMPassword',
+                              ['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
+                ]).asLDAP())
         d.addCallback(cb)
         return d
 
@@ -1091,14 +1063,12 @@ class LDAPSyntaxPasswords(unittest.TestCase):
             client.assertSent(pureldap.LDAPPasswordModifyRequest(
                 userIdentity='cn=foo,dc=example,dc=com',
                 newPasswd='new'),
-                              pureldap.LDAPModifyRequest(
-                object='cn=foo,dc=example,dc=com',
-                modification=[
-                pureldap.LDAPModification_replace(attributeType='ntPassword',
-                                                  vals=['89963F5042E5041A59C249282387A622']),
-                pureldap.LDAPModification_replace(attributeType='lmPassword',
-                                                  vals=['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
-                ]))
+                              delta.ModifyOp('cn=foo,dc=example,dc=com', [
+                delta.Replace('ntPassword',
+                              ['89963F5042E5041A59C249282387A622']),
+                delta.Replace('lmPassword',
+                              ['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
+                ]).asLDAP())
         d.addCallback(cb)
         return d
 
@@ -1125,14 +1095,12 @@ class LDAPSyntaxPasswords(unittest.TestCase):
             client.assertSent(pureldap.LDAPPasswordModifyRequest(
                 userIdentity='cn=foo,dc=example,dc=com',
                 newPasswd='new'),
-                              pureldap.LDAPModifyRequest(
-                object='cn=foo,dc=example,dc=com',
-                modification=[
-                pureldap.LDAPModification_replace(attributeType='sambaNTPassword',
-                                                  vals=['89963F5042E5041A59C249282387A622']),
-                pureldap.LDAPModification_replace(attributeType='sambaLMPassword',
-                                                  vals=['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
-                ]))
+                              delta.ModifyOp('cn=foo,dc=example,dc=com', [
+                delta.Replace('sambaNTPassword',
+                              ['89963F5042E5041A59C249282387A622']),
+                delta.Replace('sambaLMPassword',
+                              ['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
+                ]).asLDAP())
         d.addCallback(cb)
         return d
 
@@ -1172,13 +1140,10 @@ class LDAPSyntaxPasswords(unittest.TestCase):
                                            typesOnly=0,
                                            filter=pureldap.LDAPFilterMatchAll,
                                            attributes=('objectClass',)),
-                pureldap.LDAPModifyRequest(object='cn=foo,dc=example,dc=com',
-                                           modification=[
-                pureldap.LDAPModification_replace(attributeType='ntPassword',
-                                                  vals=['89963F5042E5041A59C249282387A622']),
-                pureldap.LDAPModification_replace(attributeType='lmPassword',
-                                                  vals=['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
-                ]),
+                delta.ModifyOp('cn=foo,dc=example,dc=com', [
+                delta.Replace('ntPassword', ['89963F5042E5041A59C249282387A622']),
+                delta.Replace('lmPassword', ['XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX']),
+                ]).asLDAP(),
                 )
         d.addCallback(cb)
         return d
@@ -1450,12 +1415,9 @@ class LDAPSyntaxFetch(unittest.TestCase):
         d.addCallback(self.assertIdentical, o)
 
         def cb(dummy):
-            client.assertSent(pureldap.LDAPModifyRequest(
-                object='cn=foo,dc=example,dc=com',
-                modification=[
-                pureldap.LDAPModification_replace(attributeType='aValue',
-                                                  vals=['foo', 'bar']),
-                ]),
+            client.assertSent(delta.ModifyOp('cn=foo,dc=example,dc=com', [
+                delta.Replace('aValue', ['foo', 'bar']),
+                ]).asLDAP(),
                               pureldap.LDAPSearchRequest(
                 baseObject='cn=foo,dc=example,dc=com',
                 scope=pureldap.LDAP_SCOPE_baseObject,
