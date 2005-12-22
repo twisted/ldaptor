@@ -374,6 +374,14 @@ class TestInMemoryDatabase(unittest.TestCase):
             ])
         return d
 
+    def test_commit(self):
+        """ReadOnlyInMemoryLDAPEntry.commit() succeeds immediately."""
+        self.meta['foo'] = ['bar']
+        d = self.meta.commit()
+        self.failUnless(d.called)
+        d.addCallback(self.assertIdentical, self.meta)
+        return d
+
 class FromLDIF(unittest.TestCase):
     def test_single(self):
         ldif = StringIO('''\

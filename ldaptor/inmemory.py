@@ -116,6 +116,9 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
     def move(self, newDN):
         return defer.maybeDeferred(self._move, newDN)
 
+    def commit(self):
+        return defer.succeed(self)
+
 class InMemoryLDIFProtocol(ldifprotocol.LDIF):
 
     """
