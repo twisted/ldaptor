@@ -17,7 +17,7 @@
 """LDAP protocol server"""
 
 import sets
-from ldaptor import interfaces
+from ldaptor import interfaces, delta
 from ldaptor.protocols import pureldap, pureber
 from ldaptor.protocols.ldap import distinguishedname, ldaperrors
 
@@ -303,6 +303,20 @@ class LDAPServer(BaseLDAPServer):
             return pureldap.LDAPModifyDNResponse(resultCode=0)
         d.addCallback(_report)
         return d
+
+    fail_LDAPModifyRequest = pureldap.LDAPModifyResponse
+
+    def handle_LDAPModifyRequest(self, request, controls, reply):
+        self.checkControls(controls)
+
+        root = interfaces.IConnectedLDAPEntry(self.factory)
+        mod = delta.ModifyOp.fromLDAP(request)
+        d = mod.patch(root)
+        def _report(entry):
+            return pureldap.LDAPModifyResponse(resultCode=0)
+        d.addCallback(_report)
+        return d
+
 
 if __name__ == '__main__':
     """

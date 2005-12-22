@@ -6,7 +6,7 @@ from twisted.trial import unittest
 import sets
 from twisted.internet import protocol, address
 from twisted.python import components
-from ldaptor import inmemory, interfaces, schema
+from ldaptor import inmemory, interfaces, schema, delta
 from ldaptor.protocols.ldap import ldapserver, ldapclient, ldaperrors, fetchschema
 from ldaptor.protocols import pureldap, pureber
 from twisted.test import proto_helpers
@@ -403,6 +403,29 @@ class LDAPServerTest(unittest.TestCase):
             ]))
         return d
     test_modifyDN_rdnOnly_noDeleteOldRDN_success.todo = 'Not supported yet.'
+
+    def test_modify(self):
+        self.server.dataReceived(str(pureldap.LDAPMessage(
+            pureldap.LDAPModifyRequest(self.stuff.dn,
+                                       modification=[
+            delta.Add('foo', ['bar']).asLDAP(),
+            ],
+                                       ),
+            id=2)))
+        self.assertEquals(self.server.transport.value(),
+                          str(pureldap.LDAPMessage(
+            pureldap.LDAPModifyResponse(
+            resultCode=ldaperrors.Success.resultCode),
+            id=2)),
+                          )
+        # tree changed
+        self.assertEquals(
+            self.stuff,
+            inmemory.ReadOnlyInMemoryLDAPEntry(
+            'ou=stuff,dc=example,dc=com',
+            {'objectClass': ['a', 'b'],
+             'ou': ['stuff'],
+             'foo': ['bar']}))
 
     def test_unknownRequest(self):
         # make server miss one of the handle_* attributes
