@@ -33,4 +33,5 @@ submit
 code 200
 
 title "Ldaptor Edit Page"
+notfind '<strong>\s*<span>Edited <a href="http://[^/]+/cn%3DJohn%20Smith%2Cou%3DPeople%2Cdc%3Dexample%2Cdc%3Dcom/search">cn=John Smith,ou=People,dc=example,dc=com</a> successfully. \[[^]]+\]<p><ul><li>changing description</li><ul><li>add \'\'</li></ul></ul></p></span>\s*</strong>'
 find '<strong>\s*<span>Edited <a href="http://[^/]+/cn%3DJohn%20Smith%2Cou%3DPeople%2Cdc%3Dexample%2Cdc%3Dcom/search">cn=John Smith,ou=People,dc=example,dc=com</a> successfully. \[[^]]+\]<p>No changes!</p></span>\s*</strong>'
