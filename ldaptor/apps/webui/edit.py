@@ -37,15 +37,14 @@ class EditForm(configurable.Configurable):
         self.attributeTypes=attributeTypes
         self.objectClasses=objectClasses
 
-        self.formFields=self._getFormFields()
-
     def getBindingNames(self, ctx):
         return ['edit']
 
     def bind_edit(self, ctx):
+        formFields=self._getFormFields()
         return annotate.MethodBinding(
             'edit',
-            annotate.Method(arguments=self.formFields,
+            annotate.Method(arguments=formFields,
                             label=_('Edit')),
             action=_('Edit'))
 
