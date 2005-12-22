@@ -1,4 +1,6 @@
 dn: cn=John Smith,ou=People,dc=example,dc=com
 cn: John Smith
+sn: Smith
 objectClass: person
+subschemaSubentry: cn=Subschema
 
