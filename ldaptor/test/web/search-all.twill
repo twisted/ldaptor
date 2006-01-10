@@ -1,0 +1,10 @@
+formvalue go baseDN dc=example,dc=com
+submit
+code 200
+title "Ldaptor Search Page"
+formvalue search search dummy
+submit
+code 200
+show
+find '<p><span>5</span> entries matched\.</p>'
+find '<p>Used filter <span>\(objectClass=\*\)</span></p>'
