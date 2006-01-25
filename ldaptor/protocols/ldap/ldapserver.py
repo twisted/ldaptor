@@ -161,6 +161,7 @@ class LDAPServer(BaseLDAPServer):
 
                 d = entry.bind(auth)
                 def _cb(entry):
+                    self.boundUser=entry
                     msg = pureldap.LDAPBindResponse(
                         resultCode=ldaperrors.Success.resultCode,
                         matchedDN=str(entry.dn))
@@ -320,6 +321,89 @@ class LDAPServer(BaseLDAPServer):
         d.addCallback(_report)
         return d
 
+    fail_LDAPExtendedRequest = pureldap.LDAPExtendedResponse
+
+    def handle_LDAPExtendedRequest(self, request, controls, reply):
+        self.checkControls(controls)
+
+        for handler in [getattr(self, attr)
+                        for attr in dir(self)
+                        if attr.startswith('extendedRequest_')]:
+            if getattr(handler, 'oid', None) == request.requestName:
+                berdecoder = getattr(handler, 'berdecoder', None)
+
+                if berdecoder is None:
+                    values = [request.requestValue]
+                else:
+                    values = pureber.berDecodeMultiple(request.requestValue, berdecoder)
+
+                d = defer.maybeDeferred(handler, *values, **{'reply': reply})
+                def eb(fail, oid):
+                    fail.trap(ldaperrors.LDAPException)
+                    return pureldap.LDAPExtendedResponse(
+                        resultCode=fail.value.resultCode,
+                        errorMessage=fail.value.message,
+                        responseName=oid,
+                        )
+                d.addErrback(eb, request.requestName)
+                return d
+
+        raise ldaperrors.LDAPProtocolError('Unknown extended request: %s' % request.requestName)
+
+    def extendedRequest_LDAPPasswordModifyRequest(self, data, reply):
+        if not isinstance(data, pureber.BERSequence):
+            raise ldaperrors.LDAPProtocolError('Extended request PasswordModify expected a BERSequence.')
+
+        userIdentity = None
+        oldPasswd = None
+        newPasswd = None
+
+        for value in data:
+            if isinstance(value, pureldap.LDAPPasswordModifyRequest_userIdentity):
+                if userIdentity is not None:
+                    raise ldaperrors.LDAPProtocolError(
+                        'Extended request PasswordModify received userIdentity twice.')
+                userIdentity = value.value
+            elif isinstance(value, pureldap.LDAPPasswordModifyRequest_oldPasswd):
+                if oldPasswd is not None:
+                    raise ldaperrors.LDAPProtocolError('Extended request PasswordModify received oldPasswd twice.')
+                oldPasswd = value.value
+            elif isinstance(value, pureldap.LDAPPasswordModifyRequest_newPasswd):
+                if newPasswd is not None:
+                    raise ldaperrors.LDAPProtocolError('Extended request PasswordModify received newPasswd twice.')
+                newPasswd = value.value
+            else:
+                raise ldaperrors.LDAPProtocolError('Extended request PasswordModify received unexpected item.')
+
+        if self.boundUser is None:
+            raise ldaperrors.LDAPStrongAuthRequired()
+
+        if (userIdentity is not None
+            and userIdentity != self.boundUser.dn):
+            #TODO this hardcodes ACL
+            log.msg('User %(actor)s tried to change password of %(target)s' % {
+                'actor': str(self.boundUser.dn),
+                'target': str(userIdentity),
+                })
+            raise ldaperrors.LDAPInsufficientAccessRights()
+
+        if (oldPasswd is not None
+            or newPasswd is None):
+            raise ldaperrors.LDAPOperationsError('Password does not support this case.')
+
+        self.boundUser.setPassword(newPasswd)
+        return pureldap.LDAPExtendedResponse(resultCode=ldaperrors.Success.resultCode,
+                                             responseName=self.extendedRequest_LDAPPasswordModifyRequest.oid)
+
+        # TODO
+        if userIdentity is None:
+            userIdentity = str(self.boundUser.dn)
+
+        raise NotImplementedError('VALUE %r' % value)
+    extendedRequest_LDAPPasswordModifyRequest.oid = pureldap.LDAPPasswordModifyRequest.oid
+    extendedRequest_LDAPPasswordModifyRequest.berdecoder = (
+        pureber.BERDecoderContext(
+        inherit=pureldap.LDAPBERDecoderContext_LDAPPasswordModifyRequest(inherit=pureber.BERDecoderContext())))
 
 if __name__ == '__main__':
     """

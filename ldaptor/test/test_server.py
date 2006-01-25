@@ -3,10 +3,10 @@ Test cases for ldaptor.protocols.ldap.ldapserver module.
 """
 
 from twisted.trial import unittest
-import sets
+import sets, base64
 from twisted.internet import protocol, address
 from twisted.python import components
-from ldaptor import inmemory, interfaces, schema, delta
+from ldaptor import inmemory, interfaces, schema, delta, entry
 from ldaptor.protocols.ldap import ldapserver, ldapclient, ldaperrors, fetchschema
 from ldaptor.protocols import pureldap, pureber
 from twisted.test import proto_helpers
@@ -426,6 +426,68 @@ class LDAPServerTest(unittest.TestCase):
             {'objectClass': ['a', 'b'],
              'ou': ['stuff'],
              'foo': ['bar']}))
+
+    def test_extendedRequest_unknown(self):
+        self.server.dataReceived(str(pureldap.LDAPMessage(
+            pureldap.LDAPExtendedRequest(requestName='42.42.42',
+                                         requestValue='foo'),
+            id=2)))
+        self.assertEquals(self.server.transport.value(),
+                          str(pureldap.LDAPMessage(
+            pureldap.LDAPExtendedResponse(
+            resultCode=ldaperrors.LDAPProtocolError.resultCode,
+            errorMessage='Unknown extended request: 42.42.42'),
+            id=2)),
+                          )
+
+    def test_passwordModify_notBound(self):
+        self.server.dataReceived(str(pureldap.LDAPMessage(
+            pureldap.LDAPPasswordModifyRequest(
+            userIdentity='cn=thingie,ou=stuff,dc=example,dc=com',
+            newPasswd='hushhush'),
+            id=2)))
+        self.assertEquals(self.server.transport.value(),
+                          str(pureldap.LDAPMessage(
+            pureldap.LDAPExtendedResponse(
+            resultCode=ldaperrors.LDAPStrongAuthRequired.resultCode,
+            responseName=pureldap.LDAPPasswordModifyRequest.oid),
+            id=2)),
+                          )
+
+    def test_passwordModify_simple(self):
+        # first bind to some entry
+        self.thingie['userPassword'] = ['{SSHA}yVLLj62rFf3kDAbzwEU0zYAVvbWrze8='] # "secret"
+        self.server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(
+            dn='cn=thingie,ou=stuff,dc=example,dc=com',
+            auth='secret'), id=4)))
+        self.assertEquals(self.server.transport.value(),
+                          str(pureldap.LDAPMessage(
+            pureldap.LDAPBindResponse(resultCode=0,
+                                      matchedDN='cn=thingie,ou=stuff,dc=example,dc=com'),
+            id=4)))
+        self.server.transport.clear()
+
+        self.server.dataReceived(str(pureldap.LDAPMessage(
+            pureldap.LDAPPasswordModifyRequest(
+            userIdentity='cn=thingie,ou=stuff,dc=example,dc=com',
+            newPasswd='hushhush'),
+            id=2)))
+        self.assertEquals(self.server.transport.value(),
+                          str(pureldap.LDAPMessage(
+            pureldap.LDAPExtendedResponse(
+            resultCode=ldaperrors.Success.resultCode,
+            responseName=pureldap.LDAPPasswordModifyRequest.oid),
+            id=2)),
+                          )
+        # tree changed
+        secrets = self.thingie.get('userPassword', [])
+        self.assertEquals(len(secrets), 1)
+        for secret in secrets:
+            self.assertEquals(secret[:len('{SSHA}')], '{SSHA}')
+            raw = base64.decodestring(secret[len('{SSHA}'):])
+            salt = raw[20:]
+            self.assertEquals(entry.sshaDigest('hushhush', salt),
+                              secret)
 
     def test_unknownRequest(self):
         # make server miss one of the handle_* attributes
