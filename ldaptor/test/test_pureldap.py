@@ -531,6 +531,21 @@ class KnownValues(unittest.TestCase):
             )
          ),
 
+        (pureldap.LDAPExtendedRequest,
+         [],
+         {'requestName': '42.42.42',
+          'requestValue': 'foo',
+          },
+         None,
+         [0x40|0x20|23, 1+1+8+1+1+3]
+         + ([0x80|0]
+            + [len('42.42.42')]
+            + l('42.42.42'))
+         + ([0x80|1]
+            + [len('foo')]
+            + l('foo'))
+         ),
+
         )
 
     def testToLDAP(self):

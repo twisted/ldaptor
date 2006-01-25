@@ -286,7 +286,7 @@ class LDAPServerTest(unittest.TestCase):
             attributes=[ ('supportedLDAPVersion', ['3']),
                          ('namingContexts', ['dc=example,dc=com']),
                          ('supportedExtension', [
-            pureldap.LDAPPasswordModifyRequest.oid.value,
+            pureldap.LDAPPasswordModifyRequest.oid,
             ]),
                          ]),
             id=2))

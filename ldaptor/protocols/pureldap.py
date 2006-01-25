@@ -1105,6 +1105,11 @@ class LDAPResponseName(LDAPOID):
 class LDAPResponse(BEROctetString):
     tag = CLASS_CONTEXT|11
 
+class LDAPBERDecoderContext_LDAPExtendedRequest(BERDecoderContext):
+    Identities = {
+        CLASS_CONTEXT|0x00: BEROctetString,
+        CLASS_CONTEXT|0x01: BEROctetString,
+        }
 
 class LDAPExtendedRequest(LDAPProtocolRequest, BERSequence):
     tag = CLASS_APPLICATION|23
@@ -1113,11 +1118,13 @@ class LDAPExtendedRequest(LDAPProtocolRequest, BERSequence):
     requestValue = None
 
     def fromBER(klass, tag, content, berdecoder=None):
-        l = berDecodeMultiple(content, berdecoder)
+        l = berDecodeMultiple(content,
+                              LDAPBERDecoderContext_LDAPExtendedRequest(
+            fallback=berdecoder))
 
         kw = {}
         try:
-            kw['requestValue'] = l[1]
+            kw['requestValue'] = l[1].value
         except IndexError:
             pass
 
@@ -1132,13 +1139,15 @@ class LDAPExtendedRequest(LDAPProtocolRequest, BERSequence):
         LDAPProtocolRequest.__init__(self)
         BERSequence.__init__(self, [], tag=tag)
         assert requestName is not None
+        assert isinstance(requestName, basestring)
         self.requestName=requestName
+        assert isinstance(requestValue, basestring)
         self.requestValue=requestValue
 
     def __str__(self):
-        l=[self.requestName]
+        l=[LDAPOID(self.requestName, tag=CLASS_CONTEXT|0)]
         if self.requestValue is not None:
-            l.append(self.requestValue)
+            l.append(BEROctetString(str(self.requestValue), tag=CLASS_CONTEXT|1))
         return str(BERSequence(l, tag=self.tag))
 
 class LDAPPasswordModifyRequest_userIdentity(BEROctetString):
@@ -1161,7 +1170,7 @@ class LDAPBERDecoderContext_LDAPPasswordModifyRequest(BERDecoderContext):
         }
 
 class LDAPPasswordModifyRequest(LDAPExtendedRequest):
-    oid = LDAPOID('1.3.6.1.4.1.4203.1.11.1', tag=CLASS_CONTEXT|0)
+    oid = '1.3.6.1.4.1.4203.1.11.1'
 
     def __init__(self, requestName=None,
                  userIdentity=None, oldPasswd=None, newPasswd=None,
@@ -1182,8 +1191,7 @@ class LDAPPasswordModifyRequest(LDAPExtendedRequest):
         LDAPExtendedRequest.__init__(
             self,
             requestName=self.oid,
-            requestValue=BEROctetString(str(BERSequence(l)),
-                                        tag=CLASS_CONTEXT|1),
+            requestValue=str(BERSequence(l)),
             tag=tag)
 
     def __repr__(self):
@@ -1256,7 +1264,7 @@ class LDAPStartTLSRequest(LDAPExtendedRequest):
 
     See RFC 2830 for details.
     """
-    oid = LDAPOID('1.3.6.1.4.1.1466.20037', tag=CLASS_CONTEXT|0)
+    oid = '1.3.6.1.4.1.1466.20037'
 
     def __init__(self, requestName=None, tag=None):
         assert (requestName is None
@@ -1290,6 +1298,7 @@ class LDAPBERDecoderContext(BERDecoderContext):
         LDAPAddResponse.tag: LDAPAddResponse,
         LDAPDelRequest.tag: LDAPDelRequest,
         LDAPDelResponse.tag: LDAPDelResponse,
+        LDAPExtendedRequest.tag: LDAPExtendedRequest,
         LDAPExtendedResponse.tag: LDAPExtendedResponse,
         LDAPModifyDNRequest.tag: LDAPModifyDNRequest,
         LDAPModifyDNResponse.tag: LDAPModifyDNResponse,

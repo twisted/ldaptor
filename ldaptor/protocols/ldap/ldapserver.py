@@ -183,7 +183,7 @@ class LDAPServer(BaseLDAPServer):
             attributes=[ ('supportedLDAPVersion', ['3']),
                          ('namingContexts', [str(root.dn)]),
                          ('supportedExtension', [
-            pureldap.LDAPPasswordModifyRequest.oid.value,
+            pureldap.LDAPPasswordModifyRequest.oid,
             ]),
                          ],
             ))
