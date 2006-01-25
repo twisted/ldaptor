@@ -369,11 +369,6 @@ class ConfirmChange(ServicePasswordChangeMixin, rend.Page):
         ctx.fillSlots('url', data)
         return ctx.tag
 
-    def _prettifyExceptions(self, reason, prefix='', errorTypes=None):
-        if errorTypes is not None:
-            reason.trap(*errorTypes)
-        return (prefix + reason.getErrorMessage())
-
     def _setPassword(self, ctx, password):
         e = getEntry(ctx, self.dn)
         d=defer.maybeDeferred(e.setPassword, newPasswd=password)
@@ -383,8 +378,9 @@ class ConfirmChange(ServicePasswordChangeMixin, rend.Page):
         d = defer.maybeDeferred(checkPasswordTypos, newPassword, again)
         d.addCallback(lambda dummy: self._setPassword(ctx, newPassword))
         d.addCallback(lambda dummy: _('Password set.'))
-        d.addErrback(self._prettifyExceptions,
-                     prefix=_("Failed: "))
+        def eb(fail):
+            return _("Failed: %s") % fail.getErrorMessage()
+        d.addErrback(eb)
         return d
 
     def generateRandom(self, ctx):
@@ -399,8 +395,9 @@ class ConfirmChange(ServicePasswordChangeMixin, rend.Page):
             d.addCallback(lambda dummy: _('Password set to %s') % newPassword)
             return d
         d.addCallback(_status, ctx)
-        d.addErrback(self._prettifyExceptions,
-                     prefix=_("Failed: "))
+        def eb(fail):
+            return _("Failed: %s") % fail.getErrorMessage()
+        d.addErrback(eb)
         return d
 
     def data_status(self, ctx, data):
