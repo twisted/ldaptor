@@ -190,6 +190,10 @@ class SearchForm(configurable.Configurable):
                                scope=scope,
                                sizeLimit=20,
                                sizeLimitIsNonFatal=True)
+            def _cb(result, proto):
+                proto.unbind()
+                return result
+            d.addBoth(_cb, proto)
             return d
         d.addCallback(_search, curDN, self.filter, self.data['scope'])
         return d
@@ -206,6 +210,10 @@ class SearchForm(configurable.Configurable):
                                              dn=base)
             d=baseEntry.search(scope=pureldap.LDAP_SCOPE_baseObject,
                                sizeLimit=1)
+            def _cb(result, proto):
+                proto.unbind()
+                return result
+            d.addBoth(_cb, proto)
             return d
         d.addCallback(_search, iwebui.ICurrentDN(context))
 
