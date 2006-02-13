@@ -16,7 +16,7 @@ cp.set('ldap', 'base',
        'dc=example,dc=com')
 
 cfg = config.LDAPConfig(serviceLocationOverrides={
-    'dc=example,dc=com': ('localhost', 10389),
+    'dc=example,dc=com': ('localhost', 38942),
     })
 resource = main.getResource(cfg)
 

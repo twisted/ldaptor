@@ -31,5 +31,5 @@ myService = service.IServiceCollection(application)
 
 factory = LDAPServerFactory(db)
 
-myServer = internet.TCPServer(10389, factory)
+myServer = internet.TCPServer(38942, factory)
 myServer.setServiceParent(myService)

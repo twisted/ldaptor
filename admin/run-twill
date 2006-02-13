@@ -89,7 +89,7 @@ def run():
 
 
 
-mustNotListenYet(10389)
+mustNotListenYet(38942)
 mustNotListenYet(38980)
 
 ldapsrv = subprocess.Popen(args=['twistd',
@@ -100,7 +100,7 @@ ldapsrv = subprocess.Popen(args=['twistd',
                            env=os.environ)
 
 try:
-    waitUntilListening(10389)
+    waitUntilListening(38942)
 
     twistdEnv = {}
     twistdEnv.update(os.environ)
