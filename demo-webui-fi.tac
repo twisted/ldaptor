@@ -1,4 +1,5 @@
 # -*- python -*-
+from zope.interface import implements
 from twisted.application import service, internet
 from nevow import appserver, inevow
 from ldaptor import config
@@ -10,7 +11,7 @@ myService = service.IServiceCollection(application)
 resource = main.getResource()
 
 class Wrap(object):
-    __implements__ = inevow.IResource,
+    implements(inevow.IResource)
 
     def __init__(self, resource):
         super(Wrap, self).__init__()
