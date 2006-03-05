@@ -230,6 +230,16 @@ class SearchForm(configurable.Configurable):
     def __nonzero__(self):
         return self.filter is not None
 
+def getSearchForm(ctx):
+    try:
+        hand = ctx.locate(inevow.IHand)
+    except KeyError:
+        pass
+    else:
+        if isinstance(hand, SearchForm):
+            return hand
+    return SearchForm()
+
 class SearchPage(rend.Page):
     addSlash = True
 
@@ -252,16 +262,13 @@ class SearchPage(rend.Page):
         return context.tag
 
     def render_form(self, ctx, data):
-        d = defer.maybeDeferred(self.locateConfigurable, ctx, '')
-        def _cb(conf, ctx):
-            formDefaults = ctx.locate(iformless.IFormDefaults)
-            methodDefaults = formDefaults.getAllDefaults('search')
-            for k,v in conf.data.items():
-                if v is not None:
-                    methodDefaults[k] = str(v)
-            return webform.renderForms()
-        d.addCallback(_cb, ctx)
-        return d
+        conf = getSearchForm(ctx)
+        formDefaults = ctx.locate(iformless.IFormDefaults)
+        methodDefaults = formDefaults.getAllDefaults('search')
+        for k,v in conf.data.items():
+            if v is not None:
+                methodDefaults[k] = str(v)
+        return webform.renderForms()
 
     def render_keyvalue(self, context, data):
         return weave.keyvalue(context, data)
@@ -290,19 +297,8 @@ class SearchPage(rend.Page):
         r=context.tag.allPatterns(str(bool(data)))
         return context.tag.clear()[r]
 
-    def configurable_(self, context):
-        try:
-            hand = context.locate(inevow.IHand)
-        except KeyError:
-            pass
-        else:
-            if isinstance(hand, SearchForm):
-                return hand
-        return SearchForm()
-
-    def data_search(self, context, data):
-        configurable = self.locateConfigurable(context, '')
-        return configurable
+    def data_search(self, ctx, data):
+        return getSearchForm(ctx)
 
     def data_header(self, ctx, data):
         u=url.URL.fromContext(ctx)
@@ -388,24 +384,17 @@ class SearchPage(rend.Page):
         return move
 
     def locateConfigurable(self, context, name):
-        try:
-            return super(SearchPage, self).locateConfigurable(context, name)
-        except AttributeError:
-            if name.startswith('move_'):
-                pass
-            else:
-                raise
+        if name == '':
+            return getSearchForm(context)
+        elif name.startswith('move_'):
+            dn = name[len('move_'):]
 
-        dn = name[len('move_'):]
-
-        session = context.locate(inevow.ISession)
-        move = session.getComponent(IMove)
-        if move is None:
-            raise KeyError, name
-
-        for entry in move:
-            if entry.dn == dn:
-                return iformless.IConfigurable(MoveItem(entry))
+            session = context.locate(inevow.ISession)
+            move = session.getComponent(IMove)
+            if move is not None:
+                for entry in move:
+                    if entry.dn == dn:
+                        return iformless.IConfigurable(MoveItem(entry))
 
         raise KeyError, name
 
