@@ -191,7 +191,6 @@ from the command line.
         'ldaptor/apps/webui/basedn.xhtml',
         'ldaptor/apps/webui/change_password.xhtml',
         'ldaptor/apps/webui/change_service_passwords.xhtml',
-        'ldaptor/apps/webui/delete-done.xhtml',
         'ldaptor/apps/webui/delete-nodn.xhtml',
         'ldaptor/apps/webui/delete.xhtml',
         'ldaptor/apps/webui/edit-really.xhtml',
