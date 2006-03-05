@@ -284,7 +284,9 @@ class LDAPServer(BaseLDAPServer):
         dn = distinguishedname.DistinguishedName(request.entry)
         newrdn = distinguishedname.RelativeDistinguishedName(request.newrdn)
         deleteoldrdn = bool(request.deleteoldrdn)
-        assert deleteoldrdn is True     #TODO
+        if not deleteoldrdn:
+            #TODO support this
+            raise ldaperrors.LDAPUnwillingToPerform("Cannot handle preserving old RDN yet.")
         newSuperior = request.newSuperior
         if newSuperior is None:
             newSuperior = dn.up()
