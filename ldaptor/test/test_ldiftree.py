@@ -93,6 +93,9 @@ objectClass: top
         d.addCallbacks(testutil.mustRaise, eb)
         return d
 
+    if os.getuid() == 0:
+        testNoAccess.skip = "Can't test as root"
+
     def gettingDNRaises(self, dn, exceptionClass):
         d = ldiftree.get(self.tree, dn)
         def eb(fail):
@@ -415,6 +418,9 @@ cn: theChild
         d.addCallbacks(testutil.mustRaise, eb)
         return d
 
+    if os.getuid() == 0:
+        test_children_noAccess_dir_noRead.skip = "Can't test as root"
+
     def test_children_noAccess_dir_noExec(self):
         os.chmod(self.meta.path, 0600)
         d = self.meta.children()
@@ -425,6 +431,9 @@ cn: theChild
         d.addCallbacks(testutil.mustRaise, eb)
         return d
 
+    if os.getuid() == 0:
+        test_children_noAccess_dir_noExec.skip = "Can't test as root"
+
     def test_children_noAccess_file(self):
         os.chmod(os.path.join(self.meta.path, 'cn=foo.ldif'), 0)
         d = self.meta.children()
@@ -433,6 +442,9 @@ cn: theChild
             self.assertEquals(fail.value.errno, errno.EACCES)
         d.addCallbacks(testutil.mustRaise, eb)
         return d
+
+    if os.getuid() == 0:
+        test_children_noAccess_file.skip = "Can't test as root"
 
     def test_addChild(self):
         self.empty.addChild(
