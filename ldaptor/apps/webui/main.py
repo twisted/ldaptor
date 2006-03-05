@@ -1,8 +1,9 @@
 from zope.interface import implements
 from twisted.cred import portal, checkers, credentials
 from nevow import guard, inevow
+from webut.skin import skin
 from ldaptor.config import LDAPConfig
-from ldaptor.apps.webui import gadget
+from ldaptor.apps.webui import gadget, defskin
 from ldaptor.checkers import LDAPBindingChecker
 
 class TODOGetRidOfMeRealm:
@@ -29,7 +30,7 @@ class TODOGetRidOfMeRealm:
                     resource,
                     lambda: None)
 
-def getResource(cfg=None):
+def getResource(cfg=None, skinFactory=None):
     """Get a resource for the Ldaptor-webui app."""
 
     if cfg is None:
@@ -43,4 +44,7 @@ def getResource(cfg=None):
 
     mainResource = guard.SessionWrapper(porta)
 
-    return mainResource
+    if skinFactory is None:
+        skinFactory = defskin.DefaultSkin
+
+    return skin.Skinner(skinFactory, mainResource)

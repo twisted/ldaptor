@@ -1,6 +1,7 @@
 from zope.interface import implements
 from twisted.internet import defer
 from twisted.python import plugin
+from webut.skin import iskin
 
 from ldaptor.protocols.ldap import ldapsyntax, distinguishedname
 from ldaptor.protocols.ldap import fetchschema
@@ -332,21 +333,15 @@ class AddForm(configurable.Configurable):
         return d
 
 class ReallyAddPage(rend.Page):
+    implements(iskin.ISkinnable)
+
+    title = _('Ldaptor Add Page')
+
     addSlash = True
 
     docFactory = loaders.xmlfile(
         'add-really.xhtml',
         templateDir=os.path.split(os.path.abspath(__file__))[0])
-
-    def data_css(self, ctx, data):
-        u = (url.URL.fromContext(ctx).clear().parentdir().parentdir()
-             .parentdir().parentdir()
-             .child('form.css'))
-        return [ u ]
-
-    def render_css_item(self, context, data):
-        context.fillSlots('url', data)
-        return context.tag
 
     def data_header(self, ctx, data):
         u=url.URL.fromContext(ctx)
@@ -468,6 +463,10 @@ class ChooseSmartObject(object):
         return u.child('smart').child(smartObjectClass)
 
 class AddPage(rend.Page):
+    implements(iskin.ISkinnable)
+
+    title = _('Ldaptor Add Page')
+
     addSlash = True
 
     docFactory = loaders.xmlfile(
@@ -493,15 +492,6 @@ class AddPage(rend.Page):
             if plug.name == name:
                 return plug
         raise KeyError, name
-
-    def data_css(self, ctx, data):
-        u = (url.URL.fromContext(ctx).clear().parentdir().parentdir()
-             .child('form.css'))
-        return [ u ]
-
-    def render_css_item(self, context, data):
-        context.fillSlots('url', data)
-        return context.tag
 
     def data_header(self, ctx, data):
         u=url.URL.fromContext(ctx)

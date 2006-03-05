@@ -3,12 +3,13 @@
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:nevow="http://nevow.com/ns/nevow/0.1">
+      xmlns:nevow="http://nevow.com/ns/nevow/0.1"
+      nevow:render="skin">
   <head>
-    <title nevow:render="i18n">Ldaptor Web Interface</title>
-    <link href="form.css" rel="stylesheet" />
+    <title>Title Goes Here</title>
   </head>
   <body>
+    <nevow:invisible nevow:pattern="skincontent">
     <h1 nevow:render="i18n">Base DN</h1>
 
     <form name="login"
@@ -17,5 +18,6 @@
 	  nevow:render="form">
       <nevow:invisible>Search form will be here.</nevow:invisible>
     </form>
+    </nevow:invisible>
   </body>
 </html>

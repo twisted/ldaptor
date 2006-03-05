@@ -1,6 +1,9 @@
+from zope.interface import implements
 import os
 from nevow import rend, loaders, guard, inevow, url
+from webut.skin import iskin
 from ldaptor.apps.webui import i18n
+from ldaptor.apps.webui.i18n import _
 
 def getActionURL(current, history):
     action = current
@@ -17,6 +20,10 @@ def getActionURL(current, history):
 
 class LoginPage(rend.Page):
     """The resource that is returned when you are not logged in"""
+
+    implements(iskin.ISkinnable)
+
+    title = _('Login')
 
     docFactory = loaders.xmlfile(
         'login.xhtml',

@@ -1,4 +1,6 @@
+from zope.interface import implements
 import os
+from webut.skin import iskin
 from ldaptor.protocols.ldap import ldapsyntax
 from ldaptor.apps.webui.uriquote import uriUnquote
 from nevow import rend, loaders, url, inevow
@@ -8,6 +10,10 @@ from ldaptor.apps.webui import i18n
 from ldaptor.apps.webui.search import IMove
 
 class MovePage(rend.Page):
+    implements(iskin.ISkinnable)
+
+    title = _('Ldaptor Move Page')
+
     addSlash = True
     docFactory = loaders.xmlfile(
         'move.xhtml',

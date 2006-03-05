@@ -1,4 +1,5 @@
 from zope.interface import implements
+from webut.skin import iskin
 from ldaptor.apps.webui import login, search, edit, add, delete, mass_change_password, change_password, move, iwebui
 from ldaptor.protocols.ldap import distinguishedname
 from ldaptor.apps.webui.uriquote import uriUnquote
@@ -11,6 +12,10 @@ from formless import annotate, webform, iformless
 import os
 
 class LdaptorWebUIGadget2(rend.Page):
+    implements(iskin.ISkinnable)
+
+    title = _('Ldaptor Web Interface')
+
     addSlash = True
 
     def __init__(self, baseObject):
@@ -66,6 +71,10 @@ class LDAPDN(annotate.String):
         return dn
 
 class LdaptorWebUIGadget(rend.Page):
+    implements(iskin.ISkinnable)
+
+    title = _('Ldaptor Web Interface')
+
     addSlash = True
 
     docFactory = loaders.xmlfile(
@@ -76,11 +85,6 @@ class LdaptorWebUIGadget(rend.Page):
         super(LdaptorWebUIGadget, self).__init__()
         self.loggedIn = loggedIn
         self.config = config
-        self.putChild('form.css', webform.defaultCSS)
-
-        dirname = os.path.abspath(os.path.dirname(__file__))
-        self.putChild('ldaptor.css', static.File(
-            os.path.join(dirname, 'ldaptor.css')))
 
     def getBindingNames(self, ctx):
         return ['go']
@@ -128,8 +132,8 @@ class LdaptorWebUIGadget(rend.Page):
             return u, []
 
         r=LdaptorWebUIGadget2(baseObject=dn)
-        r.remember(self.config, interfaces.ILDAPConfig)
-        r.remember(dn, iwebui.ICurrentDN)
+        ctx.remember(self.config, interfaces.ILDAPConfig)
+        ctx.remember(dn, iwebui.ICurrentDN)
         return r, segments[1:]
 
     render_i18n = i18n.render()

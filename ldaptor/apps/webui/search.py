@@ -1,6 +1,7 @@
 from zope.interface import implements
 from twisted.internet import defer
 from twisted.python import components
+from webut.skin import iskin
 from ldaptor.protocols.ldap import ldapclient, ldapsyntax
 from ldaptor.protocols.ldap import distinguishedname, ldapconnector
 from ldaptor.protocols import pureldap
@@ -241,25 +242,15 @@ def getSearchForm(ctx):
     return SearchForm()
 
 class SearchPage(rend.Page):
+    implements(iskin.ISkinnable)
+
+    title = _('Ldaptor Search Page')
+
     addSlash = True
 
     docFactory = loaders.xmlfile(
         'search.xhtml',
         templateDir=os.path.split(os.path.abspath(__file__))[0])
-
-    def __init__(self):
-        super(SearchPage, self).__init__()
-
-    def data_css(self, ctx, data):
-        root = url.URL.fromContext(ctx).clear().parentdir().parentdir()
-        return [
-            root.child('form.css'),
-            root.child('ldaptor.css'),
-            ]
-
-    def render_css_item(self, context, data):
-        context.fillSlots('url', data)
-        return context.tag
 
     def render_form(self, ctx, data):
         conf = getSearchForm(ctx)

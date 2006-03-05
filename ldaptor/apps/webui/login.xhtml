@@ -3,11 +3,13 @@
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:nevow="http://nevow.com/ns/nevow/0.1">
+      xmlns:nevow="http://nevow.com/ns/nevow/0.1"
+      nevow:render="skin">
   <head>
-    <title nevow:render="i18n">Login</title>
+    <title>Title Goes Here</title>
   </head>
   <body>
+    <nevow:invisible nevow:pattern="skincontent">
     <form name="login" method="post" action="PLACEHOLDER" nevow:render="form">
       <nevow:attr name="action"><nevow:slot name="action-url"/></nevow:attr>
       <p>
@@ -24,5 +26,6 @@
 	</input>
       </p>
     </form>
+    </nevow:invisible>
   </body>
 </html>

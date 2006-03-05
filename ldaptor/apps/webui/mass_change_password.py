@@ -1,4 +1,6 @@
+from zope.interface import implements
 from twisted.internet import defer
+from webut.skin import iskin
 from ldaptor.protocols.ldap import ldapsyntax
 from ldaptor import generate_password
 from ldaptor.apps.webui.uriquote import uriUnquote
@@ -77,6 +79,10 @@ class MassPasswordChangeForm(configurable.Configurable):
 
 
 class ReallyMassPasswordChangePage(rend.Page):
+    implements(iskin.ISkinnable)
+
+    title = _('Ldaptor Mass Password Change Page')
+
     addSlash = True
     docFactory = loaders.xmlfile(
         'mass_change_password-really.xhtml',
@@ -85,18 +91,6 @@ class ReallyMassPasswordChangePage(rend.Page):
     def __init__(self, entries):
         super(ReallyMassPasswordChangePage, self).__init__()
         self.entries = entries
-
-    def data_css(self, ctx, data):
-        u = (url.URL.fromContext(ctx).clear()
-             .parentdir().parentdir().parentdir())
-        return [
-            u.child('form.css'),
-            u.child('ldaptor.css'),
-            ]
-
-    def render_css_item(self, context, data):
-        context.fillSlots('url', data)
-        return context.tag
 
     def data_header(self, ctx, data):
         u=url.URL.fromContext(ctx)
@@ -140,6 +134,10 @@ class ReallyMassPasswordChangePage(rend.Page):
     render_i18n = i18n.render()
 
 class MassPasswordChangePage(rend.Page):
+    implements(iskin.ISkinnable)
+
+    title = _('Ldaptor Mass Password Change Page')
+
     addSlash = True
     docFactory = loaders.xmlfile(
         'mass_change_password.xhtml',

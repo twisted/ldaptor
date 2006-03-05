@@ -1,4 +1,5 @@
 from zope.interface import implements
+from webut.skin import iskin
 from ldaptor.protocols.ldap import ldapsyntax, distinguishedname
 from ldaptor.apps.webui.uriquote import uriUnquote
 from ldaptor.apps.webui.i18n import _
@@ -14,6 +15,10 @@ class ErrorWrapper:
         self.value = value
 
 class ConfirmDelete(rend.Page):
+    implements(iskin.ISkinnable)
+
+    title = _('Ldaptor Delete Page')
+
     docFactory = loaders.xmlfile(
         'delete.xhtml',
         templateDir=os.path.split(os.path.abspath(__file__))[0])
@@ -33,15 +38,6 @@ class ConfirmDelete(rend.Page):
             ],
                             label=_('Confirm delete')),
             action=_('Delete'))
-
-    def data_css(self, ctx, data):
-        u = (url.URL.fromContext(ctx).clear().parentdir().parentdir()
-             .child('form.css'))
-        return [ u ]
-
-    def render_css_item(self, context, data):
-        context.fillSlots('url', data)
-        return context.tag
 
     def delete(self, ctx):
         request = inevow.IRequest(ctx)
@@ -121,6 +117,10 @@ class ConfirmDelete(rend.Page):
     render_i18n = i18n.render()
 
 class GetDN(rend.Page):
+    implements(iskin.ISkinnable)
+
+    title = _('Ldaptor Delete Page')
+
     addSlash = True
 
     docFactory = loaders.xmlfile(

@@ -1,16 +1,16 @@
-#ldaptorPage-search #moveEntries
+#moveEntries
 {
   width: 70%;
   border: 1px solid gray;
   position: relative;
   }
 
-#ldaptorPage-search #moveEntries li
+#moveEntries li
 {
   height: 1.5em;
  }
 
-#ldaptorPage-search #moveEntries .moveForms
+#moveEntries .moveForms
 {
   display: inline;
   margin-right: 0;
@@ -18,12 +18,12 @@
   right: 1em;
   }
 
-#ldaptorPage-search #moveEntries .moveForms form
+#moveEntries .moveForms form
 {
   display: inline;
  }
 
-#ldaptorPage-search #moveEntries .moveForms form input
+#moveEntries .moveForms form input
 {
   font-size: 0.7em;
   }

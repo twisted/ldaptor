@@ -1,6 +1,7 @@
 from zope.interface import implements
 from twisted.internet import reactor
 from twisted.internet import defer
+from webut.skin import iskin
 from ldaptor.protocols import pureldap
 from ldaptor.protocols.ldap import ldapsyntax, distinguishedname
 from ldaptor import generate_password, interfaces
@@ -322,6 +323,10 @@ class ServicePasswordChangeMixin(object):
 
 
 class ConfirmChange(ServicePasswordChangeMixin, rend.Page):
+    implements(iskin.ISkinnable)
+
+    title = _('Ldaptor Password Change Page')
+
     addSlash = True
 
     docFactory = loaders.xmlfile(
@@ -356,18 +361,6 @@ class ConfirmChange(ServicePasswordChangeMixin, rend.Page):
     servicePasswordAction_10_remove = RemoveServicePassword
     servicePasswordAction_20_set = SetServicePassword
     servicePasswordAction_30_random = SetRandomServicePassword
-
-    def data_css(self, ctx, data):
-        root = (url.URL.fromContext(ctx).clear()
-                .parentdir().parentdir().parentdir())
-        return [
-            root.child('form.css'),
-            root.child('ldaptor.css'),
-            ]
-
-    def render_css_item(self, ctx, data):
-        ctx.fillSlots('url', data)
-        return ctx.tag
 
     def _setPassword(self, ctx, password):
         e = getEntry(ctx, self.dn)

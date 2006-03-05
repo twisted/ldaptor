@@ -1,3 +1,5 @@
+from zope.interface import implements
+from webut.skin import iskin
 from ldaptor.protocols.ldap import ldapsyntax
 from ldaptor.protocols.ldap import fetchschema
 from ldaptor.protocols.ldap import distinguishedname
@@ -365,6 +367,10 @@ class EditForm(configurable.Configurable):
         return d
 
 class ReallyEditPage(rend.Page):
+    implements(iskin.ISkinnable)
+
+    title = _('Ldaptor Edit Page')
+
     addSlash = True
     docFactory = loaders.xmlfile(
         'edit-really.xhtml',
@@ -378,16 +384,6 @@ class ReallyEditPage(rend.Page):
         self.entry = entry
         self.attributeTypes = attributeTypes
         self.objectClasses = objectClasses
-
-    def data_css(self, ctx, data):
-        u = (url.URL.fromContext(ctx).clear()
-             .parentdir().parentdir().parentdir()
-             .child('form.css'))
-        return [ u ]
-
-    def render_css_item(self, context, data):
-        context.fillSlots('url', data)
-        return context.tag
 
     def data_header(self, ctx, data):
         u=url.URL.fromContext(ctx)
@@ -444,6 +440,10 @@ class ReallyEditPage(rend.Page):
     render_i18n = i18n.render()
 
 class EditPage(rend.Page):
+    implements(iskin.ISkinnable)
+
+    title = _('Ldaptor Edit Page')
+
     addSlash = True
     docFactory = loaders.xmlfile(
         'edit.xhtml',

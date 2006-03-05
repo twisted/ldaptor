@@ -1,14 +1,21 @@
 # -*- python -*-
 from zope.interface import implements
 from twisted.application import service, internet
-from nevow import appserver, inevow
+from nevow import appserver, inevow, tags
 from ldaptor import config
-from ldaptor.apps.webui import main, i18n
+from ldaptor.apps.webui import main, i18n, defskin
 
 application = service.Application("ldaptor-webui")
 myService = service.IServiceCollection(application)
 
-resource = main.getResource()
+class DemoSkin(defskin.DefaultSkin):
+    def render_content(self, ctx, data):
+        return tags.invisible[
+            tags.div(style="float: right; color: lightgray; font-size: 5em;")['demo'],
+            super(DemoSkin, self).render_content(ctx, data),
+            ]
+
+resource = main.getResource(skinFactory=DemoSkin)
 
 class Wrap(object):
     implements(inevow.IResource)

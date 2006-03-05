@@ -2,15 +2,16 @@ from twisted.trial import unittest
 
 import urllib, string
 
-from twisted.internet import address, protocol
+from twisted.internet import address, protocol, defer
 from twisted.python import components
 from twisted.web import microdom
 
-from nevow import appserver
+from nevow import appserver, tags
+from webut.skin import skin
 
 from ldaptor import inmemory, interfaces, config
 from ldaptor.protocols.ldap import ldapserver
-from ldaptor.apps.webui import main
+from ldaptor.apps.webui import main, defskin
 
 from ldaptor.test import mockweb, util
 
@@ -126,16 +127,26 @@ class SiteMixin:
         cfg = MockLDAPConfig(baseDN='dc=example,dc=com',
                              serviceLocationOverrides={'': _doConnect},
                              identityBaseDN='dc=example,dc=com',)
-        root = main.getResource(cfg)
-        self.site = appserver.NevowSite(root)
+        class TestSkin(defskin.DefaultSkin):
+            def render_head(self, ctx, data):
+                d = defer.maybeDeferred(super(TestSkin, self).render_head, ctx, data)
+                def cb(stan):
+                    return stan[tags.comment['kilroy was here']]
+                d.addCallback(cb)
+                return d
+        self.root = main.getResource(cfg, skinFactory=TestSkin)
+        self.site = appserver.NevowSite(self.root)
         self.site.startFactory()
 
     def tearDown(self):
-        for name, sess in self.site.resource.sessions.items():
+        assert isinstance(self.root, skin.Skinner)
+        for name, sess in self.root.resource.sessions.items():
             sess.expire()
         self.site.stopFactory()
 
     def getPage(self, url, cookies, *a, **kw):
+        parse = kw.pop('parse', True)
+
         if cookies:
             getter = mockweb.getPage
         else:
@@ -144,13 +155,14 @@ class SiteMixin:
         d = getter(self.site, url, *a, **kw)
         data = util.pumpingDeferredResult(d)
 
-        tree = microdom.parseString(data['page'], beExtremelyLenient=True)
-        assert 'tree' not in data
-        data['tree'] = tree
+        if parse:
+            tree = microdom.parseString(data['page'], beExtremelyLenient=True)
+            assert 'tree' not in data
+            data['tree'] = tree
 
-        title = data['tree'].getElementsByTagName('title')[0]
-        assert 'title' not in data
-        data['title'] = getTextContents(title)
+            title = data['tree'].getElementsByTagName('title')[0]
+            assert 'title' not in data
+            data['title'] = getTextContents(title)
 
         return data
 
@@ -165,6 +177,10 @@ class TestCSS(SiteMixin, unittest.TestCase):
         ]
 
     def _checkResults(self, data, cookies):
+        # while we're here, make sure the skin system seems to work
+        self.assertIn('<!--kilroy was here-->', data['page'])
+        self.assertNotIn('Title Goes Here', data['page'])
+
         head = data['tree'].getElementsByTagName('head')
         assert len(head) == 1, \
                "Expected exactly one <head> element, got %r" % head
@@ -176,18 +192,21 @@ class TestCSS(SiteMixin, unittest.TestCase):
                 self.assertEquals(u.scheme, 'http')
                 self.assertEquals(u.netloc, 'localhost')
                 self.assertEquals(u.queryList(), [])
+
                 l = u.pathList()
-                if cookies:
-                    self.assertEquals(len(l), 1, "pathList %r for %s should be one element long" % (l, data['url']))
-                else:
-                    self.assertEquals(len(l), 2, "pathList %r for %s should be two elements long" % (l, data['url']))
-                    self.failUnless(l[0].startswith('__session_key__'))
-                    l.pop(0)
-                self.failUnless(l[0].endswith('.css'), "url %s has invalid CSS reference %r" % (data['url'], l[0]))
-                basename = l[0][:-len('.css')]
+                self.failUnless(l[-1].endswith('.css'),
+                                "url %s has invalid CSS extension" % data['url'])
+                basename = l[-1][:-len('.css')]
                 self.failUnless(len(basename) >= 1)
                 for c in basename:
-                    self.failUnless(c in string.ascii_lowercase, "url %s has invalid character %r in CSS reference %r" % (data['url'], c, l[0]))
+                    self.failUnless(c in string.ascii_lowercase, "url %s has invalid character %r in CSS reference %r" % (data['url'], c, l[-1]))
+
+                cssData = self.getPage(u, cookies,
+                                       followRedirect=False,
+                                       parse=False)
+                self.assertEquals(cssData['status'], '200',
+                                  "CSS files must not be without a guard session")
+
 
     def checkPage(self, url, cookies):
         data = self.getPage(url, cookies)
