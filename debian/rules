@@ -13,7 +13,7 @@ cdbs_python_ver = $(filter-out -%,$(subst -, -,$(patsubst python%,%,$(cdbs_curpk
 
 $(patsubst %,binary-post-install/%,$(DEB_PYTHON_REAL_LIB_PACKAGES)):: binary-post-install/python%-ldaptor:
 	PYTHONPATH='debian/$(cdbs_curpkg)/usr/lib/python$(cdbs_python_ver)/site-packages' \
-		'trial$(cdbs_python_ver)' --text --tbformat=emacs -R ldaptor
+		'trial$(cdbs_python_ver)' --tbformat=emacs --reporter=text ldaptor
 
 build/ldaptor-doc::
 	make -C doc
