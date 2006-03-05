@@ -124,9 +124,8 @@ $(SLIDES:%.xml=%/index.html): %/index.html: %.xml \
 		--stringparam script.dir browser \
 		../slides-driver.xsl \
 		'$(addprefix ../,$<)'
-	perl -pi -e '\
-		s{<a href="(.*?)" target="_top">Click me!</a>}{<iframe width=900 height=600 src="$$1" />}g; \
-		' \
+	perl -pi -e \
+		's{<a href="(.*?)" target="_top">Click me!</a>}{<iframe width=900 height=600 src="$$1" />}g;' \
 		'$(@D)'/foil*.html
 
 %.dia.png: %.dia
