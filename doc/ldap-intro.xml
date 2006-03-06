@@ -56,7 +56,10 @@
     stands for <literal>domainComponent</literal>. An alternative is
     to identify the organization via geographical location, as in
     <literal>o=Example Inc., c=US</literal>, but this is cumbersome as
-    it requires registration to avoid name conflicts.</para>
+    it requires registration to avoid name conflicts. The
+    <literal>o</literal> stands for organization, <literal>c</literal>
+    for country. You will also encounter <literal>ou</literal>, short
+    for organizational unit.</para>
 
     <para>Each node of the tree is called an "LDAP entry", and can
     contain multiple attributes in the form of
@@ -76,12 +79,25 @@
     entry.</para>
 
     <informalexample>
-      <para>The RDN of the entry for
-      <personname><firstname>Jack</firstname>
-      <othername>E.</othername> <surname>Wiesel</surname></personname>
-      is <literal>cn=Jack E. Wiesel</literal>. The DN is
-      <literal>cn=Jack
-      E. Wiesel,ou=Sales,ou=People,dc=example,dc=com</literal>.</para>
+      <para>
+	The RDN of the entry for
+	<personname><firstname>Jack</firstname>
+	<othername>E.</othername> <surname>Wiesel</surname></personname>
+	is <literal>cn=Jack E. Wiesel</literal>. The DN is
+	<literal>cn=Jack
+	E. Wiesel,ou=Sales,ou=People,dc=example,dc=com</literal>.
+	The <literal>cn</literal> is short for common name.
+      </para>
+      <para>
+	The RDN of the entry for
+	<personname><firstname>John</firstname>
+	<surname>Doe</surname></personname> consist of two attributes,
+	<literal>gn=John</literal> and <literal>sn=Doe</literal>,
+	joined with a plus sign to form
+	<literal>gn=John+sn=Doe</literal>.
+	<literal>gn</literal> is short for given name (first name),
+	<literal>sn</literal> for surname (last name).
+      </para>
     </informalexample>
 
   </chapter>
@@ -184,9 +200,10 @@ objectclass ( 2.5.6.6 NAME 'person'
     <computeroutput>1</computeroutput>.
 
       <footnote>
-	<para>The actual format is more complex, but this tutorial
-	should allow you to read and write normal LDIF files
-	fluently.</para>
+	<para>
+	  The actual format is more complex, but this tutorial should
+	  allow you to read and write normal LDIF files fluently.
+	</para>
       </footnote>
     </para>
 
