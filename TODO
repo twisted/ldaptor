@@ -1,5 +1,7 @@
 TODO file for the Ldaptor project.
 
+* rewrite commits 282, 242
+
 * polish and add to setup.py: bin/ldaptor-ldifdiff bin/ldaptor-ldifpatch
 
 * ldaptor-webui: edit: adding attributes in schema MAY that didn't
