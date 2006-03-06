@@ -1,275 +1,315 @@
-#: ldaptor/apps/webui/add.py:79
+#: ldaptor/apps/webui/add.py:82
 msgid "Object type to create"
 msgstr ""
 
-#: ldaptor/apps/webui/add.py:97 ldaptor/apps/webui/add.py:98
-#: ldaptor/apps/webui/add.py:247 ldaptor/apps/webui/add.py:248
-#: ldaptor/apps/webui/add.py:444 ldaptor/apps/webui/change_password.py:182
+#: ldaptor/apps/webui/add.py:100 ldaptor/apps/webui/add.py:101
+#: ldaptor/apps/webui/add.py:243 ldaptor/apps/webui/add.py:244
+#: ldaptor/apps/webui/add.py:457 ldaptor/apps/webui/add.py:458
+#: ldaptor/apps/webui/change_password.py:183
+#: ldaptor/apps/webui/change_password.py:184
 msgid "Add"
 msgstr ""
 
-#: ldaptor/apps/webui/add.py:116
-#, python-format
-msgid "Using objectclasses %s and %s."
-msgstr ""
-
-#: ldaptor/apps/webui/add.py:120
-#, python-format
-msgid "Using objectclass %s."
-msgstr ""
-
-#: ldaptor/apps/webui/add.py:318
+#: ldaptor/apps/webui/add.py:314
 msgid "No changes!"
 msgstr ""
 
-#: ldaptor/apps/webui/add.py:330
+#: ldaptor/apps/webui/add.py:326
 msgid "No changes (2)!"
 msgstr ""
 
-#: ldaptor/apps/webui/add.py:336 ldaptor/apps/webui/delete.py:50
+#: ldaptor/apps/webui/add.py:332 ldaptor/apps/webui/delete.py:60
 #, python-format
 msgid "Failed: %s."
 msgstr ""
 
-#: ldaptor/apps/webui/add.py:361 ldaptor/apps/webui/add.py:503
-#: ldaptor/apps/webui/mass_change_password.py:106
-#: ldaptor/apps/webui/delete.py:97 ldaptor/apps/webui/delete.py:128
-#: ldaptor/apps/webui/search.py:110 ldaptor/apps/webui/search.py:112
-#: ldaptor/apps/webui/change_password.py:408 ldaptor/apps/webui/edit.py:386
+#: ldaptor/apps/webui/add.py:338 ldaptor/apps/webui/add.py:468
+#: ldaptor/apps/webui/add.xhtml ldaptor/apps/webui/add-really.xhtml
+msgid "Ldaptor Add Page"
+msgstr ""
+
+#: ldaptor/apps/webui/add.py:350 ldaptor/apps/webui/add.py:500
+#: ldaptor/apps/webui/mass_change_password.py:99
+#: ldaptor/apps/webui/delete.py:106 ldaptor/apps/webui/search.py:116
+#: ldaptor/apps/webui/search.py:118 ldaptor/apps/webui/change_password.py:415
+#: ldaptor/apps/webui/edit.py:392
 msgid "Search"
 msgstr ""
 
-#: ldaptor/apps/webui/add.py:362
-#: ldaptor/apps/webui/mass_change_password.py:107
-#: ldaptor/apps/webui/delete.py:98 ldaptor/apps/webui/delete.py:129
-#: ldaptor/apps/webui/search.py:295 ldaptor/apps/webui/change_password.py:409
-#: ldaptor/apps/webui/edit.py:387
+#: ldaptor/apps/webui/add.py:351
+#: ldaptor/apps/webui/mass_change_password.py:100
+#: ldaptor/apps/webui/delete.py:107 ldaptor/apps/webui/search.py:298
+#: ldaptor/apps/webui/change_password.py:416 ldaptor/apps/webui/edit.py:393
 msgid "add new entry"
 msgstr ""
 
-#: ldaptor/apps/webui/add.py:387
+#: ldaptor/apps/webui/add.py:375
 msgid "Added "
 msgstr ""
 
-#: ldaptor/apps/webui/add.py:389 ldaptor/apps/webui/edit.py:418
+#: ldaptor/apps/webui/add.py:377 ldaptor/apps/webui/edit.py:425
 msgid " successfully. "
 msgstr ""
 
-#: ldaptor/apps/webui/add.py:393 ldaptor/apps/webui/delete.py:99
-#: ldaptor/apps/webui/search.py:343 ldaptor/apps/webui/change_password.py:410
+#: ldaptor/apps/webui/add.py:381 ldaptor/apps/webui/delete.py:108
+#: ldaptor/apps/webui/search.py:345 ldaptor/apps/webui/change_password.py:417
 msgid "edit"
 msgstr ""
 
-#: ldaptor/apps/webui/add.py:395 ldaptor/apps/webui/search.py:345
-#: ldaptor/apps/webui/edit.py:422
+#: ldaptor/apps/webui/add.py:383 ldaptor/apps/webui/search.py:347
+#: ldaptor/apps/webui/edit.py:429
 msgid "move"
 msgstr ""
 
-#: ldaptor/apps/webui/add.py:397 ldaptor/apps/webui/delete.py:100
-#: ldaptor/apps/webui/search.py:347 ldaptor/apps/webui/change_password.py:411
-#: ldaptor/apps/webui/edit.py:424
+#: ldaptor/apps/webui/add.py:385 ldaptor/apps/webui/search.py:349
+#: ldaptor/apps/webui/change_password.py:418 ldaptor/apps/webui/edit.py:431
 msgid "delete"
 msgstr ""
 
-#: ldaptor/apps/webui/add.py:399 ldaptor/apps/webui/search.py:349
-#: ldaptor/apps/webui/edit.py:426
+#: ldaptor/apps/webui/add.py:387 ldaptor/apps/webui/search.py:351
+#: ldaptor/apps/webui/edit.py:433
 msgid "change password"
 msgstr ""
 
-#: ldaptor/apps/webui/add.py:459
+#: ldaptor/apps/webui/add.py:426
 #, python-format
-msgid "Using smart objectclass %s."
+msgid "Using objectclasses %s and %s."
 msgstr ""
 
-#: ldaptor/apps/webui/mass_change_password.py:45
-#: ldaptor/apps/webui/mass_change_password.py:46
+#: ldaptor/apps/webui/add.py:432
+#, python-format
+msgid "Using objectclass %s."
+msgstr ""
+
+#: ldaptor/apps/webui/mass_change_password.py:47
+#: ldaptor/apps/webui/mass_change_password.py:48
 msgid "Generate passwords"
 msgstr ""
 
-#: ldaptor/apps/webui/mass_change_password.py:60
+#: ldaptor/apps/webui/mass_change_password.py:62
 msgid "No passwords to change."
 msgstr ""
 
-#: ldaptor/apps/webui/mass_change_password.py:137
-#: ldaptor/apps/webui/change_password.py:369
-#: ldaptor/apps/webui/change_password.py:385
+#: ldaptor/apps/webui/mass_change_password.py:84
+#: ldaptor/apps/webui/mass_change_password.py:139
+#: ldaptor/apps/webui/mass_change_password.xhtml
+#: ldaptor/apps/webui/mass_change_password-really.xhtml
+msgid "Ldaptor Mass Password Change Page"
+msgstr ""
+
+#: ldaptor/apps/webui/mass_change_password.py:130
 msgid "Failed: "
 msgstr ""
 
-#: ldaptor/apps/webui/gadget.py:71 ldaptor/apps/webui/basedn.xhtml
+#: ldaptor/apps/webui/gadget.py:17 ldaptor/apps/webui/gadget.py:76
+msgid "Ldaptor Web Interface"
+msgstr ""
+
+#: ldaptor/apps/webui/gadget.py:98 ldaptor/apps/webui/basedn.xhtml
 msgid "Base DN"
 msgstr ""
 
-#: ldaptor/apps/webui/gadget.py:72
+#: ldaptor/apps/webui/gadget.py:99
 msgid "The top-level LDAP DN you want to browse, e.g. dc=example,dc=com"
 msgstr ""
 
-#: ldaptor/apps/webui/gadget.py:76
+#: ldaptor/apps/webui/gadget.py:102 ldaptor/apps/webui/gadget.py:103
 msgid "Go"
 msgstr ""
 
-#: ldaptor/apps/webui/gadget.py:85
-msgid "Redirecting..."
+#: ldaptor/apps/webui/delete.py:20 ldaptor/apps/webui/delete.py:122
+#: ldaptor/apps/webui/delete-nodn.xhtml ldaptor/apps/webui/delete.xhtml
+msgid "Ldaptor Delete Page"
 msgstr ""
 
-#: ldaptor/apps/webui/delete.py:15
-msgid "Delete"
-msgstr ""
-
-#: ldaptor/apps/webui/delete.py:16
+#: ldaptor/apps/webui/delete.py:39
 msgid "Confirm delete"
 msgstr ""
 
-#: ldaptor/apps/webui/delete.py:49
-msgid "Success."
+#: ldaptor/apps/webui/delete.py:40
+msgid "Delete"
 msgstr ""
 
-#: ldaptor/apps/webui/delete.py:76
+#: ldaptor/apps/webui/delete.py:58
+#, python-format
+msgid "Deleted %s."
+msgstr ""
+
+#: ldaptor/apps/webui/delete.py:87
 msgid "An error occurred: "
 msgstr ""
 
-#: ldaptor/apps/webui/delete.py:139
-msgid "Internal error, no status to display."
-msgstr ""
-
-#: ldaptor/apps/webui/search.py:27
+#: ldaptor/apps/webui/search.py:34 ldaptor/apps/webui/search.py:35
 msgid "Move"
 msgstr ""
 
-#: ldaptor/apps/webui/search.py:33
+#: ldaptor/apps/webui/search.py:43 ldaptor/apps/webui/search.py:44
 msgid "Cancel"
 msgstr ""
 
-#: ldaptor/apps/webui/search.py:58
+#: ldaptor/apps/webui/search.py:63
 #, python-format
 msgid "Moved %s to %s."
 msgstr ""
 
-#: ldaptor/apps/webui/search.py:67
+#: ldaptor/apps/webui/search.py:72
 #, python-format
 msgid "Cancelled move of %s"
 msgstr ""
 
-#: ldaptor/apps/webui/search.py:71
+#: ldaptor/apps/webui/search.py:76
 msgid "whole subtree"
 msgstr ""
 
-#: ldaptor/apps/webui/search.py:73
+#: ldaptor/apps/webui/search.py:78
 msgid "single level"
 msgstr ""
 
-#: ldaptor/apps/webui/search.py:75
+#: ldaptor/apps/webui/search.py:80
 msgid "baseobject"
 msgstr ""
 
-#: ldaptor/apps/webui/search.py:97
+#: ldaptor/apps/webui/search.py:103
 msgid "Advanced search"
 msgstr ""
 
-#: ldaptor/apps/webui/search.py:100
+#: ldaptor/apps/webui/search.py:106
 msgid "Search depth"
 msgstr ""
 
-#: ldaptor/apps/webui/change_password.py:31
+#: ldaptor/apps/webui/search.py:247 ldaptor/apps/webui/search.xhtml
+msgid "Ldaptor Search Page"
+msgstr ""
+
+#: ldaptor/apps/webui/move.py:15 ldaptor/apps/webui/move.xhtml
+msgid "Ldaptor Move Page"
+msgstr ""
+
+#: ldaptor/apps/webui/login.py:26 ldaptor/apps/webui/login.xhtml
+msgid "Login"
+msgstr ""
+
+#: ldaptor/apps/webui/change_password.py:33
 #, python-format
 msgid "Service password entry has no attribute cn: %r"
 msgstr ""
 
-#: ldaptor/apps/webui/change_password.py:40
+#: ldaptor/apps/webui/change_password.py:42
 msgid "Passwords do not match."
 msgstr ""
 
-#: ldaptor/apps/webui/change_password.py:46
-#: ldaptor/apps/webui/change_password.py:70
-#: ldaptor/apps/webui/change_password.py:175
-msgid "New password"
-msgstr ""
-
-#: ldaptor/apps/webui/change_password.py:48
-#: ldaptor/apps/webui/change_password.py:72
-#: ldaptor/apps/webui/change_password.py:178
-msgid "Again"
-msgstr ""
-
-#: ldaptor/apps/webui/change_password.py:51
-#: ldaptor/apps/webui/change_password.py:76
-msgid "Set password"
-msgstr ""
-
-#: ldaptor/apps/webui/change_password.py:57
-#: ldaptor/apps/webui/change_password.py:83
-msgid "Generate random"
-msgstr ""
-
-#: ldaptor/apps/webui/change_password.py:64 ldaptor/apps/webui/delete.xhtml
+#: ldaptor/apps/webui/change_password.py:58
+#: ldaptor/apps/webui/change_password.py:59 ldaptor/apps/webui/delete.xhtml
 msgid "Remove"
 msgstr ""
 
-#: ldaptor/apps/webui/change_password.py:103
+#: ldaptor/apps/webui/change_password.py:72
 #, python-format
 msgid "Removed service %r"
 msgstr ""
 
-#: ldaptor/apps/webui/change_password.py:132
+#: ldaptor/apps/webui/change_password.py:91
+#: ldaptor/apps/webui/change_password.py:178
+#: ldaptor/apps/webui/change_password.py:345
+msgid "New password"
+msgstr ""
+
+#: ldaptor/apps/webui/change_password.py:93
+#: ldaptor/apps/webui/change_password.py:181
+#: ldaptor/apps/webui/change_password.py:347
+msgid "Again"
+msgstr ""
+
+#: ldaptor/apps/webui/change_password.py:95
+#: ldaptor/apps/webui/change_password.py:96
+#: ldaptor/apps/webui/change_password.py:349
+#: ldaptor/apps/webui/change_password.py:350
+msgid "Set password"
+msgstr ""
+
+#: ldaptor/apps/webui/change_password.py:115
 #, python-format
 msgid "Set password for service %r"
 msgstr ""
 
-#: ldaptor/apps/webui/change_password.py:161
+#: ldaptor/apps/webui/change_password.py:134
+#: ldaptor/apps/webui/change_password.py:135
+#: ldaptor/apps/webui/change_password.py:358
+#: ldaptor/apps/webui/change_password.py:359
+msgid "Generate random"
+msgstr ""
+
+#: ldaptor/apps/webui/change_password.py:154
 #, python-format
 msgid "Service %r password set to %s"
 msgstr ""
 
-#: ldaptor/apps/webui/change_password.py:173
+#: ldaptor/apps/webui/change_password.py:176
 msgid "Service name"
 msgstr ""
 
-#: ldaptor/apps/webui/change_password.py:176
+#: ldaptor/apps/webui/change_password.py:179
 msgid "Leave empty to generate random password."
 msgstr ""
 
-#: ldaptor/apps/webui/change_password.py:231
+#: ldaptor/apps/webui/change_password.py:226
 #, python-format
 msgid "Added service %r with password %s"
 msgstr ""
 
-#: ldaptor/apps/webui/change_password.py:240
+#: ldaptor/apps/webui/change_password.py:235
 #, python-format
 msgid "Added service %r"
 msgstr ""
 
-#: ldaptor/apps/webui/change_password.py:367
+#: ldaptor/apps/webui/change_password.py:328
+#: ldaptor/apps/webui/change_password.xhtml
+msgid "Ldaptor Password Change Page"
+msgstr ""
+
+#: ldaptor/apps/webui/change_password.py:373
 msgid "Password set."
 msgstr ""
 
-#: ldaptor/apps/webui/change_password.py:381
+#: ldaptor/apps/webui/change_password.py:375
+#: ldaptor/apps/webui/change_password.py:392
+#, python-format
+msgid "Failed: %s"
+msgstr ""
+
+#: ldaptor/apps/webui/change_password.py:388
 #, python-format
 msgid "Password set to %s"
 msgstr ""
 
-#: ldaptor/apps/webui/edit.py:49 ldaptor/apps/webui/edit.py:50
+#: ldaptor/apps/webui/edit.py:51 ldaptor/apps/webui/edit.py:52
 msgid "Edit"
 msgstr ""
 
-#: ldaptor/apps/webui/edit.py:317
+#: ldaptor/apps/webui/edit.py:330
 #, python-format
 msgid "changing %s: changing RDN to say %s"
 msgstr ""
 
-#: ldaptor/apps/webui/edit.py:346
+#: ldaptor/apps/webui/edit.py:359
 #, python-format
 msgid "changing %s"
 msgstr ""
 
-#: ldaptor/apps/webui/edit.py:348
+#: ldaptor/apps/webui/edit.py:361
 msgid "remove "
 msgstr ""
 
-#: ldaptor/apps/webui/edit.py:350
+#: ldaptor/apps/webui/edit.py:363
 msgid "add "
 msgstr ""
 
-#: ldaptor/apps/webui/edit.py:416
+#: ldaptor/apps/webui/edit.py:372 ldaptor/apps/webui/edit.py:445
+#: ldaptor/apps/webui/edit.xhtml ldaptor/apps/webui/edit-really.xhtml
+msgid "Ldaptor Edit Page"
+msgstr ""
+
+#: ldaptor/apps/webui/edit.py:421
 msgid "Edited "
 msgstr ""
 
@@ -283,55 +323,6 @@ msgstr ""
 
 #: ldaptor/apps/webui/change_service_passwords.xhtml
 msgid "Current service passwords"
-msgstr ""
-
-#: ldaptor/apps/webui/delete-done.xhtml
-msgid "Deleting"
-msgstr ""
-
-#: ldaptor/apps/webui/delete-done.xhtml
-msgid "Deleting Entry"
-msgstr ""
-
-#: ldaptor/apps/webui/add-really.xhtml ldaptor/apps/webui/add.xhtml
-msgid "Ldaptor Add Page"
-msgstr ""
-
-#: ldaptor/apps/webui/delete-nodn.xhtml ldaptor/apps/webui/delete.xhtml
-msgid "Ldaptor Delete Page"
-msgstr ""
-
-#: ldaptor/apps/webui/delete-done.xhtml
-msgid "Ldaptor Deleting Entry"
-msgstr ""
-
-#: ldaptor/apps/webui/edit.xhtml ldaptor/apps/webui/edit-really.xhtml
-msgid "Ldaptor Edit Page"
-msgstr ""
-
-#: ldaptor/apps/webui/mass_change_password.xhtml
-#: ldaptor/apps/webui/mass_change_password-really.xhtml
-msgid "Ldaptor Mass Password Change Page"
-msgstr ""
-
-#: ldaptor/apps/webui/move.xhtml
-msgid "Ldaptor Move Page"
-msgstr ""
-
-#: ldaptor/apps/webui/change_password.xhtml
-msgid "Ldaptor Password Change Page"
-msgstr ""
-
-#: ldaptor/apps/webui/search.xhtml
-msgid "Ldaptor Search Page"
-msgstr ""
-
-#: ldaptor/apps/webui/basedn.xhtml
-msgid "Ldaptor Web Interface"
-msgstr ""
-
-#: ldaptor/apps/webui/login.xhtml
-msgid "Login"
 msgstr ""
 
 #: ldaptor/apps/webui/search.xhtml
