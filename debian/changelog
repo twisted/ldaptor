@@ -1,3 +1,89 @@
+ldaptor (0.0.43) unstable; urgency=low
+
+  * Applications changes:
+    - ldaptor-ldap2dhcpconf:
+      - hosts can now have bootFile attributes
+      - support groups of DHCP hosts, possibly with bootFile attributes
+    - webui:
+      - In delete, instead of a special result page, redirect to search
+        page on success. If current base DN was deleted, also go up to
+        parent DN.
+      - In webui edit, allow editing of entries even if they miss a 'must'
+        field. The server should have never allowed that, but let's not
+        break in any case.
+      - Use webut.skin to make ldaptor webui skinnable. This allows
+        embedding it seamlessly in a web site.
+    - Add server support for
+      - Adding entries.
+      - Modifying entries.
+      - Modifying DNs. Not deleting the old RDN is not yet supported.
+      - Changing passwords with passwordModifyRequest, with general
+        extendedRequest support.
+
+  * Documentation changes:
+    - Explain some abbreviations in ldap intro document.
+
+  * API changes:
+    - ldiftree.LDIFTreeEntry.children now always defers.
+    - ldiftree.LDIFTreeEntry.lookup and ldiftree.get now accept strings as
+      DNs.
+    - Add LDIFTreeEntry.commit().
+    - In ldiftree, show pure .dir entries as children too.  Requiring the
+      .ldif file to be present forces simple use to have entries all the
+      way up to root, e.g. "dc=com" and "dc=foo,dc=com". Still might not
+      want missing .ldif files inside the valid tree.. need to get back to
+      this later.
+    - Make .match() *always* case-insensitive. The real solution would be
+      case-insensitive if and by a method set in the attributeType syntax,
+      as specified in the schema, etc. But we have no syntax support yet.
+    - Add .move() to inmemory and ldiftree entries.
+    - Remove LDAPModification_*. This is a non-compatible, but low-level
+      API change. You probably should not have been using
+      LDAPModification_* directly anyway, and the change to using delta
+      should be easy. The new approach is make pureldap just handle
+      sequences of sequences, and teach ldaptor.delta classes how to
+      generate LDAPModifyRequests, with .asLDAP().
+    - Give ReadOnlyInMemoryLDAPEntry a dummy commit method.
+
+  * Refactorings to adapt to Twisted APIs:
+    - Refactor for twisted 1.3->2.2 and nevow 0.3.0->0.6.0.
+
+  * Bugfixes:
+    - Fix ldaptor-ldap2dhcpconf, which has been totally broken since v0.0.32.
+    - webui:
+      - Do not leak LDAP connections in webui search.
+      - Handle invalid search filters gracefully in advanced search.
+      - Don't link to delete on the delete page.
+      - Fix delete page header link targets.
+      - In delete, do not redirect to search on error.
+      - Always clear query arguments when creating a link.
+      - Fix move, used to have whitespace in form action URL.
+      - Fix move status message.
+      - Make test tac set up a base DN. Otherwise, adding posixAccounts
+        will fail because the search for uidNumbers requires a base.
+      - Avoid i18nized string concatenation with plus.
+      - Make webui delete success message more explicit.
+    - Make LDAPFilter_substrings.substrings behave like a proper
+      list. Otherwise e.match() will fail with an IndexError. Used to only
+      trigger when receiving filters, that is, on the server end.
+    - In BEROctetString, make sure we stringify the value before using it.
+    - Improve ldiftree error reporting.
+    - Fix perl invocation in makefile to work with new make backslash
+      handling.
+
+  * Cleanups:
+    - Add web interface tests, using twill. The old test-webui.tac for
+      demo use is now called demo-webui-fi.tac.
+    - Improved unit test coverage.
+    - Better code reuse between entry, inmemory and ldiftree.
+    - Unused import cleanup.
+    - Whitespace cleanup.
+
+  * Packaging:
+    - Depend on twisted >= 2.0 and nevow >= 0.6.0.
+
+ -- Tommi Virtanen <tv@debian.org>  Tue,  7 Mar 2006 01:59:00 +0200
+
 ldaptor (0.0.42) unstable; urgency=low
 
   * Applications changes:
