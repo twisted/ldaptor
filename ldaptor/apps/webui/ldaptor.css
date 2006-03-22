@@ -66,3 +66,5 @@ fieldset,
 .ldaptor-service-passwords table.emulate-fieldset .ldaptor-svcpass-name {
  padding: 0.5em;
 }
+
+.freeform-form-error { color: red; margin-left: 1em; margin-top: 1em; margin-bottom: 1em; }
