@@ -1,4 +1,4 @@
-from zope.interface import implements
+from zope.interface import implements, Interface, Attribute
 from twisted.internet import defer
 from twisted.python import plugin
 from webut.skin import iskin
@@ -332,6 +332,18 @@ class AddForm(configurable.Configurable):
         d.addErrback(lambda reason: _("Failed: %s.") % reason.getErrorMessage())
         return d
 
+class IAddStatus(Interface):
+    entry = Attribute("""The LDAPEntry that was added.""")
+
+    password = Attribute("""Generated password the entry, or None.""")
+
+class AddStatus(object):
+    implements(IAddStatus)
+
+    def __init__(self, entry, password=None):
+        self.entry = entry
+        self.password = password
+
 class ReallyAddPage(rend.Page):
     implements(iskin.ISkinnable)
 
@@ -365,16 +377,28 @@ class ReallyAddPage(rend.Page):
             return context.tag.clear()
 
         e = interfaces.ILDAPEntry(obj, None)
-        if e is None:
-            return context.tag.clear()[obj]
+        if e is not None:
+            status = AddStatus(entry=e)
+        else:
+            status = IAddStatus(obj, None)
+            if status is None:
+                return context.tag.clear()[obj]
 
+        e = status.entry
         u=url.URL.fromContext(context)
         u=u.parentdir().parentdir().parentdir().clear()
 
-        return context.tag.clear()[
+        msg = [
             _("Added "),
             tags.a(href=u.parentdir().child(e.dn).child("search"))[e.dn],
-            _(" successfully. "),
+            ]
+
+        if status.password is not None:
+            msg.extend([_(' with password '), status.password])
+
+        return context.tag.clear()[
+            msg,
+            ' ',
 
             # TODO share implementation with entryLinks
             '[',
