@@ -463,7 +463,7 @@ def strObjectClass(oc):
     else:
         return '%s' % (oc.name[0],)
 
-class ChooseSmartObject(object):
+class ChooseSmartObject(rend.ConfigurableMixin):
     def __init__(self, pluginNames):
         self.plugins = list(pluginNames)
         self.plugins.sort()
@@ -476,7 +476,7 @@ class ChooseSmartObject(object):
             'add',
             annotate.Method(arguments=[
             annotate.Argument('context', annotate.Context()),
-            annotate.Argument('smartObjectClass', annotate.Choice(choicesAttribute='plugins')),
+            annotate.Argument('smartObjectClass', annotate.Choice(choices=self.plugins)),
             ],
                             label=_('Add')),
             action=_('Add'))
