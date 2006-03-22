@@ -13,7 +13,7 @@ class Autofill_samba: #TODO baseclass
         assert 'sambaAcctFlags' not in ldapObject
         ldapObject['sambaAcctFlags'] = ['[UX         ]']
         assert 'sambaPwdLastSet' not in ldapObject
-        ldapObject['sambaPwdLastSet'] = ['0']
+        ldapObject['sambaPwdLastSet'] = ['1']
         assert 'sambaLogonTime' not in ldapObject
         ldapObject['sambaLogonTime'] = ['0']
         assert 'sambaLogoffTime' not in ldapObject

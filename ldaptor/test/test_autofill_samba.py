@@ -155,7 +155,7 @@ class LDAPAutoFill_sambaSamAccount(unittest.TestCase):
                 ]))
 
             self.failUnlessEqual(o['sambaAcctFlags'], ['[UX         ]'])
-            self.failUnlessEqual(o['sambaPwdLastSet'], ['0'])
+            self.failUnlessEqual(o['sambaPwdLastSet'], ['1'])
             self.failUnlessEqual(o['sambaLogonTime'], ['0'])
             self.failUnlessEqual(o['sambaLogoffTime'], ['0'])
             self.failUnlessEqual(o['sambaPwdCanChange'], ['0'])
@@ -189,7 +189,7 @@ class LDAPAutoFill_sambaSamAccount(unittest.TestCase):
 
             self.failUnlessEqual(o['sambaPrimaryGroupSID'], ['foo-4131312'])
             self.failUnlessEqual(o['sambaAcctFlags'], ['[UX         ]'])
-            self.failUnlessEqual(o['sambaPwdLastSet'], ['0'])
+            self.failUnlessEqual(o['sambaPwdLastSet'], ['1'])
             self.failUnlessEqual(o['sambaLogonTime'], ['0'])
             self.failUnlessEqual(o['sambaLogoffTime'], ['0'])
             self.failUnlessEqual(o['sambaPwdCanChange'], ['0'])
