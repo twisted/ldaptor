@@ -22,7 +22,7 @@ formvalue add add_uid justfortest
 formvalue add add_homeDirectory /home/testusers/justfortest
 submit
 code 200
-find 'Added <a href="[^"]*">uid=justfortest,ou=People,dc=example,dc=com</a> successfully\.'
+find '<span>Added <a href="[^"]*">uid=justfortest,ou=People,dc=example,dc=com</a> \[[^]]+\]</span>'
 
 follow Search
 code 200
