@@ -50,7 +50,7 @@ from pyparsing import Word, Literal, Optional, ZeroOrMore, Suppress, \
                        CharsNotIn, Combine, StringStart, \
                        StringEnd, delimitedList
 
-import copy, string
+import string
 
 filter_ = Forward()
 attr = Word(string.ascii_letters,
@@ -87,14 +87,14 @@ def _p_simple(s,l,t):
 simple.setParseAction(_p_simple)
 present = attr + "=*"
 present.setParseAction(lambda s,l,t: pureldap.LDAPFilter_present(t[0]))
-initial = copy.copy(value)
+initial = value.copy()
 initial.setParseAction(lambda s,l,t: pureldap.LDAPFilter_substrings_initial(t[0]))
 initial.setName('initial')
 any_value = value + Suppress(Literal("*"))
 any_value.setParseAction(lambda s,l,t: pureldap.LDAPFilter_substrings_any(t[0]))
 any = Suppress(Literal("*")) + ZeroOrMore(any_value)
 any.setName('any')
-final = copy.copy(value)
+final = value.copy()
 final.setName('final')
 final.setParseAction(lambda s,l,t: pureldap.LDAPFilter_substrings_final(t[0]))
 substring = attr + Suppress(Literal("=")) + Group(Optional(initial) + any + Optional(final))
@@ -113,7 +113,7 @@ numericoid = delimitedList(Word(string.digits), delim='.', combine=True)
 numericoid.setName('numericoid')
 oid = numericoid | keystring
 oid.setName('oid')
-matchingrule = copy.copy(oid)
+matchingrule = oid.copy()
 matchingrule.setName('matchingrule')
 
 extensible_dn = Optional(":dn")
@@ -193,7 +193,7 @@ def parseFilter(s):
 
 maybeSubString_value = Combine(OneOrMore(CharsNotIn('*\\\0') | escaped))
 
-maybeSubString_simple = copy.copy(maybeSubString_value)
+maybeSubString_simple = maybeSubString_value.copy()
 def _p_maybeSubString_simple(s,l,t):
     return (lambda attr:
             pureldap.LDAPFilter_equalityMatch(

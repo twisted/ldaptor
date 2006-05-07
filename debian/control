@@ -3,7 +3,7 @@ Section: admin
 Priority: optional
 Maintainer: Tommi Virtanen <tv@debian.org>
 Standards-Version: 3.6.1
-Build-Depends-Indep: python, python2.3-dev, python2.4-dev, cdbs, debhelper (>= 4.1.68), docbook-slides (>= 3.2.0), xsltproc, source-highlight, python-epydoc, dia (>= 0.93-2), python2.3-twisted-core (>= 2.2), python2.3-twisted-names (>= 0.2), python2.3-twisted-mail (>= 0.2), python2.3-twisted-web (>= 0.5), python2.3-nevow (>= 0.6.0), python2.3-webut, python2.3-pyparsing, python2.3-pyopenssl, python2.3-crypto, python2.4-twisted-core (>= 2.2), python2.4-twisted-names (>= 0.2), python2.4-twisted-mail (>= 0.2), python2.4-twisted-web (>= 0.5), python2.4-nevow (>= 0.6.0), python2.4-webut, python2.4-pyparsing, python2.4-pyopenssl, python2.4-crypto
+Build-Depends-Indep: python, python2.3-dev, python2.4-dev, cdbs, debhelper (>= 4.1.68), docbook-slides (>= 3.2.0), xsltproc, source-highlight, python-epydoc, dia (>= 0.93-2), python2.3-twisted-core (>= 2.2), python2.3-twisted-names (>= 0.2), python2.3-twisted-mail (>= 0.2), python2.3-twisted-web (>= 0.5), python2.3-nevow (>= 0.6.0), python2.3-webut, python2.3-pyparsing (>= 1.3), python2.3-pyopenssl, python2.3-crypto, python2.4-twisted-core (>= 2.2), python2.4-twisted-names (>= 0.2), python2.4-twisted-mail (>= 0.2), python2.4-twisted-web (>= 0.5), python2.4-nevow (>= 0.6.0), python2.4-webut, python2.4-pyparsing (>= 1.3), python2.4-pyopenssl, python2.4-crypto
 
 Package: ldaptor-utils
 Section: admin
@@ -58,7 +58,7 @@ Description: Web user interface for editing LDAP directories
 Package: python-ldaptor
 Section: python
 Architecture: all
-Depends: ${python:Depends}, python-twisted-core (>= 2.2), python-twisted-names (>= 0.2), python-twisted-mail (>= 0.2), python-twisted-web (>= 0.5), python-pyparsing
+Depends: ${python:Depends}, python-twisted-core (>= 2.2), python-twisted-names (>= 0.2), python-twisted-mail (>= 0.2), python-twisted-web (>= 0.5), python-pyparsing (>= 1.3)
 Description: Pure-Python library for LDAP
  Ldaptor is a pure-Python library that implements
  .
@@ -79,7 +79,7 @@ Description: Pure-Python library for LDAP
 Package: python2.3-ldaptor
 Section: python
 Architecture: all
-Depends: ${python:Depends}, ldaptor-common (= 0.0.43), python2.3-twisted-core (>= 2.2), python2.3-twisted-names (>= 0.2), python2.3-twisted-mail (>= 0.2), python2.3-twisted-web (>= 0.5), python2.3-pyparsing, pwgen, python2.3-pyopenssl, python2.3-crypto
+Depends: ${python:Depends}, ldaptor-common (= 0.0.43), python2.3-twisted-core (>= 2.2), python2.3-twisted-names (>= 0.2), python2.3-twisted-mail (>= 0.2), python2.3-twisted-web (>= 0.5), python2.3-pyparsing (>= 1.3), pwgen, python2.3-pyopenssl, python2.3-crypto
 Description: Pure-Python library for LDAP
  Ldaptor is a pure-Python library that implements
  .
@@ -99,7 +99,7 @@ Description: Pure-Python library for LDAP
 Package: python2.4-ldaptor
 Section: python
 Architecture: all
-Depends: ${python:Depends}, ldaptor-common (= 0.0.43), python2.4-twisted-core (>= 2.2), python2.4-twisted-names (>= 0.2), python2.4-twisted-mail (>= 0.2), python2.4-twisted-web (>= 0.5), python2.4-pyparsing, pwgen, python2.4-pyopenssl, python2.4-crypto
+Depends: ${python:Depends}, ldaptor-common (= 0.0.43), python2.4-twisted-core (>= 2.2), python2.4-twisted-names (>= 0.2), python2.4-twisted-mail (>= 0.2), python2.4-twisted-web (>= 0.5), python2.4-pyparsing (>= 1.3), pwgen, python2.4-pyopenssl, python2.4-crypto
 Description: Pure-Python library for LDAP
  Ldaptor is a pure-Python library that implements
  .
