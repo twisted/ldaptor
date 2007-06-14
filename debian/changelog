@@ -1,3 +1,10 @@
+ldaptor (0.0.43-0.4) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * Change version number to glob in debian/ldaptor-webui.install (Closes: #384825)
+
+ -- Jaakko Niemi <liiwi@debian.org>  Sun,  1 Oct 2006 10:46:28 +0300
+
 ldaptor (0.0.43-0.3) unstable; urgency=medium
 
   * Non-maintainer upload.
