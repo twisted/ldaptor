@@ -3,7 +3,7 @@ Section: admin
 Priority: optional
 Maintainer: Tommi Virtanen <tv@debian.org>
 Standards-Version: 3.6.1
-Build-Depends-Indep: docbook-slides (>= 3.2.0), xsltproc, source-highlight, python-epydoc, dia (>= 0.93-2), python-twisted-core , python-twisted-names , python-twisted-mail , python-twisted-web , python-nevow , python-webut, python-pyparsing, python-pyopenssl, python-crypto
+Build-Depends-Indep: docbook-slides (>= 3.2.0), xsltproc, source-highlight, python-epydoc, dia (>= 0.93-2), python-twisted-core, python-twisted-names, python-twisted-mail, python-twisted-web, python-nevow, python-webut, python-pyparsing, python-pyopenssl, python-crypto
 Build-Depends: cdbs, debhelper, python-all-dev
 
 Package: ldaptor-utils
@@ -51,7 +51,7 @@ Description: Command-line LDAP utilities
 Package: ldaptor-webui
 Section: admin
 Architecture: all
-Depends: ${python:Depends}, python-nevow , python-webut, python-ldaptor
+Depends: ${python:Depends}, python-nevow, python-webut, python-ldaptor
 Description: Web user interface for editing LDAP directories
  A web-based user interface to search and edit information in an LDAP
  directory.
