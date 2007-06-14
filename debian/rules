@@ -24,8 +24,8 @@ binary-post-install/ldaptor-utils::
 binary-post-install/python-ldaptor:: binary-install/ldaptor-utils binary-install/ldaptor-webui binary-install/ldaptor-common
 	rm -rf \
 		debian/python-ldaptor/usr/bin \
-		debian/python-ldaptor/usr/lib/python$*/site-packages/ldaptor/apps/webui \
-		debian/python-ldaptor/usr/lib/python$*/site-packages/ldaptor/test/test_webui.py \
+		debian/python-ldaptor/usr/lib/python*/site-packages/ldaptor/apps/webui \
+		debian/python-ldaptor/usr/lib/python*/site-packages/ldaptor/test/test_webui.py \
 		debian/python-ldaptor/usr/share/locale
 
 binary-post-install/ldaptor-common::
