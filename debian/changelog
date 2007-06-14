@@ -1,3 +1,11 @@
+ldaptor (0.0.43-0.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Update package for python policy transition (Closes: #373559, #378586).
+  * Get rid of the /usr/doc link in postinst (Closes: #359444).
+
+ -- Luk Claes <luk@debian.org>  Wed, 19 Jul 2006 16:34:44 +0200
+
 ldaptor (0.0.43) unstable; urgency=low
 
   * Applications changes:

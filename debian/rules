@@ -5,13 +5,13 @@ include /usr/share/cdbs/1/rules/debhelper.mk
 include /usr/share/cdbs/1/class/python-distutils.mk
 
 DEB_COMPRESS_EXCLUDE := .py .js
-DEB_DH_INSTALL_SOURCEDIR := debian/python2.3-ldaptor
+DEB_DH_INSTALL_SOURCEDIR := debian/python-ldaptor
 DEB_DH_ALWAYS_EXCLUDE := .svn
 
 # see http://bugs.debian.org/295906
 cdbs_python_ver = $(filter-out -%,$(subst -, -,$(patsubst python%,%,$(cdbs_curpkg))))
 
-$(patsubst %,binary-post-install/%,$(DEB_PYTHON_REAL_LIB_PACKAGES)):: binary-post-install/python%-ldaptor:
+$(patsubst %,binary-post-install/%,$(DEB_PYTHON_REAL_LIB_PACKAGES)):: binary-post-install/python-ldaptor:
 	PYTHONPATH='debian/$(cdbs_curpkg)/usr/lib/python$(cdbs_python_ver)/site-packages' \
 		'trial$(cdbs_python_ver)' --tbformat=emacs --reporter=text ldaptor
 
@@ -21,12 +21,12 @@ build/ldaptor-doc::
 binary-post-install/ldaptor-utils::
 	rm -rf debian/ldaptor-utils/usr/bin/ldaptor-webui
 
-binary-post-install/python%-ldaptor:: binary-install/ldaptor-utils binary-install/ldaptor-webui binary-install/ldaptor-common
+binary-post-install/python-ldaptor:: binary-install/ldaptor-utils binary-install/ldaptor-webui binary-install/ldaptor-common
 	rm -rf \
-		debian/python$*-ldaptor/usr/bin \
-		debian/python$*-ldaptor/usr/lib/python$*/site-packages/ldaptor/apps/webui \
-		debian/python$*-ldaptor/usr/lib/python$*/site-packages/ldaptor/test/test_webui.py \
-		debian/python$*-ldaptor/usr/share/locale
+		debian/python-ldaptor/usr/bin \
+		debian/python-ldaptor/usr/lib/python$*/site-packages/ldaptor/apps/webui \
+		debian/python-ldaptor/usr/lib/python$*/site-packages/ldaptor/test/test_webui.py \
+		debian/python-ldaptor/usr/share/locale
 
 binary-post-install/ldaptor-common::
 	find debian/ldaptor-common/usr/share/locale \
