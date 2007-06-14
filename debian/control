@@ -60,6 +60,7 @@ Package: python-ldaptor
 Section: python
 Architecture: all
 Depends: ${python:Depends}, python-twisted-core (>= 2.2), python-twisted-names (>= 0.2), python-twisted-mail (>= 0.2), python-twisted-web (>= 0.5), python-pyparsing
+Replaces: python2.3-ldaptor
 Description: Pure-Python library for LDAP
  Ldaptor is a pure-Python library that implements
  .
