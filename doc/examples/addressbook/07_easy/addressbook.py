@@ -1,7 +1,8 @@
 import os
-from twisted.internet import reactor
-from nevow import rend, appserver, inevow, compy, \
-     stan, loaders
+from zope.interface import Interface, implements
+from twisted.internet import reactor, defer
+from nevow import rend, appserver, inevow, \
+     stan, loaders, flat
 from formless import annotate, webform, iformless
 
 from ldaptor.protocols.ldap import ldapclient, ldapsyntax, ldapconnector, \
@@ -9,7 +10,7 @@ from ldaptor.protocols.ldap import ldapclient, ldapsyntax, ldapconnector, \
 from ldaptor import ldapfilter
 from ldaptor.protocols import pureldap
 
-class ILDAPConfig(compy.Interface):
+class ILDAPConfig(Interface):
     """Addressbook configuration retrieval."""
 
     def getBaseDN(self):
@@ -22,7 +23,7 @@ class ILDAPConfig(compy.Interface):
         """
 
 class LDAPConfig(object):
-    __implements__ = ILDAPConfig
+    implements(ILDAPConfig)
 
     def __init__(self,
                  baseDN,
@@ -41,8 +42,7 @@ class LDAPConfig(object):
         return self.serviceLocationOverrides
 
 class IAddressBookSearch(annotate.TypedInterface):
-    def search(self,
-               sn = annotate.String(label="Last name"),
+    def search(sn = annotate.String(label="Last name"),
                givenName = annotate.String(label="First name"),
                telephoneNumber = annotate.String(),
                description = annotate.String()):
@@ -50,7 +50,7 @@ class IAddressBookSearch(annotate.TypedInterface):
     search = annotate.autocallable(search)
 
 class CurrentSearch(object):
-    __implements__ = IAddressBookSearch, inevow.IContainer
+    implements(IAddressBookSearch, inevow.IContainer)
     data = {}
 
     def _getSearchFilter(self):
@@ -119,9 +119,7 @@ for c in [
     pureldap.LDAPFilter_present,
     pureldap.LDAPFilter_extensibleMatch,
     ]:
-    compy.registerAdapter(LDAPFilterSerializer,
-                          c,
-                          inevow.ISerializable)
+    flat.registerFlattener(LDAPFilterSerializer, c)
 
 class AddressBookResource(rend.Page):
     docFactory = loaders.xmlfile(
@@ -136,9 +134,11 @@ class AddressBookResource(rend.Page):
         return i
 
     def data_search(self, context, data):
-        configurable = self.locateConfigurable(context, '')
-        cur = configurable.original
-        return cur
+        d = defer.maybeDeferred(self.locateConfigurable, context, '')
+        def cb(configurable):
+            return configurable.original
+        d.addCallback(cb)
+        return d
 
     def child_form_css(self, request):
         return webform.defaultCSS
@@ -152,14 +152,14 @@ class AddressBookResource(rend.Page):
         return webform.renderForms()
 
     def render_haveSearch(self, context, data):
-        r=context.allPatterns(str(bool(data)))
+        r=context.tag.allPatterns(str(bool(data)))
         return context.tag.clear()[r]
 
     def render_searchFilter(self, context, data):
         return data.asText()
 
     def render_iterateMapping(self, context, data):
-        headers = context.allPatterns('header')
+        headers = context.tag.allPatterns('header')
         keyPattern = context.patternGenerator('key')
         valuePattern = context.patternGenerator('value')
         divider = context.patternGenerator('divider', default=stan.invisible)
@@ -168,11 +168,11 @@ class AddressBookResource(rend.Page):
                     divider())
                    for key, value in data.items()]
         if not content:
-            content = context.allPatterns('empty')
+            content = context.tag.allPatterns('empty')
         else:
             # No divider after the last thing.
             content[-1] = content[-1][:-1]
-        footers = context.allPatterns('footer')
+        footers = context.tag.allPatterns('footer')
 
         return context.tag.clear()[ headers, content, footers ]
 

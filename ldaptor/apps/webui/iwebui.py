@@ -1,4 +1,4 @@
-from twisted.python import components
+from zope.interface import Interface
 
-class ICurrentDN(components.Interface):
+class ICurrentDN(Interface):
     """Marker interface for current DN for Ldaptor-webui."""

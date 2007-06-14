@@ -1,4 +1,4 @@
-from zope.interface import implements
+from zope.interface import Interface, implements
 from twisted.internet import defer
 from twisted.python import components
 from webut.skin import iskin
@@ -17,7 +17,7 @@ import os
 from nevow import rend, inevow, loaders, url, tags
 from formless import annotate, webform, iformless, configurable
 
-class IMove(components.Interface):
+class IMove(Interface):
     """Entries being moved in the tree."""
     pass
 

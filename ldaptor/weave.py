@@ -1,5 +1,6 @@
-from zope.interface import implements
-from nevow import tags, compy, inevow, flat
+from zope.interface import Interface, implements
+from twisted.python import components
+from nevow import tags, inevow, flat
 from ldaptor.protocols.ldap import ldapsyntax, distinguishedname
 from ldaptor import interfaces
 
@@ -99,7 +100,10 @@ class LDAPEntryContainer(object):
         else:
             return None
 
-compy.registerAdapter(LDAPEntryContainer, ldapsyntax.LDAPEntryWithClient, inevow.IContainer)
+components.registerAdapter(
+    LDAPEntryContainer,
+    ldapsyntax.LDAPEntryWithClient,
+    inevow.IContainer)
 
 def dnSerializer(original, context):
     return flat.serialize(str(original), context)
@@ -129,7 +133,7 @@ def entrySerializer(original, context):
 flat.registerFlattener(entrySerializer,
                        interfaces.ILDAPEntry)
 
-class IZebraStyle(compy.Interface):
+class IZebraStyle(Interface):
     """Marker interface for zebra."""
     pass
 
