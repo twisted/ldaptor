@@ -33,7 +33,7 @@ def main(dataFile, patchFile, outputFile):
 
     d.addCallback(output, outputFile)
     d.addErrback(error)
-    d.addBoth(lambda x: reactor.stop())
+    d.addBoth(lambda x: reactor.callWhenRunning(reactor.stop))
 
     reactor.run()
     sys.exit(exitStatus)
