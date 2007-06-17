@@ -182,6 +182,8 @@ from the command line.
 	"bin/ldaptor-find-server",
 	"bin/ldaptor-rename",
 	"bin/ldaptor-fetchschema",
+        "bin/ldaptor-ldifdiff",
+        "bin/ldaptor-ldifpatch",
 	],
           data_files=[
         (os.path.join(sysconfig.get_python_lib(), 'ldaptor/apps/webui'),
