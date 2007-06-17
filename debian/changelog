@@ -1,3 +1,40 @@
+ldaptor (0.0.44) unstable; urgency=low
+
+  * Acknowledge NMUs. Closes: #379045, #373559, #378586, #359444, #378898,
+    #378945, #380723, #384825.
+  * Whitespace cleanup debian/control
+
+ -- Tommi Virtanen <tv@debian.org>  Thu, 14 Jun 2007 14:06:17 +0300
+
+ldaptor (0.0.43-0.4) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * Change version number to glob in debian/ldaptor-webui.install (Closes: #384825)
+
+ -- Jaakko Niemi <liiwi@debian.org>  Sun,  1 Oct 2006 10:46:28 +0300
+
+ldaptor (0.0.43-0.3) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Remove webui stuff from python-ldaptor (Closes: #380723).
+
+ -- Luk Claes <luk@debian.org>  Tue,  1 Aug 2006 19:28:41 +0200
+
+ldaptor (0.0.43-0.2) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * Let python-ldaptor replace python2.3-ldaptor (Closes: #378945).
+
+ -- Luk Claes <luk@debian.org>  Thu, 20 Jul 2006 20:00:32 +0200
+
+ldaptor (0.0.43-0.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Update package for python policy transition (Closes: #373559, #378586).
+  * Get rid of the /usr/doc link in postinst (Closes: #359444).
+
+ -- Luk Claes <luk@debian.org>  Wed, 19 Jul 2006 16:34:44 +0200
+
 ldaptor (0.0.43) unstable; urgency=low
 
   * Applications changes:
