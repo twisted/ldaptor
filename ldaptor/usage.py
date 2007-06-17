@@ -1,3 +1,4 @@
+from twisted.python.usage import UsageError
 from twisted.python import usage, reflect
 from ldaptor.protocols import pureldap
 from ldaptor.protocols.ldap import distinguishedname
