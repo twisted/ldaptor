@@ -202,5 +202,6 @@ from the command line.
         'ldaptor/apps/webui/search.xhtml',
 
         'ldaptor/apps/webui/ldaptor.css',
+        'ldaptor/apps/webui/skin-default.html',
         ]),
         ])
