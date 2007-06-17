@@ -74,9 +74,6 @@ Description: Pure-Python library for LDAP
  - LDIF format data generation.
  .
  - Samba password changing logic.
- .
- This is a dummy package that depends on the correct version of
- python-ldaptor for the default version of Python.
 
 Package: ldaptor-doc
 Section: doc
