@@ -7,7 +7,7 @@ Build-Depends-Indep: docbook-slides (>= 3.2.0), xsltproc, source-highlight,
  python-epydoc, dia (>= 0.93-2), python-twisted-core, python-twisted-names,
  python-twisted-mail, python-twisted-web, python-nevow, python-webut,
  python-pyparsing, python-pyopenssl, python-crypto, python-support (>= 0.4)
-Build-Depends: cdbs, debhelper, python-all-dev
+Build-Depends: cdbs, debhelper (>= 4.1.68), python-all-dev
 
 Package: ldaptor-utils
 Section: admin
