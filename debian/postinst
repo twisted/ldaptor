@@ -7,3 +7,5 @@ if [ "$1" = "configure" ]; then
 		rm -f /usr/doc/$PACKAGE
 	fi
 fi
+
+#DEBHELPER#

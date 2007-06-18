@@ -1,46 +1,47 @@
 #!/usr/bin/make -f
 # -*- mode: makefile; coding: utf-8 -*-
 
-include /usr/share/cdbs/1/rules/debhelper.mk
+#the exchange is intentionnal, we will hook dh_pysupport ourselves
 include /usr/share/cdbs/1/class/python-distutils.mk
+include /usr/share/cdbs/1/rules/debhelper.mk
 
 DEB_COMPRESS_EXCLUDE := .py .js
 DEB_DH_INSTALL_SOURCEDIR := debian/python-ldaptor
 DEB_DH_ALWAYS_EXCLUDE := .svn
 
 # see http://bugs.debian.org/295906
-cdbs_python_ver = $(filter-out -%,$(subst -, -,$(patsubst python%,%,$(cdbs_curpkg))))
+cdbs_python_ver = $(shell pyversions -dv)
 
-$(patsubst %,binary-post-install/%,$(DEB_PYTHON_REAL_LIB_PACKAGES)):: binary-post-install/python-ldaptor:
-	PYTHONPATH='debian/$(cdbs_curpkg)/usr/lib/python$(cdbs_python_ver)/site-packages' \
-		'trial$(cdbs_python_ver)' --tbformat=emacs --reporter=text ldaptor
+#binary-install/python-ldaptor::
+#	PYTHONPATH='debian/$(cdbs_curpkg)/usr/lib/python$(cdbs_python_ver)/site-packages' \
+#		trial --tbformat=emacs --reporter=text ldaptor
 
 build/ldaptor-doc::
 	make -C doc
 
-binary-post-install/ldaptor-utils::
-	rm -rf debian/ldaptor-utils/usr/bin/ldaptor-webui
-
-binary-post-install/python-ldaptor:: binary-install/ldaptor-utils binary-install/ldaptor-webui binary-install/ldaptor-common
+binary-post-install/python-ldaptor:: binary-install/ldaptor-utils binary-install/ldaptor-webui
 	rm -rf \
-		debian/python-ldaptor/usr/bin \
-		debian/python-ldaptor/usr/lib/python*/site-packages/ldaptor/apps/webui \
-		debian/python-ldaptor/usr/lib/python*/site-packages/ldaptor/test/test_webui.py \
-		debian/python-ldaptor/usr/share/locale
-
-binary-post-install/ldaptor-common::
-	find debian/ldaptor-common/usr/share/locale \
+		debian/$(cdbs_curpkg)/usr/bin \
+		debian/$(cdbs_curpkg)/usr/lib/python*/site-packages/ldaptor/apps/webui \
+		debian/$(cdbs_curpkg)/usr/lib/python*/site-packages/ldaptor/test/test_webui.py
+	find debian/$(cdbs_curpkg)/usr/share/locale \
 		-name '*.mo' \
 		-a \! -name 'ldaptor.mo' \
 		-print0 \
 	| xargs -0 --no-run-if-empty rm --
+	dh_pysupport -p$(cdbs_curpkg)
+
+binary-post-install/ldaptor-utils::
+	rm -rf debian/$(cdbs_curpkg)/usr/bin/ldaptor-webui
+	dh_pysupport -p$(cdbs_curpkg)
 
 binary-post-install/ldaptor-webui::
-	find debian/ldaptor-webui/usr/share/locale \
+	find debian/$(cdbs_curpkg)/usr/share/locale \
 		-name '*.mo' \
 		-a \! -name 'ldaptor-webui.mo' \
 		-print0 \
 	| xargs -0 --no-run-if-empty rm --
+	dh_pysupport -p$(cdbs_curpkg)
 
 clean::
 	find . -type f -name '*.pyc' -print0 \

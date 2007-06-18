@@ -1,3 +1,14 @@
+ldaptor (0.0.43-0.4) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Really update package for the python policy (Closes: #373559, #378586).
+  * remove ldaptor-common, merge it into python-ldaptor.
+  * Bump Standards-Version to 3.7.2.
+  * Add python-pyopenssl to the webui Depends.
+  * Urgency set to medium for RC bug fix.
+
+ -- Pierre Habouzit <madcoder@debian.org>  Thu, 31 Aug 2006 11:02:15 +0200
+
 ldaptor (0.0.43-0.3) unstable; urgency=medium
 
   * Non-maintainer upload.
