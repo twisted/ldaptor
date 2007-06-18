@@ -1,6 +1,6 @@
 # -*- python -*-
 from twisted.application import service, internet
-from nevow import appserver, inevow
+from nevow import appserver
 from ldaptor import config
 from ldaptor.apps.webui import main, i18n
 

@@ -1,7 +1,7 @@
 import os
 from zope.interface import implements
 from webut.skin import iskin
-from nevow import rend, loaders, tags, util, inevow, static
+from nevow import rend, loaders, tags, util, static
 from formless import webform
 
 class DefaultSkin(rend.Page):

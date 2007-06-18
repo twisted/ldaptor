@@ -1,6 +1,6 @@
 # textareas reshown on forms with error get spurious \n prefixes and
 # suffixes with tidy
-config do_run_tidy 0
+config use_tidy 0
 
 formvalue go baseDN ou=People,dc=example,dc=com
 submit

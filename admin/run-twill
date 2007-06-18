@@ -1,4 +1,4 @@
-#!/usr/bin/python2.4
+#!/usr/bin/python
 import os, sys, shutil, subprocess, socket, errno, signal, time
 
 def waitUntilListening(port):
@@ -72,9 +72,8 @@ def run():
                                        os.path.expanduser('~/src/twill/trunk'),
                                        twillEnv.get('PYTHONPATH', '.')])
     returncode = subprocess.call(args=[
-        os.path.expanduser('twill-sh'),
+        os.path.expanduser('~/src/twill/trunk/twill-sh'),
         '--url', 'http://localhost:38980/',
-        '--',
         ] + tests,
                                  env=twillEnv)
 
@@ -105,8 +104,6 @@ try:
     twistdEnv = {}
     twistdEnv.update(os.environ)
     twistdEnv['PYTHONPATH'] = ':'.join(['.',
-                                        # TODO work around nevow 0.4.1 bug, fixed in r1510.
-                                        os.path.expanduser('~/src/nevow/trunk'),
                                         twistdEnv.get('PYTHONPATH', '.')])
     twistd = subprocess.Popen(args=['twistd',
                                     '-n', '-o', '-y',

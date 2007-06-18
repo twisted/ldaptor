@@ -16,7 +16,15 @@
 
 """LDAP protocol message conversion; no application logic here."""
 
-from pureber import *
+from pureber import (
+
+    BERBoolean, BERDecoderContext, BEREnumerated, BERInteger, BERNull,
+    BEROctetString, BERSequence, BERSequenceOf, BERSet, BERStructured,
+
+    CLASS_APPLICATION, CLASS_CONTEXT,
+
+    berDecodeMultiple, berDecodeObject, int2berlen,
+    )
 
 next_ldap_message_id=1
 def alloc_ldap_message_id():

@@ -7,8 +7,8 @@ from ldaptor import interfaces
 from ldaptor.apps.webui.i18n import _
 from ldaptor.apps.webui import i18n
 
-from nevow import rend, loaders, url, static, inevow
-from formless import annotate, webform, iformless
+from nevow import rend, loaders, url, inevow
+from formless import annotate, webform
 import os
 
 class LdaptorWebUIGadget2(rend.Page):

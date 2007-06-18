@@ -16,12 +16,15 @@ formvalue add structuralObjectClass account
 formvalue add auxiliary_posixAccount True
 submit
 code 200
+url  ^http://localhost:\d+/ou%3DPeople%2Cdc%3Dexample%2Cdc%3Dcom/add/manual/account%2BposixAccount/$
 title "Ldaptor Add Page"
 
+formvalue add add_cn "Just For Test"
 formvalue add add_uid justfortest
 formvalue add add_homeDirectory /home/testusers/justfortest
 submit
 code 200
+notfind '<div class="freeform-error">\s*Please enter a string\.\s*</div>'
 find '<span>Added <a href="[^"]*">uid=justfortest,ou=People,dc=example,dc=com</a> \[[^]]+\]</span>'
 
 follow Search

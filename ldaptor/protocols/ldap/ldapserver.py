@@ -44,7 +44,7 @@ class BaseLDAPServer(protocol.Protocol):
         while 1:
             try:
                 o, bytes=pureber.berDecodeObject(self.berdecoder, self.buffer)
-            except pureldap.BERExceptionInsufficientData:
+            except pureldap.BERExceptionInsufficientData: #TODO
                 o, bytes=None, 0
             self.buffer = self.buffer[bytes:]
             if o is None:
@@ -64,7 +64,7 @@ class BaseLDAPServer(protocol.Protocol):
             raise LDAPServerConnectionLostException()
         msg=pureldap.LDAPMessage(op, id=id)
         if self.debug:
-            log.debug('S->C %s' % repr(msg))
+            log.msg('S->C %s' % repr(msg), debug=True)
         self.transport.write(str(msg))
 
     def unsolicitedNotification(self, msg):
@@ -111,7 +111,7 @@ class BaseLDAPServer(protocol.Protocol):
     def handle(self, msg):
         assert isinstance(msg.value, pureldap.LDAPProtocolRequest)
         if self.debug:
-            log.debug('S<-C %s' % repr(msg))
+            log.msg('S<-C %s' % repr(msg), debug=True)
 
         if msg.id==0:
             self.unsolicitedNotification(msg.value)

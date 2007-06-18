@@ -188,9 +188,9 @@ class AddService(configurable.Configurable):
             checkPasswordTypos(newPassword, again)
 
         if not newPassword:
-            return self._generate(ctx, serviceName)
+            d = self._generate(ctx, serviceName)
         else:
-            return self._add(ctx, newPassword, serviceName)
+            d = self._add(ctx, newPassword, serviceName)
         return d
 
     def _cbSetPassword(self, ctx, newPassword, serviceName):

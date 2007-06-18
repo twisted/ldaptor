@@ -4,7 +4,7 @@ set -e
 export COVERAGE_FILE="$PWD/coverage"
 export PYTHONPATH=.
 
-PYTHON=python2.3
+PYTHON=python
 
 $PYTHON admin/coverage.py -e
 

@@ -1,6 +1,4 @@
 from zope.interface import Interface, implements
-from twisted.internet import defer
-from twisted.python import components
 from webut.skin import iskin
 from ldaptor.protocols.ldap import ldapclient, ldapsyntax
 from ldaptor.protocols.ldap import distinguishedname, ldapconnector

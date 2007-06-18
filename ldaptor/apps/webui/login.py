@@ -1,6 +1,6 @@
 from zope.interface import implements
 import os
-from nevow import rend, loaders, guard, inevow, url
+from nevow import rend, loaders, guard, url
 from webut.skin import iskin
 from ldaptor.apps.webui import i18n
 from ldaptor.apps.webui.i18n import _
