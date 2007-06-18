@@ -1,0 +1,8 @@
+/files
+/*.substvars
+/*.debhelper
+/tmp
+/ldaptor-doc
+/ldaptor-utils
+/ldaptor-webui
+/python-ldaptor

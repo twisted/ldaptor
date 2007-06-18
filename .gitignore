@@ -1,0 +1,12 @@
+*.pyc
+*.pyo
+/_trial_temp
+/build
+/coverage
+/doc/addressbook-session
+/doc/addressbook-slides
+/doc/api
+/doc/ldap-intro
+/doc/addressbook-ldif
+/doc/*.dia.png
+/ldaptor/test/ldif/webtests.tmp
