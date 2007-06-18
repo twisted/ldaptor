@@ -1,10 +1,21 @@
 ldaptor (0.0.44) unstable; urgency=low
 
-  * Acknowledge NMUs. Closes: #379045, #373559, #378586, #359444, #378898,
+  * Acknowledge NMUs. Closes: #385447, #379045, #373559, #378586, #359444, #378898,
     #378945, #380723, #384825.
   * Whitespace cleanup debian/control
 
  -- Tommi Virtanen <tv@debian.org>  Thu, 14 Jun 2007 14:06:17 +0300
+
+ldaptor (0.0.43-0.4.notreally) unstable; urgency=medium
+
+  * (note: this version was never uploaded; see #385447 --tv)
+  * Really update package for the python policy (Closes: #373559, #378586).
+  * remove ldaptor-common, merge it into python-ldaptor.
+  * Bump Standards-Version to 3.7.2.
+  * Add python-pyopenssl to the webui Depends.
+  * Urgency set to medium for RC bug fix.
+
+ -- Pierre Habouzit <madcoder@debian.org>  Thu, 31 Aug 2006 11:02:15 +0200
 
 ldaptor (0.0.43-0.4) unstable; urgency=low
 
