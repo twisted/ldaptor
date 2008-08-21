@@ -1,3 +1,10 @@
+ldaptor (0.0.43-0.5) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * Fix call of epydoc in doc/Makefile to avoid FTBFS (Closes: #433738)
+
+ -- Mario Iseli <mario@debian.org>  Fri, 17 Aug 2007 10:35:21 +0200
+
 ldaptor (0.0.43-0.4) unstable; urgency=low
 
   * Non-maintainer upload.
