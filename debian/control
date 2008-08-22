@@ -2,9 +2,9 @@ Source: ldaptor
 Section: admin
 Priority: optional
 Maintainer: Tommi Virtanen <tv@debian.org>
-Standards-Version: 3.6.1
-Build-Depends-Indep: docbook-slides (>= 3.2.0), xsltproc, source-highlight, python-epydoc, dia (>= 0.93-2), python-twisted-core , python-twisted-names , python-twisted-mail , python-twisted-web , python-nevow , python-webut, python-pyparsing, python-pyopenssl, python-crypto
-Build-Depends: cdbs, debhelper, python-all-dev
+Standards-Version: 3.7.3
+Build-Depends-Indep: docbook-slides (>= 3.2.0), xsltproc, source-highlight, python-epydoc, dia (>= 0.93-2), python-twisted-core , python-twisted-names , python-twisted-mail , python-twisted-web , python-nevow , python-webut, python-pyparsing, python-pyopenssl, python-crypto, python-support (>= 0.6)
+Build-Depends: cdbs (>= 0.4.49), debhelper, python-all-dev
 
 Package: ldaptor-utils
 Section: admin
@@ -41,12 +41,6 @@ Description: Command-line LDAP utilities
  ldaptor-ldap2pdns -- pdns pipe backend.
  .
  ldaptor-fetchschema -- Fetch schema from a server.
- .
- ldaptor-ldifdiff -- Read two LDIF files and output LDIF modifications
- that modify entries in first file to look like entries in second file.
- .
- ldaptor-ldifpatch -- Read an LDIF file and LDIF modifications and output
- LDIF with the modifications.
 
 Package: ldaptor-webui
 Section: admin
@@ -63,49 +57,32 @@ Depends: ${python:Depends}, python-twisted-core (>= 2.2), python-twisted-names (
 Replaces: python2.3-ldaptor
 Description: Pure-Python library for LDAP
  Ldaptor is a pure-Python library that implements
- .
- - LDAP client logic.
- .
- - separately-accessible LDAP and BER protocol message
- generation/parsing.
- .
- - ASCII-format LDAP filter generation and parsing.
- .
- - LDIF format data generation.
- .
- - Samba password changing logic.
- .
- This is a dummy package that depends on the correct version of
- python-ldaptor for the default version of Python.
+    * LDAP client logic.
+    * separately-accessible LDAP and BER protocol message
+      generation/parsing.
+    * ASCII-format LDAP filter generation and parsing.
+    * LDIF format data generation.
+    * Samba password changing logic.
 
 Package: ldaptor-doc
 Section: doc
 Architecture: all
 Description: Documentation for Ldaptor
  A collection of documentation about Ldaptor and LDAP, including
- .
- - An introduction to LDAP
- .
- - The Ldaptor library API
- .
- - Slides for a talk "Creating a simple LDAP application"
+    * An introduction to LDAP
+    * The Ldaptor library API
+    * Slides for a talk "Creating a simple LDAP application"
 
 Package: ldaptor-common
 Section: python
 Architecture: all
 Description: Pure-Python library for LDAP (common files)
  Ldaptor is a pure-Python library that implements
- .
- - LDAP client logic.
- .
- - separately-accessible LDAP and BER protocol message
- generation/parsing.
- .
- - ASCII-format LDAP filter generation and parsing.
- .
- - LDIF format data generation.
- .
- - Samba password changing logic.
- .
+    * LDAP client logic.
+    * separately-accessible LDAP and BER protocol message
+      generation/parsing.
+    * ASCII-format LDAP filter generation and parsing.
+    * LDIF format data generation.
+    * Samba password changing logic.
  This package contains the common files shared between different
  builds of the library for different Python versions.

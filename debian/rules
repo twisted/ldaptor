@@ -1,49 +1,34 @@
 #!/usr/bin/make -f
 # -*- mode: makefile; coding: utf-8 -*-
 
+DEB_PYTHON_SYSTEM=pysupport
+PYDEFAULT=$(shell pyversions -d)
+
 include /usr/share/cdbs/1/rules/debhelper.mk
 include /usr/share/cdbs/1/class/python-distutils.mk
 
 DEB_COMPRESS_EXCLUDE := .py .js
-DEB_DH_INSTALL_SOURCEDIR := debian/python-ldaptor
 DEB_DH_ALWAYS_EXCLUDE := .svn
 
-# see http://bugs.debian.org/295906
-cdbs_python_ver = $(filter-out -%,$(subst -, -,$(patsubst python%,%,$(cdbs_curpkg))))
+install/python-ldaptor::
+	PYTHONPATH='debian/tmp/usr/lib/$(PYDEFAULT)/site-packages' \
+		trial --tbformat=emacs --reporter=text ldaptor
 
-$(patsubst %,binary-post-install/%,$(DEB_PYTHON_REAL_LIB_PACKAGES)):: binary-post-install/python-ldaptor:
-	PYTHONPATH='debian/$(cdbs_curpkg)/usr/lib/python$(cdbs_python_ver)/site-packages' \
-		'trial$(cdbs_python_ver)' --tbformat=emacs --reporter=text ldaptor
+binary-post-install/python-ldaptor::
+	rm -rf \
+		debian/python-ldaptor/usr/share/python-support/*/ldaptor/apps/webui \
+		debian/python-ldaptor/usr/share/python-support/*/ldaptor/test/test_webui.py
 
-build/ldaptor-doc::
+build/ldaptor-doc:: doc-stamp
+doc-stamp:
 	make -C doc
+	touch $@
 
 binary-post-install/ldaptor-utils::
 	rm -rf debian/ldaptor-utils/usr/bin/ldaptor-webui
 
-binary-post-install/python-ldaptor:: binary-install/ldaptor-utils binary-install/ldaptor-webui binary-install/ldaptor-common
-	rm -rf \
-		debian/python-ldaptor/usr/bin \
-		debian/python-ldaptor/usr/lib/python*/site-packages/ldaptor/apps/webui \
-		debian/python-ldaptor/usr/lib/python*/site-packages/ldaptor/test/test_webui.py \
-		debian/python-ldaptor/usr/share/locale
-
-binary-post-install/ldaptor-common::
-	find debian/ldaptor-common/usr/share/locale \
-		-name '*.mo' \
-		-a \! -name 'ldaptor.mo' \
-		-print0 \
-	| xargs -0 --no-run-if-empty rm --
-
-binary-post-install/ldaptor-webui::
-	find debian/ldaptor-webui/usr/share/locale \
-		-name '*.mo' \
-		-a \! -name 'ldaptor-webui.mo' \
-		-print0 \
-	| xargs -0 --no-run-if-empty rm --
-
 clean::
-	find . -type f -name '*.pyc' -print0 \
-	| xargs -0 --no-run-if-empty rm --
+	find . -type f -name '*.pyc' -delete
 	make -C doc clean
 	rm -rf _trial_temp
+	rm -f doc-stamp

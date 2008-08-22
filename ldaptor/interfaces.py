@@ -1,6 +1,6 @@
-from twisted.python import components
+from zope.interface import Interface
 
-class ILDAPEntry(components.Interface):
+class ILDAPEntry(Interface):
     """
 
     Pythonic API for LDAP object access and modification.
@@ -126,7 +126,7 @@ class ILDAPEntry(components.Interface):
         incorrect.
         """
 
-class IEditableLDAPEntry(components.Interface):
+class IEditableLDAPEntry(Interface):
     """Interface definition for editable LDAP entries."""
 
     def __setitem__(self, key, value):
@@ -206,7 +206,7 @@ class IEditableLDAPEntry(components.Interface):
 
         """
 
-class IConnectedLDAPEntry(components.Interface):
+class IConnectedLDAPEntry(Interface):
     """Interface definition for LDAP entries that are part of a bigger whole."""
 
     def namingContext(self):
@@ -334,7 +334,7 @@ class IConnectedLDAPEntry(components.Interface):
 
         """
 
-class ILDAPConfig(components.Interface):
+class ILDAPConfig(Interface):
     """Generic LDAP configuration retrieval."""
 
     def getBaseDN(self):
