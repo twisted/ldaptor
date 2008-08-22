@@ -33,7 +33,7 @@ clean:
 
 rsync: $(GENERATED)
 	rsync -a $(DOCBOOK:%.xml=%.html) $(SLIDES:%.xml=%) $(DIAPNG) pyramid.twistedmatrix.com:public_html/ldap-intro/
-	rsync -a --exclude '*.pyc' --exclude SCCS --exclude '*~' examples/addressbook/{[0-9]*,README.txt,server}  pyramid.twistedmatrix.com:public_html/ldap-intro/addressbook/
+	rsync -a --exclude '*.pyc' --exclude '*~' examples/addressbook/{[0-9]*,README.txt,server}  pyramid.twistedmatrix.com:public_html/ldap-intro/addressbook/
 
 $(DOCBOOK:%.xml=%/index.html): %/index.html: %.xml
 	install -d -m0755 '$(@D)'
@@ -133,10 +133,11 @@ $(SLIDES:%.xml=%/index.html): %/index.html: %.xml \
 	mv $@.tmp $@
 
 api:
-	epydoc \
+	echo epydoc \
 	        -o api \
 		--name Ldaptor \
 		--url http://www.inoi.fi/open/trac/ldaptor/ \
-		$$(find ../ldaptor \( -name SCCS -prune \) -o -name '*.py' -print)
+		$$(find ../ldaptor -name '*.py' -print)
+	install -d -m0755 api
 
 .PHONY: api

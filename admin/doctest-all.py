@@ -18,9 +18,7 @@ def test(modulename):
 def callback(basedir, dirname, filenames):
     r=[]
     for filename in filenames:
-        if filename.startswith('.') \
-           or filename=='SCCS' \
-           or filename=='BitKeeper':
+        if filename.startswith('.'):
             continue
         r.append(filename)
 
