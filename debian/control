@@ -6,7 +6,7 @@ Standards-Version: 3.7.3
 Build-Depends-Indep: docbook-slides (>= 3.2.0), xsltproc, source-highlight,
  python-epydoc, dia (>= 0.93-2), python-twisted-core, python-twisted-names,
  python-twisted-mail, python-twisted-web, python-nevow, python-webut,
- python-pyparsing, python-pyopenssl, python-crypto, python-support (>= 0.6)
+ python-pyparsing, python-openssl, python-crypto, python-support (>= 0.6)
 Build-Depends: cdbs (>= 0.4.49), debhelper (>> 6.0.0), python-all-dev
 Homepage: http://www.inoi.fi/open/trac/ldaptor
 
@@ -49,7 +49,7 @@ Description: Command-line LDAP utilities
 Package: ldaptor-webui
 Section: admin
 Architecture: all
-Depends: ${python:Depends}, python-nevow, python-webut, python-ldaptor, python-pyopenssl
+Depends: ${python:Depends}, python-nevow, python-webut, python-ldaptor, python-openssl
 Description: Web user interface for editing LDAP directories
  A web-based user interface to search and edit information in an LDAP
  directory.
