@@ -1,3 +1,0 @@
-debian/global.cfg etc/ldaptor
-ldaptor.schema etc/ldaptor
-debian/tmp/usr/share/locale/*/*/ldaptor.mo

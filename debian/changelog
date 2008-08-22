@@ -1,3 +1,20 @@
+ldaptor (0.0.43-1) unstable; urgency=low
+
+  * QA upload.
+    + Set maintainer as Debian QA Group.
+  * Acknowledge NMUs.
+    + Remove ldiffdiff, ldiffpatch references (Closes: #370552).
+    + Remove dummy package description (Closes: #420771).
+  * Make package non-native.
+    + Maintainer is no longer upstream.
+    + Upstream appears dormant.
+  * Bump debhelper build-dep and compat to 6.
+  * Add Homepage field in control.
+  * Remove ldaptor-common package (Closes: #385447).
+    + Leave empty ldaptor-common.install because orig.tar.gz has debian dir
+
+ -- Barry deFreese <bddebian@comcast.net>  Tue, 22 Jan 2008 11:26:51 -0500
+
 ldaptor (0.0.43-0.6) unstable; urgency=low
 
   * Non-maintainer upload.
