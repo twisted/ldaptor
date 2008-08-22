@@ -1,3 +1,11 @@
+ldaptor (0.0.43-2) unstable; urgency=low
+
+  * QA upload.
+  * Deleted /usr/doc handling in postinst (closes: #359444)
+  * Added missing #DEBHELPER# tokens in maintainer scripts
+
+ -- Peter Eisentraut <petere@debian.org>  Fri, 04 Apr 2008 17:46:27 +0200
+
 ldaptor (0.0.43-1) unstable; urgency=low
 
   * QA upload.

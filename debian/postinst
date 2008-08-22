@@ -1,9 +1,3 @@
-#!/bin/sh -e
+#!/bin/sh
 
-PACKAGE=ldaptor
-if [ "$1" = "configure" ]; then
-	if [ -d /usr/doc -a ! -e /usr/doc/$PACKAGE \
-	    -a -d /usr/share/doc/$PACKAGE ]; then
-		ln -sf ../share/doc/$PACKAGE /usr/doc/$PACKAGE
-	fi
-fi
+#DEBHELPER#
