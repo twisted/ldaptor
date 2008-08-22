@@ -2,12 +2,13 @@ Source: ldaptor
 Section: admin
 Priority: optional
 Maintainer: Tommi Virtanen <tv@debian.org>
-Standards-Version: 3.7.2
+Standards-Version: 3.7.3
 Build-Depends-Indep: docbook-slides (>= 3.2.0), xsltproc, source-highlight,
  python-epydoc, dia (>= 0.93-2), python-twisted-core, python-twisted-names,
  python-twisted-mail, python-twisted-web, python-nevow, python-webut,
- python-pyparsing, python-pyopenssl, python-crypto, python-support (>= 0.4)
-Build-Depends: cdbs, debhelper (>= 4.1.68), python-all-dev
+ python-pyparsing, python-pyopenssl, python-crypto, python-support (>= 0.6)
+Build-Depends: cdbs (>= 0.4.49), debhelper (>> 6.0.0), python-all-dev
+Homepage: http://www.inoi.fi/open/trac/ldaptor
 
 Package: ldaptor-utils
 Section: admin
@@ -44,12 +45,6 @@ Description: Command-line LDAP utilities
  ldaptor-ldap2pdns -- pdns pipe backend.
  .
  ldaptor-fetchschema -- Fetch schema from a server.
- .
- ldaptor-ldifdiff -- Read two LDIF files and output LDIF modifications
- that modify entries in first file to look like entries in second file.
- .
- ldaptor-ldifpatch -- Read an LDIF file and LDIF modifications and output
- LDIF with the modifications.
 
 Package: ldaptor-webui
 Section: admin
@@ -65,29 +60,21 @@ Architecture: all
 Depends: ${python:Depends}, python-twisted-core (>= 2.2), python-twisted-names (>= 0.2), python-twisted-mail (>= 0.2), python-twisted-web (>= 0.5), python-pyparsing (>= 1.3)
 Provides: ${python:Provides}
 Replaces: python2.3-ldaptor, python2.4-ldaptor, ldaptor-common
-Conflicts:  python2.3-ldaptor, python2.4-ldaptor, ldaptor-common
+Conflicts: python2.3-ldaptor, python2.4-ldaptor, ldaptor-common
 Description: Pure-Python library for LDAP
  Ldaptor is a pure-Python library that implements
- .
- - LDAP client logic.
- .
- - separately-accessible LDAP and BER protocol message
- generation/parsing.
- .
- - ASCII-format LDAP filter generation and parsing.
- .
- - LDIF format data generation.
- .
- - Samba password changing logic.
+    * LDAP client logic.
+    * separately-accessible LDAP and BER protocol message
+      generation/parsing.
+    * ASCII-format LDAP filter generation and parsing.
+    * LDIF format data generation.
+    * Samba password changing logic.
 
 Package: ldaptor-doc
 Section: doc
 Architecture: all
 Description: Documentation for Ldaptor
  A collection of documentation about Ldaptor and LDAP, including
- .
- - An introduction to LDAP
- .
- - The Ldaptor library API
- .
- - Slides for a talk "Creating a simple LDAP application"
+    * An introduction to LDAP
+    * The Ldaptor library API
+    * Slides for a talk "Creating a simple LDAP application"

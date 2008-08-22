@@ -135,8 +135,8 @@ $(SLIDES:%.xml=%/index.html): %/index.html: %.xml \
 api:
 	epydoc \
 	        -o api \
-		-n Ldaptor \
-		-u http://www.inoi.fi/open/trac/ldaptor/ \
+		--name Ldaptor \
+		--url http://www.inoi.fi/open/trac/ldaptor/ \
 		$$(find ../ldaptor \( -name SCCS -prune \) -o -name '*.py' -print)
 
 .PHONY: api

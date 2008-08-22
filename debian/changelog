@@ -6,6 +6,55 @@ ldaptor (0.0.44) unstable; urgency=low
 
  -- Tommi Virtanen <tv@debian.org>  Thu, 14 Jun 2007 14:06:17 +0300
 
+ldaptor (0.0.43-2) unstable; urgency=low
+
+  * QA upload.
+  * Deleted /usr/doc handling in postinst (closes: #359444)
+  * Added missing #DEBHELPER# tokens in maintainer scripts
+
+ -- Peter Eisentraut <petere@debian.org>  Fri, 04 Apr 2008 17:46:27 +0200
+
+ldaptor (0.0.43-1) unstable; urgency=low
+
+  * QA upload.
+    + Set maintainer as Debian QA Group.
+  * Acknowledge NMUs.
+    + Remove ldiffdiff, ldiffpatch references (Closes: #370552).
+    + Remove dummy package description (Closes: #420771).
+  * Make package non-native.
+    + Maintainer is no longer upstream.
+    + Upstream appears dormant.
+  * Bump debhelper build-dep and compat to 6.
+  * Add Homepage field in control.
+  * Remove ldaptor-common package (Closes: #385447).
+    + Leave empty ldaptor-common.install because orig.tar.gz has debian dir
+
+ -- Barry deFreese <bddebian@comcast.net>  Tue, 22 Jan 2008 11:26:51 -0500
+
+ldaptor (0.0.43-0.6) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * Support the latest python policy. Closes: #445285.
+  * Select the DEB_PYTHON_SYSTEM.
+  * Build-depend on python-support and cdbs 0.4.49.
+  * Lots of cleanup in the rules file.
+  * setup.py: install skin-default.html. Closes: #408492.
+  * interfaces.py, apps/webui/{iwebui,search}.py: use zope.interface
+    instead of the deprecated twisted.python.components.
+  * debian/{postinst,prerm}: removed, not necessary anymore.
+  * Standards version is 3.7.3
+  * Fix list formatting in the long descriptions.
+  * Fix description for python-ldaptor.
+
+ -- Josselin Mouette <joss@debian.org>  Tue, 22 Jan 2008 10:44:24 +0100
+
+ldaptor (0.0.43-0.5) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * Fix call of epydoc in doc/Makefile to avoid FTBFS (Closes: #433738)
+
+ -- Mario Iseli <mario@debian.org>  Fri, 17 Aug 2007 10:35:21 +0200
+
 ldaptor (0.0.43-0.4.notreally) unstable; urgency=medium
 
   * (note: this version was never uploaded; see #385447 --tv)
