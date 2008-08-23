@@ -96,6 +96,54 @@ class AttributeType_KnownValues(unittest.TestCase):
            'syntax': '1.3.6.1.4.1.1466.115.121.1.26{128}',
            }),
 
+        ("""( 1.2.840.113549.1.9.1
+        NAME ( 'email' 'emailAddress' 'pkcs9email' )
+        DESC 'RFC2459: legacy attribute for email addresses in DNs'
+        EQUALITY caseIgnoreIA5Match
+        SUBSTR caseIgnoreIA5SubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.26{128}
+        X-ORDERED 'VALUES' )""",
+         { 'oid': '1.2.840.113549.1.9.1',
+           'name': ('email', 'emailAddress', 'pkcs9email', ),
+           'desc': 'RFC2459: legacy attribute for email addresses in DNs',
+           'equality': 'caseIgnoreIA5Match',
+           'substr': 'caseIgnoreIA5SubstringsMatch',
+           'syntax': '1.3.6.1.4.1.1466.115.121.1.26{128}',
+           'x_attrs': [('X-ORDERED', 'VALUES'),],
+           }),
+
+        ("""( 1.3.6.1.3.42.1 NAME 'olcDatabase'
+        EQUALITY caseIgnoreMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+        SINGLE-VALUE X-ORDERED 'SIBLINGS' )""",
+         { 'oid': '1.3.6.1.3.42.1',
+           'name': ('olcDatabase',),
+           'equality': 'caseIgnoreMatch',
+           'syntax': '1.3.6.1.4.1.1466.115.121.1.15',
+           'single_value': 1,
+           'x_attrs': [('X-ORDERED', 'SIBLINGS')],
+           }),
+
+        ("""( 1.3.6.1.3.42.2
+        NAME 'olcSuffix'
+        EQUALITY distinguishedNameMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.12
+        X-ORDERED 'VALUES' )""",
+         { 'oid': '1.3.6.1.3.42.2',
+           'name': ('olcSuffix',),
+           'equality': 'distinguishedNameMatch',
+           'syntax': '1.3.6.1.4.1.1466.115.121.1.12',
+           'x_attrs': [('X-ORDERED', 'VALUES')],
+           }),
+
+        ("""( 1.3.6.1.3.42.3
+        NAME 'experimentalWithQdstrings'
+        X-FOO ( 'one' 'two' ) )""",
+         { 'oid': '1.3.6.1.3.42.3',
+           'name': ('experimentalWithQdstrings',),
+           'x_attrs': [('X-FOO', ('one', 'two'))],
+           }),
+
         ]
 
     def testParse(self):

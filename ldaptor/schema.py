@@ -353,6 +353,10 @@ class AttributeTypeDescription(ASN1ParserThingie):
         self.no_user_modification=None
         self.usage=None
 
+        # storage for experimental terms ("X-SOMETHING"), so we can
+        # output them when stringifying.
+        self.x_attrs=[]
+
         if text is not None:
             self._parse(text)
 
@@ -466,7 +470,34 @@ class AttributeTypeDescription(ASN1ParserThingie):
             text = text.lstrip()
             self.usage, text = extractWord(text)
 
-        text = text.lstrip()
+
+        while True:
+            text = text.lstrip()
+
+            word = peekWord(text)
+            if word is None:
+                break
+
+            if word.startswith('X-'):
+                text=text[len(word+" "):]
+                text = text.lstrip()
+                if text[0]=="'":
+                    text=text[1:]
+                    end=text.index("'")
+                    value=text[:end]
+                    text=text[end+1:]
+                elif text[0]=="(":
+                    text=text[1:]
+                    text = text.lstrip()
+                    end=text.index(")")
+                    value=self._strings_to_list(text[:end])
+                    text=text[end+1:]
+                else:
+                    raise "TODO"
+
+                self.x_attrs.append((word, value))
+            else:
+                raise RuntimeError('Unhandled attributeType: %r', word)
 
         assert text=="", "Text was not empty: %s"%repr(text)
 
@@ -530,6 +561,16 @@ class AttributeTypeDescription(ASN1ParserThingie):
             r.append('NO-USER-MODIFICATION')
         if self.usage is not None:
             r.append('USAGE %s' % self.usage)
+        for name, value in self.x_attrs:
+            if isinstance(value, basestring):
+                r.append("%s '%s'" % (name, value))
+            else:
+                r.append(
+                    '%s ( %s )' % (
+                        name,
+                        ' '.join("'%s'" % s for s in value),
+                        ),
+                    )
         return ('( %s ' % self.oid
                 + '\n        '.join(r)
                 + ' )')
