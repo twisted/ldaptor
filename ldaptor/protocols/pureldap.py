@@ -165,6 +165,26 @@ class LDAPBindRequest(LDAPProtocolRequest, BERSequence):
 class LDAPReferral(BERSequence):
     tag = CLASS_CONTEXT | 0x03
 
+
+# This is currently just a stub and implements no real functionality.
+class LDAPSearchResultReference(LDAPProtocolResponse):
+    tag = CLASS_APPLICATION | 0x13
+
+    def __init__(self):
+        LDAPProtocolResponse.__init__(self)
+
+    def fromBER(cls, tag, content, berdecoder=None):
+        r = cls()
+        return r
+    fromBER = classmethod(fromBER)
+
+    def __str__(self):
+        return object.__str__(self)
+
+    def __repr__(self):
+        return object.__repr__(self)
+
+
 class LDAPResult(LDAPProtocolResponse, BERSequence):
     def fromBER(klass, tag, content, berdecoder=None):
         l = berDecodeMultiple(content, LDAPBERDecoderContext_LDAPBindRequest(
@@ -843,6 +863,7 @@ class LDAPBERDecoderContext_LDAPControls(BERDecoderContext):
 class LDAPBERDecoderContext_LDAPMessage(BERDecoderContext):
     Identities = {
         LDAPControls.tag: LDAPControls,
+        LDAPSearchResultReference.tag: LDAPSearchResultReference,
         }
 
 class LDAPBERDecoderContext_TopLevel(BERDecoderContext):

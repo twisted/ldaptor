@@ -631,6 +631,8 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             self._cbSearchEntry(callback, msg.objectName, msg.attributes,
                                 complete=complete)
             return False
+        elif isinstance(msg, pureldap.LDAPSearchResultReference):
+            return False
         else:
             raise ldaperrors.LDAPProtocolError, \
                   'bad search response: %r' % msg
