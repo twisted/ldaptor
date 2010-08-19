@@ -683,7 +683,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
                 typesOnly=typesOnly,
                 filter=filterObject,
                 attributes=attributes)
-            self.client.send_multiResponse(
+            dsend = self.client.send_multiResponse(
                 op, self._cbSearchMsg,
                 d, cb, complete=not attributes,
                 sizeLimitIsNonFatal=sizeLimitIsNonFatal)
@@ -692,6 +692,11 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         else:
             if callback is None:
                 d.addCallback(lambda dummy: results)
+            def rerouteerr(e):
+                d.errback(e)
+                # returning None will stop the error
+                # from being propagated and logged.
+            dsend.addErrback(rerouteerr)
         return d
 
     def lookup(self, dn):
