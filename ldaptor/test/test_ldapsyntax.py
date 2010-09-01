@@ -7,6 +7,7 @@ from ldaptor import config, testutil, delta
 from ldaptor.protocols.ldap import ldapsyntax, ldaperrors
 from ldaptor.protocols import pureldap, pureber
 from twisted.internet import defer
+from twisted.internet import error
 from twisted.python import failure
 from ldaptor.testutil import LDAPClientTestDriver
 
@@ -366,6 +367,7 @@ class LDAPSyntaxAttributesModificationOnWire(unittest.TestCase):
 
 
 class LDAPSyntaxSearch(unittest.TestCase):
+    timeout = 3
     def testSearch(self):
         """Test searches."""
 
@@ -638,6 +640,17 @@ class LDAPSyntaxSearch(unittest.TestCase):
                 attributeDesc=pureldap.LDAPAttributeDescription(value='foo'),
                 assertionValue=pureldap.LDAPAssertionValue(value='a')),
                 ))
+        d.addCallbacks(testutil.mustRaise, eb)
+        return d
+
+    def testSearch_err(self):
+        client=LDAPClientTestDriver([
+                failure.Failure(error.ConnectionLost())
+                ])
+        o = ldapsyntax.LDAPEntry(client=client, dn='dc=example,dc=com')
+        d = o.search(filterText='(foo=a)')
+        def eb(fail):
+            fail.trap(error.ConnectionLost)
         d.addCallbacks(testutil.mustRaise, eb)
         return d
 
@@ -1514,5 +1527,17 @@ class Bind(unittest.TestCase):
         d = defer.maybeDeferred(o.bind, 's3krit')
         def eb(fail):
             fail.trap(ldaperrors.LDAPInvalidCredentials)
+        d.addCallbacks(testutil.mustRaise, eb)
+        return d
+
+    def test_err(self):
+        client = LDAPClientTestDriver([
+                failure.Failure(error.ConnectionLost())])
+
+        o=ldapsyntax.LDAPEntry(client=client,
+                               dn='cn=foo,dc=example,dc=com')
+        d = defer.maybeDeferred(o.bind, 'whatever')
+        def eb(fail):
+            fail.trap(error.ConnectionLost)
         d.addCallbacks(testutil.mustRaise, eb)
         return d

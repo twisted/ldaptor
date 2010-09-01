@@ -1,6 +1,7 @@
 """Utilities for writing Twistedy unit tests and debugging."""
 
 from twisted.internet import defer
+from twisted.python import failure
 from twisted.trial import unittest
 from twisted.test import proto_helpers
 from ldaptor import config
@@ -36,23 +37,37 @@ class LDAPClientTestDriver:
     messages are stored in self.sent, so you can assert that the sent
     messages are what they are supposed to be.
 
+    It is also possible to include a Failure instance instead of a list
+    of LDAPProtocolResponses to cause which will cause the errback
+    to be called with the failure.
+
     """
     def __init__(self, *responses):
         self.sent=[]
         self.responses=list(responses)
         self.connected = None
         self.transport = FakeTransport(self)
+
     def send(self, op):
         self.sent.append(op)
         l = self._response()
         assert len(l) == 1, \
                "got %d responses for a .send()" % len(l)
-        return defer.succeed(l[0])
+        r = l[0]
+        if isinstance(r, failure.Failure):
+            return defer.fail(r)
+        else:
+            return defer.succeed(r)
+
     def send_multiResponse(self, op, handler, *args, **kwargs):
+        d = defer.Deferred()
         self.sent.append(op)
         responses = self._response()
         while responses:
             r = responses.pop(0)
+            if isinstance(r, failure.Failure):
+                d.errback(r)
+                break
             ret = handler(r, *args, **kwargs)
             if responses:
                 assert not ret, \
@@ -60,6 +75,7 @@ class LDAPClientTestDriver:
             else:
                 assert ret, \
                        "no more responses to give, but handler still wants more (got %r)." % ret
+        return d
 
     def send_noResponse(self, op):
         responses = self.responses.pop(0)
