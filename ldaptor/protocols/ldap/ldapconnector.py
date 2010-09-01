@@ -8,7 +8,7 @@ except ImportError:
 
 class LDAPConnector(SRVConnector):
     def __init__(self, reactor, dn, factory,
-                 overrides=None):
+                 overrides=None, bindAddress=None):
         if not isinstance(dn, distinguishedname.DistinguishedName):
             dn = distinguishedname.DistinguishedName(stringValue=dn)
         if overrides is None:
@@ -17,7 +17,8 @@ class LDAPConnector(SRVConnector):
 
         domain = dn.getDomainName()
         SRVConnector.__init__(self, reactor,
-                              'ldap', domain, factory)
+                  'ldap', domain, factory,
+                  connectFuncKwArgs={'bindAddress': bindAddress})
 
     def __getstate__(self):
         r={}
@@ -86,11 +87,12 @@ class LDAPConnector(SRVConnector):
         return host, port
 
 class LDAPClientCreator(protocol.ClientCreator):
-    def connect(self, dn, overrides=None):
+    def connect(self, dn, overrides=None, bindAddress=None):
         """Connect to remote host, return Deferred of resulting protocol instance."""
         d = defer.Deferred()
         f = protocol._InstanceFactory(self.reactor, self.protocolClass(*self.args, **self.kwargs), d)
-        c = LDAPConnector(self.reactor, dn, f, overrides=overrides)
+        c = LDAPConnector(self.reactor, dn, f, overrides=overrides,
+                bindAddress=bindAddress)
         c.connect()
         return d
 
