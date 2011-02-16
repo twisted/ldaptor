@@ -1,0 +1,10 @@
+On Ubuntu:
+
+sudo apt-get install python-pyparsing python-webut python-software-tools
+sudo easy_install twisted # Upgrades Twisted to 10.2 to avoid deprecation warnings.
+
+To run the LDAP server (runs on port 38942):
+twistd -ny --pidfile=ldapserver.pid --logfile=ldapserver.log test-ldapserver.tac
+
+To run the web interface (runs on port 38980):
+twistd -ny --pidfile=webui.pid --logfile=webui.log test-webui.tac
