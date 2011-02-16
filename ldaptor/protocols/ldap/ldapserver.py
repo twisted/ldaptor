@@ -16,7 +16,6 @@
 
 """LDAP protocol server"""
 
-import sets
 from ldaptor import interfaces, delta
 from ldaptor.protocols import pureldap, pureber
 from ldaptor.protocols.ldap import distinguishedname, ldaperrors
@@ -260,7 +259,7 @@ class LDAPServer(BaseLDAPServer):
 
         attributes = {}
         for name, vals in request.attributes:
-            attributes.setdefault(name.value, sets.Set())
+            attributes.setdefault(name.value, set())
             attributes[name.value].update([x.value for x in vals])
         dn = distinguishedname.DistinguishedName(request.entry)
         rdn = str(dn.split()[0])

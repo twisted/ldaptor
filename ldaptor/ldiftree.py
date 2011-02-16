@@ -1,7 +1,7 @@
 """
 Manage LDAP data as a tree of LDIF files.
 """
-import os, errno, sets
+import os, errno
 from zope.interface import implements
 from twisted.internet import defer, error
 from twisted.python import failure
@@ -169,7 +169,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
             else:
                 raise
         else:
-            seen = sets.Set()
+            seen = set()
             for fn in filenames:
                 base, ext = os.path.splitext(fn)
                 if ext not in ['.dir', '.ldif']:
