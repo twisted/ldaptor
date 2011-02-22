@@ -38,8 +38,8 @@ class LDAPClientTestDriver:
     messages are what they are supposed to be.
 
     It is also possible to include a Failure instance instead of a list
-    of LDAPProtocolResponses to cause which will cause the errback
-    to be called with the failure.
+    of LDAPProtocolResponses which will cause the errback to be called
+    with the failure.
 
     """
     def __init__(self, *responses):
