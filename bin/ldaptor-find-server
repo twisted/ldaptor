@@ -4,8 +4,7 @@ import sys
 from ldaptor.protocols.ldap.distinguishedname import DistinguishedName
 from twisted.internet.defer import DeferredList
 from twisted.internet import reactor
-from twisted.protocols import dns
-from twisted.names import client
+from twisted.names import client, dns
 
 def printAnswer(answers, dn):
     for rrlist in answers:
