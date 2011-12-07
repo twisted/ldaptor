@@ -9,13 +9,16 @@ from twisted.names import client, dns
 def printAnswer(answers, dn):
     for rrlist in answers:
         for rr in rrlist:
-            assert isinstance(rr.payload, dns.Record_SRV)
-            print '%s\tpri=%d weight=%d %s:%d' % (dn,
+            if isinstance(rr.payload, dns.Record_SRV):
+                print '%s\tpri=%d weight=%d %s:%d' % (dn,
                                                   rr.payload.priority,
                                                   rr.payload.weight,
                                                   rr.payload.target,
                                                   rr.payload.port,
                                                   )
+            else:
+                # suppress additional records
+                pass
     return answers
 
 exitStatus = 0
