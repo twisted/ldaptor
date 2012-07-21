@@ -1,5 +1,4 @@
-# Twisted, the Framework of Your Internet
-# Copyright (C) 2001 Matthew W. Lefkowitz
+# Copyright (C) 2001 Tommi Virtanen
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of version 2.1 of the GNU Lesser General Public
