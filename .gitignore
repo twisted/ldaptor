@@ -2,7 +2,6 @@
 *.pyo
 /_trial_temp
 /build
-/coverage
 /doc/addressbook-session
 /doc/addressbook-slides
 /doc/api

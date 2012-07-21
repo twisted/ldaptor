@@ -1,3 +1,0 @@
-debian/tmp/usr/bin/ldaptor-webui
-debian/tmp/usr/lib/python*/site-packages/ldaptor/apps/webui
-debian/tmp/usr/share/locale/*/*/ldaptor-webui.mo

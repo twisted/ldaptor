@@ -1,3 +1,0 @@
-debian/tmp/usr/lib/python*
-debian/global.cfg etc/ldaptor
-ldaptor.schema etc/ldaptor
