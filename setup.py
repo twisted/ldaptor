@@ -148,7 +148,7 @@ from the command line.
 	  author="Tommi Virtanen",
 	  author_email="tv@eagain.net",
 	  #url="TODO",
-	  license="GNU LGPL",
+	  license="MIT",
 
           cmdclass={'build': build,
                     'build_locale': build_locale,
