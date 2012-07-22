@@ -146,7 +146,7 @@ from the command line.
 
 """.strip(),
 	  author="Tommi Virtanen",
-	  author_email="tv@debian.org",
+	  author_email="tv@eagain.net",
 	  #url="TODO",
 	  license="GNU LGPL",
 
