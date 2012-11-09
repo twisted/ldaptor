@@ -1,298 +1,273 @@
-"""Pure-Python MD4 digest algorithm implementation."""
+"""
+helper implementing insecure and obsolete md4 algorithm.
+used for NTHASH format, which is also insecure and broken,
+since it's just md4(password)
 
-# http://www.geocities.com/rozmanov/python/
+implementated based on rfc at http://www.faqs.org/rfcs/rfc1320.html
 
 """
-From: "Dmitry Rozmanov" <dima@xenon.spb.ru>
-To: "Tommi Virtanen" <tv@debian.org>
-Subject: Re: About your md4.py
+# Passlib is (c) `Assurance Technologies <http://www.assurancetechnologies.com>`
+# and is released under the `BSD license <http://www.opensource.org/licenses/bsd-license.php>`
 
-Hi.
+#=============================================================================
+# imports
+#=============================================================================
+# core
+from binascii import hexlify
+import struct
+from warnings import warn
+# site
+from compat import b, bytes, bascii_to_str, irange, PY3
+# local
+__all__ = [ "md4" ]
+#=============================================================================
+# utils
+#=============================================================================
+def F(x,y,z):
+    return (x&y) | ((~x) & z)
 
-Year, I am thinking of this, but could not find time for this. Thanks for
-the link.
+def G(x,y,z):
+    return (x&y) | (x&z) | (y&z)
 
-But why?
+##def H(x,y,z):
+##    return x ^ y ^ z
 
-Consider it as a GPL for now if it is important.
+MASK_32 = 2**32-1
 
-Regards.
+#=============================================================================
+# main class
+#=============================================================================
+class md4(object):
+    """pep-247 compatible implementation of MD4 hash algorithm
 
-    ---Dmitry.
+    .. attribute:: digest_size
 
------ Original Message -----
-From: "Tommi Virtanen" <tv@debian.org>
-To: "Dmitry Rozmanov" <dima@xenon.spb.ru>
-Sent: Tuesday, August 27, 2002 9:17 PM
-Subject: About your md4.py
+        size of md4 digest in bytes (16 bytes)
 
+    .. method:: update
 
-> Hi. Could you consider adding a license
-> in your U32.py and md4.py files? Here's
-> a quick reference:
->
-> http://zooko.com/license_quick_ref.html
->
-> --
-> :(){ :|:&};:
-"""
+        update digest by appending additional content
 
-"""
-From: "Dmitry Rozmanov" <dima@xenon.spb.ru>
-To: "Tommi Virtanen" <tv@debian.org>
-Subject: Re: About your md4.py
+    .. method:: copy
 
-Ok. Let it be LGPL. Use libs, soon I will modify them and post to the site.
+        create clone of digest object, including current state
 
-Regards.
+    .. method:: digest
 
-    ---Dmitry.
+        return bytes representing md4 digest of current content
 
------ Original Message -----
-From: "Tommi Virtanen" <tv@debian.org>
-To: "Dmitry Rozmanov" <dima@xenon.spb.ru>
-Sent: Wednesday, August 28, 2002 9:21 AM
-Subject: Re: About your md4.py
+    .. method:: hexdigest
 
+        return hexdecimal version of digest
+    """
+    # FIXME: make this follow hash object PEP better.
+    # FIXME: this isn't threadsafe
+    # XXX: should we monkeypatch ourselves into hashlib for general use? probably wouldn't be nice.
 
-> On Wed, Aug 28, 2002 at 02:56:25AM +0400, Dmitry Rozmanov wrote:
-> > Year, I am thinking of this, but could not find time for
-> > this. Thanks for the link.
-> >
-> > But why?
-> >
-> > Consider it as a GPL for now if it is important.
->
-> Please include that information in the files themselves;
-> it would really help. Otherwise, all I have is this
-> email to point to.
->
-> Oh, and please reconsider the actual license. For example,
-> I have an LGPL'ed library I need md4 in. If you choose GPL,
-> my library couldn't use your md4.py.
->
-> --
-> :(){ :|:&};:
-"""
+    name = "md4"
+    digest_size = digestsize = 16
 
-# MD4 validation data
+    _count = 0 # number of 64-byte blocks processed so far (not including _buf)
+    _state = None # list of [a,b,c,d] 32 bit ints used as internal register
+    _buf = None # data processed in 64 byte blocks, this holds leftover from last update
 
-md4_test= [
-      ('', 0x31d6cfe0d16ae931b73c59d7e0c089c0L),
-      ("a",   0xbde52cb31de33e46245e05fbdbd6fb24L),
-      ("abc",   0xa448017aaf21d8525fc10ae87aa6729dL),
-      ("message digest",   0xd9130a8164549fe818874806e1c7014bL),
-      ("abcdefghijklmnopqrstuvwxyz",   0xd79e1c308aa5bbcdeea8ed63df412da9L),
-      ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
-       0x043f8582f241db351ce627e153e7f0e4L),
-      ("12345678901234567890123456789012345678901234567890123456789012345678901234567890",
-      0xe33b4ddc9c38f2199c3e7b164fcc0536L),
-     ]
+    def __init__(self, content=None):
+        self._count = 0
+        self._state = [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476]
+        self._buf = b('')
+        if content:
+            self.update(content)
 
-from U32 import U32
+    # round 1 table - [abcd k s]
+    _round1 = [
+        [0,1,2,3, 0,3],
+        [3,0,1,2, 1,7],
+        [2,3,0,1, 2,11],
+        [1,2,3,0, 3,19],
 
-class MD4Type:
-    A = None
-    B = None
-    C = None
-    D = None
-    count, len1, len2 = None, None, None
-    buf = []
+        [0,1,2,3, 4,3],
+        [3,0,1,2, 5,7],
+        [2,3,0,1, 6,11],
+        [1,2,3,0, 7,19],
 
-    def __init__(self, data=""):
+        [0,1,2,3, 8,3],
+        [3,0,1,2, 9,7],
+        [2,3,0,1, 10,11],
+        [1,2,3,0, 11,19],
 
+        [0,1,2,3, 12,3],
+        [3,0,1,2, 13,7],
+        [2,3,0,1, 14,11],
+        [1,2,3,0, 15,19],
+    ]
 
-        self.A = U32(0x67452301L)
-        self.B = U32(0xefcdab89L)
-        self.C = U32(0x98badcfeL)
-        self.D = U32(0x10325476L)
-        self.count, self.len1, self.len2 = U32(0L), U32(0L), U32(0L)
-        self.buf = [0x00] * 64
-        self.update(data)
+    # round 2 table - [abcd k s]
+    _round2 = [
+        [0,1,2,3, 0,3],
+        [3,0,1,2, 4,5],
+        [2,3,0,1, 8,9],
+        [1,2,3,0, 12,13],
+
+        [0,1,2,3, 1,3],
+        [3,0,1,2, 5,5],
+        [2,3,0,1, 9,9],
+        [1,2,3,0, 13,13],
+
+        [0,1,2,3, 2,3],
+        [3,0,1,2, 6,5],
+        [2,3,0,1, 10,9],
+        [1,2,3,0, 14,13],
+
+        [0,1,2,3, 3,3],
+        [3,0,1,2, 7,5],
+        [2,3,0,1, 11,9],
+        [1,2,3,0, 15,13],
+    ]
+
+    # round 3 table - [abcd k s]
+    _round3 = [
+        [0,1,2,3, 0,3],
+        [3,0,1,2, 8,9],
+        [2,3,0,1, 4,11],
+        [1,2,3,0, 12,15],
+
+        [0,1,2,3, 2,3],
+        [3,0,1,2, 10,9],
+        [2,3,0,1, 6,11],
+        [1,2,3,0, 14,15],
+
+        [0,1,2,3, 1,3],
+        [3,0,1,2, 9,9],
+        [2,3,0,1, 5,11],
+        [1,2,3,0, 13,15],
+
+        [0,1,2,3, 3,3],
+        [3,0,1,2, 11,9],
+        [2,3,0,1, 7,11],
+        [1,2,3,0, 15,15],
+    ]
+
+    def _process(self, block):
+        "process 64 byte block"
+        # unpack block into 16 32-bit ints
+        X = struct.unpack("<16I", block)
+
+        # clone state
+        orig = self._state
+        state = list(orig)
+
+        # round 1 - F function - (x&y)|(~x & z)
+        for a,b,c,d,k,s in self._round1:
+            t = (state[a] + F(state[b],state[c],state[d]) + X[k]) & MASK_32
+            state[a] = ((t<<s) & MASK_32) + (t>>(32-s))
+
+        # round 2 - G function
+        for a,b,c,d,k,s in self._round2:
+            t = (state[a] + G(state[b],state[c],state[d]) + X[k] + 0x5a827999) & MASK_32
+            state[a] = ((t<<s) & MASK_32) + (t>>(32-s))
+
+        # round 3 - H function - x ^ y ^ z
+        for a,b,c,d,k,s in self._round3:
+            t = (state[a] + (state[b] ^ state[c] ^ state[d]) + X[k] + 0x6ed9eba1) & MASK_32
+            state[a] = ((t<<s) & MASK_32) + (t>>(32-s))
+
+        # add back into original state
+        for i in irange(4):
+            orig[i] = (orig[i]+state[i]) & MASK_32
+
+    def update(self, content):
+        if not isinstance(content, bytes):
+            raise TypeError("expected bytes")
+        buf = self._buf
+        if buf:
+            content = buf + content
+        idx = 0
+        end = len(content)
+        while True:
+            next = idx + 64
+            if next <= end:
+                self._process(content[idx:next])
+                self._count += 1
+                idx = next
+            else:
+                self._buf = content[idx:]
+                return
 
     def copy(self):
-
-        dest = new()
-
-        dest.len1 = self.len1
-        dest.len2 = self.len2
-        dest.A = self.A
-        dest.B = self.B
-        dest.C = self.C
-        dest.D = self.D
-        dest.count = self.count
-        for i in range(self.count):
-            dest.buf[i] = self.buf[i]
-
-        return dest
-
-    def update(self, str):
-
-        buf = []
-        for i in str: buf.append(ord(i))
-        ilen = U32(len(buf))
-        #print (ilen)
-
-        if (long(self.len1 + (ilen << 3)) < long(self.len1)):
-            self.len2 = self.len2 + U32(1)
-
-        self.len1 = self.len1 + (ilen << 3)
-        self.len2 = self.len2 + (ilen >> 29)
-        # print int(self.len1), int(self.len2)
-        #print (self.len1), (self.len2)
-
-        L = U32(0)
-        bufpos = 0
-        while (long(ilen) > 0):
-            if (64 - long(self.count)) < long(ilen): L = U32(64 - long(self.count))
-            else: L = ilen
-            for i in range(int(L)): self.buf[i + int(self.count)] = buf[i + bufpos]
-            self.count = self.count + L
-            ilen = ilen - L
-            bufpos = bufpos + int(L)
-
-            #print self.count, L, ilen
-            if (long(self.count) == 64L):
-                self.count = U32(0L)
-                X = []
-                i = 0
-                for j in range(16):
-                    X.append(U32(self.buf[i]) + (U32(self.buf[i+1]) << 8)  + \
-                    (U32(self.buf[i+2]) << 16) + (U32(self.buf[i+3]) << 24))
-                    i = i + 4
-
-                A = self.A
-                B = self.B
-                C = self.C
-                D = self.D
-
-                A = f1(A,B,C,D, 0, 3, X)
-                D = f1(D,A,B,C, 1, 7, X)
-                C = f1(C,D,A,B, 2,11, X)
-                B = f1(B,C,D,A, 3,19, X)
-                A = f1(A,B,C,D, 4, 3, X)
-                D = f1(D,A,B,C, 5, 7, X)
-                C = f1(C,D,A,B, 6,11, X)
-                B = f1(B,C,D,A, 7,19, X)
-                A = f1(A,B,C,D, 8, 3, X)
-                D = f1(D,A,B,C, 9, 7, X)
-                C = f1(C,D,A,B,10,11, X)
-                B = f1(B,C,D,A,11,19, X)
-                A = f1(A,B,C,D,12, 3, X)
-                D = f1(D,A,B,C,13, 7, X)
-                C = f1(C,D,A,B,14,11, X)
-                B = f1(B,C,D,A,15,19, X)
-
-                A = f2(A,B,C,D, 0, 3, X)
-                D = f2(D,A,B,C, 4, 5, X)
-                C = f2(C,D,A,B, 8, 9, X)
-                B = f2(B,C,D,A,12,13, X)
-                A = f2(A,B,C,D, 1, 3, X)
-                D = f2(D,A,B,C, 5, 5, X)
-                C = f2(C,D,A,B, 9, 9, X)
-                B = f2(B,C,D,A,13,13, X)
-                A = f2(A,B,C,D, 2, 3, X)
-                D = f2(D,A,B,C, 6, 5, X)
-                C = f2(C,D,A,B,10, 9, X)
-                B = f2(B,C,D,A,14,13, X)
-                A = f2(A,B,C,D, 3, 3, X)
-                D = f2(D,A,B,C, 7, 5, X)
-                C = f2(C,D,A,B,11, 9, X)
-                B = f2(B,C,D,A,15,13, X)
-
-                A = f3(A,B,C,D, 0, 3, X)
-                D = f3(D,A,B,C, 8, 9, X)
-                C = f3(C,D,A,B, 4,11, X)
-                B = f3(B,C,D,A,12,15, X)
-                A = f3(A,B,C,D, 2, 3, X)
-                D = f3(D,A,B,C,10, 9, X)
-                C = f3(C,D,A,B, 6,11, X)
-                B = f3(B,C,D,A,14,15, X)
-                A = f3(A,B,C,D, 1, 3, X)
-                D = f3(D,A,B,C, 9, 9, X)
-                C = f3(C,D,A,B, 5,11, X)
-                B = f3(B,C,D,A,13,15, X)
-                A = f3(A,B,C,D, 3, 3, X)
-                D = f3(D,A,B,C,11, 9, X)
-                C = f3(C,D,A,B, 7,11, X)
-                B = f3(B,C,D,A,15,15, X)
-
-                self.A = self.A + A
-                self.B = self.B + B
-                self.C = self.C + C
-                self.D = self.D + D
-                #print self
+        other = _builtin_md4()
+        other._count = self._count
+        other._state = list(self._state)
+        other._buf = self._buf
+        return other
 
     def digest(self):
+        # NOTE: backing up state so we can restore it after _process is called,
+        #       in case object is updated again (this is only attr altered by this method)
+        orig = list(self._state)
 
-        res = [0x00] * 16
-        s = [0x00] * 8
-        padding = [0x00] * 64
-        padding[0] = 0x80
-        padlen, oldlen1, oldlen2 = U32(0), U32(0), U32(0)
+        # final block: buf + 0x80,
+        # then 0x00 padding until congruent w/ 56 mod 64 bytes
+        # then last 8 bytes = msg length in bits
+        buf = self._buf
+        msglen = self._count*512 + len(buf)*8
+        block = buf + b('\x80') + b('\x00') * ((119-len(buf)) % 64) + \
+            struct.pack("<2I", msglen & MASK_32, (msglen>>32) & MASK_32)
+        if len(block) == 128:
+            self._process(block[:64])
+            self._process(block[64:])
+        else:
+            assert len(block) == 64
+            self._process(block)
 
-        temp = self.copy()
-
-        oldlen1 = temp.len1
-        oldlen2 = temp.len2
-        if (56 <= long(self.count)): padlen = U32(56 - long(self.count) + 64)
-        else: padlen = U32(56 - long(self.count))
-        #print int(padlen)
-        temp.update(int_array2str(padding[:int(padlen)]))
-        #print temp
-
-        s[0]= (oldlen1)        & U32(0xFF)
-        s[1]=((oldlen1) >>  8) & U32(0xFF)
-        s[2]=((oldlen1) >> 16) & U32(0xFF)
-        s[3]=((oldlen1) >> 24) & U32(0xFF)
-        s[4]= (oldlen2)        & U32(0xFF)
-        s[5]=((oldlen2) >>  8) & U32(0xFF)
-        s[6]=((oldlen2) >> 16) & U32(0xFF)
-        s[7]=((oldlen2) >> 24) & U32(0xFF)
-        temp.update(int_array2str(s))
-
-        #print temp
-
-        res[ 0]= temp.A        & U32(0xFF)
-        res[ 1]=(temp.A >>  8) & U32(0xFF)
-        res[ 2]=(temp.A >> 16) & U32(0xFF)
-        res[ 3]=(temp.A >> 24) & U32(0xFF)
-        res[ 4]= temp.B        & U32(0xFF)
-        res[ 5]=(temp.B >>  8) & U32(0xFF)
-        res[ 6]=(temp.B >> 16) & U32(0xFF)
-        res[ 7]=(temp.B >> 24) & U32(0xFF)
-        res[ 8]= temp.C        & U32(0xFF)
-        res[ 9]=(temp.C >>  8) & U32(0xFF)
-        res[10]=(temp.C >> 16) & U32(0xFF)
-        res[11]=(temp.C >> 24) & U32(0xFF)
-        res[12]= temp.D        & U32(0xFF)
-        res[13]=(temp.D >>  8) & U32(0xFF)
-        res[14]=(temp.D >> 16) & U32(0xFF)
-        res[15]=(temp.D >> 24) & U32(0xFF)
-
-        return int_array2str(res)
+        # render digest & restore un-finalized state
+        out = struct.pack("<4I", *self._state)
+        self._state = orig
+        return out
 
     def hexdigest(self):
-        d=self.digest()
-        return ''.join(map(lambda c: '%02x'%ord(c), d))
+        return bascii_to_str(hexlify(self.digest()))
 
-def F(x, y, z): return (((x) & (y)) | ((~x) & (z)))
-def G(x, y, z): return (((x) & (y)) | ((x) & (z)) | ((y) & (z)))
-def H(x, y, z): return ((x) ^ (y) ^ (z))
+    #===================================================================
+    # eoc
+    #===================================================================
 
-def ROL(x, n): return (((x) << n) | ((x) >> (32-n)))
+# keep ref around for unittest, 'md4' usually replaced by ssl wrapper, below.
+_builtin_md4 = md4
 
-def f1(a, b, c, d, k, s, X): return ROL(a + F(b, c, d) + X[k], s)
-def f2(a, b, c, d, k, s, X): return ROL(a + G(b, c, d) + X[k] + U32(0x5a827999L), s)
-def f3(a, b, c, d, k, s, X): return ROL(a + H(b, c, d) + X[k] + U32(0x6ed9eba1L), s)
+#=============================================================================
+# check if hashlib provides accelarated md4
+#=============================================================================
+import hashlib
+from compat import PYPY
 
-def int_array2str(array):
-        str = ''
-        for i in array:
-            str = str + chr(i)
-        return str
+def _has_native_md4(): # pragma: no cover -- runtime detection
+    try:
+        h = hashlib.new("md4")
+    except ValueError:
+        # not supported - ssl probably missing (e.g. ironpython)
+        return False
+    result = h.hexdigest()
+    if result == '31d6cfe0d16ae931b73c59d7e0c089c0':
+        return True
+    if PYPY and result == '':
+        # workaround for https://bugs.pypy.org/issue957, fixed in PyPy 1.8
+        return False
+    # anything else and we should alert user
+    from passlib.exc import PasslibRuntimeWarning
+    warn("native md4 support disabled, sanity check failed!", PasslibRuntimeWarning)
+    return False
 
-def md4(data=''):
-    return MD4Type(data)
-def new(data=''):
-    return MD4Type(data)
+if _has_native_md4():
+    # overwrite md4 class w/ hashlib wrapper
+    def md4(content=None):
+        "wrapper for hashlib.new('md4')"
+        return hashlib.new('md4', content or b(''))
+
+#=============================================================================
+# Include to match existing md4.new() code:
+#=============================================================================
+new = md4
+
+#=============================================================================
+# eof
+#=============================================================================
