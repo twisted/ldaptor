@@ -1179,14 +1179,14 @@ class LDAPExtendedRequest(LDAPProtocolRequest, BERSequence):
         return r
     fromBER = classmethod(fromBER)
 
-    def __init__(self, requestName, requestValue=None,
+    def __init__(self, requestName=None, requestValue=None,
                  tag=None):
         LDAPProtocolRequest.__init__(self)
         BERSequence.__init__(self, [], tag=tag)
         assert requestName is not None
         assert isinstance(requestName, basestring)
+        assert requestValue is None or isinstance(requestValue, basestring)
         self.requestName=requestName
-        assert isinstance(requestValue, basestring)
         self.requestValue=requestValue
 
     def __str__(self):
