@@ -43,7 +43,7 @@ class BaseLDAPServer(protocol.Protocol):
         while 1:
             try:
                 o, bytes=pureber.berDecodeObject(self.berdecoder, self.buffer)
-            except pureldap.BERExceptionInsufficientData: #TODO
+            except pureber.BERExceptionInsufficientData: #TODO
                 o, bytes=None, 0
             self.buffer = self.buffer[bytes:]
             if o is None:
