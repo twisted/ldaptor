@@ -143,7 +143,7 @@ class ObjectClassDescription(ASN1ParserThingie):
                 self.name=self._strings_to_list(text[:end])
                 text=text[end+1:]
             else:
-                raise "TODO"
+                raise NotImplementedError("TODO")
 
 
         text = text.lstrip()
@@ -386,7 +386,7 @@ class AttributeTypeDescription(ASN1ParserThingie):
                 self.name=self._strings_to_list(text[:end])
                 text=text[end+1:]
             else:
-                raise "TODO"
+                raise NotImplementedError("TODO")
 
 
         text = text.lstrip()
@@ -692,7 +692,7 @@ class MatchingRuleDescription(ASN1ParserThingie):
                 self.name=self._strings_to_list(text[:end])
                 text=text[end+1:]
             else:
-                raise "TODO"
+                raise NotImplementedError("TODO")
 
         text = text.lstrip()
 

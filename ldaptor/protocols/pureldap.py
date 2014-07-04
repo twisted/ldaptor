@@ -511,7 +511,7 @@ class LDAPFilter_substrings(BERSequence):
                 assert final is None
                 any.append(s.asText())
             else:
-                raise 'TODO'
+                raise NotImplementedError('TODO: Filter type not supported %r' % s)
 
         if initial is None:
             initial=''

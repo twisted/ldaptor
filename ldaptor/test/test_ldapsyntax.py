@@ -1228,7 +1228,7 @@ class LDAPSyntaxPasswords(unittest.TestCase):
             return 'This test run should succeed'
 
         def chainMustErrback(dummy):
-            raise 'Should never get here'
+            raise RuntimeError('Should never get here')
         d.addCallbacks(callback=chainMustErrback, errback=checkError)
         d.addCallback(self.assertEquals, 'This test run should succeed')
         def cb(dummy):
