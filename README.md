@@ -10,9 +10,7 @@ Ldaptor is a pure-Python library that implements:
 - LDIF format data generation
 - Samba password changing logic
 
-Also included is a web-based user interface to search and edit
-information in an LDAP directory and a set of LDAP utilities for use
-from the command line.
+Also included is a set of LDAP utilities for use from the command line.
 
 
 Quick Usage Example
@@ -67,21 +65,12 @@ To run the LDAP server (runs on port 38942):
     twistd -ny --pidfile=ldapserver.pid --logfile=ldapserver.log \
         test-ldapserver.tac
 
-To run the web interface (runs on port 38980):
-
-    twistd -ny --pidfile=webui.pid --logfile=webui.log test-webui.tac
-
 Dependencies:
 
 - [Twisted](http://pypi.python.org/pypi/Twisted/)
 - [pyparsing](http://pypi.python.org/pypi/pyparsing/)
 - [pyOpenSSL](http://pypi.python.org/pypi/pyOpenSSL/)
 - [PyCrypto](http://pypi.python.org/pypi/pycrypto/) for Samba passwords
-
-Additional dependencies for the web UI:
-
-- [Nevow](http://pypi.python.org/pypi/Nevow/)
-- [webut](http://github.com/antong/webut)
 
 
 Status and History
@@ -100,9 +89,4 @@ available at:
 The LDAP client library functionality is in active use. It is stable
 and works very well. Current focus is on fixing bugs and maintaining
 compatibility with new, stable Python and Twisted releases.
-
-The web UI is not maintained and, to the maintainer's knowledge,
-not actively used. It can be made to run, but relies on deprecated
-functionality in Twisted.
-
 
