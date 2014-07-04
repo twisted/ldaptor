@@ -4,47 +4,7 @@ TODO file for the Ldaptor project.
 
 * polish and add to setup.py: bin/ldaptor-ldifdiff bin/ldaptor-ldifpatch
 
-* ldaptor-webui: edit: adding attributes in schema MAY that didn't
-   exist earlier
-
-* ldaptor-webui: edit: adding objectClasses
-
-* ldaptor-webui, ldaptor-utils: editing a users groups
-   - for ldaptor-webui, a multiselection with a list of existing
-      groups to choose from
-
-* ldaptor-webui, maybe others: non-ASCII chars
-
-* changing the dn attribute
-
-* duplicate mails/uids/uidNumbers/gidNumbers/homes
-
-* suggest mails/uids/uidNumbers/gidNumbers/homes
-
-* SSL
-
-* ldaptor-webui empty lines at end of multiline attributes gets
-   lost in old_foo (atleast with galeon)
-
-* ldaptor-webui: connections to ldap server lost cause tracebacks
-
-* ldaptor-webui: malformed ldap filter causes tracebacks
-
-* ldaptor-webui: if authenticated, use that client for searches etc.
-
-* ldaptor-webui: on failed add, don't clear form
-
 * ldaptor-ldap2dhcpconf: data validity
-
-* ldaptor-webui: forms accesskey, fieldset & legend, disabled,
-   readonly in http://www.w3.org/TR/html401/interact/forms.html
-
-* ldaptor-webui: choosing the right dn key for users? Prefer
-   uid?
-
-* ldaptor-webui: samba fields.
-
-* ldaptor-webui: shadow field defaults
 
 * referrals
 
@@ -71,16 +31,6 @@ TODO file for the Ldaptor project.
 
 * write a getting started doc with steps #2 and #3 from openldap.org quickstart.html
 
-* use twisted-web.deb for ldaptor-webui; steps needed:
-   1. exarkun/moshez twisted.web improvement that returns 403 for
-   non-localhost requests must be integrated to twisted (jml promised
-   to do) (code is in sandbox/exarkun/rresource.py in Twisted CVS)
-   2. twisted release
-   3. twisted-web upload to debian
-
-* add->search->delete => your basedn has been removed, parent links
-   fail also
-
 * ldaptor-ldap2maradns: Anetmask. should set A record as x.y.z.0 and
    TXT as "16" (bitcount)
 
@@ -100,8 +50,6 @@ TODO file for the Ldaptor project.
 
    - glade, python-gtk
 
-* self-change password webui
-
 * ldaptor-getfreenumber take minimum as command line option
 
 * ldapserver handler functions can return only one message, and have
@@ -115,8 +63,7 @@ TODO file for the Ldaptor project.
 * use ldaptor.config.ILDAPConfig everywhere for
    serviceLocationOverrides etc. by passing around a componentized
    "context" that can be used to access ILDAPConfig. ILDAPConfig
-   should only contain parts used by the ldaptor library; webui should
-   use its own IWebUIConfig.
+   should only contain parts used by the ldaptor library.
 
 * add entry.namingContexts(), that returns all of the naming contexts
    and not just the one that is parent for entry.dn
@@ -124,8 +71,6 @@ TODO file for the Ldaptor project.
 * better API to handle controls
 
 * use interfaces and adapters for serializing BER objects
-
-* split webui unit tests
 
 * install unit tests when doing setup.py install
 

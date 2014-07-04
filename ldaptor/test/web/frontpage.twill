@@ -1,9 +1,0 @@
-title "Ldaptor Web Interface"
-formvalue go baseDN dc=example,dc=com
-submit
-code 200
-title "Ldaptor Search Page"
-#TODO if possible, get rid of %3D and use just = instead
-url '/dc%3Dexample%2Cdc%3Dcom/search/$'
-find dc=example,dc=com
-notfind LDAPNoSuchObject
