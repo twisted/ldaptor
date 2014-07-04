@@ -114,6 +114,7 @@ class LDAPProtocolResponse(LDAPProtocolOp):
 class LDAPBERDecoderContext_LDAPBindRequest(BERDecoderContext):
     Identities = {
         CLASS_CONTEXT|0x00: BEROctetString,
+        CLASS_CONTEXT|0x03: BERSequence,
         }
 
 class LDAPBindRequest(LDAPProtocolRequest, BERSequence):
@@ -124,14 +125,28 @@ class LDAPBindRequest(LDAPProtocolRequest, BERSequence):
                               LDAPBERDecoderContext_LDAPBindRequest(
             fallback=berdecoder))
 
+        sasl = False
+        auth = None
+        if isinstance(l[2], BEROctetString):
+            auth = l[2].value
+        elif isinstance(l[2], BERSequence):
+            auth = (l[2][0].value, l[2][1].value)
+            sasl = True
+
         r = klass(version=l[0].value,
                   dn=l[1].value,
-                  auth=l[2].value,
-                  tag=tag)
+                  auth=auth,
+                  tag=tag,
+                  sasl=sasl)
         return r
     fromBER = classmethod(fromBER)
 
-    def __init__(self, version=None, dn=None, auth=None, tag=None):
+    def __init__(self, version=None, dn=None, auth=None, tag=None, sasl=False):
+        """Constructor for LDAP Bind Request
+
+        For sasl=False, pass a string password for 'auth'
+        For sasl=True, pass a tuple of (mechanism, credentials) for 'auth'"""
+
         LDAPProtocolRequest.__init__(self)
         BERSequence.__init__(self, [], tag=tag)
         self.version=version
@@ -143,12 +158,18 @@ class LDAPBindRequest(LDAPProtocolRequest, BERSequence):
         self.auth=auth
         if self.auth is None:
             self.auth=''
+            assert(not sasl)
+        self.sasl=sasl
 
     def __str__(self):
+        if not self.sasl:
+            auth_ber = BEROctetString(self.auth, tag=CLASS_CONTEXT|0)
+        else:
+            auth_ber = BERSequence([BEROctetString(self.auth[0]), BEROctetString(self.auth[1])], tag=CLASS_CONTEXT|3)
         return str(BERSequence([
             BERInteger(self.version),
             BEROctetString(self.dn),
-            BEROctetString(self.auth, tag=CLASS_CONTEXT|0),
+            auth_ber,
             ], tag=self.tag))
 
     def __repr__(self):
@@ -158,9 +179,8 @@ class LDAPBindRequest(LDAPProtocolRequest, BERSequence):
         l.append('auth=%s' % repr(self.auth))
         if self.tag!=self.__class__.tag:
             l.append('tag=%d' % self.tag)
+        l.append('sasl=%s' % repr(self.sasl))
         return self.__class__.__name__+'('+', '.join(l)+')'
-
-
 
 class LDAPReferral(BERSequence):
     tag = CLASS_CONTEXT | 0x03
@@ -241,8 +261,8 @@ class LDAPResult(LDAPProtocolResponse, BERSequence):
             l.append('tag=%d' % self.tag)
         return self.__class__.__name__+'('+', '.join(l)+')'
 
-class LDAPBindResponse_serverSaslCreds(BERSequence):
-    tag = CLASS_CONTEXT|0x03
+class LDAPBindResponse_serverSaslCreds(BEROctetString):
+    tag = CLASS_CONTEXT|0x07
 
     pass
 
@@ -267,9 +287,8 @@ class LDAPBindResponse(LDAPResult):
         assert 3<=len(l)<=4
 
         try:
-            if isinstance(l[0], LDAPBindResponse_serverSaslCreds):
-                serverSaslCreds=l[0]
-                del l[0]
+            if isinstance(l[3], LDAPBindResponse_serverSaslCreds):
+                serverSaslCreds=l[3]
             else:
                 serverSaslCreds=None
         except IndexError:
@@ -290,15 +309,13 @@ class LDAPBindResponse(LDAPResult):
     fromBER = classmethod(fromBER)
 
     def __init__(self, resultCode=None, matchedDN=None, errorMessage=None, referral=None, serverSaslCreds=None, tag=None):
-        LDAPResult.__init__(self, resultCode=resultCode, matchedDN=matchedDN, errorMessage=errorMessage, referral=referral, tag=None)
-        assert self.serverSaslCreds is None #TODO
+        LDAPResult.__init__(self, resultCode=resultCode, matchedDN=matchedDN, errorMessage=errorMessage,
+                            referral=referral, serverSaslCreds=serverSaslCreds, tag=None)
 
     def __str__(self):
-        assert self.serverSaslCreds is None #TODO
         return LDAPResult.__str__(self)
 
     def __repr__(self):
-        assert self.serverSaslCreds is None #TODO
         return LDAPResult.__repr__(self)
 
 class LDAPUnbindRequest(LDAPProtocolRequest, BERNull):

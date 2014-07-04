@@ -545,6 +545,15 @@ class KnownValues(unittest.TestCase):
             + l('foo'))
          ),
 
+        (pureldap.LDAPBindRequest,
+         [],
+         {'auth': ('PLAIN', 'test'),
+          'sasl': True},
+         pureldap.LDAPBERDecoderContext(
+                fallback=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext()),
+                inherit=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext())),
+         [ord(x) for x in str(pureldap.LDAPBindRequest(auth=('PLAIN', 'test'), sasl=True))]
+         )
         )
 
     def testToLDAP(self):
