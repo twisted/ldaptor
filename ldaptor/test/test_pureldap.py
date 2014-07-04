@@ -545,6 +545,25 @@ class KnownValues(unittest.TestCase):
             + l('foo'))
          ),
 
+        (pureldap.LDAPExtendedRequest,
+         [],
+         {'requestName': '42.42.42',
+          'requestValue': None,
+          },
+         None,
+         [0x40|0x20|23, 1+1+8]
+         + ([0x80|0]
+            + [len('42.42.42')]
+            + l('42.42.42'))
+         ),
+
+        (pureldap.LDAPAbandonRequest,
+         [],
+         {'id': 3},
+         None,
+         [0x40|0x10, 0x01, 3]
+         ),
+
         (pureldap.LDAPBindRequest,
          [],
          {'auth': ('PLAIN', 'test'),
