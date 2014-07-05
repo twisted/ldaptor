@@ -195,7 +195,7 @@ class LDAPClient(protocol.Protocol):
     ##Unbind
     def unbind(self):
         if not self.connected:
-            raise "Not connected (TODO)" #TODO make this a real object
+            raise Exception("Not connected (TODO)") #TODO make this a real object
         r=pureldap.LDAPUnbindRequest()
         self.send_noResponse(r)
         self.transport.loseConnection()

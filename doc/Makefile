@@ -38,7 +38,7 @@ rsync: $(GENERATED)
 $(DOCBOOK:%.xml=%/index.html): %/index.html: %.xml
 	install -d -m0755 '$(@D)'
 	xsltproc  --nonet \
-		/usr/share/sgml/docbook/stylesheet/xsl/nwalsh/xhtml/docbook.xsl \
+		/usr/share/sgml/docbook/xsl-stylesheets/xhtml/docbook.xsl \
 		$< \
 		>$@.tmp
 	mv $@.tmp $@
@@ -110,8 +110,8 @@ $(SLIDES:%.xml=%/index.html): %/index.html: %.xml \
 	addressbook-slides/07_easy/searchform-xhtml.html \
 	addressbook-slides/07_easy/addressbook-tac.html
 	install -d -m0755 '$(@D)'
-	cp -ar /usr/share/sgml/docbook/custom/slides/3.2.0/graphics '$(@D)'
-	cp -ar /usr/share/sgml/docbook/custom/slides/3.2.0/browser '$(@D)'
+	cp -ar /usr/share/xml/docbook/slides/3.4.0/graphics '$(@D)'
+	cp -ar /usr/share/xml/docbook/slides/3.4.0/browser '$(@D)'
 	patch '$(@D)/browser/overlay.js' <overlay.js.patch
 	cp $(DIAPNG) '$(@D)'
 	cp slide-style.css '$(@D)'
@@ -129,7 +129,7 @@ $(SLIDES:%.xml=%/index.html): %/index.html: %.xml \
 		'$(@D)'/foil*.html
 
 %.dia.png: %.dia
-	dia -t png-libart --export=$@.tmp $<
+	dia -n -t cairo-alpha-png --export=$@.tmp $<
 	mv $@.tmp $@
 
 api:

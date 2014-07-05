@@ -1,7 +1,6 @@
-import sets
 from copy import deepcopy
 
-class LDAPAttributeSet(sets.Set):
+class LDAPAttributeSet(set):
     def __init__(self, key, *a, **kw):
         self.key = key
         super(LDAPAttributeSet, self).__init__(*a, **kw)
@@ -35,16 +34,16 @@ class LDAPAttributeSet(sets.Set):
         return not self==other
 
     def difference(self, other):
-        return sets.Set(self) - sets.Set(other)
+        return set(self) - set(other)
 
     def union(self, other):
-        return sets.Set(self) | sets.Set(other)
+        return set(self) | set(other)
 
     def intersection(self, other):
-        return sets.Set(self) & sets.Set(other)
+        return set(self) & set(other)
 
     def symmetric_difference(self, other):
-        return sets.Set(self) ^ sets.Set(other)
+        return set(self) ^ set(other)
 
     def copy(self):
         result = self.__class__(self.key)
@@ -55,6 +54,6 @@ class LDAPAttributeSet(sets.Set):
     def __deepcopy__(self, memo):
         result = self.__class__(self.key)
         memo[id(self)] = result
-        data = deepcopy(sets.Set(self), memo)
+        data = deepcopy(set(self), memo)
         result.update(data)
         return result

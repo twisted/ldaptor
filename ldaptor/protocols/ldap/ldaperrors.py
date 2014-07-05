@@ -38,6 +38,11 @@ class Success(LDAPResult):
         pass
 
 class LDAPException(Exception, LDAPResult):
+
+    def _get_message(self): return self.__message
+    def _set_message(self, value): self.__message = value
+    message = property(_get_message, _set_message)
+
     def __init__(self, message=None):
         Exception.__init__(self)
         self.message=message
@@ -50,7 +55,6 @@ class LDAPException(Exception, LDAPResult):
             return self.name
         else:
             return 'Unknown LDAP error %r' % self
-
 
 class LDAPUnknownError(LDAPException):
     resultCode=None

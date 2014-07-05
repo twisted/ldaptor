@@ -1,3 +1,2 @@
 include MANIFEST.in
 include TODO
-recursive-include debian *

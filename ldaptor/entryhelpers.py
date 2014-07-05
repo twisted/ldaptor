@@ -1,4 +1,3 @@
-import sets
 from twisted.internet import defer
 from ldaptor import delta, ldapfilter
 from ldaptor.protocols import pureldap
@@ -20,8 +19,8 @@ class DiffTreeMixin(object):
             assert len(r) == 1
             return r[0]
 
-        my = sets.Set([x.dn.split()[0] for x in myChildren])
-        his = sets.Set([x.dn.split()[0] for x in otherChildren])
+        my = set([x.dn.split()[0] for x in myChildren])
+        his = set([x.dn.split()[0] for x in otherChildren])
 
         # differences in common children
         commonRDN = list(my & his)

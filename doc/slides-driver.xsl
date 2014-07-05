@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
 
-  <xsl:import href="/usr/share/xml/docbook/custom/slides/3.3.1/xsl/xhtml/default.xsl"/>
+  <xsl:import href="/usr/share/xml/docbook/slides/3.4.0/xsl/xhtml/default.xsl"/>
   <!-- xsl:import href="slides/xsl/default.xsl"/ -->
 
   <xsl:param name="keyboard.nav">1</xsl:param>

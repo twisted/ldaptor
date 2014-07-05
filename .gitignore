@@ -9,3 +9,6 @@
 /doc/addressbook-ldif
 /doc/*.dia.png
 /ldaptor/test/ldif/webtests.tmp
+ldaptor.test.test_config
+ldaptor.egg-info
+.idea

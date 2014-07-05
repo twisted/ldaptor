@@ -8,7 +8,7 @@ changing of location in tree)
 from ldaptor import attributeset
 from ldaptor.protocols import pureldap, pureber
 from ldaptor.protocols.ldap import ldif, distinguishedname
-
+import codecs
 class Modification(attributeset.LDAPAttributeSet):
     def patch(self, entry):
         raise NotImplementedError
@@ -19,10 +19,20 @@ class Modification(attributeset.LDAPAttributeSet):
         if self._LDAP_OP is None:
             raise NotImplementedError("%s.asLDAP not implemented"
                                       % self.__class__.__name__)
+        tmplist = list(self)
+        newlist = []
+        for x in range(len(tmplist)):
+            if (isinstance(tmplist[x], unicode)):
+                value = tmplist[x].encode('utf-8')
+                newlist.append(value)
+            else:
+                value = tmplist[x]
+                newlist.append(value) 
+        
         return str(pureber.BERSequence([
             pureber.BEREnumerated(self._LDAP_OP),
             pureber.BERSequence([ pureldap.LDAPAttributeDescription(self.key),
-                                  pureber.BERSet(map(pureldap.LDAPString, list(self))),
+                                  pureber.BERSet(map(pureldap.LDAPString, newlist)),
                                   ]),
             ]))
 

@@ -7,7 +7,7 @@ from ldaptor.protocols.ldap import ldapclient, ldif, distinguishedname, ldaperro
 from ldaptor.protocols import pureldap, pureber
 from ldaptor.samba import smbpassword
 from ldaptor import ldapfilter, interfaces, delta, attributeset, entry
-
+import codecs
 class PasswordSetAggregateError(Exception):
     """Some of the password plugins failed"""
     def __init__(self, errors):
@@ -393,9 +393,10 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             ldapAttrType = pureldap.LDAPAttributeDescription(attrType)
             l = []
             for value in values:
+                if (isinstance(value, unicode)):
+                    value = value.encode('utf-8')
                 l.append(pureldap.LDAPAttributeValue(value))
             ldapValues = pureber.BERSet(l)
-
             ldapAttrs.append((ldapAttrType, ldapValues))
         op=pureldap.LDAPAddRequest(entry=str(dn),
                                    attributes=ldapAttrs)
@@ -631,6 +632,8 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             self._cbSearchEntry(callback, msg.objectName, msg.attributes,
                                 complete=complete)
             return False
+        elif isinstance(msg, pureldap.LDAPSearchResultReference):
+            return False
         else:
             raise ldaperrors.LDAPProtocolError, \
                   'bad search response: %r' % msg
@@ -681,7 +684,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
                 typesOnly=typesOnly,
                 filter=filterObject,
                 attributes=attributes)
-            self.client.send_multiResponse(
+            dsend = self.client.send_multiResponse(
                 op, self._cbSearchMsg,
                 d, cb, complete=not attributes,
                 sizeLimitIsNonFatal=sizeLimitIsNonFatal)
@@ -690,6 +693,11 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         else:
             if callback is None:
                 d.addCallback(lambda dummy: results)
+            def rerouteerr(e):
+                d.errback(e)
+                # returning None will stop the error
+                # from being propagated and logged.
+            dsend.addErrback(rerouteerr)
         return d
 
     def lookup(self, dn):

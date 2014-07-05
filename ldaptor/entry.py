@@ -1,9 +1,15 @@
-import sets, random, sha, base64
+import random, base64
 from zope.interface import implements
 from twisted.internet import defer
 from twisted.python.util import InsensitiveDict
 from ldaptor import interfaces, attributeset, delta
 from ldaptor.protocols.ldap import distinguishedname, ldif, ldaperrors
+
+try:
+    from hashlib import sha1
+except ImportError:
+    from sha import sha as sha1
+
 
 def sshaDigest(passphrase, salt=None):
     if salt is None:
@@ -11,7 +17,7 @@ def sshaDigest(passphrase, salt=None):
         for i in range(8):
             salt += chr(random.randint(0, 255))
 
-    s = sha.sha()
+    s = sha1()
     s.update(passphrase)
     s.update(salt)
     encoded = base64.encodestring(s.digest()+salt).rstrip()
@@ -139,8 +145,8 @@ class BaseLDAPEntry(object):
 
         r = []
 
-        myKeys = sets.Set(self.keys())
-        otherKeys = sets.Set(other.keys())
+        myKeys = set(self.keys())
+        otherKeys = set(other.keys())
 
         addedKeys = list(otherKeys - myKeys)
         addedKeys.sort() # for reproducability only
