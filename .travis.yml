@@ -31,9 +31,7 @@ env:
     - TOX_ENV=py27-tw121
     - TOX_ENV=pypy-tw121
 
-script: 
-	pip install tox
-	tox -e $TOX_ENV
+script: pip install tox && tox -e $TOX_ENV
 
 notifications:
     email: false
