@@ -2,6 +2,7 @@
 *.pyo
 /_trial_temp
 /build
+/.tox
 /doc/addressbook-session
 /doc/addressbook-slides
 /doc/api
