@@ -2,6 +2,7 @@ language: python
 python: 2.7
 
 env:
+  matrix:
     - TOX_ENV=pyflakes
     - TOX_ENV=py26
     - TOX_ENV=py27
@@ -30,6 +31,29 @@ env:
     - TOX_ENV=py26-tw121
     - TOX_ENV=py27-tw121
     - TOX_ENV=pypy-tw121
+
+matrix:
+  fast_finish: true
+  allow_failures:
+    - env: TOX_ENV=pyflakes
+    - env: TOX_ENV=py26
+    - env: TOX_ENV=py27
+    - env: TOX_ENV=py26-twtrunk
+    - env: TOX_ENV=py27-twtrunk
+    - env: TOX_ENV=py26-tw140
+    - env: TOX_ENV=py27-tw140
+    - env: TOX_ENV=py26-tw132
+    - env: TOX_ENV=py27-tw132
+    - env: TOX_ENV=py26-tw131
+    - env: TOX_ENV=py27-tw131
+    - env: TOX_ENV=py26-tw130
+    - env: TOX_ENV=py27-tw130
+    - env: TOX_ENV=py26-tw123
+    - env: TOX_ENV=py27-tw123
+    - env: TOX_ENV=py26-tw122
+    - env: TOX_ENV=py27-tw122
+    - env: TOX_ENV=py26-tw121
+    - env: TOX_ENV=py27-tw121
 
 script: pip install tox && tox -e $TOX_ENV
 

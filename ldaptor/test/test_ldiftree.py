@@ -2,29 +2,40 @@
 Test cases for LDIF directory tree writing/reading.
 """
 
+import os
+import random
+import errno
+import shutil
+
 from twisted.trial import unittest
-import os, random, errno, shutil, sets
+
 from ldaptor import ldiftree, entry, delta, testutil
 from ldaptor.entry import BaseLDAPEntry
 from ldaptor.protocols.ldap import ldaperrors, ldifprotocol
+
 
 def writeFile(path, content):
     f = file(path, 'w')
     f.write(content)
     f.close()
 
+
 class RandomizeListdirMixin(object):
-    def randomListdir(self, *args, **kwargs):
-        r = self.__listdir(*args, **kwargs)
+    @classmethod
+    def randomListdir(cls, *args, **kwargs):
+        r = cls.__listdir(*args, **kwargs)
         random.shuffle(r)
         return r
 
-    def setUpClass(self):
-        self.__listdir = os.listdir
-        os.listdir = self.randomListdir
+    @classmethod
+    def setUpClass(cls):
+        cls.__listdir = os.listdir
+        os.listdir = cls.randomListdir
 
-    def tearDownClass(self):
-        os.listdir = self.__listdir
+    @classmethod
+    def tearDownClass(cls):
+        os.listdir = cls.__listdir
+
 
 class Dir2LDIF(RandomizeListdirMixin, unittest.TestCase):
     def setUp(self):
@@ -767,8 +778,8 @@ objectClass: top
         def getChildren(dummy):
             return self.example.children()
         d.addCallback(getChildren)
-        d.addCallback(sets.Set)
-        d.addCallback(self.assertEquals, sets.Set([
+        d.addCallback(set)
+        d.addCallback(self.assertEquals, set([
             self.meta,
             BaseLDAPEntry(
             dn='ou=moved,dc=example,dc=com',
@@ -784,8 +795,8 @@ objectClass: top
         def getChildren(dummy):
             return self.example.children()
         d.addCallback(getChildren)
-        d.addCallback(sets.Set)
-        d.addCallback(self.assertEquals, sets.Set([
+        d.addCallback(set)
+        d.addCallback(self.assertEquals, set([
             BaseLDAPEntry(dn='ou=moved,dc=example,dc=com',
                           attributes={ 'objectClass': ['a', 'b'],
                                        'ou': ['moved'],
@@ -801,16 +812,16 @@ objectClass: top
         def getChildren(dummy):
             return self.example.children()
         d.addCallback(getChildren)
-        d.addCallback(sets.Set)
-        d.addCallback(self.assertEquals, sets.Set([
+        d.addCallback(set)
+        d.addCallback(self.assertEquals, set([
             self.meta,
             self.oneChild,
             ]))
         def getChildren2(dummy):
             return self.oneChild.children()
         d.addCallback(getChildren2)
-        d.addCallback(sets.Set)
-        d.addCallback(self.assertEquals, sets.Set([
+        d.addCallback(set)
+        d.addCallback(self.assertEquals, set([
             self.theChild,
             BaseLDAPEntry(
             dn='ou=moved,ou=oneChild,dc=example,dc=com',
@@ -825,16 +836,16 @@ objectClass: top
         def getChildren(dummy):
             return self.example.children()
         d.addCallback(getChildren)
-        d.addCallback(sets.Set)
-        d.addCallback(self.assertEquals, sets.Set([
+        d.addCallback(set)
+        d.addCallback(self.assertEquals, set([
             self.empty,
             self.oneChild,
             ]))
         def getChildren2(dummy):
             return self.oneChild.children()
         d.addCallback(getChildren2)
-        d.addCallback(sets.Set)
-        d.addCallback(self.assertEquals, sets.Set([
+        d.addCallback(set)
+        d.addCallback(self.assertEquals, set([
             self.theChild,
             BaseLDAPEntry(dn='ou=moved,ou=oneChild,dc=example,dc=com',
                           attributes={ 'objectClass': ['a', 'b'],
