@@ -37,6 +37,7 @@ matrix:
     env:
       - TOX_ENV=pyflakes
       - TOX_ENV=py26
+      - TOX_ENV=py27
       - TOX_ENV=py26-twtrunk
       - TOX_ENV=py27-twtrunk
       - TOX_ENV=py26-tw140
