@@ -93,9 +93,9 @@ class BaseLDAPEntry(object):
         if self.dn != other.dn:
             return 0
 
-        my=self.keys()
+        my=[key for key in self.keys() if key != 'objectClass']
         my.sort()
-        its=other.keys()
+        its=[key for key in other.keys() if key != 'objectClass']
         its.sort()
         if my!=its:
             return 0
@@ -104,6 +104,15 @@ class BaseLDAPEntry(object):
             itsAttr=other[key]
             if myAttr!=itsAttr:
                 return 0
+
+        myObjectClass = list(self.get('objectClass', []))
+        myObjectClass.sort()
+        itsObjectClass = list(its.get('objectClass', []))
+        itsObjectClass.sort()
+
+        if myObjectClass == itsObjectClass:
+            return 0
+        
         return 1
 
     def __ne__(self, other):
