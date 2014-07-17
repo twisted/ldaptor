@@ -577,3 +577,5 @@ class TestSchema(unittest.TestCase):
             test_schema.OBJECTCLASSES['organization'],
             test_schema.OBJECTCLASSES['organizationalUnit'],
             ]])
+
+    testSimple.todo = 'Not supported yet.'

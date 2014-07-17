@@ -384,12 +384,18 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
     def addChild(self, rdn, attributes):
         self._checkState()
 
+        a = []
+        if attributes.get('objectClass', None):
+            a.append(('objectClass', attributes['objectClass']))
+            del attributes['objectClass']
+        attributes = a+sorted(attributes.items())
+        del a
         rdn = distinguishedname.RelativeDistinguishedName(rdn)
         dn = distinguishedname.DistinguishedName(
             listOfRDNs=(rdn,)+self.dn.split())
 
         ldapAttrs = []
-        for attrType, values in attributes.items():
+        for attrType, values in attributes:
             ldapAttrType = pureldap.LDAPAttributeDescription(attrType)
             l = []
             for value in values:

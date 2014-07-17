@@ -66,10 +66,32 @@ class BaseLDAPEntry(object):
         return self.has_key(key)
 
     def keys(self):
-        return self._attributes.keys()
+        a = []
+        if self.get('objectClass'):
+            a.append('objectClass')
+        l=list(self._attributes.keys())
+        l.sort()
+        for key in l:
+            if key.lower() != 'objectclass':
+                a.append(key)
+        return a
 
     def items(self):
-        return self._attributes.items()
+        a=[]
+        objectClasses = list(self.get('objectClass', []))
+        objectClasses.sort()
+        if objectClasses:
+            a.append(('objectClass', objectClasses))
+
+        l=list(self._attributes.items())
+        l.sort()
+        for key, values in l:
+            if key.lower() != 'objectclass':
+                vs = list(values)
+                vs.sort()
+                a.append((key, vs))
+
+        return a
 
     def __str__(self):
         a=[]
