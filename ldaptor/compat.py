@@ -50,7 +50,7 @@ __all__ = [
     'PY2', 'PY3', 'PY_MAX_25', 'PY27', 'PY_MIN_32',
 
     # io
-    'BytesIO', 'StringIO', 'NativeStringIO', 'SafeConfigParser',
+    # 'BytesIO', 'StringIO', 'NativeStringIO', 'SafeConfigParser',
     'print_',
 
     # type detection

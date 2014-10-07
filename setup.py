@@ -2,13 +2,15 @@
 import os
 from setuptools import setup
 
+
 def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+    with open(os.path.join(os.path.dirname(__file__), fname)) as f:
+        return f
 
 
 if __name__ == '__main__':
     setup(name="ldaptor",
-          version='0.0.54',
+          version='14.0',
           description="Pure-Python library for LDAP",
           long_description=read('README.md'),
           author="Tommi Virtanen",
@@ -21,7 +23,7 @@ if __name__ == '__main__':
           classifiers=['Intended Audience :: Developers',
                        'License :: OSI Approved :: MIT License',
                        'Operating System :: OS Independent',
-                       'Development Status :: 7 - Inactive',
+                       'Development Status :: 5 - Production/Stable',
                        'Framework :: Twisted', 'Programming Language :: Python',
                        'Topic :: Software Development :: Libraries :: Python Modules',
                        'Topic :: System :: Systems Administration :: Authentication/Directory :: LDAP'],

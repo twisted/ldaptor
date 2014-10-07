@@ -17,7 +17,7 @@ class TestCallableOverride(unittest.TestCase):
         def _doConnect(factory):
             factory.doStart()
             factory.startedConnecting(c)
-            proto = factory.buildProtocol(address.IPv4Address('TCP', 'localhost', '1'))
+            factory.buildProtocol(address.IPv4Address('TCP', 'localhost', '1'))
         d = c.connect(dn, overrides={ dn: _doConnect, })
         def cb(r):
             self.failUnless(isinstance(r, FakeProto))

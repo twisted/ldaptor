@@ -261,7 +261,7 @@ class SearchByTreeWalkingMixin(object):
             if entry.match(filterObject):
                 matchCallback(entry)
 
-        d = iterator(callback=_tryMatch)
+        iterator(callback=_tryMatch)
 
         if callback is None:
             return defer.succeed(results)

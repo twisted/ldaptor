@@ -17,7 +17,7 @@ from binascii import hexlify
 import struct
 from warnings import warn
 # site
-from compat import b, bytes, bascii_to_str, irange, PY3
+from compat import b, bytes, bascii_to_str, irange  # , PY3  # twisted isn't Python3, yet
 # local
 __all__ = [ "md4" ]
 #=============================================================================
@@ -157,19 +157,19 @@ class md4(object):
         state = list(orig)
 
         # round 1 - F function - (x&y)|(~x & z)
-        for a,b,c,d,k,s in self._round1:
-            t = (state[a] + F(state[b],state[c],state[d]) + X[k]) & MASK_32
-            state[a] = ((t<<s) & MASK_32) + (t>>(32-s))
+        for a1,b1,c1,d1,k1,s1 in self._round1:
+            t = (state[a1] + F(state[b1],state[c1],state[d1]) + X[k1]) & MASK_32
+            state[a1] = ((t<<s1) & MASK_32) + (t>>(32-s1))
 
         # round 2 - G function
-        for a,b,c,d,k,s in self._round2:
-            t = (state[a] + G(state[b],state[c],state[d]) + X[k] + 0x5a827999) & MASK_32
-            state[a] = ((t<<s) & MASK_32) + (t>>(32-s))
+        for a1,b1,c1,d1,k1,s1 in self._round2:
+            t = (state[a1] + G(state[b1],state[c1],state[d1]) + X[k1] + 0x5a827999) & MASK_32
+            state[a1] = ((t<<s1) & MASK_32) + (t>>(32-s1))
 
         # round 3 - H function - x ^ y ^ z
-        for a,b,c,d,k,s in self._round3:
-            t = (state[a] + (state[b] ^ state[c] ^ state[d]) + X[k] + 0x6ed9eba1) & MASK_32
-            state[a] = ((t<<s) & MASK_32) + (t>>(32-s))
+        for a1,b1,c1,d1,k1,s1 in self._round3:
+            t = (state[a1] + (state[b1] ^ state[c1] ^ state[d1]) + X[k1] + 0x6ed9eba1) & MASK_32
+            state[a1] = ((t<<s1) & MASK_32) + (t>>(32-s1))
 
         # add back into original state
         for i in irange(4):
