@@ -32,7 +32,5 @@ class ConnectionLost(unittest.TestCase):
             fail.trap(SillyError)
         d1.addCallbacks(testutil.mustRaise, eb)
         d2.addCallbacks(testutil.mustRaise, eb)
-        defer.DeferredList([d1, d2])
         
-        return defer.DeferredList([d1, d2],
-                                  fireOnOneErrback=True)
+        return defer.DeferredList([d1, d2], fireOnOneErrback=True)

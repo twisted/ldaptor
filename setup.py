@@ -11,7 +11,7 @@ def read(fname):
 if __name__ == '__main__':
     setup(name="ldaptor",
           version='14.0',
-          description="Pure-Python library for LDAP",
+          description="A Pure-Python Twisted library for LDAP",
           long_description=read('README.md'),
           author="Tommi Virtanen",
           author_email="tv@eagain.net",
