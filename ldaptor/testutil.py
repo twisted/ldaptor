@@ -128,9 +128,6 @@ def createServer(proto, *responses, **kw):
         #TODO factory.startedConnecting(c)
         proto = factory.buildProtocol(addr=None)
         proto.connectionMade()
-    cfg = config.loadConfig(
-        configFiles=[],
-        reload=True)
     overrides = kw.setdefault('serviceLocationOverrides', {})
     overrides.setdefault('', createClient)
     conf = config.LDAPConfig(**kw)

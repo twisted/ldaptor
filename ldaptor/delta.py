@@ -8,7 +8,6 @@ changing of location in tree)
 from ldaptor import attributeset
 from ldaptor.protocols import pureldap, pureber
 from ldaptor.protocols.ldap import ldif, distinguishedname
-import codecs
 class Modification(attributeset.LDAPAttributeSet):
     def patch(self, entry):
         raise NotImplementedError
