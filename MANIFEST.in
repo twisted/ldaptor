@@ -1,3 +1,7 @@
 include MANIFEST.in
 include TODO
 include README.md
+include .travis.yml
+include LICENSE
+include tox.ini
+recursive-include ldaptor *.ldif
