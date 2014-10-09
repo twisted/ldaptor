@@ -30,6 +30,7 @@ env:
     - TOX_ENV=pypy-tw122
     - TOX_ENV=pypy-tw121
     - TOX_ENV=pyflakes
+    - TOX_ENV=manifest
 
 matrix:
   fast_finish: true
