@@ -13,3 +13,4 @@
 ldaptor.test.*
 ldaptor.egg-info
 .idea
+.coverage
