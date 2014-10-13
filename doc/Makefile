@@ -1,143 +1,190 @@
-DIAS:= \
-	chat-bind.dia \
-	chat-search.dia \
-	chat-search-pipeline.dia \
-	chat-unbind.dia \
-	ldapfilter-as-tree.dia \
-	ldap-is-a-tree.dia \
-	overview.dia
+# Makefile for Sphinx documentation
+#
 
-DIAPNG:=$(DIAS:%.dia=%.dia.png)
+# Create PNGs from DIAs
+DIA = dia
+DIA_SOURCES = \
+	source/_static/diagrams/chat-bind.dia \
+	source/_static/diagrams/chat-search.dia \
+	source/_static/diagrams/chat-search-pipeline.dia \
+	source/_static/diagrams/chat-unbind.dia \
+	source/_static/diagrams/ldapfilter-as-tree.dia \
+	source/_static/diagrams/ldap-is-a-tree.dia \
+	source/_static/diagrams/overview.dia
 
-DOCBOOK:=ldap-intro.xml
-SLIDES:=addressbook-slides.xml
+# You can set these variables from the command line.
+SPHINXOPTS    =
+SPHINXBUILD   = sphinx-build
+PAPER         =
+BUILDDIR      = build
 
-GENERATED:=\
-	$(DOCBOOK:%.xml=%/index.html) \
-	$(SLIDES:%.xml=%/index.html) \
-	$(DIAPNG) \
-	api
+# User-friendly check for sphinx-build
+ifeq ($(shell which $(SPHINXBUILD) >/dev/null 2>&1; echo $$?), 1)
+$(error The '$(SPHINXBUILD)' command was not found. Make sure you have Sphinx installed, then set the SPHINXBUILD environment variable to point to the full path of the '$(SPHINXBUILD)' executable. Alternatively you can add the directory with the executable to your PATH. If you don't have Sphinx installed, grab it from http://sphinx-doc.org/)
+endif
 
-XMLIFY:=sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g'
+# Internal variables.
+PAPEROPT_a4     = -D latex_paper_size=a4
+PAPEROPT_letter = -D latex_paper_size=letter
+ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) source
+# the i18n builder cannot share the environment and doctrees with the others
+I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) source
 
-all:: $(GENERATED)
+.PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest gettext
+
+help:
+	@echo "Please use \`make <target>' where <target> is one of"
+	@echo "  html       to make standalone HTML files"
+	@echo "  dirhtml    to make HTML files named index.html in directories"
+	@echo "  singlehtml to make a single large HTML file"
+	@echo "  pickle     to make pickle files"
+	@echo "  json       to make JSON files"
+	@echo "  htmlhelp   to make HTML files and a HTML help project"
+	@echo "  qthelp     to make HTML files and a qthelp project"
+	@echo "  devhelp    to make HTML files and a Devhelp project"
+	@echo "  epub       to make an epub"
+	@echo "  latex      to make LaTeX files, you can set PAPER=a4 or PAPER=letter"
+	@echo "  latexpdf   to make LaTeX files and run them through pdflatex"
+	@echo "  latexpdfja to make LaTeX files and run them through platex/dvipdfmx"
+	@echo "  text       to make text files"
+	@echo "  man        to make manual pages"
+	@echo "  texinfo    to make Texinfo files"
+	@echo "  info       to make Texinfo files and run them through makeinfo"
+	@echo "  gettext    to make PO message catalogs"
+	@echo "  changes    to make an overview of all changed/added/deprecated items"
+	@echo "  xml        to make Docutils-native XML files"
+	@echo "  pseudoxml  to make pseudoxml-XML files for display purposes"
+	@echo "  linkcheck  to check all external links for integrity"
+	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
 clean:
-	rm -rf \
-		$(GENERATED) \
-		ldap-intro \
-		$(DIAPNG:%=%.tmp) \
-		addressbook-ldif \
-		addressbook-session \
-		addressbook-slides
+	rm -rf $(BUILDDIR)/*
 
-rsync: $(GENERATED)
-	rsync -a $(DOCBOOK:%.xml=%.html) $(SLIDES:%.xml=%) $(DIAPNG) pyramid.twistedmatrix.com:public_html/ldap-intro/
-	rsync -a --exclude '*.pyc' --exclude '*~' examples/addressbook/{[0-9]*,README.txt,server}  pyramid.twistedmatrix.com:public_html/ldap-intro/addressbook/
+html:
+	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
+	$(DIA) -n -t png-libart $(DIA_SOURCES)
+	mv *.png $(BUILDDIR)/html/
+	@echo
+	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
-$(DOCBOOK:%.xml=%/index.html): %/index.html: %.xml
-	install -d -m0755 '$(@D)'
-	xsltproc  --nonet \
-		/usr/share/sgml/docbook/xsl-stylesheets/xhtml/docbook.xsl \
-		$< \
-		>$@.tmp
-	mv $@.tmp $@
+dirhtml:
+	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/dirhtml
+	@echo
+	@echo "Build finished. The HTML pages are in $(BUILDDIR)/dirhtml."
 
-ldap-intro/index.html: \
-	ldap-intro/ldap-is-a-tree.dia.png \
-	ldap-intro/ldapfilter-as-tree.dia.png \
-	ldap-intro/chat-bind.dia.png \
-	ldap-intro/chat-search.dia.png \
-	ldap-intro/chat-search-pipeline.dia.png \
-	ldap-intro/chat-unbind.dia.png
+singlehtml:
+	$(SPHINXBUILD) -b singlehtml $(ALLSPHINXOPTS) $(BUILDDIR)/singlehtml
+	@echo
+	@echo "Build finished. The HTML page is in $(BUILDDIR)/singlehtml."
 
-ldap-intro/%.dia.png: %.dia.png
-	install -d -m0755 '$(@D)'
-	install -m0644 $< $@.tmp
-	mv $@.tmp $@
+pickle:
+	$(SPHINXBUILD) -b pickle $(ALLSPHINXOPTS) $(BUILDDIR)/pickle
+	@echo
+	@echo "Build finished; now you can process the pickle files."
 
-addressbook-ldif/%.xml: examples/addressbook/server/%.ldif
-	install -d -m0755 '$(@D)'
-	$(XMLIFY) <$< >$@.tmp
-	mv $@.tmp $@
+json:
+	$(SPHINXBUILD) -b json $(ALLSPHINXOPTS) $(BUILDDIR)/json
+	@echo
+	@echo "Build finished; now you can process the JSON files."
 
-addressbook-session/session-%.xml: examples/addressbook/01_repl/session-%
-	install -d -m0755 '$(@D)'
-	$(XMLIFY) <$< >$@.tmp
-	mv $@.tmp $@
+htmlhelp:
+	$(SPHINXBUILD) -b htmlhelp $(ALLSPHINXOPTS) $(BUILDDIR)/htmlhelp
+	@echo
+	@echo "Build finished; now you can run HTML Help Workshop with the" \
+	      ".hhp project file in $(BUILDDIR)/htmlhelp."
 
-addressbook-slides/%/addressbook-py.html: \
-	examples/addressbook/%/addressbook.py tags.j2h
-	install -d -m0755 '$(@D)'
-	( echo '<font size="+1">' && source-highlight --out-format=xhtml --src-lang=python && echo '</font>' ) <$< >$@.tmp
-	mv $@.tmp $@
+qthelp:
+	$(SPHINXBUILD) -b qthelp $(ALLSPHINXOPTS) $(BUILDDIR)/qthelp
+	@echo
+	@echo "Build finished; now you can run "qcollectiongenerator" with the" \
+	      ".qhcp project file in $(BUILDDIR)/qthelp, like this:"
+	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/Ldaptor.qhcp"
+	@echo "To view the help file:"
+	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/Ldaptor.qhc"
 
-addressbook-slides/%/addressbook-tac.html: \
-	examples/addressbook/%/addressbook.tac tags.j2h
-	install -d -m0755 '$(@D)'
-	( echo '<font size="+1">' && source-highlight --out-format=xhtml --src-lang=python && echo '</font>' ) <$< >$@.tmp
-	mv $@.tmp $@
+devhelp:
+	$(SPHINXBUILD) -b devhelp $(ALLSPHINXOPTS) $(BUILDDIR)/devhelp
+	@echo
+	@echo "Build finished."
+	@echo "To view the help file:"
+	@echo "# mkdir -p $$HOME/.local/share/devhelp/Ldaptor"
+	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/Ldaptor"
+	@echo "# devhelp"
 
-addressbook-slides/%/searchform-xhtml.html: \
-	examples/addressbook/%/searchform.xhtml
-	install -d -m0755 '$(@D)'
-	( echo '<pre>' && sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g;' && echo '</pre>' ) <$< >$@.tmp
-	mv $@.tmp $@
+epub:
+	$(SPHINXBUILD) -b epub $(ALLSPHINXOPTS) $(BUILDDIR)/epub
+	@echo
+	@echo "Build finished. The epub file is in $(BUILDDIR)/epub."
 
-addressbook-slides/index.html: \
-	ldapentry-vs-oo.xml search-inputs.xml
+latex:
+	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
+	@echo
+	@echo "Build finished; the LaTeX files are in $(BUILDDIR)/latex."
+	@echo "Run \`make' in that directory to run these through (pdf)latex" \
+	      "(use \`make latexpdf' here to do that automatically)."
 
-ldap-intro.html: \
-	ldapentry-vs-oo.xml search-inputs.xml
+latexpdf:
+	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
+	@echo "Running LaTeX files through pdflatex..."
+	$(MAKE) -C $(BUILDDIR)/latex all-pdf
+	@echo "pdflatex finished; the PDF files are in $(BUILDDIR)/latex."
 
-$(SLIDES:%.xml=%/index.html): %/index.html: %.xml \
-	slides-driver.xsl \
-	Makefile $(DIAPNG) \
-	addressbook-ldif/doe.xml \
-	addressbook-ldif/smith.xml \
-	addressbook-session/session-01.xml \
-	addressbook-session/session-02.xml \
-	addressbook-session/session-03.xml \
-	addressbook-session/session-04.xml \
-	addressbook-session/session-05.xml \
-	addressbook-session/session-06.xml \
-	addressbook-session/session-07.xml \
-	addressbook-session/session-08.xml \
-	addressbook-session/session-09.xml \
-	slide-style.css \
-	addressbook-slides/02_script/addressbook-py.html \
-	addressbook-slides/07_easy/addressbook-py.html \
-	addressbook-slides/07_easy/searchform-xhtml.html \
-	addressbook-slides/07_easy/addressbook-tac.html
-	install -d -m0755 '$(@D)'
-	cp -ar /usr/share/xml/docbook/slides/3.4.0/graphics '$(@D)'
-	cp -ar /usr/share/xml/docbook/slides/3.4.0/browser '$(@D)'
-	patch '$(@D)/browser/overlay.js' <overlay.js.patch
-	cp $(DIAPNG) '$(@D)'
-	cp slide-style.css '$(@D)'
-	# TODO --nonet
-	cd '$(@D)' && xsltproc \
-		--stringparam keyboard.nav 1 \
-		--stringparam overlay 1 \
-		--stringparam output.indent yes \
-		--stringparam graphics.dir graphics \
-		--stringparam script.dir browser \
-		../slides-driver.xsl \
-		'$(addprefix ../,$<)'
-	perl -pi -e \
-		's{<a href="(.*?)" target="_top">Click me!</a>}{<iframe width=900 height=600 src="$$1" />}g;' \
-		'$(@D)'/foil*.html
+latexpdfja:
+	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
+	@echo "Running LaTeX files through platex and dvipdfmx..."
+	$(MAKE) -C $(BUILDDIR)/latex all-pdf-ja
+	@echo "pdflatex finished; the PDF files are in $(BUILDDIR)/latex."
 
-%.dia.png: %.dia
-	dia -n -t cairo-alpha-png --export=$@.tmp $<
-	mv $@.tmp $@
+text:
+	$(SPHINXBUILD) -b text $(ALLSPHINXOPTS) $(BUILDDIR)/text
+	@echo
+	@echo "Build finished. The text files are in $(BUILDDIR)/text."
 
-api:
-	echo epydoc \
-	        -o api \
-		--name Ldaptor \
-		--url http://www.inoi.fi/open/trac/ldaptor/ \
-		$$(find ../ldaptor -name '*.py' -print)
-	install -d -m0755 api
+man:
+	$(SPHINXBUILD) -b man $(ALLSPHINXOPTS) $(BUILDDIR)/man
+	@echo
+	@echo "Build finished. The manual pages are in $(BUILDDIR)/man."
 
-.PHONY: api
+texinfo:
+	$(SPHINXBUILD) -b texinfo $(ALLSPHINXOPTS) $(BUILDDIR)/texinfo
+	@echo
+	@echo "Build finished. The Texinfo files are in $(BUILDDIR)/texinfo."
+	@echo "Run \`make' in that directory to run these through makeinfo" \
+	      "(use \`make info' here to do that automatically)."
+
+info:
+	$(SPHINXBUILD) -b texinfo $(ALLSPHINXOPTS) $(BUILDDIR)/texinfo
+	@echo "Running Texinfo files through makeinfo..."
+	make -C $(BUILDDIR)/texinfo info
+	@echo "makeinfo finished; the Info files are in $(BUILDDIR)/texinfo."
+
+gettext:
+	$(SPHINXBUILD) -b gettext $(I18NSPHINXOPTS) $(BUILDDIR)/locale
+	@echo
+	@echo "Build finished. The message catalogs are in $(BUILDDIR)/locale."
+
+changes:
+	$(SPHINXBUILD) -b changes $(ALLSPHINXOPTS) $(BUILDDIR)/changes
+	@echo
+	@echo "The overview file is in $(BUILDDIR)/changes."
+
+linkcheck:
+	$(SPHINXBUILD) -b linkcheck $(ALLSPHINXOPTS) $(BUILDDIR)/linkcheck
+	@echo
+	@echo "Link check complete; look for any errors in the above output " \
+	      "or in $(BUILDDIR)/linkcheck/output.txt."
+
+doctest:
+	$(SPHINXBUILD) -b doctest $(ALLSPHINXOPTS) $(BUILDDIR)/doctest
+	@echo "Testing of doctests in the sources finished, look at the " \
+	      "results in $(BUILDDIR)/doctest/output.txt."
+
+xml:
+	$(SPHINXBUILD) -b xml $(ALLSPHINXOPTS) $(BUILDDIR)/xml
+	@echo
+	@echo "Build finished. The XML files are in $(BUILDDIR)/xml."
+
+pseudoxml:
+	$(SPHINXBUILD) -b pseudoxml $(ALLSPHINXOPTS) $(BUILDDIR)/pseudoxml
+	@echo
+	@echo "Build finished. The pseudo-XML files are in $(BUILDDIR)/pseudoxml."
