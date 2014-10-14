@@ -41,9 +41,9 @@ attributeType may appear multiple times, in effect having multiple
 values.
 
 One or more of the attributes are chosen as a Relative
-Distinguished Name Relative Distinguished Name or RDN, and will be
-used to identify the node based on its parent. This means the RDN
-must be unique among the children of its parent. Listing all the
+Distinguished Name or RDN, and will be used to identify the
+node based on its parent. This means the RDN must be unique
+among the children of its parent. Listing all the
 RDNs, separated by commas, from the node to the root, gives us the
 Distinguished Name or DN of the entry.
 
@@ -118,7 +118,7 @@ If you look at LDAP entries from the viewpoint of a
 programmer accustomed with object oriented programming, you will
 see a lot of similarities, but also some striking differences:
 
-&ldapentry_vs_oo;
+:doc:`ldapentry-vs-oo`
 
 Writing Things Down: LDIF
 -------------------------
@@ -177,8 +177,7 @@ starts with the keyword version and value 1.
     | sn:Jensen
     | uid:bjensen
     | telephonenumber:+1 408 555 1212
-    | description:Babs is a big sailing fan, and travels extensively in sea
-    | rch of perfect sailing conditions.
+    | description:Babs is a big sailing fan, and travels extensively in search of perfect sailing conditions.
     | title:Product Manager, Rod and Reel Division
 
 Searches and Search Filters
@@ -196,7 +195,7 @@ An LDAP search takes the following information as input:
    Once again, we are skipping some details for
    understandability.
 
-&search_inputs;
+:doc:`search-inputs`
 
 Of these, the search filter is clearly the most interesting
 one. As with LDIF, search filters have a standardized plain text

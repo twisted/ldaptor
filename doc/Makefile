@@ -69,11 +69,15 @@ html:
 
 dirhtml:
 	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/dirhtml
+	$(DIA) -n -t png-libart $(DIA_SOURCES)
+	mv *.png $(BUILDDIR)/dirhtml/
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/dirhtml."
 
 singlehtml:
 	$(SPHINXBUILD) -b singlehtml $(ALLSPHINXOPTS) $(BUILDDIR)/singlehtml
+	$(DIA) -n -t png-libart $(DIA_SOURCES)
+	mv *.png $(BUILDDIR)/singlehtml/
 	@echo
 	@echo "Build finished. The HTML page is in $(BUILDDIR)/singlehtml."
 
@@ -89,12 +93,16 @@ json:
 
 htmlhelp:
 	$(SPHINXBUILD) -b htmlhelp $(ALLSPHINXOPTS) $(BUILDDIR)/htmlhelp
+	$(DIA) -n -t png-libart $(DIA_SOURCES)
+	mv *.png $(BUILDDIR)/htmlhelp/
 	@echo
 	@echo "Build finished; now you can run HTML Help Workshop with the" \
 	      ".hhp project file in $(BUILDDIR)/htmlhelp."
 
 qthelp:
 	$(SPHINXBUILD) -b qthelp $(ALLSPHINXOPTS) $(BUILDDIR)/qthelp
+	$(DIA) -n -t png-libart $(DIA_SOURCES)
+	mv *.png $(BUILDDIR)/qthelp/
 	@echo
 	@echo "Build finished; now you can run "qcollectiongenerator" with the" \
 	      ".qhcp project file in $(BUILDDIR)/qthelp, like this:"
@@ -104,6 +112,8 @@ qthelp:
 
 devhelp:
 	$(SPHINXBUILD) -b devhelp $(ALLSPHINXOPTS) $(BUILDDIR)/devhelp
+	$(DIA) -n -t png-libart $(DIA_SOURCES)
+	mv *.png $(BUILDDIR)/devhelp/
 	@echo
 	@echo "Build finished."
 	@echo "To view the help file:"
@@ -113,11 +123,15 @@ devhelp:
 
 epub:
 	$(SPHINXBUILD) -b epub $(ALLSPHINXOPTS) $(BUILDDIR)/epub
+	$(DIA) -n -t png-libart $(DIA_SOURCES)
+	mv *.png $(BUILDDIR)/epub/
 	@echo
 	@echo "Build finished. The epub file is in $(BUILDDIR)/epub."
 
 latex:
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
+	$(DIA) -n -t png-libart $(DIA_SOURCES)
+	mv *.png $(BUILDDIR)/latex/
 	@echo
 	@echo "Build finished; the LaTeX files are in $(BUILDDIR)/latex."
 	@echo "Run \`make' in that directory to run these through (pdf)latex" \
@@ -125,12 +139,16 @@ latex:
 
 latexpdf:
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
+	$(DIA) -n -t png-libart $(DIA_SOURCES)
+	mv *.png $(BUILDDIR)/latex/
 	@echo "Running LaTeX files through pdflatex..."
 	$(MAKE) -C $(BUILDDIR)/latex all-pdf
 	@echo "pdflatex finished; the PDF files are in $(BUILDDIR)/latex."
 
 latexpdfja:
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
+	$(DIA) -n -t png-libart $(DIA_SOURCES)
+	mv *.png $(BUILDDIR)/latex/
 	@echo "Running LaTeX files through platex and dvipdfmx..."
 	$(MAKE) -C $(BUILDDIR)/latex all-pdf-ja
 	@echo "pdflatex finished; the PDF files are in $(BUILDDIR)/latex."
