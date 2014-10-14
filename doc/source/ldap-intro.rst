@@ -141,44 +141,45 @@ starts with the keyword version and value 1.
        The actual format is more complex, but this tutorial
        should allow you to read and write normal LDIF files fluently.
 
-**A simple LDAP file with two entries.**
+A simple LDAP file with two entries::
 
-    | version: 1
-    | dn: cn=Barbara Jensen, ou=Product Development, dc=airius, dc=com
-    | objectclass: top
-    | objectclass: person
-    | objectclass: organizationalPerson
-    | cn: Barbara Jensen
-    | cn: Barbara J Jensen
-    | cn: Babs Jensen
-    | sn: Jensen
-    | uid: bjensen
-    | telephonenumber: +1 408 555 1212
-    | description: A big sailing fan.
+    version: 1
+    dn: cn=Barbara Jensen, ou=Product Development, dc=airius, dc=com
+    objectclass: top
+    objectclass: person
+    objectclass: organizationalPerson
+    cn: Barbara Jensen
+    cn: Barbara J Jensen
+    cn: Babs Jensen
+    sn: Jensen
+    uid: bjensen
+    telephonenumber: +1 408 555 1212
+    description: A big sailing fan.
 
-    | dn: cn=Bjorn Jensen, ou=Accounting, dc=airius, dc=com
-    | objectclass: top
-    | objectclass: person
-    | objectclass: organizationalPerson
-    | cn: Bjorn Jensen
-    | sn: Jensen
-    | telephonenumber: +1 408 555 1212
+    dn: cn=Bjorn Jensen, ou=Accounting, dc=airius, dc=com
+    objectclass: top
+    objectclass: person
+    objectclass: organizationalPerson
+    cn: Bjorn Jensen
+    sn: Jensen
+    telephonenumber: +1 408 555 1212
 
-**A file containing an entry with a folded attribute value, from RFC2849.**
 
-    | version: 1
-    | dn:cn=Barbara Jensen, ou=Product Development, dc=airius, dc=com
-    | objectclass:top
-    | objectclass:person
-    | objectclass:organizationalPerson
-    | cn:Barbara Jensen
-    | cn:Barbara J Jensen
-    | cn:Babs Jensen
-    | sn:Jensen
-    | uid:bjensen
-    | telephonenumber:+1 408 555 1212
-    | description:Babs is a big sailing fan, and travels extensively in search of perfect sailing conditions.
-    | title:Product Manager, Rod and Reel Division
+A file containing an entry with a folded attribute value, from RFC2849::
+
+    version: 1
+    dn:cn=Barbara Jensen, ou=Product Development, dc=airius, dc=com
+    objectclass:top
+    objectclass:person
+    objectclass:organizationalPerson
+    cn:Barbara Jensen
+    cn:Barbara J Jensen
+    cn:Babs Jensen
+    sn:Jensen
+    uid:bjensen
+    telephonenumber:+1 408 555 1212
+    description:Babs is a big sailing fan, and travels extensively in search of perfect sailing conditions.
+    title:Product Manager, Rod and Reel Division
 
 Searches and Search Filters
 ---------------------------

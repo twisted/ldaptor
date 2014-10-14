@@ -8,7 +8,6 @@ Subpackages
 
     ldaptor.protocols
     ldaptor.samba
-    ldaptor.test
 
 Submodules
 ----------
