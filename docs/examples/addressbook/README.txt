@@ -7,7 +7,6 @@ language and Ldaptor and Twisted programming libraries.
 
 Estimated length: 1h 30min, including a short break.
 
-
 First, you need to start the LDAP server. Have OpenLDAP installed
 (apt-get install slapd), cd into the server directory and say "./run".
 You don't need to be root.

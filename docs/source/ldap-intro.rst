@@ -116,9 +116,7 @@ Object-oriented look at LDAP entries
 
 If you look at LDAP entries from the viewpoint of a
 programmer accustomed with object oriented programming, you will
-see a lot of similarities, but also some striking differences:
-
-:doc:`ldapentry-vs-oo`
+see a lot of similarities, but also some striking differences.
 
 Writing Things Down: LDIF
 -------------------------
@@ -195,8 +193,6 @@ An LDAP search takes the following information as input:
 .. NOTE::
    Once again, we are skipping some details for
    understandability.
-
-:doc:`search-inputs`
 
 Of these, the search filter is clearly the most interesting
 one. As with LDIF, search filters have a standardized plain text

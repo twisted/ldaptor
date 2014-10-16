@@ -1,0 +1,36 @@
+Release 14.0
+============
+Ldaptor has a new version schema. As a first-party library we now follow Twisted's example.
+
+License
+-------
+* Tommi changed Ldaptor's license to the MIT (Expat) license.
+* Replaced MD4 code with one using BSD 3-clause license.
+
+API Changes
+-----------
+* None
+
+Testing
+-------
+* Added Travis-CI.
+* Added test coverage, we're currently at around 75%.
+* Use Tox build matrix to handle pypy, py26, py27 and twisted version from 10.0 until 14.0
+* The above passes all existing unit tests.
+
+Improved Documentation
+----------------------
+* Added, updated and reworked documentation using Sphinx.
+* We'll be using readthedocs.com soon.
+* Dia is required for convert diagrams to svg/png. No dia, no images.
+* Use dia conversion in Makefile.
+
+Bugfixes
+--------
+TODO: Many
+
+
+Prehistory
+==========
+
+All versions up to and including 0.0.43 didn't have a changelog.
