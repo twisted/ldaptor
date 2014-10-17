@@ -1,6 +1,0 @@
->>> smith=results[0]
->>> print smith.dn
-givenName=John+sn=Smith,ou=People,dc=example,dc=com
->>> smith['givenName']
-['John']
->>>

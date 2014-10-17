@@ -1,9 +1,0 @@
->>> from twisted.trial.util import deferredResult
->>> proto=deferredResult(d)
->>> proto
-<ldaptor.protocols.ldap.ldapclient.LDAPClient
-instance at 0x40619dac>
->>> from ldaptor.protocols.ldap import ldapsyntax
->>> baseEntry=ldapsyntax.LDAPEntry(client=proto, dn=dn)
->>> d2=baseEntry.search(filterText='(gn=j*)')
->>> results=deferredResult(d2)

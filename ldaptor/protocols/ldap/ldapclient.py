@@ -77,7 +77,7 @@ class LDAPClient(protocol.Protocol):
             raise LDAPClientConnectionLostException()
         msg=pureldap.LDAPMessage(op)
         if self.debug:
-            log.debug('C->S %s' % repr(msg))
+            log.msg('C->S %s' % repr(msg))
         assert not self.onwire.has_key(msg.id)
         return msg
 
@@ -151,7 +151,7 @@ class LDAPClient(protocol.Protocol):
     def handle(self, msg):
         assert isinstance(msg.value, pureldap.LDAPProtocolResponse)
         if self.debug:
-            log.debug('C<-S %s' % repr(msg))
+            log.msg('C<-S %s' % repr(msg))
 
         if msg.id==0:
             self.unsolicitedNotification(msg.value)

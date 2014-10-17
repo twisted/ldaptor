@@ -1,0 +1,4 @@
+sphinx
+nose
+pytest
+pdbpp

@@ -61,7 +61,6 @@ can be installed e.g., by:
 
     apt-get install python-ldaptor
 
-
 To run the LDAP server (runs on port 38942):
 
     twistd -ny --pidfile=ldapserver.pid --logfile=ldapserver.log \
@@ -80,15 +79,12 @@ Status and History
 
 Ldaptor was created by Tommi Virtanen who developed it during the
 years 2001-2008. From 2007 onwards mainly bug fixes were added, many
-contributed by Debian maintainers. The original author is however no
-longer developing or actively using Ldaptor. The currently maintained
-code directly descends from the original author's code repository
-available at:
+contributed by Debian maintainers. Development picked back up in 2014
+by Bret Curtis (psi29a) with Tommi's consent and was migrated
+to Twisted where it is a first-party Twisted library. Ldaptor can
+be found here:
 
-- http://eagain.net/gitweb/?p=ldaptor.git
-- git://eagain.net/ldaptor.git
+- https://github.com/twisted/ldaptor
 
 The LDAP client library functionality is in active use. It is stable
-and works very well. Current focus is on fixing bugs and maintaining
-compatibility with new, stable Python and Twisted releases.
-
+and works very well.

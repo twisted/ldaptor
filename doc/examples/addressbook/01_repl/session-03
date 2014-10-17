@@ -1,4 +1,0 @@
->>> d=connector.connectAnonymously(dn,
-... {dn: ('localhost', 10389)})
->>> d
-<Deferred at 0x402d058c>

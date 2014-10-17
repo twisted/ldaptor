@@ -1,9 +1,0 @@
-string teal ;
-type yellow ;
-symbol darkblue ;
-keyword blue b ;
-comment brown i ;
-number purple ;
-preproc darkblue b ;
-function black b;
-cbracket red;
