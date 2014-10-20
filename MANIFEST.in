@@ -1,7 +1,26 @@
+include *.txt
 include MANIFEST.in
-include TODO
+include AUTHORS
+include NEWS
 include README.md
 include .travis.yml
 include LICENSE
 include tox.ini
+include ldaptor.schema
+include test-ldapserver.tac
+include docs/examples/ldif2ldif
 recursive-include ldaptor *.ldif
+recursive-include docs Makefile
+recursive-include docs *.rst
+recursive-include docs *.dia
+recursive-include docs *.keep
+recursive-include docs *.py
+recursive-include docs *.xhtml
+recursive-include docs *.ldif
+recursive-include docs *.tac
+recursive-include docs *.schema
+recursive-include docs *.txt
+recursive-include docs *.cfg
+recursive-include docs *.conf
+recursive-include docs/examples/addressbook run
+recursive-include docs/examples/addressbook summary
