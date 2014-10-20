@@ -1,33 +1,31 @@
-Release 14.0
-============
+Changelog
+=========
 Ldaptor has a new version schema. As a first-party library we now follow Twisted's example.
 
-License
--------
+Release 14.0
+------------
+
+**License**
     * Tommi changed Ldaptor's license to the MIT (Expat) license.
     * Replaced MD4 code with one using BSD 3-clause license.
 
-API Changes
------------
+**API Changes**
     * Ldaptor client and server: None
     * Everything having to do with webui and Nevow have been removed
 
-Testing
--------
+**Testing**
     * Added Travis-CI.
     * Added test coverage, we're currently at around 75%.
     * Use Tox build matrix to handle pypy, py26, py27 and twisted version from 10.0 until 14.0
     * The above passes all existing unit tests, a few "ordering" bugs were fixed in the process.
     * Added pureldap.LDAPAbandonRequest and extra pureldap.LDAPExtendedRequest test
 
-Improved Documentation
-----------------------
+**Improved Documentation**
     * Added, updated and reworked documentation using Sphinx.
     * Stay tuned to: https://ldaptor.readthedocs.org/
     * Dia is required for convert diagrams to svg/png, this might change in the future.
 
-Bugfixes
---------
+**Bug fixes**
     * Fix startTLS support, in accordance to RFC2251
     * Fix for debug logging in ldapclient
     * Added support for abandon request
@@ -49,6 +47,6 @@ Bugfixes
 
 
 Prehistory
-==========
+----------
 
 All versions up to and including 0.0.43 didn't have a changelog.

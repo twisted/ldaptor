@@ -49,11 +49,13 @@ User Guide
 .. toctree::
    :maxdepth: 2
 
+   AUTHORS
    ldap-intro
 
 .. toctree::
    :maxdepth: 1
 
+   NEWS
    addressbook-example
 
 Ldaptor API:

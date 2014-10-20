@@ -1,4 +1,0 @@
-#!/bin/sh
-set -e
-
-find . \( -name build -prune \) -o \( -name debian -prune \) -o \( -name '*.py' -print0 \) | xargs -0 pychecker
