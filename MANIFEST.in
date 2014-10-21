@@ -24,3 +24,5 @@ recursive-include docs *.cfg
 recursive-include docs *.conf
 recursive-include docs/examples/addressbook run
 recursive-include docs/examples/addressbook summary
+prune docs/build/html
+prune ldaptor/test/ldif/webtests.tmp
