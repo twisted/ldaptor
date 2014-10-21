@@ -1,7 +1,4 @@
 include *.txt
-include MANIFEST.in
-include AUTHORS
-include NEWS
 include README.md
 include .travis.yml
 include LICENSE
