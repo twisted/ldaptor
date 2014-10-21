@@ -1,10 +1,11 @@
 Changelog
 =========
 
-Ldaptor has a new version schema. As a first-party library we now follow Twisted's example.
 
 Release 14.0 (UNRELEASED)
 -------------------------
+
+Ldaptor has a new version schema. As a first-party library we now follow Twisted's example.
 
 License
 ^^^^^^^
@@ -32,12 +33,11 @@ Features
 Bugfixes
 ^^^^^^^^
 
-    - ldaptor.protocols.pureldap.LDAPExtendedRequest now correctly handles STARTTLS in accordance to `RFC2251 <http://tools.ietf.org/html/rfc2251>`_.
     - ldaptor.protocols.ldap.ldapclient's now uses log.msg for it's debug listing instead of the non-Twisted log.debug.
     - String literal exceptions have been replaced by real Exceptions.
     - "bin/ldaptor-ldap2passwd --help" now does not throws an exception anymore (`debian bug #526522 <https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=526522>`_).
     - ldaptor.delta.Modification and ldaptor.protocols.ldap.ldapsyntax.PasswordSetAggregateError that are used for adding contacts now handle unicode arguments properly.
-    - ldaptor.protocols.pureldap.LDAPExtendedRequest's constructor has been fixed so the constructor of ldaptor.protocols.pureldap.LDAPStartTLSRequest doesn't fail anymore.
+    - ldaptor.protocols.pureldap.LDAPExtendedRequest's constructor now handles STARTTLS in accordance to `RFC2251 <http://tools.ietf.org/html/rfc2251>`_ so the constructor of ldaptor.protocols.pureldap.LDAPStartTLSRequest doesn't fail anymore.
     - ldaptor.protocols.ldap.ldapserver.BaseLDAPServer now uses the correct exception module in dataReceived.
     - ldaptor.protocols.ldap.ldaperrors.LDAPException: "Fix deprecated exception error"
     - bin/ldaptor-find-server now imports dns from the correct twisted modules.
