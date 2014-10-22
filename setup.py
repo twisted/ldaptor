@@ -12,7 +12,7 @@ if __name__ == '__main__':
     setup(name="ldaptor",
           version='14.0',
           description="A Pure-Python Twisted library for LDAP",
-          long_description=read('README.md'),
+          long_description=read('README.rst'),
           author="Tommi Virtanen",
           author_email="tv@eagain.net",
           maintainer="Bret Curtis",

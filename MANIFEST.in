@@ -1,7 +1,7 @@
+include *.rst
 include *.txt
 include .travis.yml
 include LICENSE
-include README.md
 include docs/examples/ldif2ldif
 include ldaptor.schema
 include test-ldapserver.tac
