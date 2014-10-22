@@ -38,12 +38,10 @@ Setting up an LDAP server in 5 seconds
 Python, an easy programming language
 
 **Batteries included!**
-    
+
 Python combines remarkable power with very clear syntax.
 
 Runs on many brands of UNIX, on Windows, OS/2, Mac, Amiga, and many other platforms.
-
-    TODO: add more about getting things setup.
 
 The first step
 --------------
@@ -91,13 +89,11 @@ Preparing to connect
 Twisted
 -------
 
-Twisted is an event-driven networking framework written in Python and licensed under the MIT \
-(Expat) License.
+Twisted is an event-driven networking framework written in Python and licensed under the MIT (Expat) License.
 
-Twisted supports TCP, UDP, SSL/TLS, multicast, Unix sockets, a large number of protocols \
-(including HTTP, NNTP, SSH, IRC, FTP, and others), and much more.
+Twisted supports TCP, UDP, SSL/TLS, multicast, Unix sockets, a large number of protocols (including HTTP, NNTP, SSH, IRC, FTP, and others), and much more.
 
-Twisted includes many fullblown applications, such as web, SSH, FTP, DNS and news servers.
+Twisted includes many full-blown applications, such as web, SSH, FTP, DNS and news servers.
 
 Connecting
 ----------
@@ -112,11 +108,12 @@ Connecting
 
 Deferreds
 ---------
-* A promise that a function will at some point have a result.
-* You can attach callback functions to a Deferred.
-* Once it gets a result these callbacks will be called.
-* Also allows you to register a callback for an error, with the default behavior of logging the error.
-* Standard way to handle all sorts of blocking or delayed operations.
+
+- A promise that a function will at some point have a result.
+- You can attach callback functions to a Deferred.
+- Once it gets a result these callbacks will be called.
+- Also allows you to register a callback for an error, with the default behavior of logging the error.
+- Standard way to handle all sorts of blocking or delayed operations.
 
 Searching
 ---------
@@ -208,35 +205,29 @@ A lot of similarities with OO programming languages, but some big differences, t
 
 An LDAP entry corresponds with an object.
 
-Whereas object are usually instances of a single class, LDAP entries can "implement" multiple \
-objectClasses.
+Whereas object are usually instances of a single class, LDAP entries can "implement" multiple objectClasses.
 
 All objectClasses can inherit zero, one or many objectClasses, just like programming classes.
 
-All objectClasses have a root class, known as `top`; many object oriented programming languages \
-have a root class, e.g. named `Object`.
+All objectClasses have a root class, known as `top`; many object oriented programming languages have a root class, e.g. named `Object`.
 
-All objectClasses are either `STRUCTURAL` or `AUXILIARY`; entries can only implement \
-one `STRUCTURAL` objectClass.
+All objectClasses are either `STRUCTURAL` or `AUXILIARY`; entries can only implement one `STRUCTURAL` objectClass.
 
-Lastly, objectClasses of an entry can be changed at will; you only need to take care that the \
-entry has all the `MUST` attribute types, and no attribute types outside of the ones that \
-are `MUST` or `MAY`.
+Lastly, objectClasses of an entry can be changed at will; you only need to take care that the entry has all the `MUST` attribute types, and no attribute types outside of the ones that are `MUST` or `MAY`.
 
 .. NOTE::
     Note that e.g. OpenLDAP doesn't implement this.
 
-Attributes of an entry closely match attributes of objects in programming languages; however, \
- LDAP attributes may have multiple values.
+Attributes of an entry closely match attributes of objects in programming languages; however, LDAP attributes may have multiple values.
 
 Search inputs
 -------------
+
 An example search filter: ``(cn=John Smith)``
 
 A search filter, specifying criteria an entry must fulfill to match.
 
-Scope of the search, either look at the base DN only, only look one level below it, or look at \
-the whole subtree rooted at the base DN.
+Scope of the search, either look at the base DN only, only look one level below it, or look at the whole subtree rooted at the base DN.
 
 Size limit of at most how many matching entries to return.
 
@@ -296,28 +287,34 @@ Our first Python program
 
 Phases of the protocol chat
 ---------------------------
-* Open and bind
-* Search (possibly many times)
-* Unbind and close
+
+- Open and bind
+- Search (possibly many times)
+- Unbind and close
 
 Opening and binding
 -------------------
+
 .. image::  chat-bind.png
 
 Doing a search
 --------------
+
 .. image::  chat-search.png
 
 Doing multiple searches
 -----------------------
+
 .. image::  chat-search-pipeline.png
 
 Unbinding and closing
 ---------------------
+
 .. image::  chat-unbind.png
 
 A complex search filter
 -----------------------
+
 An example::
 
     (&(objectClass=person)
@@ -333,11 +330,11 @@ Object classes
 #. Objectclass defines
     #. What attributetypes an entry MUST have
     #. What attributetypes an entry MAY have
-#. An entry in a phonebook must have a name and a telephone number,
-    and may have a fax number and street address.
+#. An entry in a phonebook must have a name and a telephone number, and may have a fax number and street address.
 
 Schema
 ------
+
 #. A configuration file included in the LDAP server configuration.
 #. A combination of attribute type and object class definitions.
 #. Stored as plain text
@@ -345,6 +342,7 @@ Schema
 
 Attribute type
 --------------
+
 An example::
 
     attributetype ( 2.5.4.4 NAME ( 'sn' 'surname' )
@@ -353,6 +351,7 @@ An example::
 
 
 Can also contain:
+
 #. content data type
 #. comparison and sort mechanism
 #. substring search mechanism
@@ -373,6 +372,7 @@ An example::
 
 Creating schemas
 ----------------
+
 #. Anyone can create their own schema
 #. Need to be globally unique
 #. But try to use already existing ones
@@ -386,5 +386,6 @@ Install Ldaptor: https://github.com/twisted/ldaptor
 
 Learn Python: http://www.python.org/
 
-Learn Twisted. Write a client application for a simple protocol. Read the HOWTOs.
-http://twistedmatrix.com/documents/howto/clients
+Learn Twisted.
+Write a client application for a simple protocol.
+Read the HOWTOs:  http://twistedmatrix.com/documents/current/core/howto/clients.html

@@ -1,5 +1,5 @@
-ldaptor package
-===============
+ldaptor API Reference
+=====================
 
 Subpackages
 -----------
