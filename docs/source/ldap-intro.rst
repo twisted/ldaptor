@@ -14,7 +14,7 @@ LDAP Presents a Distributed Tree of Information
 Probably the nicest way to get a mental model of LDAP information is to think of a tree with elements both in leaf and non-leaf nodes.
 Parts of the tree may reside at different LDAP servers.
 
-.. image::  ldap-is-a-tree.png
+.. image::  _static/images/ldap-is-a-tree.png
    :alt: Tree-like, distributed nature of data stored in LDAP
 
 An organization normally uses their DNS domain name as the root entry for their local LDAP tree.
@@ -165,7 +165,7 @@ For example, to match only objects that have objectClass ``person``, where the f
 
 ``(&(objectClass=person)(!(telephoneNumber=*))(|(cn=*a*b*)(cn=*b*a*)))``
 
-.. image:: ldapfilter-as-tree.png
+.. image:: _static/images/ldapfilter-as-tree.png
    :alt: Visualizing an LDAP search filter
 
 Phases of an LDAP Protocol Chat
@@ -183,7 +183,7 @@ The client authenticates itself and/or the user, providing any necessary authent
 This is called binding.
 Normally, the connection is not really authenticated, but left as anonymous; the bind message is sent with no user or password information.
 
-.. image:: chat-bind.png
+.. image:: _static/images/chat-bind.png
    :alt: Beginning of an LDAP protocol chat
 
 Next, the client sends a search request, containing the base DN for the search, the filter that entries must fulfill to match, and some extra settings discussed above.
@@ -192,13 +192,13 @@ The server replies by sending search result entries back, one message per matchi
 If no entry matched or there was an error before the search could even start, the server might not send any entries.
 Finally, the server sends a message indicating the search is done, and includes information on whether the search was completely successfully, or the error encountered.
 
-.. image:: chat-search.png
+.. image:: _static/images/chat-search.png
    :alt: A sample LDAP search operation
 
 Note that the client could have sent another search request without waiting for the first search to complete.
 The order of results from the different search, or when they are completed, is in no way guaranteed.
 
-.. image:: chat-search-pipeline.png
+.. image:: _static/images/chat-search-pipeline.png
    :alt: Multiple search operations pipelined
 
 One important detail we have skimmed over so far is how the LDAP client knows what message the server is replying to.
@@ -214,7 +214,7 @@ This message is known as ``unbind``.
 This only means that the state of connection is the same as when connected, before the first ``bind``; that is, it un-authenticates the current user.
 If the client really wants to close the connection, it will then close the TCP socket.
 
-.. image:: chat-unbind.png
+.. image:: _static/images/chat-unbind.png
    :alt: End of an LDAP protocol chat
 
 Please understand that these were just examples, and in reality protocol chats are often more complicated.

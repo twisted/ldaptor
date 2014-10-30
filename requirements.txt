@@ -1,3 +1,5 @@
+-e .
+
 pyOpenSSL
 PyCrypto
 service_identity

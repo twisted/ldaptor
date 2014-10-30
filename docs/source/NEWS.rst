@@ -2,8 +2,8 @@ Changelog
 =========
 
 
-Release 14.0 (UNRELEASED)
--------------------------
+Release 14.0
+------------
 
 Ldaptor has a new version schema. As a first-party library we now follow Twisted's example.
 
