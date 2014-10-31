@@ -3,7 +3,7 @@ Creating a simple LDAP application
 
 LDAP presents a distributed tree of information
 -----------------------------------------------
-.. image::  ldap-is-a-tree.png
+.. image::  _static/images/ldap-is-a-tree.png
 
 Writing things down, John Doe LDIF::
 
@@ -70,7 +70,7 @@ It is licensed under the MIT (Expat) License.
 Overview of Ldaptor
 -------------------
 
-.. image::  overview.png
+.. image::  _static/images/overview.png
 
 Preparing to connect
 --------------------
@@ -295,22 +295,22 @@ Phases of the protocol chat
 Opening and binding
 -------------------
 
-.. image::  chat-bind.png
+.. image::  _static/images/chat-bind.png
 
 Doing a search
 --------------
 
-.. image::  chat-search.png
+.. image::  _static/images/chat-search.png
 
 Doing multiple searches
 -----------------------
 
-.. image::  chat-search-pipeline.png
+.. image::  _static/images/chat-search-pipeline.png
 
 Unbinding and closing
 ---------------------
 
-.. image::  chat-unbind.png
+.. image::  _static/images/chat-unbind.png
 
 A complex search filter
 -----------------------
@@ -321,7 +321,7 @@ An example::
         (!(telephoneNumber=*))
         (|(cn=*a*b*)(cn=*b*a*)))
 
-.. image::  ldapfilter-as-tree.png
+.. image::  _static/images/ldapfilter-as-tree.png
 
 Object classes
 --------------

@@ -1,3 +1,7 @@
+-r requirements.txt
+-e .
+
+check-manifest
 sphinx
 nose
 pytest

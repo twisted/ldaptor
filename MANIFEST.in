@@ -13,6 +13,7 @@ recursive-include docs *.conf
 recursive-include docs *.dia
 recursive-include docs *.keep
 recursive-include docs *.ldif
+recursive-include docs *.png
 recursive-include docs *.py
 recursive-include docs *.rst
 recursive-include docs *.schema
