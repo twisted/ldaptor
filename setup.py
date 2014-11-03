@@ -5,11 +5,11 @@ from setuptools import setup
 
 def read(fname):
     with open(os.path.join(os.path.dirname(__file__), fname)) as f:
-        return f
+        return f.read()
 
 
 if __name__ == '__main__':
-    setup(name="ldaptor",
+    setup(name="Ldaptor",
           version='14.0',
           description="A Pure-Python Twisted library for LDAP",
           long_description=read('README.rst'),
