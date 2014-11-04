@@ -9,7 +9,7 @@ def read(fname):
 
 
 if __name__ == '__main__':
-    setup(name="Ldaptor",
+    setup(name="ldaptor",
           version='14.0',
           description="A Pure-Python Twisted library for LDAP",
           long_description=read('README.rst'),

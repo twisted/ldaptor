@@ -3,10 +3,12 @@
 _trial_temp/
 .tox/
 ldaptor.test.*/
-/ldaptor/test/ldif/webtests.tmp
-/docs/*.png
-/docs/build/
+ldaptor/test/ldif/webtests.tmp
+docs/*.png
+docs/build/
 ldaptor.egg-info
 .idea
 .coverage
-/venv/
+venv/
+build/
+dist/
