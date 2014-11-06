@@ -1,16 +1,32 @@
 #!/usr/bin/python
+
+import codecs
 import os
+import re
+
 from setuptools import setup
 
 
-def read(fname):
-    with open(os.path.join(os.path.dirname(__file__), fname)) as f:
+here = os.path.abspath(os.path.dirname(__file__))
+
+
+def read(*parts):
+    with codecs.open(os.path.join(here, *parts), 'r') as f:
         return f.read()
+
+
+def find_version(*file_paths):
+    version_file = read(*file_paths)
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                              version_file, re.M)
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError("Unable to find version string.")
 
 
 if __name__ == '__main__':
     setup(name="ldaptor",
-          version='14.0',
+          version=find_version("ldaptor", "__init__.py"),
           description="A Pure-Python Twisted library for LDAP",
           long_description=read('README.rst'),
           author="Tommi Virtanen",
@@ -19,14 +35,23 @@ if __name__ == '__main__':
           maintainer_email="psi29a@gmail.com",
           url="https://github.com/twisted/ldaptor",
           license="MIT",
-          install_requires=['zope.interface', 'Twisted', 'pyparsing', 'pyOpenSSL', 'PyCrypto'],
-          classifiers=['Intended Audience :: Developers',
-                       'License :: OSI Approved :: MIT License',
-                       'Operating System :: OS Independent',
-                       'Development Status :: 5 - Production/Stable',
-                       'Framework :: Twisted', 'Programming Language :: Python',
-                       'Topic :: Software Development :: Libraries :: Python Modules',
-                       'Topic :: System :: Systems Administration :: Authentication/Directory :: LDAP'],
+          install_requires=[
+              'PyCrypto',
+              'Twisted',
+              'pyOpenSSL',
+              'pyparsing',
+              'zope.interface',
+          ],
+          classifiers=[
+              'Intended Audience :: Developers',
+              'License :: OSI Approved :: MIT License',
+              'Operating System :: OS Independent',
+              'Development Status :: 5 - Production/Stable',
+              'Framework :: Twisted', 'Programming Language :: Python',
+              'Topic :: Software Development :: Libraries :: Python Modules',
+              'Topic :: System :: Systems Administration '
+              ':: Authentication/Directory :: LDAP'
+          ],
           packages=["ldaptor",
                     "ldaptor.protocols",
                     "ldaptor.protocols.ldap",
