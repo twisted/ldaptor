@@ -73,9 +73,8 @@ class ProxyBase(ldapserver.BaseLDAPServer):
         """
         The connection to the proxied server failed.
         """
-        #TODO self.loseConnection()
         log.err(err)
-        return reason # TODO
+        return err 
 
     def _processBacklog(self):
         """
@@ -95,12 +94,13 @@ class ProxyBase(ldapserver.BaseLDAPServer):
 
         def forwardit(result, reply):
             """
+            Forward the LDAP request to the proxied server.
             """
             request, controls = result
-            # TODO controls
             if request.needs_answer:
                 d = self.client.send_multiResponse(request, self._gotResponseFromProxiedServer, reply, request, controls)
-                # TODO handle errbacks from the deferred above
+                d.addErrback(log.err)
+                del d
             else:
                 self.client.send_noResponse(request)
         d = defer.maybeDeferred(self.handleBeforeForwardRequest, request, controls)
@@ -157,7 +157,6 @@ if __name__ == '__main__':
     Demonstration LDAP proxy; passes all requests to localhost:389.
     """
     from twisted.internet import protocol
-    from twisted.python import log
     import sys
     log.startLogging(sys.stderr)
 
