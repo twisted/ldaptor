@@ -2,7 +2,7 @@
 Test cases for ldaptor.protocols.ldap.proxybase module.
 """
 
-from twisted.internet import reactor, error
+from twisted.internet import error
 from twisted.internet.task import Clock
 from twisted.trial import unittest
 from ldaptor.protocols.ldap import proxybase, ldaperrors
