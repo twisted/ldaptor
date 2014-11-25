@@ -13,7 +13,7 @@ class ProxyBase(ldapserver.BaseLDAPServer):
     unbound = False
     clientCreator = ldapconnector.LDAPClientCreator
 
-    def __init__(self, config, use_tls=False):
+    def __init__(self, config, use_tls=False, reactor_=reactor):
         """
         Initialize the object.
 
@@ -29,10 +29,11 @@ class ProxyBase(ldapserver.BaseLDAPServer):
         # are queued.
         self.queuedRequests = []
         self.use_tls = use_tls
+        self.reactor = reactor_
 
     def connectionMade(self):
         # Esablish a connection to the proxied LDAP server.
-        clientCreator = self.clientCreator(reactor, self.protocol)
+        clientCreator = self.clientCreator(self.reactor, self.protocol)
         d = clientCreator.connect(
             dn='',
             overrides=self.config.getServiceLocationOverrides())

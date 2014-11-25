@@ -123,15 +123,19 @@ class LDAPClientTestDriver:
         self.transport.loseConnection()
 
 def createServer(proto, *responses, **kw):
+    if 'proto_args' in kw:
+        proto_args = kw['proto_args']
+        del kw['proto_args']
+    else:
+        proto_args = {}
     def createClient(factory):
         factory.doStart()
-        #TODO factory.startedConnecting(c)
         proto = factory.buildProtocol(addr=None)
         proto.connectionMade()
     overrides = kw.setdefault('serviceLocationOverrides', {})
     overrides.setdefault('', createClient)
     conf = config.LDAPConfig(**kw)
-    server = proto(conf)
+    server = proto(conf, **proto_args)
     server.protocol = lambda : LDAPClientTestDriver(*responses)
     server.transport = proto_helpers.StringTransport()
     server.connectionMade()
