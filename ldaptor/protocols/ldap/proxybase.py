@@ -1,7 +1,7 @@
 """LDAP protocol proxy server"""
 
 from ldaptor import config
-from ldaptor.protocols.ldap import ldapserver, ldapconnector, ldapclient
+from ldaptor.protocols.ldap import ldapserver, ldapconnector, ldapclient, ldaperrors
 from ldaptor.protocols import pureldap
 from twisted.internet import reactor, defer
 from twisted.python import log
@@ -19,6 +19,9 @@ class ProxyBase(ldapserver.BaseLDAPServer):
 
         @param config: The configuration.
         @type config: ldaptor.interfaces.ILDAPConfig
+
+        @param use_tls: Force connections to the proxied server to use startTLS.
+        @type use_tls: boolean
         """
         ldapserver.BaseLDAPServer.__init__(self)
         self.config = config
@@ -39,8 +42,7 @@ class ProxyBase(ldapserver.BaseLDAPServer):
         ldapserver.BaseLDAPServer.connectionMade(self)
 
     def connectionLost(self, reason):
-        assert self.client is not None
-        if self.client.connected:
+        if self.client is not None and self.client.connected:
             if not self.unbound:
                 self.client.unbind()
                 self.unbound = True
@@ -137,6 +139,27 @@ class ProxyBase(ldapserver.BaseLDAPServer):
         d = defer.succeed(request)
         d.addCallback(self._forwardRequestToProxiedServer, controls, reply)
         return d
+
+    def handle_LDAPExtendedRequest(self, request, controls, reply):
+        """
+        """
+        log.msg("Received extended request: " + request.requestName)
+        if request.requestName == pureldap.LDAPStartTLSRequest.oid:
+            d = defer.maybeDeferred(self.handleStartTLSRequest, request, controls, reply)
+            d.addErrback(log.err)
+            return d
+
+        return self.handleUnknown(request, controls, reply)
+
+    def handleStartTLSRequest(self, request, controls, reply):
+        """
+        """
+        log.msg("Received startTLS request: " + repr(request)) 
+        msg = pureldap.LDAPStartTLSResponse(resultCode=ldaperrors.LDAPUnavailable.resultCode)
+        log.msg("StartTLS not implemented.  Responding with 'unavailable' (52): " + repr(msg))
+        #self.transport.write(msg)
+        return defer.succeed(msg)
+        
 
     def handle_LDAPUnbindRequest(self, request, controls, reply):
         self.unbound = True
