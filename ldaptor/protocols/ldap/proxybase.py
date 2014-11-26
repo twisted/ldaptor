@@ -30,6 +30,7 @@ class ProxyBase(ldapserver.BaseLDAPServer):
         self.queuedRequests = []
         self.use_tls = use_tls
         self.reactor = reactor_
+        self.startTLS_initiated = False
 
     def connectionMade(self):
         # Esablish a connection to the proxied LDAP server.
@@ -144,7 +145,8 @@ class ProxyBase(ldapserver.BaseLDAPServer):
     def handle_LDAPExtendedRequest(self, request, controls, reply):
         """
         """
-        log.msg("Received extended request: " + request.requestName)
+        if self.debug:
+            log.msg("Received extended request: " + request.requestName)
         if request.requestName == pureldap.LDAPStartTLSRequest.oid:
             d = defer.maybeDeferred(self.handleStartTLSRequest, request, controls, reply)
             d.addErrback(log.err)
@@ -154,11 +156,34 @@ class ProxyBase(ldapserver.BaseLDAPServer):
 
     def handleStartTLSRequest(self, request, controls, reply):
         """
+        If the protocol factory has an `options` attribute it is assumed
+        to be a `twisted.internet.ssl.CertificateOptions` that can be used
+        to initiate TLS on the transport.
+
+        Otherwise, this method returns an `unavailable` result code.
         """
-        log.msg("Received startTLS request: " + repr(request)) 
-        msg = pureldap.LDAPStartTLSResponse(resultCode=ldaperrors.LDAPUnavailable.resultCode)
-        log.msg("StartTLS not implemented.  Responding with 'unavailable' (52): " + repr(msg))
-        #self.transport.write(msg)
+        debug_flag = self.debug
+        if debug_flag:
+            log.msg("Received startTLS request: " + repr(request)) 
+        if hasattr(self.factory, 'options'):
+            if self.startTLS_initiated:
+                msg = pureldap.LDAPStartTLSResponse(resultCode=ldaperrors.LDAPOperationsError.resultCode)
+                log.msg("Session already using TLS.  Responding with 'operationsError' (1): " + repr(msg))
+            else:
+                if debug_flag:
+                    log.msg("Setting success result code ...")
+                msg = pureldap.LDAPStartTLSResponse(resultCode=ldaperrors.Success.resultCode)
+                if debug_flag:
+                    log.msg("Replying with successful LDAPStartTLSResponse ...")
+                reply(msg)
+                if debug_flag:
+                    log.msg("Initiating startTLS on transport ...")
+                self.transport.startTLS(self.factory.options)
+                self.startTLS_initiated = True
+                msg = None
+        else:
+            msg = pureldap.LDAPStartTLSResponse(resultCode=ldaperrors.LDAPUnavailable.resultCode)
+            log.msg("StartTLS not implemented.  Responding with 'unavailable' (52): " + repr(msg))
         return defer.succeed(msg)
         
 
