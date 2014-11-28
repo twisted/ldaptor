@@ -1,11 +1,10 @@
-
-# Standard Library
+"""
+LDAP protocol proxy server.
+"""
 from __future__ import absolute_import, division, print_function
-# Project modules
 from ldaptor import config
 from ldaptor.protocols.ldap import ldapserver, ldapconnector, ldapclient, ldaperrors
 from ldaptor.protocols import pureldap
-# External modules
 from twisted.internet import reactor, defer
 from twisted.python import log
 
