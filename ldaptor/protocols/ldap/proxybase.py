@@ -1,13 +1,24 @@
-"""LDAP protocol proxy server"""
-
+"""
+LDAP protocol proxy server.
+"""
+# Standard Library
+from __future__ import absolute_import, division, print_function
+# Project modules
 from ldaptor import config
 from ldaptor.protocols.ldap import ldapserver, ldapconnector, ldapclient, ldaperrors
 from ldaptor.protocols import pureldap
+# External modules
 from twisted.internet import reactor, defer
 from twisted.python import log
 
-
 class ProxyBase(ldapserver.BaseLDAPServer):
+    """
+    An LDAP server proxy.
+    Override `handleBeforeForwardRequest()` to inspect/modify requests from
+    the client.
+    Override `handleBeforeForwardRequest()` to inspect/modify responses from
+    the proxied server.
+    """
     protocol = ldapclient.LDAPClient
     client = None
     unbound = False
@@ -17,11 +28,13 @@ class ProxyBase(ldapserver.BaseLDAPServer):
         """
         Initialize the object.
 
-        @param config: The configuration.
-        @type config: ldaptor.interfaces.ILDAPConfig
+        :param config: The configuration.
+        :type config: ldaptor.interfaces.ILDAPConfig
 
-        @param use_tls: Force connections to the proxied server to use startTLS.
-        @type use_tls: boolean
+        :param use_tls: Force connections to the proxied server to use startTLS.
+        :type use_tls: boolean
+
+        :param reactor_: Use a reactor other than the default one.
         """
         ldapserver.BaseLDAPServer.__init__(self)
         self.config = config
@@ -33,14 +46,15 @@ class ProxyBase(ldapserver.BaseLDAPServer):
         self.startTLS_initiated = False
 
     def connectionMade(self):
-        # Esablish a connection to the proxied LDAP server.
+        """
+        Establish a connection to the proxied LDAP server.
+        """
         clientCreator = self.clientCreator(self.reactor, self.protocol)
         d = clientCreator.connect(
             dn='',
             overrides=self.config.getServiceLocationOverrides())
         d.addCallback(self._connectedToProxiedServer)
         d.addErrback(self._failedToConnectToProxiedServer)
-
         ldapserver.BaseLDAPServer.connectionMade(self)
 
     def connectionLost(self, reason):
@@ -95,7 +109,6 @@ class ProxyBase(ldapserver.BaseLDAPServer):
         if self.client is None:
             self.queuedRequests.append((request, controls, reply))
             return
-
         def forwardit(result, reply):
             """
             Forward the LDAP request to the proxied server.
@@ -123,8 +136,6 @@ class ProxyBase(ldapserver.BaseLDAPServer):
         """
         d = defer.maybeDeferred(self.handleProxiedResponse, response, request, controls)
         d.addCallback(reply)
-
-        # Evaluate to True if this is the last response to the request.
         return isinstance(response, (
             pureldap.LDAPSearchResultDone,
             pureldap.LDAPBindResponse,
@@ -138,12 +149,19 @@ class ProxyBase(ldapserver.BaseLDAPServer):
         return defer.succeed(response)
 
     def handleUnknown(self, request, controls, reply):
+        """
+        Forwards requests to the proxied server.
+        This handler is overridden from `ldaptor.protocol.ldap.server.BaseServer`.
+        And request for which no corresponding `handle_xxx()` method is 
+        implemented is dispatched to this handler.
+        """
         d = defer.succeed(request)
         d.addCallback(self._forwardRequestToProxiedServer, controls, reply)
         return d
 
     def handle_LDAPExtendedRequest(self, request, controls, reply):
         """
+        Handler for extended LDAP requests (e.g. startTLS).
         """
         if self.debug:
             log.msg("Received extended request: " + request.requestName)
@@ -151,7 +169,6 @@ class ProxyBase(ldapserver.BaseLDAPServer):
             d = defer.maybeDeferred(self.handleStartTLSRequest, request, controls, reply)
             d.addErrback(log.err)
             return d
-
         return self.handleUnknown(request, controls, reply)
 
     def handleStartTLSRequest(self, request, controls, reply):
@@ -186,13 +203,17 @@ class ProxyBase(ldapserver.BaseLDAPServer):
             log.msg("StartTLS not implemented.  Responding with 'unavailable' (52): " + repr(msg))
         return defer.succeed(msg)
         
-
     def handle_LDAPUnbindRequest(self, request, controls, reply):
+        """
+        The client has requested to gracefully end the connection.
+        Disconnect from the proxied server.
+        """
         self.unbound = True
         self.handleUnknown(request, controls, reply)
 
 class MyProxy(ProxyBase):
     """
+    A simple example of using `ProxyBase` to log responses.
     """
     def handleProxiedResponse(self, response, request, controls):
         """
@@ -208,7 +229,6 @@ if __name__ == '__main__':
     from twisted.internet import protocol
     import sys
     log.startLogging(sys.stderr)
-
     factory = protocol.ServerFactory()
     proxied = ('localhost', 8080)
     use_tls = False

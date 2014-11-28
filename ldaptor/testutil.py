@@ -123,6 +123,12 @@ class LDAPClientTestDriver:
         self.transport.loseConnection()
 
 def createServer(proto, *responses, **kw):
+    """
+    Create an LDAP server for testing.
+    :param proto: The server protocol factory (e.g. `ProxyBase`).
+    :param responses: The responses to initialize the `LDAPClientTestDrive`.
+    :param proto_args" Optional mapping passed as keyword args to protocol factory.
+    """
     if 'proto_args' in kw:
         proto_args = kw['proto_args']
         del kw['proto_args']
