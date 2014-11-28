@@ -1,6 +1,4 @@
-"""
-LDAP protocol proxy server.
-"""
+
 # Standard Library
 from __future__ import absolute_import, division, print_function
 # Project modules
@@ -232,7 +230,7 @@ if __name__ == '__main__':
     factory = protocol.ServerFactory()
     proxied = ('localhost', 8080)
     use_tls = False
-    cfg = config.LDAPConfig(serviceLocationOverrides={ '': proxied, })
+    cfg = config.LDAPConfig(serviceLocationOverrides={'': proxied, })
     factory.protocol = lambda : MyProxy(cfg, use_tls=use_tls)
     reactor.listenTCP(10389, factory)
     reactor.run()

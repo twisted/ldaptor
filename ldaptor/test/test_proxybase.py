@@ -21,10 +21,10 @@ class ProxyBase(unittest.TestCase):
 
     def test_bind(self):
         """
-        BIND to the server and get a successfult response.
+        When binding to the server an `LDAPBindResponse` with a successful 
+        result code.is written to the transport.
         """
-        server = self.createServer([ pureldap.LDAPBindResponse(resultCode=0),
-                                     ])
+        server = self.createServer([pureldap.LDAPBindResponse(resultCode=0),])
         server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(), id=4)))
         server.reactor.advance(1)
         self.assertEquals(server.transport.value(),
@@ -32,8 +32,8 @@ class ProxyBase(unittest.TestCase):
 
     def test_search(self):
         """
-        Perform an LDAP search against the server; verify search results and 
-        "search done" responses.
+        When performing an LDAP search against the server; the search results and 
+        a single "search done" response is written to the transport.
         """
         server = self.createServer([ pureldap.LDAPBindResponse(resultCode=0),
                                      ],
@@ -56,10 +56,7 @@ class ProxyBase(unittest.TestCase):
         The server disconnects from the client gracefully when the 
         client signals its intent to unbind.
         """
-        server = self.createServer([ pureldap.LDAPBindResponse(resultCode=0),
-                                     ],
-                                   [],
-                                   )
+        server = self.createServer([pureldap.LDAPBindResponse(resultCode=0),], [],)
         server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(), id=2)))
         server.reactor.advance(1)
         client = server.client
@@ -79,10 +76,7 @@ class ProxyBase(unittest.TestCase):
         The server disconects correctly when the client terminates the
         connection without sending an unbind request.
         """
-        server = self.createServer([ pureldap.LDAPBindResponse(resultCode=0),
-                                     ],
-                                   [],
-                                   )
+        server = self.createServer([pureldap.LDAPBindResponse(resultCode=0),], [],)
         server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(), id=2)))
         server.reactor.advance(1)
         client = server.client

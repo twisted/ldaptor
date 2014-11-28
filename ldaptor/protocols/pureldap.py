@@ -1333,12 +1333,11 @@ class LDAPExtendedResponse(LDAPResult):
 class LDAPStartTLSRequest(LDAPExtendedRequest):
     """
     Request to start Transport Layer Security.
-
     See RFC 2830 for details.
     """
     oid = '1.3.6.1.4.1.1466.20037'
 
-    def __init__(self, requestName = None, tag = None):
+    def __init__(self, requestName=None, tag=None):
         assert (requestName is None
                 or requestName == self.oid), \
                 '%s requestName was %s instead of %s' \
@@ -1346,42 +1345,40 @@ class LDAPStartTLSRequest(LDAPExtendedRequest):
 
         LDAPExtendedRequest.__init__(
             self,
-            requestName = self.oid,
-            tag = tag)
+            requestName=self.oid,
+            tag=tag)
 
     def __repr__(self):
         l = []
-        if self.tag!=self.__class__.tag:
-            l.append('tag=%d' % self.tag)
+        if self.tag != self.__class__.tag:
+            l.append('tag={0}'.format(self.tag))
         return self.__class__.__name__+'('+', '.join(l)+')'
 
 class LDAPStartTLSResponse(LDAPExtendedResponse):
     """
     Response to start Transport Layer Security.
-
     See RFC 4511 section 4.14.2 for details.
     """
     oid = '1.3.6.1.4.1.1466.20037'
 
-    def __init__(self, resultCode = None, matchedDN = None, errorMessage = None,
-                 referral = None, serverSaslCreds = None,
-                 responseName = None, response = None,
-                 tag = None):
-
+    def __init__(self, resultCode=None, matchedDN=None, errorMessage=None,
+                 referral=None, serverSaslCreds=None,
+                 responseName=None, response=None,
+                 tag=None):
         LDAPExtendedResponse.__init__(self, 
-            resultCode = resultCode, 
-            matchedDN = matchedDN, 
-            errorMessage = errorMessage,
-            referral = referral, 
-            serverSaslCreds = serverSaslCreds,
-            responseName = responseName, 
-            response = response,
-            tag = tag)
+            resultCode=resultCode, 
+            matchedDN=matchedDN, 
+            errorMessage=errorMessage,
+            referral=referral, 
+            serverSaslCreds=serverSaslCreds,
+            responseName=responseName, 
+            response=response,
+            tag=tag)
 
     def __repr__(self):
         l = []
         if self.tag!=self.__class__.tag:
-            l.append('tag=%d' % self.tag)
+            l.append('tag={0}'.format(self.tag))
         return self.__class__.__name__+'('+', '.join(l)+')'
 
 class LDAPBERDecoderContext(BERDecoderContext):
