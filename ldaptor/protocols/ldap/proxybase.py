@@ -110,20 +110,24 @@ class ProxyBase(ldapserver.BaseLDAPServer):
             """
             Forward the LDAP request to the proxied server.
             """
+            if result is None:
+                return
             request, controls = result
             if request.needs_answer:
-                d = self.client.send_multiResponse(request, self._gotResponseFromProxiedServer, reply, request, controls)
-                d.addErrback(log.err)
-                del d
+                d2 = self.client.send_multiResponse(request, self._gotResponseFromProxiedServer, reply, request, controls)
+                d2.addErrback(log.err)
             else:
                 self.client.send_noResponse(request)
-        d = defer.maybeDeferred(self.handleBeforeForwardRequest, request, controls)
+        d = defer.maybeDeferred(self.handleBeforeForwardRequest, request, controls, reply)
         d.addCallback(forwardit, reply)
 
-    def handleBeforeForwardRequest(self, request, controls):
+    def handleBeforeForwardRequest(self, request, controls, reply):
         """
         Override to modify request and/or controls forwarded on to the proxied server.
         Must return a tuple of request, controls or a deferred that fires the same.
+        Return `None` or a deferred that fires `None` to bypass forwarding the 
+        request to the proxied server.  In this case, any response can be sent to the
+        client via `reply(response)`.
         """
         return defer.succeed((request, controls))
 
