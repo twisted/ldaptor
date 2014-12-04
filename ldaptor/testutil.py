@@ -142,7 +142,9 @@ def createServer(proto, *responses, **kw):
     overrides.setdefault('', createClient)
     conf = config.LDAPConfig(**kw)
     server = proto(conf, **proto_args)
-    server.protocol = lambda : LDAPClientTestDriver(*responses)
+    clientTestDriver = LDAPClientTestDriver(*responses)
+    server.protocol = lambda : clientTestDriver
+    server.clientTestDriver = clientTestDriver
     server.transport = proto_helpers.StringTransport()
     server.connectionMade()
     return server
