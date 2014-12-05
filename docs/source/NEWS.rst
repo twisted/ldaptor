@@ -1,6 +1,15 @@
 Changelog
 =========
 
+Release 14.1 (UNRELEASED)
+-------------------------
+
+Features
+^^^^^^^^
+
+- Make meta data introspectable
+- Added `proxybase.py`, an LDAP proxy that is easier to hook into.
+
 
 Release 14.0 (2014-10-31)
 -------------------------
