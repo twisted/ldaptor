@@ -587,40 +587,36 @@ class LDAPMatchingRuleAssertion(BERSequence):
     dnAttributes=None
 
     def fromBER(klass, tag, content, berdecoder=None):
+        matchingRule = None 
+        atype = None 
+        matchValue = None 
+        dnAttributes = None
         l = berDecodeMultiple(content, LDAPBERDecoderContext_MatchingRuleAssertion(fallback=berdecoder, inherit=berdecoder))
-
-        assert 1<=len(l)<=4
+        assert 1 <= len(l) <= 4
         if isinstance(l[0], LDAPMatchingRuleAssertion_matchingRule):
             matchingRule=l[0]
             del l[0]
-        if len(l)>1 \
-           and isinstance(l[0], LDAPMatchingRuleAssertion_type):
-            type=l[0]
+        if len(l)>=1 and isinstance(l[0], LDAPMatchingRuleAssertion_type):
+            atype = l[0]
             del l[0]
-        if len(l)>1 \
-           and isinstance(l[0], LDAPMatchingRuleAssertion_matchValue):
-            matchValue=l[0]
+        if len(l) >= 1 and isinstance(l[0], LDAPMatchingRuleAssertion_matchValue):
+            matchValue = l[0]
             del l[0]
-        if len(l)>1 \
-           and isinstance(l[0], LDAPMatchingRuleAssertion_dnAttributes):
-            dnAttributes=l[0]
+        if len(l) >= 1 and isinstance(l[0], LDAPMatchingRuleAssertion_dnAttributes):
+            dnAttributes = l[0]
             del l[0]
         assert matchValue
         if not dnAttributes:
             dnAttributes=None
-
-        assert 8<=len(l)<=8
         r = klass(matchingRule=matchingRule,
-                  type=type,
-                  matchValue=matchValue,
-                  dnAttributes=dnAttributes,
-                  tag=tag)
+            type=atype,
+            matchValue=matchValue,
+            dnAttributes=dnAttributes,
+            tag=tag)
         return r
     fromBER = classmethod(fromBER)
 
-    def __init__(self, matchingRule=None, type=None,
-                 matchValue=None, dnAttributes=None,
-                 tag=None):
+    def __init__(self, matchingRule=None, type=None, matchValue=None, dnAttributes=None, tag=None):
         BERSequence.__init__(self, value=[], tag=tag)
         assert matchValue is not None
         self.matchingRule=matchingRule
