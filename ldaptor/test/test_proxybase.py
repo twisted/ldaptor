@@ -1,7 +1,7 @@
 """
 Test cases for ldaptor.protocols.ldap.proxybase module.
 """
-
+import itertools
 from twisted.internet import error, defer
 from twisted.internet.task import Clock
 from twisted.trial import unittest
@@ -28,6 +28,7 @@ class ResponseInterceptingProxy(proxybase.ProxyBase):
     """
     A test LDAP proxy that intercepts and modifies search results.
     """
+    delays = itertools.cycle([1, 5,])
     new_attrib = ('frotz', 'xyzzy')
     def handleProxiedResponse(self, response, request, controls):
         """
@@ -37,7 +38,13 @@ class ResponseInterceptingProxy(proxybase.ProxyBase):
         if isinstance(response, pureldap.LDAPSearchResultEntry):
             key, value = self.new_attrib
             response.attributes.append((key, [value]))
-        return defer.succeed(response)
+        d = defer.Deferred()
+        d.addCallback(self._afterDelay)
+        self.reactor.callLater(self.delays.next(), d.callback, response)
+        return d
+
+    def _afterDelay(self, response):
+        return response
 
 class ProxyBase(unittest.TestCase):
     def createServer(self, *responses, **kwds):
@@ -157,6 +164,7 @@ class ProxyBase(unittest.TestCase):
         server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(), id=2)))
         server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPSearchRequest(), id=3)))
         server.reactor.advance(1)
+        server.reactor.advance(5)
         self.assertEquals(server.transport.value(),
                           str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=0), id=2))
                           +str(pureldap.LDAPMessage(pureldap.LDAPSearchResultEntry('cn=foo,dc=example,dc=com', [('a', ['b']), ('frotz', ['xyzzy'])]), id=3))
