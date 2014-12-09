@@ -608,7 +608,8 @@ class LDAPMatchingRuleAssertion(BERSequence):
         assert matchValue
         if not dnAttributes:
             dnAttributes=None
-        r = klass(matchingRule=matchingRule,
+        r = klass(
+            matchingRule=matchingRule,
             type=atype,
             matchValue=matchValue,
             dnAttributes=dnAttributes,

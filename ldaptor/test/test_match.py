@@ -406,7 +406,7 @@ class TestEntryMatch(unittest.TestCase):
 
     def test_extensibleMatch4_noMatch(self):
         """
-        An extensibleMatch filter that uses DN attributes does not matches an entry
+        An extensibleMatch filter that uses DN attributes does not match an entry
         based on its OU.
         See RFC4511 section 4.5.1.
         """
