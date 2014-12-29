@@ -383,6 +383,48 @@ class TestEntryMatch(unittest.TestCase):
                                                          3))
         self.assertEquals(result, False)
 
+    def test_extensibleMatch4(self):
+        """
+        An extensibleMatch filter that uses DN attributes matches an entry
+        based on its OU.
+        See RFC4511 section 4.5.1.
+        """
+        m = pureldap.LDAPFilter_extensibleMatch(
+            matchingRule=None, 
+            type=pureldap.LDAPMatchingRuleAssertion_type(value='ou'), 
+            matchValue=pureldap.LDAPMatchingRuleAssertion_matchValue(value='fings'), 
+            dnAttributes=pureldap.LDAPMatchingRuleAssertion_dnAttributes(value=255))
+        o = inmemory.ReadOnlyInMemoryLDAPEntry(
+            dn = 'cn=foo,ou=fings,dc=example,dc=com',
+            attributes={
+                'objectClass': ['a', 'b'],
+                'aValue': ['b'],
+                'num': [4],
+            })
+        result = o.match(m)
+        self.assertEquals(result, True)
+
+    def test_extensibleMatch4_noMatch(self):
+        """
+        An extensibleMatch filter that uses DN attributes does not match an entry
+        based on its OU.
+        See RFC4511 section 4.5.1.
+        """
+        m = pureldap.LDAPFilter_extensibleMatch(
+            matchingRule=None, 
+            type=pureldap.LDAPMatchingRuleAssertion_type(value='ou'), 
+            matchValue=pureldap.LDAPMatchingRuleAssertion_matchValue(value='fings'), 
+            dnAttributes=pureldap.LDAPMatchingRuleAssertion_dnAttributes(value=255))
+        o = inmemory.ReadOnlyInMemoryLDAPEntry(
+            dn = 'cn=foo,ou=uvvers,dc=example,dc=com',
+            attributes={
+                'objectClass': ['a', 'b'],
+                'aValue': ['b'],
+                'num': [4],
+            })
+        result = o.match(m)
+        self.assertEquals(result, False)
+
     def test_notImplemented(self):
         o=inmemory.ReadOnlyInMemoryLDAPEntry(dn='cn=foo,dc=example,dc=com',
                                              attributes={
@@ -394,7 +436,6 @@ class TestEntryMatch(unittest.TestCase):
         unknownMatch = UnknownMatch()
         self.assertRaises(ldapsyntax.MatchNotImplemented,
                           o.match, unknownMatch)
-
 
 # TODO LDAPFilter_approxMatch
 # TODO LDAPFilter_extensibleMatch

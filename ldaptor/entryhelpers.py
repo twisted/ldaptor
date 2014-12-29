@@ -3,6 +3,15 @@ from ldaptor import delta, ldapfilter
 from ldaptor.protocols import pureldap
 from ldaptor.protocols.ldap import ldapsyntax, ldaperrors
 
+def safelower(s):
+    """
+    As string.lower(), but return s if something goes wrong.
+    """
+    try:
+        return s.lower()
+    except:
+        return s
+
 class DiffTreeMixin(object):
     def _diffTree_gotMyChildren(self, myChildren, other, result):
         d = other.children()
@@ -207,6 +216,21 @@ class MatchMixin(object):
             return False
         elif isinstance(filter, pureldap.LDAPFilter_not):
             return not self.match(filter.value)
+        elif isinstance(filter, pureldap.LDAPFilter_extensibleMatch):
+            if filter.matchingRule is None:
+                attrib = filter.type.value
+                match_value = filter.matchValue.value
+                match_value_lower = safelower(match_value)
+                if (match_value_lower in [val.lower() for val in self.get(attrib, [])]):
+                    return True
+                for rdn in self.dn.listOfRDNs:
+                    for av in rdn.attributeTypesAndValues:
+                        if attrib is None or attrib == av.attributeType:
+                            if match_value_lower == safelower(av.value):
+                                return True
+                return False
+            else:
+                raise ldapsyntax.MatchNotImplemented, filter
         else:
             raise ldapsyntax.MatchNotImplemented, filter
 
