@@ -9,7 +9,7 @@ def safelower(s):
     """
     try:
         return s.lower()
-    except:
+    except Exception:
         return s
 
 class DiffTreeMixin(object):
