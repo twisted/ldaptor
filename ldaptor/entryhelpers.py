@@ -5,11 +5,11 @@ from ldaptor.protocols.ldap import ldapsyntax, ldaperrors
 
 def safelower(s):
     """
-    As string.lower(), but return s if something goes wrong.
+    As string.lower(), but return `s` if something goes wrong.
     """
     try:
         return s.lower()
-    except:
+    except AttributeError:
         return s
 
 class DiffTreeMixin(object):
