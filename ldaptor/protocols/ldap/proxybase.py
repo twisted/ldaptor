@@ -88,8 +88,17 @@ class ProxyBase(ldapserver.BaseLDAPServer):
         """
         The connection to the proxied server failed.
         """
-        log.err(err)
-        return err 
+        log.msg("[ERROR] Could not connect to proxied server.  Error was:\n{0}".format(err))
+        while len(self.queuedRequests) > 0:
+            request, controls, reply = self.queuedRequests.pop(0)
+            if isinstance(request, pureldap.LDAPBindRequest):
+                msg = pureldap.LDAPBindResponse(resultCode=ldaperrors.LDAPUnavailable.resultCode)
+            elif isinstance(request, pureldap.LDAPStartTLSRequest):
+                msg = pureldap.LDAPStartTLSResponse(resultCode=ldaperrors.LDAPUnavailable.resultCode)
+            else:
+                continue
+            reply(msg)
+        self.transport.loseConnection()
 
     def _processBacklog(self):
         """
