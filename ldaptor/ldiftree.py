@@ -1,27 +1,30 @@
 """
 Manage LDAP data as a tree of LDIF files.
 """
-import os, errno
-from zope.interface import implements
-from twisted.internet import defer, error
-from twisted.python import failure
+import errno
+import os
 from ldaptor import entry, interfaces, attributeset, entryhelpers
 from ldaptor.protocols.ldap import ldifprotocol, distinguishedname, ldaperrors
+from twisted.internet import defer, error
+from twisted.python import failure
 from twisted.mail.maildir import _generateMaildirName as tempName
+from zope.interface import implements
+
 
 class LDIFTreeEntryContainsMultipleEntries(Exception):
     """LDIFTree entry contains multiple LDIF entries."""
 
+
 class LDIFTreeEntryContainsNoEntries(Exception):
     """LDIFTree entry does not contain a valid LDIF entry."""
 
+
 class LDIFTreeNoSuchObject(Exception):
-    # TODO combine with standard LDAP errors
     """LDIFTree does not contain such entry."""
+
 
 class LDAPCannotRemoveRootError(ldaperrors.LDAPNamingViolation):
     """Cannot remove root of LDAP tree"""
-    # TODO share with ldaptor.inmemory?
 
 
 class StoreParsedLDIF(ldifprotocol.LDIF):
@@ -35,8 +38,11 @@ class StoreParsedLDIF(ldifprotocol.LDIF):
     def connectionLost(self, reason):
         self.done = True
 
+
 def get(path, dn):
     return defer.maybeDeferred(_get, path, dn)
+
+
 def _get(path, dn):
     dn = distinguishedname.DistinguishedName(dn)
     l = list(dn.split())
@@ -46,8 +52,8 @@ def _get(path, dn):
     parser = StoreParsedLDIF()
 
     entry = os.path.join(path,
-                         *['%s.dir'%rdn for rdn in l[:-1]])
-    entry = os.path.join(entry, '%s.ldif'%l[-1])
+                         *['%s.dir' % rdn for rdn in l[:-1]])
+    entry = os.path.join(entry, '%s.ldif' % l[-1])
     f = file(entry)
     while 1:
         data = f.read(8192)
@@ -61,9 +67,10 @@ def _get(path, dn):
     if len(entries) == 0:
         raise LDIFTreeEntryContainsNoEntries
     elif len(entries) > 1:
-        raise LDIFTreeEntryContainsMultipleEntries, entries
+        raise LDIFTreeEntryContainsMultipleEntries(entries)
     else:
         return entries[0]
+
 
 def _putEntry(fileName, entry):
     """fileName is without extension."""
@@ -72,7 +79,8 @@ def _putEntry(fileName, entry):
     f.write(str(entry))
     f.close()
     os.rename(tmp, fileName+'.ldif')
-    # TODO atomicity
+    return True
+
 
 def _put(path, entry):
     l = list(entry.dn.split())
@@ -82,12 +90,12 @@ def _put(path, entry):
     entryRDN = l.pop()
     if l:
         grandParent = os.path.join(path,
-                                   *['%s.dir'%rdn for rdn in l[:-1]])
+                                   *['%s.dir' % rdn for rdn in l[:-1]])
         parentEntry = os.path.join(grandParent, '%s.ldif' % l[-1])
         parentDir = os.path.join(grandParent, '%s.dir' % l[-1])
         if not os.path.exists(parentDir):
             if not os.path.exists(parentEntry):
-                raise LDIFTreeNoSuchObject, entry.dn.up()
+                raise LDIFTreeNoSuchObject(entry.dn.up())
             try:
                 os.mkdir(parentDir)
             except OSError, e:
@@ -98,10 +106,12 @@ def _put(path, entry):
                     raise
     else:
         parentDir = path
-    return _putEntry(os.path.join(parentDir, '%s'%entryRDN), entry)
+    return _putEntry(os.path.join(parentDir, '%s' % entryRDN), entry)
+
 
 def put(path, entry):
     return defer.execute(_put, path, entry)
+
 
 class LDIFTreeEntry(entry.EditableLDAPEntry,
                     entryhelpers.DiffTreeMixin,
@@ -116,7 +126,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
             dn = ''
         entry.BaseLDAPEntry.__init__(self, dn, *a, **kw)
         self.path = path
-        if dn != '': #TODO DistinguishedName.__nonzero__
+        if dn != '':
             self._load()
 
     def _load(self):
@@ -144,14 +154,12 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
         if len(entries) == 0:
             raise LDIFTreeEntryContainsNoEntries
         elif len(entries) > 1:
-            raise LDIFTreeEntryContainsMultipleEntries, entries
+            raise LDIFTreeEntryContainsMultipleEntries(entries)
         else:
-            # TODO ugliness and all of its friends
-            for k,v in entries[0].items():
+            for k, v in entries[0].items():
                 self._attributes[k] = attributeset.LDAPAttributeSet(k, v)
 
     def parent(self):
-        # TODO add __nonzero__ to DistinguishedName
         if self.dn == '':
             # root
             return None
@@ -207,7 +215,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
         it = dn.split()
         me = self.dn.split()
         assert len(it) > len(me)
-        assert ((len(me)==0) or (it[-len(me):] == me))
+        assert ((len(me) == 0) or (it[-len(me):] == me))
         rdn = it[-len(me)-1]
         path = os.path.join(self.path, '%s.dir' % rdn)
         entry = os.path.join(self.path, '%s.ldif' % rdn)
@@ -224,9 +232,8 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
             if c.dn.split()[0] == rdn:
                 raise ldaperrors.LDAPEntryAlreadyExists, c.dn
 
-        dn = distinguishedname.DistinguishedName(listOfRDNs=
-                                                 (rdn,)
-                                                 +self.dn.split())
+        dn = distinguishedname.DistinguishedName(
+            listOfRDNs=(rdn,) + self.dn.split())
         e = entry.BaseLDAPEntry(dn, attributes)
         if not os.path.exists(self.path):
             os.mkdir(self.path)
@@ -236,10 +243,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
         f.write(str(e))
         f.close()
         os.rename(tmp, fileName+'.ldif')
-        # TODO atomicity
-
         dirName = os.path.join(self.path, '%s.dir' % rdn)
-
         e = self.__class__(dirName, dn)
         return e
 
@@ -248,7 +252,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
         return d
 
     def _delete(self):
-        if self.dn == '': ##TODO DistinguishedName __nonzero__
+        if self.dn == '':
             raise LDAPCannotRemoveRootError
         if self._sync_children():
             raise ldaperrors.LDAPNotAllowedOnNonLeaf(
@@ -285,7 +289,14 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
     def commit(self):
         assert self.path.endswith('.dir')
         entryPath = self.path[:-len('.dir')]
-        return defer.maybeDeferred(_putEntry, entryPath, self)
+        d = defer.maybeDeferred(_putEntry, entryPath, self)
+
+        def eb_(err):
+            log.msg("[ERROR] Could not commit entry: {0}.".format(self.dn))
+            return False
+
+        d.addErrback(eb_)
+        return d
 
     def move(self, newDN):
         return defer.maybeDeferred(self._move, newDN)
@@ -313,7 +324,6 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
             self[attr.attributeType].remove(attr.value)
         # add new RDN attributes
         for attr in newDN.split()[0].split():
-            # TODO what if the key does not exist?
             self[attr.attributeType].add(attr.value)
         newRDN = newDN.split()[0]
         srcdir = os.path.dirname(self.path)

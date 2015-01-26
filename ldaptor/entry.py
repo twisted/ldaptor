@@ -1,9 +1,10 @@
-import random, base64
-from zope.interface import implements
-from twisted.internet import defer
-from twisted.python.util import InsensitiveDict
+import base64
+import random
 from ldaptor import interfaces, attributeset, delta
 from ldaptor.protocols.ldap import distinguishedname, ldif, ldaperrors
+from twisted.internet import defer
+from twisted.python.util import InsensitiveDict
+from zope.interface import implements
 
 try:
     from hashlib import sha1
@@ -24,6 +25,7 @@ def sshaDigest(passphrase, salt=None):
     crypt = '{SSHA}' + encoded
     return crypt
 
+
 class BaseLDAPEntry(object):
     implements(interfaces.ILDAPEntry)
     dn = None
@@ -39,15 +41,15 @@ class BaseLDAPEntry(object):
         attribute types to list of attribute values.
 
         """
-        self._attributes=InsensitiveDict()
+        self._attributes = InsensitiveDict()
         self.dn = distinguishedname.DistinguishedName(dn)
 
-        for k,vs in attributes.items():
+        for k, vs in attributes.items():
             if k not in self._attributes:
                 self._attributes[k] = []
             self._attributes[k].extend(vs)
 
-        for k,vs in self._attributes.items():
+        for k, vs in self._attributes.items():
             self._attributes[k] = self.buildAttributeSet(k, vs)
 
     def buildAttributeSet(self, key, values):
@@ -69,7 +71,7 @@ class BaseLDAPEntry(object):
         a = []
         if self.get('objectClass'):
             a.append('objectClass')
-        l=list(self._attributes.keys())
+        l = list(self._attributes.keys())
         l.sort()
         for key in l:
             if key.lower() != 'objectclass':
@@ -77,13 +79,13 @@ class BaseLDAPEntry(object):
         return a
 
     def items(self):
-        a=[]
+        a = []
         objectClasses = list(self.get('objectClass', []))
         objectClasses.sort()
         if objectClasses:
             a.append(('objectClass', objectClasses))
 
-        l=list(self._attributes.items())
+        l = list(self._attributes.items())
         l.sort()
         for key, values in l:
             if key.lower() != 'objectclass':
@@ -94,13 +96,13 @@ class BaseLDAPEntry(object):
         return a
 
     def __str__(self):
-        a=[]
+        a = []
 
         objectClasses = list(self.get('objectClass', []))
         objectClasses.sort()
         a.append(('objectClass', objectClasses))
 
-        l=list(self.items())
+        l = list(self.items())
         l.sort()
         for key, values in l:
             if key.lower() != 'objectclass':
@@ -115,21 +117,21 @@ class BaseLDAPEntry(object):
         if self.dn != other.dn:
             return 0
 
-        my=self.keys()
+        my = self.keys()
         my.sort()
-        its=other.keys()
+        its = other.keys()
         its.sort()
-        if my!=its:
+        if my != its:
             return 0
         for key in my:
-            myAttr=self[key]
-            itsAttr=other[key]
-            if myAttr!=itsAttr:
+            myAttr = self[key]
+            itsAttr = other[key]
+            if myAttr != itsAttr:
                 return 0
         return 1
 
     def __ne__(self, other):
-        return not self==other
+        return not self == other
 
     def __len__(self):
         return len(self.keys())
@@ -138,15 +140,15 @@ class BaseLDAPEntry(object):
         return True
 
     def __repr__(self):
-        x={}
+        x = {}
         for key in self.keys():
-            x[key]=self[key]
-        keys=self.keys()
+            x[key] = self[key]
+        keys = self.keys()
         keys.sort()
-        a=[]
+        a = []
         for key in keys:
             a.append('%s: %s' % (repr(key), repr(list(self[key]))))
-        attributes=', '.join(a)
+        attributes = ', '.join(a)
         return '%s(%s, {%s})' % (
             self.__class__.__name__,
             repr(str(self.dn)),
@@ -171,27 +173,27 @@ class BaseLDAPEntry(object):
         otherKeys = set(other.keys())
 
         addedKeys = list(otherKeys - myKeys)
-        addedKeys.sort() # for reproducability only
+        addedKeys.sort()  # for reproducability only
         for added in addedKeys:
             r.append(delta.Add(added, other[added]))
 
         deletedKeys = list(myKeys - otherKeys)
-        deletedKeys.sort() # for reproducability only
+        deletedKeys.sort()  # for reproducability only
         for deleted in deletedKeys:
             r.append(delta.Delete(deleted, self[deleted]))
 
         sharedKeys = list(myKeys & otherKeys)
-        sharedKeys.sort() # for reproducability only
+        sharedKeys.sort()  # for reproducability only
         for shared in sharedKeys:
 
             addedValues = list(other[shared] - self[shared])
             if addedValues:
-                addedValues.sort() # for reproducability only
+                addedValues.sort()  # for reproducability only
                 r.append(delta.Add(shared, addedValues))
 
             deletedValues = list(self[shared] - other[shared])
             if deletedValues:
-                deletedValues.sort() # for reproducability only
+                deletedValues.sort()  # for reproducability only
                 r.append(delta.Delete(shared, deletedValues))
 
         return delta.ModifyOp(dn=self.dn, modifications=r)
@@ -207,6 +209,10 @@ class BaseLDAPEntry(object):
                 got = sshaDigest(password, salt)
                 if got == digest:
                     return self
+            else:
+                # Plaintext
+                if digest == password:
+                    return self
         raise ldaperrors.LDAPInvalidCredentials
 
     def hasMember(self, dn):
@@ -218,11 +224,12 @@ class BaseLDAPEntry(object):
     def __hash__(self):
         return hash(self.dn)
 
+
 class EditableLDAPEntry(BaseLDAPEntry):
     implements(interfaces.IEditableLDAPEntry)
 
     def __setitem__(self, key, value):
-        new=self.buildAttributeSet(key, value)
+        new = self.buildAttributeSet(key, value)
         self._attributes[key] = new
 
     def __delitem__(self, key):
