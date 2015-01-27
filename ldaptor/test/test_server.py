@@ -386,7 +386,7 @@ class LDAPServerTest(unittest.TestCase):
         self.server.dataReceived(
             str(
                 pureldap.LDAPMessage(
-                    pureldap.LDAPDelRequest(str(self.thingie.dn)), i
+                    pureldap.LDAPDelRequest(str(self.thingie.dn)),
                     id=2)))
         self.assertEquals(
             self.server.transport.value(),
