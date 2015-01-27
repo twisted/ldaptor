@@ -1,7 +1,6 @@
 """
 Test cases for ldaptor.inmemory module.
 """
-
 from twisted.trial import unittest
 from cStringIO import StringIO
 from ldaptor import inmemory, delta, testutil
@@ -379,8 +378,6 @@ class TestInMemoryDatabase(unittest.TestCase):
         self.meta['foo'] = ['bar']
         d = self.meta.commit()
         self.failUnless(d.called)
-        d.addCallback(self.assertIdentical, self.meta)
-        return d
 
 class FromLDIF(unittest.TestCase):
     def test_single(self):
