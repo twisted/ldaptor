@@ -1,5 +1,6 @@
 from zope.interface import Interface
 
+
 class ILDAPEntry(Interface):
     """
 
@@ -12,7 +13,6 @@ class ILDAPEntry(Interface):
     ...     })
     >>> o
     LDAPEntry(dn='cn=foo,dc=example,dc=com', attributes={'anAttribute': ['itsValue', 'secondValue'], 'onemore': ['aValue']})
-
     """
 
     def __getitem__(self, key):
@@ -126,6 +126,7 @@ class ILDAPEntry(Interface):
         incorrect.
         """
 
+
 class IEditableLDAPEntry(Interface):
     """Interface definition for editable LDAP entries."""
 
@@ -170,8 +171,8 @@ class IEditableLDAPEntry(Interface):
         """
         Send all pending changes to the LDAP server.
 
-        @returns: a Deferred that tells you whether the
-        operation succeeded or not. (TODO specify how)
+        @returns: a Deferred that fires True (operation succeeded)
+        or False (operation failed).
         """
 
     def move(self, newDN):
@@ -206,19 +207,20 @@ class IEditableLDAPEntry(Interface):
 
         """
 
+
 class IConnectedLDAPEntry(Interface):
-    """Interface definition for LDAP entries that are part of a bigger whole."""
+    """
+    Interface definition for LDAP entries that are part of a bigger
+    whole.
+    """
 
     def namingContext(self):
         """
-
         Return an LDAPEntry for the naming context that contains this object.
-
         """
 
     def fetch(self, *attributes):
         """
-
         Fetch the attributes of this object from the server.
 
         @param attributes: Attributes to fetch. If none, fetch all
@@ -228,7 +230,6 @@ class IConnectedLDAPEntry(Interface):
 
         @return: A Deferred that will complete when the operation is
         done.
-
         """
 
     def search(self,
@@ -333,6 +334,7 @@ class IConnectedLDAPEntry(Interface):
         @return: Boolean.
 
         """
+
 
 class ILDAPConfig(Interface):
     """Generic LDAP configuration retrieval."""

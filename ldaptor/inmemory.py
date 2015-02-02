@@ -4,8 +4,10 @@ from twisted.python.failure import Failure
 from ldaptor import interfaces, entry, entryhelpers
 from ldaptor.protocols.ldap import distinguishedname, ldaperrors, ldifprotocol
 
+
 class LDAPCannotRemoveRootError(ldaperrors.LDAPNamingViolation):
     """Cannot remove root of LDAP tree"""
+
 
 class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
                                 entryhelpers.DiffTreeMixin,
@@ -55,9 +57,8 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
         for c in self._children:
             if c.dn.split()[0] == rdn:
                 raise ldaperrors.LDAPEntryAlreadyExists, c.dn
-        dn = distinguishedname.DistinguishedName(listOfRDNs=
-                                                 (rdn,)
-                                                 +self.dn.split())
+        dn = distinguishedname.DistinguishedName(
+            listOfRDNs=(rdn,) + self.dn.split())
         e = ReadOnlyInMemoryLDAPEntry(dn, attributes)
         e._parent = self
         self._children.append(e)
@@ -117,7 +118,8 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
         return defer.maybeDeferred(self._move, newDN)
 
     def commit(self):
-        return defer.succeed(self)
+        return defer.succeed(True)
+
 
 class InMemoryLDIFProtocol(ldifprotocol.LDIF):
 
@@ -135,7 +137,8 @@ class InMemoryLDIFProtocol(ldifprotocol.LDIF):
     """
 
     def __init__(self):
-        self.db = None #do not access this via db, just to make sure you respect the ordering
+        # Do not access this via db, just to make sure you respect the ordering
+        self.db = None
         self._deferred = defer.Deferred()
         self.completed = defer.Deferred()
 
@@ -166,10 +169,10 @@ class InMemoryLDIFProtocol(ldifprotocol.LDIF):
             self._deferred.addCallback(self._addEntry, entry)
 
     def lookupFailed(self, reason, entry):
-        return reason # pass the error (abort) by default
+        return reason  # pass the error (abort) by default
 
     def addFailed(self, reason, entry):
-        return reason # pass the error (abort) by default
+        return reason  # pass the error (abort) by default
 
     def connectionLost(self, reason):
         super(InMemoryLDIFProtocol, self).connectionLost(reason)
@@ -178,7 +181,8 @@ class InMemoryLDIFProtocol(ldifprotocol.LDIF):
         else:
             self._deferred.chainDeferred(self.completed)
 
-        del self._deferred # invalidate it to flush out bugs
+        del self._deferred  # invalidate it to flush out bugs
+
 
 def fromLDIFFile(f):
     """Read LDIF data from a file."""
