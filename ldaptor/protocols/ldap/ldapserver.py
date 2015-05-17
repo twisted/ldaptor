@@ -19,7 +19,6 @@
 from ldaptor import interfaces, delta
 from ldaptor.protocols import pureldap, pureber
 from ldaptor.protocols.ldap import distinguishedname, ldaperrors
-
 from twisted.python import log
 from twisted.internet import protocol, defer
 
@@ -199,10 +198,17 @@ class LDAPServer(BaseLDAPServer):
 
     def _cbSearchGotBase(self, base, dn, request, reply):
         def _sendEntryToClient(entry):
-            reply(pureldap.LDAPSearchResultEntry(
-                objectName=str(entry.dn),
-                attributes=entry.items(),
-                ))
+            requested_attribs = request.attributes
+            if len(requested_attribs) > 0:
+                filtered_attribs = [
+                    (k, entry.get(k)) for k in requested_attribs if k in entry]
+            else:
+                filtered_attribs = entry.items()
+            if len(filtered_attribs) > 0:
+                reply(pureldap.LDAPSearchResultEntry(
+                    objectName=str(entry.dn),
+                    attributes=filtered_attribs,
+                    ))
         d = base.search(filterObject=request.filter,
                         attributes=request.attributes,
                         scope=request.scope,

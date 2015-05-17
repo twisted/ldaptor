@@ -225,6 +225,43 @@ class LDAPServerTest(unittest.TestCase):
                     pureldap.LDAPSearchResultDone(resultCode=0),
                     id=2)))
 
+    def test_search_matchAll_oneResult_filtered(self):
+        self.server.dataReceived(
+            str(
+                pureldap.LDAPMessage(
+                    pureldap.LDAPSearchRequest(
+                        baseObject='cn=thingie,ou=stuff,dc=example,dc=com',
+                        attributes=['cn']),
+                    id=2)))
+        self.assertEquals(
+            self.server.transport.value(),
+            str(
+                pureldap.LDAPMessage(
+                    pureldap.LDAPSearchResultEntry(
+                        objectName='cn=thingie,ou=stuff,dc=example,dc=com',
+                        attributes=[
+                            ('cn', ['thingie'])]),
+                    id=2)
+            ) + str(
+                pureldap.LDAPMessage(
+                    pureldap.LDAPSearchResultDone(resultCode=0),
+                    id=2)))
+
+    def test_search_matchAll_oneResult_filteredNoAttribsRemaining(self):
+        self.server.dataReceived(
+            str(
+                pureldap.LDAPMessage(
+                    pureldap.LDAPSearchRequest(
+                        baseObject='cn=thingie,ou=stuff,dc=example,dc=com',
+                        attributes=['xyzzy']),
+                    id=2)))
+        self.assertEquals(
+            self.server.transport.value(),
+            str(
+                pureldap.LDAPMessage(
+                    pureldap.LDAPSearchResultDone(resultCode=0),
+                    id=2)))
+
     def test_search_matchAll_manyResults(self):
         self.server.dataReceived(
             str(
