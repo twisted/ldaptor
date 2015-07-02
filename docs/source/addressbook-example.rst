@@ -1,9 +1,16 @@
+==================================
 Creating a simple LDAP application
 ==================================
 
-LDAP presents a distributed tree of information
------------------------------------------------
+--------------
+An LDAP Primer
+--------------
+Entries in an LDAP directory information tree (DIT) are arranged in a 
+hierarchy.
+
 .. image::  _static/images/ldap-is-a-tree.png
+
+:term:`LDIF` is a textual representation of entries in the DIT.
 
 Writing things down, John Doe LDIF::
 
@@ -32,19 +39,17 @@ Writing things down, John Smith LDIF::
      ple lines as long as the non-first lines are inden
      ted in the LDIF.
 
-Setting up an LDAP server in 5 seconds
---------------------------------------
+------------------------------------
+Asynchronous LDAP Clients and Servers
+------------------------------------
 
-Python, an easy programming language
+Ldaptor is a set of pure-Python LDAP client and server protocols and libraries..
 
-**Batteries included!**
+It is licensed under the MIT (Expat) License.
 
-Python combines remarkable power with very clear syntax.
-
-Runs on many brands of UNIX, on Windows, OS/2, Mac, Amiga, and many other platforms.
-
-The first step
---------------
+--------------------------------
+Working with Distinguished Names
+--------------------------------
 
 .. code-block:: python
 
@@ -60,32 +65,14 @@ The first step
     >>> str(dn)
     'dc=example,dc=com'
 
-Ldaptor
--------
 
-Ldaptor is a set of pure-Python LDAP client programs, applications and a programming library.
-
-It is licensed under the MIT (Expat) License.
-
+-------------------
 Overview of Ldaptor
 -------------------
 
 .. image::  _static/images/overview.png
 
-Preparing to connect
---------------------
-
-.. code-block:: python
-
-    >>> from ldaptor.protocols.ldap import \
-    ... ldapclient, ldapconnector
-    >>> from twisted.internet import reactor
-    >>> connector=ldapconnector.LDAPClientCreator(reactor,
-    ... ldapclient.LDAPClient)
-    >>> connector
-    <ldaptor.protocols.ldap.ldapconnector.LDAPClientCreator
-    instance at 0x40619b6c>
-
+-------
 Twisted
 -------
 
@@ -95,17 +82,26 @@ Twisted supports TCP, UDP, SSL/TLS, multicast, Unix sockets, a large number of p
 
 Twisted includes many full-blown applications, such as web, SSH, FTP, DNS and news servers.
 
-Connecting
-----------
+-------------------------------
+Connect to a DIT Asynchronously
+-------------------------------
+
+Ldaptor contains helper classes to simplify connecting to an LDAP DIT.
 
 .. code-block:: python
 
-    >>> d=connector.connectAnonymously(dn,
-    ... {dn: ('localhost', 10389)})
+    >>> from ldaptor.protocols.ldap import ldapclient, ldapconnector
+    >>> from twisted.internet import reactor
+    >>> connector=ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
+    >>> connector
+    <ldaptor.protocols.ldap.ldapconnector.LDAPClientCreator
+    instance at 0x40619b6c>
+    >>> d = connector.connectAnonymously(dn, {dn: ('localhost', 10389)})
     >>> d
     <Deferred at 0x402d058c>
 
 
+---------
 Deferreds
 ---------
 
@@ -115,23 +111,29 @@ Deferreds
 - Also allows you to register a callback for an error, with the default behavior of logging the error.
 - Standard way to handle all sorts of blocking or delayed operations.
 
+---------
 Searching
 ---------
+
+Once connected to the DIT, and LDAP client can search for entries.
 
 .. code-block:: python
 
     >>> from twisted.trial.util import deferredResult
-    >>> proto=deferredResult(d)
+    >>> proto = deferredResult(d)
     >>> proto
     <ldaptor.protocols.ldap.ldapclient.LDAPClient
     instance at 0x40619dac>
     >>> from ldaptor.protocols.ldap import ldapsyntax
-    >>> baseEntry=ldapsyntax.LDAPEntry(client=proto, dn=dn)
-    >>> d2=baseEntry.search(filterText='(gn=j*)')
-    >>> results=deferredResult(d2)
+    >>> baseEntry = ldapsyntax.LDAPEntry(client=proto, dn=dn)
+    >>> d2 = baseEntry.search(filterText='(gn=j*)')
+    >>> results = deferredResult(d2)
 
+-------
 Results
 -------
+
+Search results are a list of LDAP entries.
 
 .. code-block:: python
 
@@ -147,8 +149,11 @@ Results
     'postalAddress': ['Backstreet'], 'postalCode': ['54321'],
     'sn': ['Doe'], 'st': ['NY'], 'street': ['Back alley']})]
 
+------------------
 Results one-by-one
 ------------------
+
+You can inspect individual results in the result list.
 
 .. code-block:: python
 
@@ -164,12 +169,16 @@ Results one-by-one
       File "<stdin>", line 1, in ?
     IndexError: list index out of range
 
+-----------
 LDIF output
 -----------
 
+Search results can be printed as LDIF output.  LDIF output
+can be used by other LDAP tools.
+
 .. code-block:: python
 
-    >>> print results[0]
+    >>> print(results[0])
     dn: givenName=John+sn=Smith,ou=People,dc=example,dc=com
     objectClass: addressbookPerson
     description: Some text.
@@ -179,33 +188,40 @@ LDIF output
     telephoneNumber: 555-1234
 
 
+----------------------
 Closing the connection
 ----------------------
+
+Unlike an HTTP connection, an LDAP connection persists until the client
+indicates it is done or the server forcibly terminates the connection
+(e.g. a TCP socket times out).
 
 .. code-block:: python
 
     >>> proto.unbind()
 
+-----------------------
 Access to entry details
 -----------------------
 
+LDAP entries have a dictionary-like interface.  Attributes are accessed
+like dictionary keys.  The values are always a list of one or more values.
+
 .. code-block:: python
 
-    >>> smith=results[0]
-    >>> print smith.dn
+    >>> smith = results[0]
+    >>> print(smith.dn)
     givenName=John+sn=Smith,ou=People,dc=example,dc=com
     >>> smith['givenName']
     ['John']
     >>>
 
-Object-oriented look at LDAP entries
-------------------------------------
+------------------------
+Anatomy of an LDAP entry
+------------------------
 
-A lot of similarities with OO programming languages, but some big differences, too.
 
-An LDAP entry corresponds with an object.
-
-Whereas object are usually instances of a single class, LDAP entries can "implement" multiple objectClasses.
+LDAP entries can "implement" multiple objectClasses.
 
 All objectClasses can inherit zero, one or many objectClasses, just like programming classes.
 
@@ -220,6 +236,7 @@ Lastly, objectClasses of an entry can be changed at will; you only need to take 
 
 Attributes of an entry closely match attributes of objects in programming languages; however, LDAP attributes may have multiple values.
 
+-------------
 Search inputs
 -------------
 
@@ -233,27 +250,29 @@ Size limit of at most how many matching entries to return.
 
 Attributes to return, or none for all attributes the matching entries happen to have.
 
+------------------------
 Our first Python program
 ------------------------
 
 .. code-block:: python
 
     #!/usr/bin/python
-    from twisted.internet import reactor, defer
 
-    from ldaptor.protocols.ldap import ldapclient, ldapsyntax, ldapconnector, \
-         distinguishedname
+    from twisted.internet import reactor, defer
+    from ldaptor.protocols.ldap import ldapclient, ldapsyntax, ldapconnector
+    from ldaptor.protocols.ldap.distinguishedname import DistinguishedName
     from ldaptor import ldapfilter
 
     def search(config):
-        c=ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
-        d=c.connectAnonymously(config['base'],
-                               config['serviceLocationOverrides'])
+        c = ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
+        d = c.connectAnonymously(
+            config['base'],
+            config['serviceLocationOverrides'])
 
         def _doSearch(proto, config):
             searchFilter = ldapfilter.parseFilter('(gn=j*)')
             baseEntry = ldapsyntax.LDAPEntry(client=proto, dn=config['base'])
-            d=baseEntry.search(filterObject=searchFilter)
+            d = baseEntry.search(filterObject=searchFilter)
             return d
 
         d.addCallback(_doSearch, config)
@@ -263,20 +282,18 @@ Our first Python program
         import sys
         from twisted.python import log
         log.startLogging(sys.stderr, setStdout=0)
-
         config = {
-            'base':
-              distinguishedname.DistinguishedName('ou=People,dc=example,dc=com'),
+            'base': DistinguishedName('ou=People,dc=example,dc=com'),
             'serviceLocationOverrides': {
-              distinguishedname.DistinguishedName('dc=example,dc=com'):
-                ('localhost', 10389),
-              }
+                    DistinguishedName('dc=example,dc=com'): ('localhost', 10389),
+                }
             }
-
         d = search(config)
+
         def _show(results):
             for item in results:
-                print item
+                print(item)
+
         d.addCallback(_show)
         d.addErrback(defer.logError)
         d.addBoth(lambda _: reactor.stop())
@@ -285,6 +302,7 @@ Our first Python program
     if __name__ == '__main__':
         main()
 
+---------------------------
 Phases of the protocol chat
 ---------------------------
 
@@ -292,26 +310,31 @@ Phases of the protocol chat
 - Search (possibly many times)
 - Unbind and close
 
+-------------------
 Opening and binding
 -------------------
 
 .. image::  _static/images/chat-bind.png
 
+--------------
 Doing a search
 --------------
 
 .. image::  _static/images/chat-search.png
 
+-----------------------
 Doing multiple searches
 -----------------------
 
 .. image::  _static/images/chat-search-pipeline.png
 
+---------------------
 Unbinding and closing
 ---------------------
 
 .. image::  _static/images/chat-unbind.png
 
+-----------------------
 A complex search filter
 -----------------------
 
@@ -323,6 +346,7 @@ An example::
 
 .. image::  _static/images/ldapfilter-as-tree.png
 
+--------------
 Object classes
 --------------
 
@@ -332,6 +356,7 @@ Object classes
     #. What attributetypes an entry MAY have
 #. An entry in a phonebook must have a name and a telephone number, and may have a fax number and street address.
 
+------
 Schema
 ------
 
@@ -340,6 +365,7 @@ Schema
 #. Stored as plain text
 #. Can be requested over an LDAP connection
 
+--------------
 Attribute type
 --------------
 
@@ -357,6 +383,7 @@ Can also contain:
 #. substring search mechanism
 #. whether multiple values are allowed
 
+------------
 Object class
 ------------
 
@@ -370,6 +397,7 @@ An example::
         $ seeAlso $ description )
     )
 
+----------------
 Creating schemas
 ----------------
 
@@ -377,6 +405,7 @@ Creating schemas
 #. Need to be globally unique
 #. But try to use already existing ones
 
+----------------------
 Where to go from here?
 ----------------------
 

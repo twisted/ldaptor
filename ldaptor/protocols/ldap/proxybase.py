@@ -242,7 +242,8 @@ class MyProxy(ProxyBase):
 
 if __name__ == '__main__':
     """
-    Demonstration LDAP proxy; passes all requests to localhost:389.
+    Demonstration LDAP proxy; listens on localhost:10389; passes all requests 
+    to localhost:8080 and logs responses..
     """
     from twisted.internet import protocol
     import sys
