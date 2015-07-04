@@ -2,10 +2,9 @@
 LDAP protocol proxy server.
 """
 from __future__ import absolute_import, division, print_function
-from ldaptor import config
 from ldaptor.protocols.ldap import ldapserver, ldapconnector, ldapclient, ldaperrors
 from ldaptor.protocols import pureldap
-from twisted.internet import reactor, defer
+from twisted.internet import defer
 from twisted.python import log
 
 class ProxyBase(ldapserver.BaseLDAPServer):
@@ -16,40 +15,28 @@ class ProxyBase(ldapserver.BaseLDAPServer):
     Override `handleBeforeForwardRequest()` to inspect/modify responses from
     the proxied server.
     """
-    protocol = ldapclient.LDAPClient
     client = None
     unbound = False
-    clientCreator = ldapconnector.LDAPClientCreator
+    use_tls = False
 
-    def __init__(self, config, use_tls=False, reactor_=reactor):
-        """
-        Initialize the object.
-
-        :param config: The configuration.
-        :type config: ldaptor.interfaces.ILDAPConfig
-
-        :param use_tls: Force connections to the proxied server to use startTLS.
-        :type use_tls: boolean
-
-        :param reactor_: Use a reactor other than the default one.
-        """
+    def __init__(self):
         ldapserver.BaseLDAPServer.__init__(self)
-        self.config = config
         # Requests that are ready before the client connection is established
         # are queued.
         self.queuedRequests = []
-        self.use_tls = use_tls
-        self.reactor = reactor_
         self.startTLS_initiated = False
+
+    def connectToServer(self):
+        raise NotImplementedError(
+            "You must override this method and attempt to connect to a server. "
+            "This method should return a deferred that will fire with a "
+            "protocol instance when the connection is complete.")
 
     def connectionMade(self):
         """
         Establish a connection to the proxied LDAP server.
         """
-        clientCreator = self.clientCreator(self.reactor, self.protocol)
-        d = clientCreator.connect(
-            dn='',
-            overrides=self.config.getServiceLocationOverrides())
+        d = self.connectToServer()
         d.addCallback(self._connectedToProxiedServer)
         d.addErrback(self._failedToConnectToProxiedServer)
         ldapserver.BaseLDAPServer.connectionMade(self)
@@ -233,6 +220,16 @@ class MyProxy(ProxyBase):
     """
     A simple example of using `ProxyBase` to log responses.
     """
+    proxiedEndpointStr = None
+    protocol = ldapclient.LDAPClient
+
+    def connectToServer(self):
+        endpointStr = self.proxiedEndpointStr
+        assert endpointStr is not None, (
+            "You must set the `proxiedEndpointStr` property on this instance.")
+        return ldapconnector.connectToLDAPEndpoint(
+            reactor, endpointStr, self.protocol)
+
     def handleProxiedResponse(self, response, request, controls):
         """
         Log the representation of the responses received.
@@ -245,14 +242,20 @@ if __name__ == '__main__':
     Demonstration LDAP proxy; listens on localhost:10389; passes all requests 
     to localhost:8080 and logs responses..
     """
-    from twisted.internet import protocol
+    from twisted.internet import protocol, reactor
     import sys
     log.startLogging(sys.stderr)
     factory = protocol.ServerFactory()
-    proxied = ('localhost', 8080)
+    proxiedEndpointStr = 'tcp:host=localhost:port=8080'
     use_tls = False
-    cfg = config.LDAPConfig(serviceLocationOverrides={'': proxied, })
-    factory.protocol = lambda : MyProxy(cfg, use_tls=use_tls)
+
+    def buildProtocol():
+        proto = MyProxy()
+        proto.proxiedEndpointStr = proxiedEndpointStr
+        proto.use_tls = use_tls
+        return proto
+
+    factory.protocol = buildProtocol
     reactor.listenTCP(10389, factory)
     reactor.run()
 

@@ -1,10 +1,16 @@
 from twisted.internet import protocol, defer
+from twisted.internet.endpoints import clientFromString, connectProtocol
 from ldaptor.protocols.ldap import distinguishedname
-
 try:
     from twisted.internet.utils import SRVConnector
 except ImportError:
     from twisted.names.srvconnect import SRVConnector
+
+def connectToLDAPEndpoint(reactor, endpointStr, clientProtocol):
+    e = clientFromString(reactor, endpointStr)
+    d = connectProtocol(e, clientProtocol())
+    return d
+
 
 class LDAPConnector(SRVConnector):
     def __init__(self, reactor, dn, factory,
