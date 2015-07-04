@@ -2,7 +2,7 @@
 LDAP protocol proxy server.
 """
 from __future__ import absolute_import, division, print_function
-from ldaptor.protocols.ldap import ldapserver, ldapconnector, ldapclient, ldaperrors
+from ldaptor.protocols.ldap import ldapserver, ldapconnector, ldaperrors
 from ldaptor.protocols import pureldap
 from twisted.internet import defer
 from twisted.python import log
@@ -19,6 +19,7 @@ class ProxyBase(ldapserver.BaseLDAPServer):
     client = None
     unbound = False
     use_tls = False
+    clientConnector = None
 
     def __init__(self):
         ldapserver.BaseLDAPServer.__init__(self)
@@ -26,18 +27,17 @@ class ProxyBase(ldapserver.BaseLDAPServer):
         # are queued.
         self.queuedRequests = []
         self.startTLS_initiated = False
-
-    def connectToServer(self):
-        raise NotImplementedError(
-            "You must override this method and attempt to connect to a server. "
-            "This method should return a deferred that will fire with a "
+        assert clientConnector is not None, (
+            "You must set the `clientConnector` property on this instance.  "
+            "It should be a callable that attempts to connect to a server. "
+            "This callable should return a deferred that will fire with a "
             "protocol instance when the connection is complete.")
 
     def connectionMade(self):
         """
         Establish a connection to the proxied LDAP server.
         """
-        d = self.connectToServer()
+        d = self.clientConnector()
         d.addCallback(self._connectedToProxiedServer)
         d.addErrback(self._failedToConnectToProxiedServer)
         ldapserver.BaseLDAPServer.connectionMade(self)
@@ -240,20 +240,10 @@ class ProxyBase(ldapserver.BaseLDAPServer):
         self.handleUnknown(request, controls, reply)
 
 
-class MyProxy(ProxyBase):
+class ExampleProxy(ProxyBase):
     """
     A simple example of using `ProxyBase` to log responses.
     """
-    proxiedEndpointStr = None
-    protocol = ldapclient.LDAPClient
-
-    def connectToServer(self):
-        endpointStr = self.proxiedEndpointStr
-        assert endpointStr is not None, (
-            "You must set the `proxiedEndpointStr` property on this instance.")
-        return ldapconnector.connectToLDAPEndpoint(
-            reactor, endpointStr, self.protocol)
-
     def handleProxiedResponse(self, response, request, controls):
         """
         Log the representation of the responses received.
@@ -266,16 +256,24 @@ if __name__ == '__main__':
     Demonstration LDAP proxy; listens on localhost:10389; passes all requests
     to localhost:8080 and logs responses..
     """
+    from ldaptor.protocols.ldap.ldapclient import LDAPClient
     from twisted.internet import protocol, reactor
+    from functools import partial
     import sys
+
     log.startLogging(sys.stderr)
     factory = protocol.ServerFactory()
     proxiedEndpointStr = 'tcp:host=localhost:port=8080'
     use_tls = False
+    clientConnector = partial(
+        ldapconnector.connectToLDAPEndpoint,
+        reactor,
+        proxiedEndpointStr,
+        LDAPClient)
 
     def buildProtocol():
-        proto = MyProxy()
-        proto.proxiedEndpointStr = proxiedEndpointStr
+        proto = ExampleProxy()
+        proto.clientConnector = clientConnector
         proto.use_tls = use_tls
         return proto
 
