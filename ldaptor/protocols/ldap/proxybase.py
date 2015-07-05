@@ -27,16 +27,16 @@ class ProxyBase(ldapserver.BaseLDAPServer):
         # are queued.
         self.queuedRequests = []
         self.startTLS_initiated = False
-        assert clientConnector is not None, (
-            "You must set the `clientConnector` property on this instance.  "
-            "It should be a callable that attempts to connect to a server. "
-            "This callable should return a deferred that will fire with a "
-            "protocol instance when the connection is complete.")
 
     def connectionMade(self):
         """
         Establish a connection to the proxied LDAP server.
         """
+        assert self.clientConnector is not None, (
+            "You must set the `clientConnector` property on this instance.  "
+            "It should be a callable that attempts to connect to a server. "
+            "This callable should return a deferred that will fire with a "
+            "protocol instance when the connection is complete.")
         d = self.clientConnector()
         d.addCallback(self._connectedToProxiedServer)
         d.addErrback(self._failedToConnectToProxiedServer)
