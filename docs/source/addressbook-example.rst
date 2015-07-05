@@ -115,7 +115,7 @@ Deferreds
 Searching
 ---------
 
-Once connected to the DIT, and LDAP client can search for entries.
+Once connected to the DIT, an LDAP client can search for entries.
 
 .. code-block:: python
 

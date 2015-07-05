@@ -31,7 +31,6 @@ User's Guide
 
    ldap-intro
    addressbook-example
-   cookbook
    ldaptor
 
 ----------------
