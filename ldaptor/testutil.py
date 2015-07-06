@@ -40,8 +40,9 @@ class LDAPClientTestDriver:
     It is also possible to include a Failure instance instead of a list
     of LDAPProtocolResponses which will cause the errback to be called
     with the failure.
-
     """
+    fakeUnbindResponse = 'fake-unbind-by-LDAPClientTestDriver'
+
     def __init__(self, *responses):
         self.sent=[]
         self.responses=list(responses)
@@ -51,8 +52,7 @@ class LDAPClientTestDriver:
     def send(self, op):
         self.sent.append(op)
         l = self._response()
-        assert len(l) == 1, \
-               "got %d responses for a .send()" % len(l)
+        assert len(l) == 1, "got %d responses for a .send()" % len(l)
         r = l[0]
         if isinstance(r, failure.Failure):
             return defer.fail(r)
@@ -70,16 +70,23 @@ class LDAPClientTestDriver:
                 break
             ret = handler(r, *args, **kwargs)
             if responses:
-                assert not ret, \
-                       "got %d responses still to give, but handler wants none (got %r)." % (len(responses), ret)
+                msg = (
+                    "got %d responses still to give, "
+                    "but handler wants none (got %r).") % (len(responses), ret)
+                assert not ret, msg
             else:
-                assert ret, \
-                       "no more responses to give, but handler still wants more (got %r)." % ret
+                msg = (
+                    "no more responses to give, but handler "
+                    "still wants more (got %r)." % ret)
+                assert ret, msg
         return d
 
     def send_noResponse(self, op):
-        responses = self.responses.pop(0)
-        assert not responses
+        if len(self.responses) == 0:
+            msg = "Ran out of responses"
+            assert op == self.fakeUnbindResponse, msg
+        else:
+            self.responses.pop(0)
         self.sent.append(op)
 
     def _response(self):
@@ -93,32 +100,36 @@ class LDAPClientTestDriver:
 
     def assertSent(self, *shouldBeSent):
         shouldBeSent = list(shouldBeSent)
-        assert self.sent == shouldBeSent, \
-               '%s expected to send %r but sent %r' % (
+        msg = '%s expected to send %r but sent %r' % (
             self.__class__.__name__,
             shouldBeSent,
             self.sent)
+        assert self.sent == shouldBeSent, msg
         sentStr = ''.join([str(x) for x in self.sent])
         shouldBeSentStr = ''.join([str(x) for x in shouldBeSent])
-        assert sentStr == shouldBeSentStr, \
-               '%s expected to send data %r but sent %r' % (
+        msg = '%s expected to send data %r but sent %r' % (
             self.__class__.__name__,
             shouldBeSentStr,
             sentStr)
+        assert sentStr == shouldBeSentStr, msg
 
     def connectionMade(self):
         """TCP connection has opened"""
         self.connected = 1
 
     def connectionLost(self, reason=None):
-        """Called when TCP connection has been lost"""
-        assert not self.responses, \
-               "connectionLost called even when have responses left: %r" % self.responses
+        """
+        Called when TCP connection has been lost
+        """
+        msg = (
+            "connectionLost called even when have "
+            "responses left: %r" % self.responses)
+        assert not self.responses, msg
         self.connected = 0
 
     def unbind(self):
         assert self.connected
-        r='fake-unbind-by-LDAPClientTestDriver'
+        r = self.fakeUnbindResponse
         self.send_noResponse(r)
         self.transport.loseConnection()
 

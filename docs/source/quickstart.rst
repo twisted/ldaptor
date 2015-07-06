@@ -5,30 +5,42 @@ LDAP Client Quickstart
 
 .. code-block:: python
 
+    from __future__ import print_function
     from twisted.internet import reactor, defer
-    from ldaptor.protocols.ldap import ldapclient, ldapsyntax, ldapconnector
+    from twisted.internet.endpoints import clientFromString, connectProtocol
+    from twisted.internet.task import react
+    from ldaptor.protocols.ldap.ldapclient import LDAPClient
+    from ldaptor.protocols.ldap.ldapsyntax import LDAPEntry
+    import sys
 
     @defer.inlineCallbacks
-    def example():
-        serverip = '192.168.128.21'
-        basedn = 'dc=example,dc=com'
-        binddn = 'bjensen@example.com'
+    def onConnect(client):
+        basedn = 'dc=example,dc=org'
+        binddn = 'cn=bob,ou=people,dc=example,dc=org'
         bindpw = 'secret'
-        query = '(cn=Babs*)'
-        c = ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
-        overrides = {basedn: (serverip, 389)}
-        client = yield c.connect(basedn, overrides=overrides)
-        yield client.bind(binddn, bindpw)
-        o = ldapsyntax.LDAPEntry(client, basedn)
+        query = '(cn=bob)'
+        try:
+            yield client.bind(binddn, bindpw)
+        except Exception as ex:
+            print(ex)
+            raise
+        o = LDAPEntry(client, basedn)
         results = yield o.search(filterText=query)
         for entry in results:
-            print entry
+            print(entry)
 
-    if __name__ == '__main__':
-        df = example()
-        df.addErrback(lambda err: err.printTraceback())
-        df.addCallback(lambda _: reactor.stop())
-        reactor.run()
+    def onError(err):
+        err.printDetailedTraceback(file=sys.stderr)
+
+    def main(reactor):
+        endpoint_str = "tcp:host=127.0.0.1:port=8080"
+        e = clientFromString(reactor, endpoint_str)
+        d = connectProtocol(e, LDAPClient())
+        d.addCallback(onConnect)
+        d.addErrback(onError)
+        return d
+
+    react(main)
 
 =======================
 LDAP Server Quick Start
@@ -38,7 +50,7 @@ LDAP Server Quick Start
 .. code-block:: python
 
     from twisted.application import service, internet
-    from twisted.internet import reactor
+    from twisted.internet.endpoints import serverFromString
     from twisted.internet.protocol import ServerFactory
     from twisted.python.components import registerAdapter
     from twisted.python import log
@@ -72,6 +84,7 @@ LDAP Server Quick Start
     objectclass: person
     objectClass: inetOrgPerson
     sn: Roberts
+    userPassword: secret
 
     """
 
@@ -101,6 +114,7 @@ LDAP Server Quick Start
             return proto
 
     if __name__ == '__main__':
+        from twisted.internet import reactor
         if len(sys.argv) == 2:
             port = int(sys.argv[1])
         else:
@@ -121,5 +135,7 @@ LDAP Server Quick Start
         factory.debug = True
         application = service.Application("ldaptor-server")
         myService = service.IServiceCollection(application)
-        reactor.listenTCP(port, factory)
+        serverEndpointStr = "tcp:{0}".format(port)
+        e = serverFromString(reactor, serverEndpointStr)
+        d = e.listen(factory)
         reactor.run()

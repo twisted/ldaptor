@@ -1,12 +1,12 @@
 """
 Test cases for ldaptor.protocols.ldap.proxybase module.
 """
+from functools import partial
 import itertools
 from twisted.internet import error, defer
-from twisted.internet.task import Clock, deferLater
+from twisted.internet.task import Clock
 from twisted.trial import unittest
 from twisted.test import proto_helpers
-from ldaptor import config
 from ldaptor.protocols.ldap import proxybase, ldaperrors
 from ldaptor.protocols import pureldap
 from ldaptor import testutil
@@ -57,37 +57,14 @@ class WontConnectError(Exception):
     pass
 
 
-class WontConnectClientCreator(object):
-    """
-    A test LDAP client creator that will raise an exception when the
-    `connect()` method is called.
-    """
-    ex = None
-    delay = 0
+def failToConnectToServer(reactor, delay=0):
+    d = defer.Deferred()
 
-    def __init__(self, *args, **kwgs):
-        if self.ex is None:
-            self.ex = WontConnectError("Test LDAP client refuses to connect.")
-        self.reactor = kwgs.get('reactor', None)
+    def onConnect():
+        d.errback(fail=WontConnectError("Test LDAP client refuses to connect."))
 
-    def connect(self, *args, **kwgs):
-        delay = self.delay
-        if delay == 0:
-            return defer.fail(self.ex)
-        else:
-            d = deferLater(self.reactor, delay, self.refuseConnect_)
-            return d
-
-    def refuseConnect_(self):
-        return defer.fail(self.ex)
-
-
-def makeClientCreatorFactory(delay):
-    def makeClientCreator(reactor_, protocol):
-        cc = WontConnectClientCreator(reactor=reactor_)
-        cc.delay = delay
-        return cc
-    return makeClientCreator
+    reactor.callLater(delay, onConnect)
+    return d
 
 
 class ProxyBase(unittest.TestCase):
@@ -97,8 +74,26 @@ class ProxyBase(unittest.TestCase):
         """
         protocol = kwds.get("protocol", proxybase.ProxyBase)
         clock = Clock()
-        proto_args = dict(reactor_=clock)
-        server = testutil.createServer(protocol, *responses, proto_args=proto_args)
+        clock = kwds.get('clock', clock)
+        server = protocol()
+        clientTestDriver = testutil.LDAPClientTestDriver(*responses)
+        
+        def simulateConnectToServer():
+            d = defer.Deferred()
+
+            def onConnect():
+                clientTestDriver.connectionMade()
+                d.callback(clientTestDriver)
+
+            clock.callLater(0, onConnect)
+            return d
+
+        clientConnector = kwds.get('clientConnector', simulateConnectToServer)
+        server.clientConnector = clientConnector
+        server.clientTestDriver = clientTestDriver
+        server.transport = proto_helpers.StringTransport()
+        server.reactor = clock
+        server.connectionMade()
         return server
 
     def test_bind(self):
@@ -156,17 +151,19 @@ class ProxyBase(unittest.TestCase):
         The server disconects correctly when the client terminates the
         connection without sending an unbind request.
         """
-        server = self.createServer([pureldap.LDAPBindResponse(resultCode=0)], [])
+        server = self.createServer([pureldap.LDAPBindResponse(resultCode=0)])
         server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(), id=2)))
         server.reactor.advance(1)
         client = server.client
         client.assertSent(pureldap.LDAPBindRequest())
-        self.assertEquals(server.transport.value(),
-                          str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=0), id=2)))
+        self.assertEquals(
+            server.transport.value(),
+            str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=0), id=2)))
         server.connectionLost(error.ConnectionDone)
         server.reactor.advance(1)
-        client.assertSent(pureldap.LDAPBindRequest(),
-                          'fake-unbind-by-LDAPClientTestDriver')
+        client.assertSent(
+            pureldap.LDAPBindRequest(),
+            'fake-unbind-by-LDAPClientTestDriver')
         self.assertEquals(server.transport.value(),
                           str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=0), id=2)))
 
@@ -218,13 +215,13 @@ class ProxyBase(unittest.TestCase):
         When making a request and the proxy cannot connect to the proxied server, the
         connection is terminated.
         """
-        conf = config.LDAPConfig(serviceLocationOverrides={'': ('localhost', 8080)})
-        server = proxybase.ProxyBase(conf, reactor_=Clock())
-        server.transport = proto_helpers.StringTransport()
-        server.clientCreator = makeClientCreatorFactory(0)
-        server.connectionMade()
-        server.clientCreator = WontConnectClientCreator
-        server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(), id=4)))
+        clock = Clock()
+        connector = partial(failToConnectToServer, clock)
+        server = self.createServer(
+            [], 
+            clientConnector=connector, 
+            clock=clock)
+        self.assertEquals(connector, server.clientConnector)
         server.reactor.advance(1)
         self.assertEquals(server.transport.value(), "")
 
@@ -234,12 +231,15 @@ class ProxyBase(unittest.TestCase):
         pending BIND and startTLS requests are replied to and the connection
         is closed.
         """
-        conf = config.LDAPConfig(serviceLocationOverrides={'': ('localhost', 8080)})
-        server = proxybase.ProxyBase(conf, reactor_=Clock())
-        server.transport = proto_helpers.StringTransport()
-        server.clientCreator = makeClientCreatorFactory(2)
-        server.connectionMade()
+        clock = Clock()
+        connector = partial(failToConnectToServer, clock)
+        server = self.createServer(
+            [], 
+            clientConnector=connector, 
+            clock=clock)
+        self.assertEquals(connector, server.clientConnector)
         server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(), id=4)))
         server.reactor.advance(2)
-        self.assertEquals(server.transport.value(),
-                          str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=52), id=4)))
+        self.assertEquals(
+            server.transport.value(),
+            str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=52), id=4)))

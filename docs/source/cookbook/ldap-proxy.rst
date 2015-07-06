@@ -52,11 +52,15 @@ Code
 
 .. code-block:: python
 
-    from ldaptor import config
+    #! /usr/bin/env python
+
     from ldaptor.protocols import pureldap
+    from ldaptor.protocols.ldap.ldapclient import LDAPClient
+    from ldaptor.protocols.ldap.ldapconnector import connectToLDAPEndpoint
     from ldaptor.protocols.ldap.proxybase import ProxyBase
     from twisted.internet import defer, protocol, reactor
     from twisted.python import log
+    from functools import partial
     import sys
 
     class LoggingProxy(ProxyBase):
@@ -85,16 +89,29 @@ Code
 
     if __name__ == '__main__':
         """
-        Demonstration LDAP proxy; passes all requests to localhost:10389.
+        Demonstration LDAP proxy; listens on localhost:10389 and 
+        passes all requests to localhost:8080.
         """
         log.startLogging(sys.stderr)
         factory = protocol.ServerFactory()
-        proxied = ('localhost', 8080)
+        proxiedEndpointStr = 'tcp:host=localhost:port=8080'
         use_tls = False
-        cfg = config.LDAPConfig(serviceLocationOverrides={'': proxied, })
-        factory.protocol = lambda : LoggingProxy(cfg, use_tls=use_tls)
+        clientConnector = partial(
+            connectToLDAPEndpoint,
+            reactor,
+            proxiedEndpointStr,
+            LDAPClient)
+
+        def buildProtocol():
+            proto = LoggingProxy()
+            proto.clientConnector = clientConnector
+            proto.use_tls = use_tls
+            return proto
+
+        factory.protocol = buildProtocol
         reactor.listenTCP(10389, factory)
         reactor.run()
+
 
 ''''''''''
 Discussion
@@ -113,10 +130,12 @@ you want.
 The main program entry point starts logging and creates a generic server factory.
 The proxied LDAP server is configured to run on the local host on port 8080.
 The factory protocol is set to a function that takes no arguments and returns an
-instance of our :py:class:`LoggingProxy` that has been configured with the 
-proxied LDAP server settings.  The Twisted reactor is then configured to listen
-on TCP port 10389 and use the factory to create protocol instances to handle 
-incoming connections.
+instance of our :py:class:`LoggingProxy` that has been configured with a 
+`clientConnector` callable.  When this callable is invoked, it will return a
+deferred that will fire with a :py:class:`LDAPClient` instance when a connection
+to the proxied LDAP server is established.  The Twisted reactor is then 
+configured to listen on TCP port 10389 and use the factory to create server 
+protocol instances to handle incoming connections.
 
 The :py:class:`ProxyBase` class handles the typical LDAP protocol events but 
 provides convenient hooks for intercepting LDAP requests and responses.  In 
@@ -130,14 +149,15 @@ to configure options from the command line.
 
 .. code-block:: python
 
-    from ldaptor import config
     from ldaptor.protocols import pureldap
+    from ldaptor.protocols.ldap.ldapclient import LDAPClient
+    from ldaptor.protocols.ldap.ldapconnector import connectToLDAPEndpoint
     from ldaptor.protocols.ldap.proxybase import ProxyBase
     from twisted.application.service import Application, Service
     from twisted.internet import defer, protocol, reactor
     from twisted.internet.endpoints import serverFromString
     from twisted.python import log
-
+    from functools import partial
 
     class LoggingProxy(ProxyBase):
         """
@@ -166,15 +186,27 @@ to configure options from the command line.
 
 
     class LoggingProxyService(Service):
-        endpoint_str = "tcp:10389"
-        proxied = ('localhost', 8080)
+        endpointStr = "tcp:10389"
+        proxiedEndpointStr = 'tcp:host=localhost:port=8080'
 
         def startService(self):
             factory = protocol.ServerFactory()
             use_tls = False
-            cfg = config.LDAPConfig(serviceLocationOverrides={'': self.proxied, })
-            factory.protocol = lambda : LoggingProxy(cfg, use_tls=use_tls)
-            ep = serverFromString(reactor, self.endpoint_str)
+            proxiedEndpointStr = 'tcp:host=localhost:port=8080'
+            clientConnector = partial(
+                connectToLDAPEndpoint,
+                reactor,
+                self.proxiedEndpointStr,
+                LDAPClient)
+
+            def buildProtocol():
+                proto = LoggingProxy()
+                proto.clientConnector = clientConnector
+                proto.use_tls = use_tls
+                return proto
+
+            factory.protocol = buildProtocol
+            ep = serverFromString(reactor, self.endpointStr)
             d = ep.listen(factory)
             d.addCallback(self.setListeningPort)
             d.addErrback(log.err)
@@ -196,6 +228,7 @@ to configure options from the command line.
     service = LoggingProxyService()
     service.setServiceParent(application)
 
+
 This program is very similar to the previous one.  However, this one is run
 with :program:`twistd`::
 
@@ -208,12 +241,14 @@ code from the `if __name__ == '__main__'` block into the service's
 starts up.  Conversely, :py:func:`stopService()` is called when the service is 
 about to shut down.
 
-This improved example also makes use of an endpoint string.  This is a string
-description of the socket on which our LDAP proxy server will listen.  The
-advantage of endpoints is that you can read these strings from a configuration
-file and change how your server listens.  Our example listens on a plain old 
-TCP socket, but you could easilly switch to a TLS socket or a UNIX domain
-socket without having to change a line of code.
+This improved example also makes use of endpoint strings.  These strings are
+textual descriptions of client and server sockets on which our LDAP proxy 
+server will connect and listen, respectively.  
+
+The advantage of endpoints is that you can read these strings from a configuration
+file and change how your server listens or how you client connects.  Our example 
+listens on a plain old TCP socket, but you could easilly switch to a TLS socket
+or a UNIX domain socket without having to change a line of code.
 
 Listening on an endpoint is an asynchronous task, so we set a callback to 
 record the listening port.  When the service stops, we ask the port to stop 
