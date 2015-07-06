@@ -84,6 +84,7 @@ LDAP Server Quick Start
     objectclass: person
     objectClass: inetOrgPerson
     sn: Roberts
+    userPassword: secret
 
     """
 
