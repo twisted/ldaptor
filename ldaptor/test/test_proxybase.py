@@ -4,10 +4,9 @@ Test cases for ldaptor.protocols.ldap.proxybase module.
 from functools import partial
 import itertools
 from twisted.internet import error, defer
-from twisted.internet.task import Clock, deferLater
+from twisted.internet.task import Clock
 from twisted.trial import unittest
 from twisted.test import proto_helpers
-from ldaptor import config
 from ldaptor.protocols.ldap import proxybase, ldaperrors
 from ldaptor.protocols import pureldap
 from ldaptor import testutil
@@ -66,13 +65,6 @@ def failToConnectToServer(reactor, delay=0):
 
     reactor.callLater(delay, onConnect)
     return d
-
-def makeClientCreatorFactory(delay):
-    def makeClientCreator(reactor_, protocol):
-        cc = WontConnectClientCreator(reactor=reactor_)
-        cc.delay = delay
-        return cc
-    return makeClientCreator
 
 
 class ProxyBase(unittest.TestCase):
