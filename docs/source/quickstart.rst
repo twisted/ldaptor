@@ -49,7 +49,7 @@ LDAP Server Quick Start
 .. code-block:: python
 
     from twisted.application import service, internet
-    from twisted.internet import reactor
+    from twisted.internet.endpoints import serverFromString
     from twisted.internet.protocol import ServerFactory
     from twisted.python.components import registerAdapter
     from twisted.python import log
@@ -112,6 +112,7 @@ LDAP Server Quick Start
             return proto
 
     if __name__ == '__main__':
+        from twisted.internet import reactor
         if len(sys.argv) == 2:
             port = int(sys.argv[1])
         else:
@@ -132,5 +133,7 @@ LDAP Server Quick Start
         factory.debug = True
         application = service.Application("ldaptor-server")
         myService = service.IServiceCollection(application)
-        reactor.listenTCP(port, factory)
+        serverEndpointStr = "tcp:{0}".format(port)
+        e = serverFromString(reactor, serverEndpointStr)
+        d = e.listen(factory)
         reactor.run()
