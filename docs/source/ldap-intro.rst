@@ -141,6 +141,11 @@ In general, LDAP servers index the entries and can effectively search for matche
 
 An LDAP search takes the following information as input:
 
+* base DN
+* scope (base, one level, subtree)
+* filter
+* attributes requested
+
 .. NOTE::
    Once again, we are skipping some details for
    understandability.
@@ -209,8 +214,8 @@ Now, all the client needs to do is remember which numbers are still in use, and 
 It can internally maintain search state based on these numbers, and process result entries based on them.
 The client can reuse a number when it is known that no more server replies will be sent using that number; for example, the search done message gives this guarantee.
 
-Finally, when the client longer wants to talk to the server, it sends a message effectively saying "good bye".
-This message is known as ``unbind``.
+Finally, when the client no longer wants to talk to the server, it sends a message effectively saying 
+"good bye".  This message is known as ``unbind``.
 This only means that the state of connection is the same as when connected, before the first ``bind``; that is, it un-authenticates the current user.
 If the client really wants to close the connection, it will then close the TCP socket.
 

@@ -11,6 +11,7 @@ LDAP Client Quickstart
     from twisted.internet.task import react
     from ldaptor.protocols.ldap.ldapclient import LDAPClient
     from ldaptor.protocols.ldap.ldapsyntax import LDAPEntry
+    import sys
 
     @defer.inlineCallbacks
     def onConnect(client):
@@ -28,15 +29,15 @@ LDAP Client Quickstart
         for entry in results:
             print(entry)
 
-    def onError(err, reactor):
-        err.printTraceback()
+    def onError(err):
+        err.printDetailedTraceback(file=sys.stderr)
 
     def main(reactor):
         endpoint_str = "tcp:host=127.0.0.1:port=8080"
         e = clientFromString(reactor, endpoint_str)
         d = connectProtocol(e, LDAPClient())
         d.addCallback(onConnect)
-        d.addErrback(onError, reactor)
+        d.addErrback(onError)
         return d
 
     react(main)

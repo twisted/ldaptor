@@ -39,9 +39,9 @@ Writing things down, John Smith LDIF::
      ple lines as long as the non-first lines are inden
      ted in the LDIF.
 
-------------------------------------
+-------------------------------------
 Asynchronous LDAP Clients and Servers
-------------------------------------
+-------------------------------------
 
 Ldaptor is a set of pure-Python LDAP client and server protocols and libraries..
 
@@ -90,15 +90,15 @@ Ldaptor contains helper classes to simplify connecting to an LDAP DIT.
 
 .. code-block:: python
 
-    >>> from ldaptor.protocols.ldap import ldapclient, ldapconnector
+    >>> from ldaptor.protocols.ldap.ldapclient import LDAPClient
     >>> from twisted.internet import reactor
-    >>> connector=ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
-    >>> connector
-    <ldaptor.protocols.ldap.ldapconnector.LDAPClientCreator
-    instance at 0x40619b6c>
-    >>> d = connector.connectAnonymously(dn, {dn: ('localhost', 10389)})
+    >>> from twisted.internet.endpoints import clientFromString, connectProtocol
+    >>> e = clientFromString(reactor, "tcp:host=localhost:port=10389")
+    >>> e
+    <twisted.internet.endpoints.TCP4ClientEndpoint at 0xb452e0c>
+    >>> d = connectProtocol(e, LDAPClient)
     >>> d
-    <Deferred at 0x402d058c>
+    <Deferred at 0xb34656c>
 
 
 ---------
