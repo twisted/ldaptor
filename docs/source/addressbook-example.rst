@@ -82,6 +82,30 @@ Twisted supports TCP, UDP, SSL/TLS, multicast, Unix sockets, a large number of p
 
 Twisted includes many full-blown applications, such as web, SSH, FTP, DNS and news servers.
 
+---------
+Deferreds
+---------
+
+- A promise that a function will at some point have a result.
+- You can attach callback functions to a Deferred.
+- Once it gets a result these callbacks will be called.
+- Also allows you to register a callback for an error, with the default behavior of logging the error.
+- Standard way to handle all sorts of blocking or delayed operations.
+
+.. note::
+
+    Because of the asynchronous nature of Deferreds, a standard interactive
+    Python shell won't work treat the following examples the way you might
+    expect.  That is because the Twisted reator is not running, so connections
+    will never be made and Deferreds will never fire their callback function(s).
+
+    If you want to follow along interactively, you can use the following
+    interactive shell that comes with Twisted.  It runs a reactor in the 
+    background so you can see deferred results::
+
+        $ python -m twisted.conch.stdio
+
+
 -------------------------------
 Connect to a DIT Asynchronously
 -------------------------------
@@ -96,20 +120,9 @@ Ldaptor contains helper classes to simplify connecting to an LDAP DIT.
     >>> e = clientFromString(reactor, "tcp:host=localhost:port=10389")
     >>> e
     <twisted.internet.endpoints.TCP4ClientEndpoint at 0xb452e0c>
-    >>> d = connectProtocol(e, LDAPClient)
+    >>> d = connectProtocol(e, LDAPClient())
     >>> d
-    <Deferred at 0xb34656c>
-
-
----------
-Deferreds
----------
-
-- A promise that a function will at some point have a result.
-- You can attach callback functions to a Deferred.
-- Once it gets a result these callbacks will be called.
-- Also allows you to register a callback for an error, with the default behavior of logging the error.
-- Standard way to handle all sorts of blocking or delayed operations.
+    <Deferred at 0x36755a8 current result: <ldaptor.protocols.ldap.ldapclient.LDAPClient instance at 0x36757a0>>
 
 ---------
 Searching
@@ -119,15 +132,15 @@ Once connected to the DIT, an LDAP client can search for entries.
 
 .. code-block:: python
 
-    >>> from twisted.trial.util import deferredResult
-    >>> proto = deferredResult(d)
+    >>> proto = d.result
     >>> proto
-    <ldaptor.protocols.ldap.ldapclient.LDAPClient
-    instance at 0x40619dac>
+    <ldaptor.protocols.ldap.ldapclient.LDAPClient instance at 0x40619dac>
     >>> from ldaptor.protocols.ldap import ldapsyntax
+    >>> from ldaptor.protocols.ldap import distinguishedname
+    >>> dn = distinguishedname.DistinguishedName("dc=example,dc=org")
     >>> baseEntry = ldapsyntax.LDAPEntry(client=proto, dn=dn)
-    >>> d2 = baseEntry.search(filterText='(gn=j*)')
-    >>> results = deferredResult(d2)
+    >>> d2 = baseEntry.search(filterText='(givenName=b*)')
+    >>> results = d2.result
 
 -------
 Results
