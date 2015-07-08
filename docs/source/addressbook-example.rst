@@ -47,6 +47,31 @@ Ldaptor is a set of pure-Python LDAP client and server protocols and libraries..
 
 It is licensed under the MIT (Expat) License.
 
+---------------------------------
+Following Along with the Examples
+---------------------------------
+
+If you are following along with the interactive examples, you will need an LDAP 
+directory server to which the example client can connect.  A script that 
+creates such a client is available in the section :ref:`quickstart-server-label`.
+Copy the script to a file `quickstart_server.py` and run it in another terminal::
+
+    $ python quickstart_server.py 10389
+
+
+.. note::
+
+    Because of the asynchronous nature of Deferreds, a standard interactive
+    Python shell won't work treat the following examples the way you might
+    expect.  That is because the Twisted reator is not running, so connections
+    will never be made and Deferreds will never fire their callback function(s).
+
+    If you want to follow along interactively, you can use the following
+    interactive shell that comes with Twisted.  It runs a reactor in the 
+    background so you can see deferred results::
+
+        $ python -m twisted.conch.stdio
+
 --------------------------------
 Working with Distinguished Names
 --------------------------------
@@ -92,20 +117,6 @@ Deferreds
 - Also allows you to register a callback for an error, with the default behavior of logging the error.
 - Standard way to handle all sorts of blocking or delayed operations.
 
-.. note::
-
-    Because of the asynchronous nature of Deferreds, a standard interactive
-    Python shell won't work treat the following examples the way you might
-    expect.  That is because the Twisted reator is not running, so connections
-    will never be made and Deferreds will never fire their callback function(s).
-
-    If you want to follow along interactively, you can use the following
-    interactive shell that comes with Twisted.  It runs a reactor in the 
-    background so you can see deferred results::
-
-        $ python -m twisted.conch.stdio
-
-
 -------------------------------
 Connect to a DIT Asynchronously
 -------------------------------
@@ -139,7 +150,7 @@ Once connected to the DIT, an LDAP client can search for entries.
     >>> from ldaptor.protocols.ldap import distinguishedname
     >>> dn = distinguishedname.DistinguishedName("dc=example,dc=org")
     >>> baseEntry = ldapsyntax.LDAPEntry(client=proto, dn=dn)
-    >>> d2 = baseEntry.search(filterText='(givenName=b*)')
+    >>> d2 = baseEntry.search(filterText='(gn=j*)')
     >>> results = d2.result
 
 -------
@@ -151,12 +162,12 @@ Search results are a list of LDAP entries.
 .. code-block:: python
 
     >>> results
-    [LDAPEntry(dn='givenName=John+sn=Smith,ou=People,
+    [LDAPEntry(dn='gn=John+sn=Smith,ou=People,
     dc=example,dc=com', attributes={'description': ['Some text.'],
-    'facsimileTelephoneNumber': ['555-1235'], 'givenName': ['John'],
+    'facsimileTelephoneNumber': ['555-1235'], 'gn': ['John'],
     'objectClass': ['addressbookPerson'], 'sn': ['Smith'],
     'telephoneNumber': ['555-1234']}), LDAPEntry(dn=
-    'givenName=John+sn=Doe,ou=People,dc=example,dc=com',
+    'gn=John+sn=Doe,ou=People,dc=example,dc=com',
     attributes={'c': ['US'], 'givenName': ['John'], 'l': ['New York City'],
     'objectClass': ['addressbookPerson'], 'postOfficeBox': ['123'],
     'postalAddress': ['Backstreet'], 'postalCode': ['54321'],
@@ -172,9 +183,9 @@ You can inspect individual results in the result list.
 
     >>> results[0]
     LDAPEntry(dn=
-    'givenName=John+sn=Smith,ou=People,dc=example,dc=com',
+    'gn=John+sn=Smith,ou=People,dc=example,dc=com',
     attributes={'description': ['Some text.'],
-    'facsimileTelephoneNumber': ['555-1235'], 'givenName': ['John'],
+    'facsimileTelephoneNumber': ['555-1235'], 'gn': ['John'],
     'objectClass': ['addressbookPerson'], 'sn': ['Smith'],
     'telephoneNumber': ['555-1234']})
     >>> results[3]
@@ -192,11 +203,11 @@ can be used by other LDAP tools.
 .. code-block:: python
 
     >>> print(results[0])
-    dn: givenName=John+sn=Smith,ou=People,dc=example,dc=com
+    dn: gn=John+sn=Smith,ou=People,dc=example,dc=com
     objectClass: addressbookPerson
     description: Some text.
     facsimileTelephoneNumber: 555-1235
-    givenName: John
+    gn: John
     sn: Smith
     telephoneNumber: 555-1234
 
@@ -224,8 +235,8 @@ like dictionary keys.  The values are always a list of one or more values.
 
     >>> smith = results[0]
     >>> print(smith.dn)
-    givenName=John+sn=Smith,ou=People,dc=example,dc=com
-    >>> smith['givenName']
+    gn=John+sn=Smith,ou=People,dc=example,dc=com
+    >>> smith['gn']
     ['John']
     >>>
 
@@ -271,37 +282,33 @@ Our first Python program
 
     #!/usr/bin/python
 
-    from twisted.internet import reactor, defer
-    from ldaptor.protocols.ldap import ldapclient, ldapsyntax, ldapconnector
-    from ldaptor.protocols.ldap.distinguishedname import DistinguishedName
+    from twisted.internet import defer
+    from twisted.internet.task import react
+    from twisted.internet.endpoints import clientFromString, connectProtocol
     from ldaptor import ldapfilter
+    from ldaptor.protocols.ldap import ldapsyntax
+    from ldaptor.protocols.ldap.ldapclient import LDAPClient
+    from ldaptor.protocols.ldap.distinguishedname import DistinguishedName
 
-    def search(config):
-        c = ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
-        d = c.connectAnonymously(
-            config['base'],
-            config['serviceLocationOverrides'])
+    def search(reactor, endpointStr, base_dn):
+        e = clientFromString(reactor, endpointStr)
+        d = connectToLDAPEndpoint(e, LDAPClient())
 
-        def _doSearch(proto, config):
+        def _doSearch(proto):
             searchFilter = ldapfilter.parseFilter('(gn=j*)')
-            baseEntry = ldapsyntax.LDAPEntry(client=proto, dn=config['base'])
+            baseEntry = ldapsyntax.LDAPEntry(client=proto, dn=base_dn)
             d = baseEntry.search(filterObject=searchFilter)
             return d
 
-        d.addCallback(_doSearch, config)
+        d.addCallback(_doSearch)
         return d
 
-    def main():
+    def main(reactor):
         import sys
         from twisted.python import log
         log.startLogging(sys.stderr, setStdout=0)
-        config = {
-            'base': DistinguishedName('ou=People,dc=example,dc=com'),
-            'serviceLocationOverrides': {
-                    DistinguishedName('dc=example,dc=com'): ('localhost', 10389),
-                }
-            }
-        d = search(config)
+        dn =  DistinguishedName('dc=example,dc=org')
+        d = search(reactor, 'tcp:host=localhost:port=10389', dn)
 
         def _show(results):
             for item in results:
@@ -310,10 +317,10 @@ Our first Python program
         d.addCallback(_show)
         d.addErrback(defer.logError)
         d.addBoth(lambda _: reactor.stop())
-        reactor.run()
+        return d
 
     if __name__ == '__main__':
-        main()
+        react(main)
 
 ---------------------------
 Phases of the protocol chat
