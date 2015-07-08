@@ -6,9 +6,9 @@ An LDAP proxy sits between an LDAP client and an LDAP server.  It accepts LDAP
 requests from the client and forwards them to the LDAP server.  Responses from
 the server are then relayed back to the client.
 
-----------------
-Why is it Useful
-----------------
+-----------------
+Why is it Useful?
+-----------------
 
 An LDAP proxy has many different uses:
 
@@ -39,6 +39,10 @@ An LDAP proxy has many different uses:
   round-robin architecture.  The client can be configured to always connect
   to the proxy, which in turn will distrbute the connections amongst the 
   replicas.
+
+--------------
+Proxy Recipies
+--------------
 
 """"""""""""""""""
 Logging LDAP Proxy

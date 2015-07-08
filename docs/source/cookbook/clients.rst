@@ -63,14 +63,14 @@ The :py:func:`twisted.internet.task.react()` function is perfect for running a
 one-shot `main()` function.  When `main()` is called, we create a client 
 endpoint from a string description and the reactor.
 :py:func:`twisted.internet.endpoints.connectProtocol()` is used to make a
-one-time connection to an LDAP DIT listening on the local host, port 8080.
+one-time connection to an LDAP directory listening on the local host, port 8080.
 When the deferred returned from that function fires, the connection has
 been established and the client protocol instance is passed to the 
 :py:func:`onConnect()` callback.
 
 This callback uses inline deferreds to make the syntax more compact.  We create
 an :py:class:`ldaptor.protocols.ldap.ldapsyntax.LDAPEntry` with a DN matching
-the root of the DIT and call the asynchronous :py:func:`search()` method.  The
+the root of the directory and call the asynchronous :py:func:`search()` method.  The
 result returned when the deferred fires is a list of :py:class:`LDAPEntry` 
 objects.
 

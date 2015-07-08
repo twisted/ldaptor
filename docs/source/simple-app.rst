@@ -1,5 +1,5 @@
 ==================================
-Creating a simple LDAP application
+Creating a Simple LDAP Application
 ==================================
 
 --------------
@@ -39,6 +39,32 @@ Writing things down, John Smith LDIF::
      ple lines as long as the non-first lines are inden
      ted in the LDIF.
 
+-------
+Twisted
+-------
+
+Twisted is an event-driven networking framework written in Python and licensed under the MIT (Expat) License.
+
+Twisted supports TCP, UDP, SSL/TLS, multicast, Unix sockets, a large number of protocols (including HTTP, NNTP, SSH, IRC, FTP, and others), and much more.
+
+Twisted includes many full-blown applications, such as web, SSH, FTP, DNS and news servers.
+
+---------
+Deferreds
+---------
+
+- A promise that a function will at some point have a result.
+- You can attach callback functions to a Deferred.
+- Once it gets a result these callbacks will be called.
+- Also allows you to register a callback for an error, with the default behavior of logging the error.
+- Standard way to handle all sorts of blocking or delayed operations.
+
+-------------------
+Overview of Ldaptor
+-------------------
+
+.. image::  _static/images/overview.png
+
 -------------------------------------
 Asynchronous LDAP Clients and Servers
 -------------------------------------
@@ -47,9 +73,9 @@ Ldaptor is a set of pure-Python LDAP client and server protocols and libraries..
 
 It is licensed under the MIT (Expat) License.
 
----------------------------------
+"""""""""""""""""""""""""""""""""
 Following Along with the Examples
----------------------------------
+"""""""""""""""""""""""""""""""""
 
 If you are following along with the interactive examples, you will need an LDAP 
 directory server to which the example client can connect.  A script that 
@@ -90,36 +116,9 @@ Working with Distinguished Names
     >>> str(dn)
     'dc=example,dc=com'
 
-
--------------------
-Overview of Ldaptor
--------------------
-
-.. image::  _static/images/overview.png
-
--------
-Twisted
--------
-
-Twisted is an event-driven networking framework written in Python and licensed under the MIT (Expat) License.
-
-Twisted supports TCP, UDP, SSL/TLS, multicast, Unix sockets, a large number of protocols (including HTTP, NNTP, SSH, IRC, FTP, and others), and much more.
-
-Twisted includes many full-blown applications, such as web, SSH, FTP, DNS and news servers.
-
----------
-Deferreds
----------
-
-- A promise that a function will at some point have a result.
-- You can attach callback functions to a Deferred.
-- Once it gets a result these callbacks will be called.
-- Also allows you to register a callback for an error, with the default behavior of logging the error.
-- Standard way to handle all sorts of blocking or delayed operations.
-
--------------------------------
-Connect to a DIT Asynchronously
--------------------------------
+-------------------------------------
+Connect to a Directory Asynchronously
+-------------------------------------
 
 Ldaptor contains helper classes to simplify connecting to an LDAP DIT.
 
