@@ -1,5 +1,5 @@
 ==================================
-Creating a simple LDAP application
+Creating a Simple LDAP Application
 ==================================
 
 --------------
@@ -39,6 +39,32 @@ Writing things down, John Smith LDIF::
      ple lines as long as the non-first lines are inden
      ted in the LDIF.
 
+-------
+Twisted
+-------
+
+Twisted is an event-driven networking framework written in Python and licensed under the MIT (Expat) License.
+
+Twisted supports TCP, UDP, SSL/TLS, multicast, Unix sockets, a large number of protocols (including HTTP, NNTP, SSH, IRC, FTP, and others), and much more.
+
+Twisted includes many full-blown applications, such as web, SSH, FTP, DNS and news servers.
+
+---------
+Deferreds
+---------
+
+- A promise that a function will at some point have a result.
+- You can attach callback functions to a Deferred.
+- Once it gets a result these callbacks will be called.
+- Also allows you to register a callback for an error, with the default behavior of logging the error.
+- Standard way to handle all sorts of blocking or delayed operations.
+
+-------------------
+Overview of Ldaptor
+-------------------
+
+.. image::  _static/images/overview.png
+
 -------------------------------------
 Asynchronous LDAP Clients and Servers
 -------------------------------------
@@ -46,6 +72,31 @@ Asynchronous LDAP Clients and Servers
 Ldaptor is a set of pure-Python LDAP client and server protocols and libraries..
 
 It is licensed under the MIT (Expat) License.
+
+"""""""""""""""""""""""""""""""""
+Following Along with the Examples
+"""""""""""""""""""""""""""""""""
+
+If you are following along with the interactive examples, you will need an LDAP 
+directory server to which the example client can connect.  A script that 
+creates such a client is available in the section :ref:`quickstart-server-label`.
+Copy the script to a file `quickstart_server.py` and run it in another terminal::
+
+    $ python quickstart_server.py 10389
+
+
+.. note::
+
+    Because of the asynchronous nature of Deferreds, a standard interactive
+    Python shell won't work treat the following examples the way you might
+    expect.  That is because the Twisted reator is not running, so connections
+    will never be made and Deferreds will never fire their callback function(s).
+
+    If you want to follow along interactively, you can use the following
+    interactive shell that comes with Twisted.  It runs a reactor in the 
+    background so you can see deferred results::
+
+        $ python -m twisted.conch.stdio
 
 --------------------------------
 Working with Distinguished Names
@@ -65,26 +116,9 @@ Working with Distinguished Names
     >>> str(dn)
     'dc=example,dc=com'
 
-
--------------------
-Overview of Ldaptor
--------------------
-
-.. image::  _static/images/overview.png
-
--------
-Twisted
--------
-
-Twisted is an event-driven networking framework written in Python and licensed under the MIT (Expat) License.
-
-Twisted supports TCP, UDP, SSL/TLS, multicast, Unix sockets, a large number of protocols (including HTTP, NNTP, SSH, IRC, FTP, and others), and much more.
-
-Twisted includes many full-blown applications, such as web, SSH, FTP, DNS and news servers.
-
--------------------------------
-Connect to a DIT Asynchronously
--------------------------------
+-------------------------------------
+Connect to a Directory Asynchronously
+-------------------------------------
 
 Ldaptor contains helper classes to simplify connecting to an LDAP DIT.
 
@@ -96,20 +130,9 @@ Ldaptor contains helper classes to simplify connecting to an LDAP DIT.
     >>> e = clientFromString(reactor, "tcp:host=localhost:port=10389")
     >>> e
     <twisted.internet.endpoints.TCP4ClientEndpoint at 0xb452e0c>
-    >>> d = connectProtocol(e, LDAPClient)
+    >>> d = connectProtocol(e, LDAPClient())
     >>> d
-    <Deferred at 0xb34656c>
-
-
----------
-Deferreds
----------
-
-- A promise that a function will at some point have a result.
-- You can attach callback functions to a Deferred.
-- Once it gets a result these callbacks will be called.
-- Also allows you to register a callback for an error, with the default behavior of logging the error.
-- Standard way to handle all sorts of blocking or delayed operations.
+    <Deferred at 0x36755a8 current result: <ldaptor.protocols.ldap.ldapclient.LDAPClient instance at 0x36757a0>>
 
 ---------
 Searching
@@ -119,15 +142,15 @@ Once connected to the DIT, an LDAP client can search for entries.
 
 .. code-block:: python
 
-    >>> from twisted.trial.util import deferredResult
-    >>> proto = deferredResult(d)
+    >>> proto = d.result
     >>> proto
-    <ldaptor.protocols.ldap.ldapclient.LDAPClient
-    instance at 0x40619dac>
+    <ldaptor.protocols.ldap.ldapclient.LDAPClient instance at 0x40619dac>
     >>> from ldaptor.protocols.ldap import ldapsyntax
+    >>> from ldaptor.protocols.ldap import distinguishedname
+    >>> dn = distinguishedname.DistinguishedName("dc=example,dc=org")
     >>> baseEntry = ldapsyntax.LDAPEntry(client=proto, dn=dn)
     >>> d2 = baseEntry.search(filterText='(gn=j*)')
-    >>> results = deferredResult(d2)
+    >>> results = d2.result
 
 -------
 Results
@@ -138,12 +161,12 @@ Search results are a list of LDAP entries.
 .. code-block:: python
 
     >>> results
-    [LDAPEntry(dn='givenName=John+sn=Smith,ou=People,
+    [LDAPEntry(dn='gn=John+sn=Smith,ou=People,
     dc=example,dc=com', attributes={'description': ['Some text.'],
-    'facsimileTelephoneNumber': ['555-1235'], 'givenName': ['John'],
+    'facsimileTelephoneNumber': ['555-1235'], 'gn': ['John'],
     'objectClass': ['addressbookPerson'], 'sn': ['Smith'],
     'telephoneNumber': ['555-1234']}), LDAPEntry(dn=
-    'givenName=John+sn=Doe,ou=People,dc=example,dc=com',
+    'gn=John+sn=Doe,ou=People,dc=example,dc=com',
     attributes={'c': ['US'], 'givenName': ['John'], 'l': ['New York City'],
     'objectClass': ['addressbookPerson'], 'postOfficeBox': ['123'],
     'postalAddress': ['Backstreet'], 'postalCode': ['54321'],
@@ -159,9 +182,9 @@ You can inspect individual results in the result list.
 
     >>> results[0]
     LDAPEntry(dn=
-    'givenName=John+sn=Smith,ou=People,dc=example,dc=com',
+    'gn=John+sn=Smith,ou=People,dc=example,dc=com',
     attributes={'description': ['Some text.'],
-    'facsimileTelephoneNumber': ['555-1235'], 'givenName': ['John'],
+    'facsimileTelephoneNumber': ['555-1235'], 'gn': ['John'],
     'objectClass': ['addressbookPerson'], 'sn': ['Smith'],
     'telephoneNumber': ['555-1234']})
     >>> results[3]
@@ -179,11 +202,11 @@ can be used by other LDAP tools.
 .. code-block:: python
 
     >>> print(results[0])
-    dn: givenName=John+sn=Smith,ou=People,dc=example,dc=com
+    dn: gn=John+sn=Smith,ou=People,dc=example,dc=com
     objectClass: addressbookPerson
     description: Some text.
     facsimileTelephoneNumber: 555-1235
-    givenName: John
+    gn: John
     sn: Smith
     telephoneNumber: 555-1234
 
@@ -211,8 +234,8 @@ like dictionary keys.  The values are always a list of one or more values.
 
     >>> smith = results[0]
     >>> print(smith.dn)
-    givenName=John+sn=Smith,ou=People,dc=example,dc=com
-    >>> smith['givenName']
+    gn=John+sn=Smith,ou=People,dc=example,dc=com
+    >>> smith['gn']
     ['John']
     >>>
 
@@ -258,37 +281,33 @@ Our first Python program
 
     #!/usr/bin/python
 
-    from twisted.internet import reactor, defer
-    from ldaptor.protocols.ldap import ldapclient, ldapsyntax, ldapconnector
-    from ldaptor.protocols.ldap.distinguishedname import DistinguishedName
+    from twisted.internet import defer
+    from twisted.internet.task import react
+    from twisted.internet.endpoints import clientFromString, connectProtocol
     from ldaptor import ldapfilter
+    from ldaptor.protocols.ldap import ldapsyntax
+    from ldaptor.protocols.ldap.ldapclient import LDAPClient
+    from ldaptor.protocols.ldap.distinguishedname import DistinguishedName
 
-    def search(config):
-        c = ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
-        d = c.connectAnonymously(
-            config['base'],
-            config['serviceLocationOverrides'])
+    def search(reactor, endpointStr, base_dn):
+        e = clientFromString(reactor, endpointStr)
+        d = connectToLDAPEndpoint(e, LDAPClient())
 
-        def _doSearch(proto, config):
+        def _doSearch(proto):
             searchFilter = ldapfilter.parseFilter('(gn=j*)')
-            baseEntry = ldapsyntax.LDAPEntry(client=proto, dn=config['base'])
+            baseEntry = ldapsyntax.LDAPEntry(client=proto, dn=base_dn)
             d = baseEntry.search(filterObject=searchFilter)
             return d
 
-        d.addCallback(_doSearch, config)
+        d.addCallback(_doSearch)
         return d
 
-    def main():
+    def main(reactor):
         import sys
         from twisted.python import log
         log.startLogging(sys.stderr, setStdout=0)
-        config = {
-            'base': DistinguishedName('ou=People,dc=example,dc=com'),
-            'serviceLocationOverrides': {
-                    DistinguishedName('dc=example,dc=com'): ('localhost', 10389),
-                }
-            }
-        d = search(config)
+        dn =  DistinguishedName('dc=example,dc=org')
+        d = search(reactor, 'tcp:host=localhost:port=10389', dn)
 
         def _show(results):
             for item in results:
@@ -297,10 +316,10 @@ Our first Python program
         d.addCallback(_show)
         d.addErrback(defer.logError)
         d.addBoth(lambda _: reactor.stop())
-        reactor.run()
+        return d
 
     if __name__ == '__main__':
-        main()
+        react(main)
 
 ---------------------------
 Phases of the protocol chat

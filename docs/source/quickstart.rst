@@ -42,6 +42,8 @@ LDAP Client Quickstart
 
     react(main)
 
+.. _quickstart-server-label:
+
 =======================
 LDAP Server Quick Start
 =======================
@@ -78,13 +80,37 @@ LDAP Server Quick Start
 
     dn: cn=bob,ou=people,dc=example,dc=org
     cn: bob
-    givenName: Bob
+    gn: Bob
     mail: bob@example.org
     objectclass: top
     objectclass: person
     objectClass: inetOrgPerson
     sn: Roberts
     userPassword: secret
+
+    dn: gn=John+sn=Doe,ou=people,dc=example,dc=org
+    objectClass: addressbookPerson
+    gn: John
+    sn: Doe
+    street: Back alley
+    postOfficeBox: 123
+    postalCode: 54321
+    postalAddress: Backstreet
+    st: NY
+    l: New York City
+    c: US
+    userPassword: terces
+
+    dn: gn=John+sn=Smith,ou=people, dc=example,dc=org
+    objectClass: addressbookPerson
+    gn: John
+    sn: Smith
+    telephoneNumber: 555-1234
+    facsimileTelephoneNumber: 555-1235
+    description: This is a description that can span multi
+     ple lines as long as the non-first lines are inden
+     ted in the LDIF.
+    userPassword: eekretsay
 
     """
 

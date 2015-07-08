@@ -30,7 +30,7 @@ User's Guide
    :maxdepth: 1
 
    ldap-intro
-   addressbook-example
+   simple-app 
    ldaptor
 
 ----------------
