@@ -10,6 +10,7 @@ Contributors
 - Anton Gyllenberg
 - Bret Curtis
 - Carl Waldbieser
+- Christopher Bartz
 - David Strauss
 - HawkOwl
 - Hynek Schlawack
