@@ -301,8 +301,8 @@ class TestEntryMatch(unittest.TestCase):
             'aValue': ['b'],
             'num': [4],
             })
-        result = o.match(pureldap.LDAPFilter_greaterOrEqual('foo',
-                                                         42))
+        result = o.match(pureldap.LDAPFilter_greaterOrEqual(pureber.BEROctetString('foo'),
+                                                            pureber.BERInteger(42)))
         self.assertEquals(result, False)
 
     def test_greaterOrEqual_match_greater(self):
@@ -312,8 +312,8 @@ class TestEntryMatch(unittest.TestCase):
             'aValue': ['b'],
             'num': [4],
             })
-        result = o.match(pureldap.LDAPFilter_greaterOrEqual('num',
-                                                            3))
+        result = o.match(pureldap.LDAPFilter_greaterOrEqual(pureber.BEROctetString('num'),
+                                                            pureber.BERInteger(3)))
         self.assertEquals(result, True)
 
     def test_greaterOrEqual_match_equal(self):
@@ -323,8 +323,8 @@ class TestEntryMatch(unittest.TestCase):
             'aValue': ['b'],
             'num': [4],
             })
-        result = o.match(pureldap.LDAPFilter_greaterOrEqual('num',
-                                                            4))
+        result = o.match(pureldap.LDAPFilter_greaterOrEqual(pureber.BEROctetString('num'),
+                                                            pureber.BERInteger(4)))
         self.assertEquals(result, True)
 
     def test_greaterOrEqual_noMatch(self):
@@ -334,8 +334,8 @@ class TestEntryMatch(unittest.TestCase):
             'aValue': ['b'],
             'bValue': [4],
             })
-        result = o.match(pureldap.LDAPFilter_greaterOrEqual('num',
-                                                            5))
+        result = o.match(pureldap.LDAPFilter_greaterOrEqual(pureber.BEROctetString('num'),
+                                                            pureber.BERInteger(5)))
         self.assertEquals(result, False)
 
 
@@ -346,8 +346,8 @@ class TestEntryMatch(unittest.TestCase):
             'aValue': ['b'],
             'num': [4],
             })
-        result = o.match(pureldap.LDAPFilter_lessOrEqual('foo',
-                                                         42))
+        result = o.match(pureldap.LDAPFilter_lessOrEqual(pureber.BEROctetString('foo'),
+                                                         pureber.BERInteger(42)))
         self.assertEquals(result, False)
 
     def test_lessOrEqual_match_less(self):
@@ -357,8 +357,8 @@ class TestEntryMatch(unittest.TestCase):
             'aValue': ['b'],
             'num': [4],
             })
-        result = o.match(pureldap.LDAPFilter_lessOrEqual('num',
-                                                         5))
+        result = o.match(pureldap.LDAPFilter_lessOrEqual(pureber.BEROctetString('num'),
+                                                         pureber.BERInteger(5)))
         self.assertEquals(result, True)
 
     def test_lessOrEqual_match_equal(self):
@@ -368,8 +368,8 @@ class TestEntryMatch(unittest.TestCase):
             'aValue': ['b'],
             'num': [4],
             })
-        result = o.match(pureldap.LDAPFilter_lessOrEqual('num',
-                                                         4))
+        result = o.match(pureldap.LDAPFilter_lessOrEqual(pureber.BEROctetString('num'),
+                                                         pureber.BERInteger(4)))
         self.assertEquals(result, True)
 
     def test_lessOrEqual_noMatch(self):
@@ -379,8 +379,8 @@ class TestEntryMatch(unittest.TestCase):
             'aValue': ['b'],
             'num': [4],
             })
-        result = o.match(pureldap.LDAPFilter_lessOrEqual('num',
-                                                         3))
+        result = o.match(pureldap.LDAPFilter_lessOrEqual(pureber.BEROctetString('num'),
+                                                         pureber.BERInteger(3)))
         self.assertEquals(result, False)
 
     def test_extensibleMatch4(self):

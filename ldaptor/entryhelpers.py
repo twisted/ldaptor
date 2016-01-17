@@ -191,17 +191,17 @@ class MatchMixin(object):
                 return True
             return False
         elif isinstance(filter, pureldap.LDAPFilter_greaterOrEqual):
-            if filter.attributeDesc not in self:
+            if filter.attributeDesc.value not in self:
                 return False
-            for value in self[filter.attributeDesc]:
-                if value  >= filter.assertionValue:
+            for value in self[filter.attributeDesc.value]:
+                if value  >= filter.assertionValue.value:
                     return True
             return False
         elif isinstance(filter, pureldap.LDAPFilter_lessOrEqual):
-            if filter.attributeDesc not in self:
+            if filter.attributeDesc.value not in self:
                 return False
-            for value in self[filter.attributeDesc]:
-                if value <= filter.assertionValue:
+            for value in self[filter.attributeDesc.value]:
+                if value <= filter.assertionValue.value:
                     return True
             return False
         elif isinstance(filter, pureldap.LDAPFilter_and):
