@@ -260,11 +260,26 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
     def __nonzero__(self):
         return True
 
-    def bind(self, password):
-        r=pureldap.LDAPBindRequest(dn=str(self.dn), auth=password)
+    def bind(self, password, sasl=False, sasl_ctx=None):
+        if sasl and sasl_ctx:
+            password = sasl_ctx.send(password)
+        r=pureldap.LDAPBindRequest(dn=str(self.dn), auth=password, sasl=sasl)
         d = self.client.send(r)
-        d.addCallback(self._handle_bind_msg)
+        if sasl:
+            d.addCallback(self._handle_sasl_bind_msg, sasl_ctx)
+        else:
+            d.addCallback(self._handle_bind_msg)
         return d
+
+    def _handle_sasl_bind_msg(self, msg, sasl_ctx):
+        assert isinstance(msg, pureldap.LDAPBindResponse)
+        assert msg.referral is None #TODO
+        if sasl_ctx and msg.resultCode == ldaperrors.LDAPSaslBindInProgress.resultCode:
+            token_in = msg.serverSaslCreds.value
+            return self.bind(token_in, sasl=True, sasl_ctx=sasl_ctx)
+        elif msg.resultCode!=ldaperrors.Success.resultCode:
+            raise ldaperrors.get(msg.resultCode, msg.errorMessage)
+        return self
 
     def _handle_bind_msg(self, msg):
         assert isinstance(msg, pureldap.LDAPBindResponse)

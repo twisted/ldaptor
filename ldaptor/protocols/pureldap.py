@@ -587,9 +587,9 @@ class LDAPMatchingRuleAssertion(BERSequence):
     dnAttributes=None
 
     def fromBER(klass, tag, content, berdecoder=None):
-        matchingRule = None 
-        atype = None 
-        matchValue = None 
+        matchingRule = None
+        atype = None
+        matchValue = None
         dnAttributes = None
         l = berDecodeMultiple(content, LDAPBERDecoderContext_MatchingRuleAssertion(fallback=berdecoder, inherit=berdecoder))
         assert 1 <= len(l) <= 4
@@ -1366,13 +1366,13 @@ class LDAPStartTLSResponse(LDAPExtendedResponse):
                  referral=None, serverSaslCreds=None,
                  responseName=None, response=None,
                  tag=None):
-        LDAPExtendedResponse.__init__(self, 
-            resultCode=resultCode, 
-            matchedDN=matchedDN, 
+        LDAPExtendedResponse.__init__(self,
+            resultCode=resultCode,
+            matchedDN=matchedDN,
             errorMessage=errorMessage,
-            referral=referral, 
+            referral=referral,
             serverSaslCreds=serverSaslCreds,
-            responseName=responseName, 
+            responseName=responseName,
             response=response,
             tag=tag)
 

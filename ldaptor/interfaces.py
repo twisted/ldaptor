@@ -116,7 +116,7 @@ class ILDAPEntry(Interface):
     def __nonzero__(self):
         """Always return True"""
 
-    def bind(self, password):
+    def bind(self, password, sasl=False, sasl_ctx=None):
         """
         Try to authenticate with given secret.
 
