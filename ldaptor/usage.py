@@ -1,6 +1,18 @@
 from twisted.python import usage, reflect
+from twisted.python.usage import UsageError
 from ldaptor.protocols import pureldap
 from ldaptor.protocols.ldap import distinguishedname
+
+__all__ = [
+    "Options",
+    "Options_base",
+    "Options_base_optional",
+    "Options_bind",
+    "Options_bind_mandatory",
+    "Options_scope",
+    "Options_service_location",
+    "UsageError",
+]
 
 class Options(usage.Options):
     optParameters = ()
