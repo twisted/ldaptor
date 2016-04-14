@@ -130,7 +130,7 @@ class SubtreeFromChildrenMixin(object):
             callback(self)
             d = self.children()
             def _gotChildren(children, callback):
-                for c in children:
+                for c in reversed(children):
                     c.subtree(callback)
             d.addCallback(_gotChildren, callback)
             return d
