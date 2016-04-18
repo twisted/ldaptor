@@ -199,7 +199,7 @@ class LDAPServer(BaseLDAPServer):
     def _cbSearchGotBase(self, base, dn, request, reply):
         def _sendEntryToClient(entry):
             requested_attribs = request.attributes
-            if len(requested_attribs) > 0:
+            if len(requested_attribs) > 0 and '*' not in requested_attribs:
                 filtered_attribs = [
                     (k, entry.get(k)) for k in requested_attribs if k in entry]
             else:
