@@ -841,13 +841,17 @@ class LDAPControl(BERSequence):
     def fromBER(klass, tag, content, berdecoder=None):
         l = berDecodeMultiple(content, berdecoder)
 
+        assert 1<=len(l)<= 3
+
         kw = {}
-        if l[1:]:
+        if len(l) == 2:
+            if isinstance(l[1], BERBoolean):
+              kw['criticality'] = l[1].value
+            elif isinstance(l[1], BEROctetString):
+              kw['controlValue'] = l[1].value
+        elif len(l) == 3:
             kw['criticality'] = l[1].value
-        if l[2:]:
             kw['controlValue'] = l[2].value
-        # TODO is controlType, controlValue allowed without criticality?
-        assert not l[3:]
 
         r = klass(controlType=l[0].value,
                   tag=tag,
