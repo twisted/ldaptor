@@ -358,13 +358,14 @@ class KnownValues(unittest.TestCase):
           'controls': [ ('1.2.3.4', None, None),
                         ('2.3.4.5', False),
                         ('3.4.5.6', True, '\x00\x01\x02\xFF'),
+                        ('4.5.6.7', None, '\x00\x01\x02\xFF'),
                         ],
           },
          pureldap.LDAPBERDecoderContext_TopLevel(
         inherit=pureldap.LDAPBERDecoderContext_LDAPMessage(
         fallback=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext()),
         inherit=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext()))),
-         [0x30, 59]
+         [0x30, 76]
          # id
          + [0x02, 0x01, 42]
          # value
@@ -376,6 +377,9 @@ class KnownValues(unittest.TestCase):
                              criticality=False),
         pureldap.LDAPControl(controlType='3.4.5.6',
                              criticality=True,
+                             controlValue='\x00\x01\x02\xFF'),
+        pureldap.LDAPControl(controlType='4.5.6.7',
+                             criticality=None,
                              controlValue='\x00\x01\x02\xFF'),
         ]))),
          ),
