@@ -2,13 +2,12 @@ language: python
 python: 2.7
 
 env:
-    - TOX_ENV=py26-tw150
+    - TOX_ENV=py26-tw154
+    - TOX_ENV=py26-tw140
     - TOX_ENV=py27-twlatest
     - TOX_ENV=py27-twtrunk
     - TOX_ENV=py27-tw162
     - TOX_ENV=py27-tw160
-    - TOX_ENV=py27-tw154
-    - TOX_ENV=py27-tw153
     - TOX_ENV=py27-tw150
     - TOX_ENV=py27-tw140
     - TOX_ENV=pypy-twlatest
@@ -16,6 +15,7 @@ env:
     - TOX_ENV=pypy-tw162
     - TOX_ENV=pypy-tw160
     - TOX_ENV=pypy-tw150
+    - TOX_ENV=pypy-tw140
     - TOX_ENV=pyflakes
     - TOX_ENV=manifest
 

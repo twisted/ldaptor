@@ -1,7 +1,7 @@
 Changelog
 =========
 
-Release 14.1 (UNRELEASED)
+Release 16.0 (2016-06-07)
 -------------------------
 
 Features
@@ -9,7 +9,11 @@ Features
 
 - Make meta data introspectable
 - Added `proxybase.py`, an LDAP proxy that is easier to hook into.
-
+- When parsing LDAPControls, criticality may not exist while controlValue still does
+- Requested attributes can also be passed as '*' symbol
+- Numerous small bug fixes.
+- Additional documentation
+- Updated Travis-CI, Tox and other bits for better coverage.
 
 Release 14.0 (2014-10-31)
 -------------------------
