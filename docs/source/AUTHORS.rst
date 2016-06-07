@@ -8,6 +8,7 @@ Contributors
 ============
 
 - Anton Gyllenberg
+- Aren Sandersen
 - Bret Curtis
 - Carl Waldbieser
 - Christopher Bartz
@@ -15,5 +16,6 @@ Contributors
 - HawkOwl
 - Hynek Schlawack
 - Kenny MacDermid
+- Michael Schlenker
 - Stefan Andersson
 - Tommi Virtanen
