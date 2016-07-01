@@ -188,6 +188,45 @@ class LDAPServerTest(unittest.TestCase):
             str(pureldap.LDAPMessage(pureldap.LDAPUnbindRequest(), id=7)))
         self.assertEquals(self.server.transport.value(), '')
 
+    def test_compare_outOfTree(self):
+        dn = 'dc=invalid'
+        ava = pureldap.LDAPAttributeValueAssertion('objectClass', 'groupOfUniqueNames')
+
+        self.server.dataReceived(
+            str(
+                pureldap.LDAPMessage(
+                    pureldap.LDAPCompareRequest(entry=dn, ava=ava),
+                    id=2)))
+
+        self.assertEquals(
+            self.server.transport.value(),
+            str(
+                pureldap.LDAPMessage(
+                    pureldap.LDAPCompareResponse(
+                        resultCode=ldaperrors.LDAPNoSuchObject.resultCode),
+                    id=2)))
+
+#    def test_compare_matchAll_oneResult(self):
+#        self.assertEquals(True, False)
+#
+#    def test_compare_matchAll_oneResult_filtered(self):
+#        self.assertEquals(True, False)
+#
+#    def test_compare_matchAll_oneResult_filteredNoAttribsRemaining(self):
+#        self.assertEquals(True, False)
+#
+#    def test_compare_matchAll_manyResults(self):
+#        self.assertEquals(True, False)
+#
+#    def test_compare_scope_oneLevel(self):
+#        self.assertEquals(True, False)
+#
+#    def test_compare_scope_wholeSubtree(self):
+#        self.assertEquals(True, False)
+#
+#    def test_compare_scope_baseObject(self):
+#        self.assertEquals(True, False)
+
     def test_search_outOfTree(self):
         self.server.dataReceived(
             str(
