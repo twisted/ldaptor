@@ -353,9 +353,9 @@ class LDAPAttributeValueAssertion(BERSequence):
         self.assertionValue=assertionValue
 
     def __str__(self):
-        return str(BERSequence([self.attributeDesc,
-                                self.assertionValue],
-                               tag=self.tag))
+        return str(BERSequence([LDAPString(self.attributeDesc),
+                                LDAPString(self.assertionValue)],
+                                tag=self.tag))
 
     def __repr__(self):
         if self.tag==self.__class__.tag:
@@ -1164,7 +1164,7 @@ class LDAPCompareRequest(LDAPProtocolRequest, BERSequence):
         self.ava = ava
 
     def __str__(self):
-        l = [ LDAPString(self.entry), str(self.ava) ]
+        l = [ LDAPString(self.entry), self.ava ]
         return str(BERSequence(l, tag=self.tag))
 
     def __repr__(self):
