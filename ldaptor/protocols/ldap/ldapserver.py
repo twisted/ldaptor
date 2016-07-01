@@ -196,6 +196,46 @@ class LDAPServer(BaseLDAPServer):
         return pureldap.LDAPSearchResultDone(
             resultCode=ldaperrors.Success.resultCode)
 
+    def _cbCompareGotBase(self, base, dn, request, reply):
+        d = base.search()
+
+        def _done(_):
+            return pureldap.LDAPCompareResponse(
+                    resultCode=ldaperrors.LDAPNoSuchObject.resultCode)
+        d.addCallback(_done)
+
+        return d
+
+    def _cbCompareLDAPError(self, reason):
+        reason.trap(ldaperrors.LDAPException)
+        return pureldap.LDAPCompareResponse(
+            resultCode=reason.value.resultCode)
+
+    def _cbCompareOtherError(self, reason):
+        return pureldap.LDAPCompareResponse(
+            resultCode=ldaperrors.other,
+            errorMessage=reason.getErrorMessage())
+
+    fail_LDAPCompareRequest = pureldap.LDAPCompareResponse
+
+    def handle_LDAPCompareRequest(self, request, controls, reply):
+        self.checkControls(controls)
+
+        if (request.entry == ''
+                and request.scope == pureldap.LDAP_SCOPE_baseObject
+                and request.filter == pureldap.LDAPFilter_present('objectClass')):
+            return self.getRootDSE(request, reply)
+
+        dn = distinguishedname.DistinguishedName(request.entry)
+        root = interfaces.IConnectedLDAPEntry(self.factory)
+
+        d = root.lookup(dn)
+        d.addCallback(self._cbCompareGotBase, dn, request, reply)
+        d.addErrback(self._cbCompareLDAPError)
+        d.addErrback(defer.logError)
+        d.addErrback(self._cbCompareOtherError)
+        return d
+
     def _cbSearchGotBase(self, base, dn, request, reply):
         def _sendEntryToClient(entry):
             requested_attribs = request.attributes
