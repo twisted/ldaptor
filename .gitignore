@@ -12,3 +12,5 @@ ldaptor.egg-info
 venv/
 build/
 dist/
+.cache
+tags
