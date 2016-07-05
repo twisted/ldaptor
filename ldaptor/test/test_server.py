@@ -52,6 +52,45 @@ class LDAPServerTest(unittest.TestCase):
                 'objectClass': ['a', 'b'],
                 'cn': ['another'],
             })
+
+        # Add Users Subtree
+        self.users = self.root.addChild(
+            rdn='ou=People',
+            attributes={
+                'objectClass': ['top', 'organizationalunit'],
+                'ou': ['People']
+            })
+
+        self.users.addChild(
+            rdn='uid=kthompson',
+            attributes={
+                'objectClass': ['top', 'inetOrgPerson'],
+                'uid': ['kthompson']
+            })
+
+        self.users.addChild(
+            rdn='uid=bgates',
+            attributes={
+                'objectClass': ['top', 'inetOrgPerson'],
+                'uid': ['bgates']
+            })
+
+        # Add Groups Subtree
+        self.groups = self.root.addChild(
+            rdn='ou=Groups',
+            attributes={
+                'objectClass': ['top', 'organizationalunit'],
+                'ou': ['Groups']
+            })
+
+        foo = self.groups.addChild(
+            rdn = 'cn=unix',
+            attributes={
+                'uniquemember': ['uid=kthompson,ou=People,dc=example,dc=com'],
+                'objectClass': ['top', 'groupOfUniqueNames'],
+                'cn': ['unix']
+            })
+
         server = ldapserver.LDAPServer()
         server.factory = self.root
         server.transport = proto_helpers.StringTransport()
@@ -206,26 +245,41 @@ class LDAPServerTest(unittest.TestCase):
                         resultCode=ldaperrors.LDAPNoSuchObject.resultCode),
                     id=2)))
 
-#    def test_compare_matchAll_oneResult(self):
-#        self.assertEquals(True, False)
-#
-#    def test_compare_matchAll_oneResult_filtered(self):
-#        self.assertEquals(True, False)
-#
-#    def test_compare_matchAll_oneResult_filteredNoAttribsRemaining(self):
-#        self.assertEquals(True, False)
-#
-#    def test_compare_matchAll_manyResults(self):
-#        self.assertEquals(True, False)
-#
-#    def test_compare_scope_oneLevel(self):
-#        self.assertEquals(True, False)
-#
-#    def test_compare_scope_wholeSubtree(self):
-#        self.assertEquals(True, False)
-#
-#    def test_compare_scope_baseObject(self):
-#        self.assertEquals(True, False)
+    def test_compare_inGroup(self):
+        dn = 'cn=unix,ou=Groups,dc=example,dc=com'
+        ava = pureldap.LDAPAttributeValueAssertion('uniquemember', 'uid=kthompson,ou=People,dc=example,dc=com')
+
+        self.server.dataReceived(
+            str(
+                pureldap.LDAPMessage(
+                    pureldap.LDAPCompareRequest(entry=dn, ava=ava),
+                    id=2)))
+
+        self.assertEquals(
+            self.server.transport.value(),
+            str(
+                pureldap.LDAPMessage(
+                    pureldap.LDAPCompareResponse(
+                        resultCode=ldaperrors.LDAPCompareTrue.resultCode),
+                    id=2)))
+
+    def test_compare_notInGroup(self):
+        dn = 'cn=unix,ou=Groups,dc=example,dc=com'
+        ava = pureldap.LDAPAttributeValueAssertion('uniquemember', 'uid=bgates,ou=People,dc=example,dc=com')
+
+        self.server.dataReceived(
+            str(
+                pureldap.LDAPMessage(
+                    pureldap.LDAPCompareRequest(entry=dn, ava=ava),
+                    id=2)))
+
+        self.assertEquals(
+            self.server.transport.value(),
+            str(
+                pureldap.LDAPMessage(
+                    pureldap.LDAPCompareResponse(
+                        resultCode=ldaperrors.LDAPCompareFalse.resultCode),
+                    id=2)))
 
     def test_search_outOfTree(self):
         self.server.dataReceived(
