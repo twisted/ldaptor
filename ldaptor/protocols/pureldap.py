@@ -353,9 +353,9 @@ class LDAPAttributeValueAssertion(BERSequence):
         self.assertionValue=assertionValue
 
     def __str__(self):
-        return str(BERSequence([self.attributeDesc,
-                                self.assertionValue],
-                               tag=self.tag))
+        return str(BERSequence([LDAPString(self.attributeDesc),
+                                LDAPString(self.assertionValue)],
+                                tag=self.tag))
 
     def __repr__(self):
         if self.tag==self.__class__.tag:
@@ -1139,8 +1139,45 @@ class LDAPModifyDNRequest(LDAPProtocolRequest, BERSequence):
 class LDAPModifyDNResponse(LDAPResult):
     tag=CLASS_APPLICATION|13
 
-#class LDAPCompareResponse(LDAPProtocolResponse):
-#class LDAPCompareRequest(LDAPProtocolRequest):
+class LDAPBERDecoderContext_Compare(BERDecoderContext):
+    Identities = {
+        BERSequence.tag: LDAPAttributeValueAssertion
+    }
+
+class LDAPCompareRequest(LDAPProtocolRequest, BERSequence):
+    tag=CLASS_APPLICATION|14
+
+    entry = None
+    ava = None
+
+    def fromBER(klass, tag, content, berdecoder=None):
+        l = berDecodeMultiple(content, LDAPBERDecoderContext_Compare(fallback=berdecoder, inherit=berdecoder))
+
+        r = klass(entry=l[0].value,
+                  ava=l[1],
+                  tag=tag)
+
+        return r
+    fromBER = classmethod(fromBER)
+
+    def __init__(self, entry, ava, tag=None):
+        LDAPProtocolRequest.__init__(self)
+        BERSequence.__init__(self, [], tag=tag)
+        assert entry is not None
+        assert ava is not None
+        self.entry = entry
+        self.ava = ava
+
+    def __str__(self):
+        l = [ LDAPString(self.entry), self.ava ]
+        return str(BERSequence(l, tag=self.tag))
+
+    def __repr__(self):
+        l = [ "entry={}".format(self.entry), "ava={}".format(repr(self.ava)) ]
+        return "{}({})".format(self.__class__.__name__, ', '.join(l))
+
+class LDAPCompareResponse(LDAPResult):
+    tag=CLASS_APPLICATION|15
 
 class LDAPAbandonRequest(LDAPProtocolRequest, LDAPInteger):
     tag = CLASS_APPLICATION|0x10
@@ -1402,4 +1439,6 @@ class LDAPBERDecoderContext(BERDecoderContext):
         LDAPModifyDNRequest.tag: LDAPModifyDNRequest,
         LDAPModifyDNResponse.tag: LDAPModifyDNResponse,
         LDAPAbandonRequest.tag: LDAPAbandonRequest,
+        LDAPCompareRequest.tag: LDAPCompareRequest,
+        LDAPCompareResponse.tag: LDAPCompareResponse
     }
