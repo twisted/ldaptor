@@ -13,3 +13,4 @@ venv/
 build/
 dist/
 .cache
+tags
