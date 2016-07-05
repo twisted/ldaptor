@@ -1139,6 +1139,11 @@ class LDAPModifyDNRequest(LDAPProtocolRequest, BERSequence):
 class LDAPModifyDNResponse(LDAPResult):
     tag=CLASS_APPLICATION|13
 
+class LDAPBERDecoderContext_Compare(BERDecoderContext):
+    Identities = {
+        BERSequence.tag: LDAPAttributeValueAssertion
+    }
+
 class LDAPCompareRequest(LDAPProtocolRequest, BERSequence):
     tag=CLASS_APPLICATION|14
 
@@ -1146,7 +1151,7 @@ class LDAPCompareRequest(LDAPProtocolRequest, BERSequence):
     ava = None
 
     def fromBER(klass, tag, content, berdecoder=None):
-        l = berDecodeMultiple(content, berdecoder)
+        l = berDecodeMultiple(content, LDAPBERDecoderContext_Compare(fallback=berdecoder, inherit=berdecoder))
 
         r = klass(entry=l[0].value,
                   ava=l[1],
