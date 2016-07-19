@@ -355,7 +355,7 @@ class LDAPAttributeValueAssertion(BERSequence):
     def __str__(self):
         return str(BERSequence([self.attributeDesc,
                                 self.assertionValue],
-                                tag=self.tag))
+                               tag=self.tag))
 
     def __repr__(self):
         if self.tag==self.__class__.tag:
@@ -1139,19 +1139,27 @@ class LDAPModifyDNRequest(LDAPProtocolRequest, BERSequence):
 class LDAPModifyDNResponse(LDAPResult):
     tag=CLASS_APPLICATION|13
 
+
 class LDAPBERDecoderContext_Compare(BERDecoderContext):
     Identities = {
         BERSequence.tag: LDAPAttributeValueAssertion
     }
 
+
 class LDAPCompareRequest(LDAPProtocolRequest, BERSequence):
-    tag=CLASS_APPLICATION|14
+    tag = CLASS_APPLICATION | 14
 
     entry = None
     ava = None
 
     def fromBER(klass, tag, content, berdecoder=None):
-        l = berDecodeMultiple(content, LDAPBERDecoderContext_Compare(fallback=berdecoder, inherit=berdecoder))
+        l = berDecodeMultiple(
+                content,
+                LDAPBERDecoderContext_Compare(
+                    fallback=berdecoder,
+                    inherit=berdecoder
+                    )
+                )
 
         r = klass(entry=l[0].value,
                   ava=l[1],
@@ -1169,15 +1177,17 @@ class LDAPCompareRequest(LDAPProtocolRequest, BERSequence):
         self.ava = ava
 
     def __str__(self):
-        l = [ LDAPString(self.entry), self.ava ]
+        l = [LDAPString(self.entry), self.ava]
         return str(BERSequence(l, tag=self.tag))
 
     def __repr__(self):
-        l = [ "entry={}".format(self.entry), "ava={}".format(repr(self.ava)) ]
+        l = ["entry={}".format(self.entry), "ava={}".format(repr(self.ava))]
         return "{}({})".format(self.__class__.__name__, ', '.join(l))
 
+
 class LDAPCompareResponse(LDAPResult):
-    tag=CLASS_APPLICATION|15
+    tag=CLASS_APPLICATION | 15
+
 
 class LDAPAbandonRequest(LDAPProtocolRequest, LDAPInteger):
     tag = CLASS_APPLICATION|0x10

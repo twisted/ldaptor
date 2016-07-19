@@ -84,7 +84,7 @@ class LDAPServerTest(unittest.TestCase):
             })
 
         self.groups.addChild(
-            rdn = 'cn=unix',
+            rdn='cn=unix',
             attributes={
                 'uniquemember': ['uid=kthompson,ou=People,dc=example,dc=com'],
                 'objectClass': ['top', 'groupOfUniqueNames'],
