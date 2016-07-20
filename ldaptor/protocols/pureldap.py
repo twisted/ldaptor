@@ -1136,6 +1136,7 @@ class LDAPModifyDNRequest(LDAPProtocolRequest, BERSequence):
             l.append("tag=%d" % self.tag)
         return self.__class__.__name__ + "(" + ', '.join(l) + ")"
 
+
 class LDAPModifyDNResponse(LDAPResult):
     tag=CLASS_APPLICATION|13
 
@@ -1186,7 +1187,7 @@ class LDAPCompareRequest(LDAPProtocolRequest, BERSequence):
 
 
 class LDAPCompareResponse(LDAPResult):
-    tag=CLASS_APPLICATION | 15
+    tag = CLASS_APPLICATION | 15
 
 
 class LDAPAbandonRequest(LDAPProtocolRequest, LDAPInteger):
