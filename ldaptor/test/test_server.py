@@ -52,6 +52,45 @@ class LDAPServerTest(unittest.TestCase):
                 'objectClass': ['a', 'b'],
                 'cn': ['another'],
             })
+
+        # Add Users Subtree
+        self.users = self.root.addChild(
+            rdn='ou=People',
+            attributes={
+                'objectClass': ['top', 'organizationalunit'],
+                'ou': ['People']
+            })
+
+        self.users.addChild(
+            rdn='uid=kthompson',
+            attributes={
+                'objectClass': ['top', 'inetOrgPerson'],
+                'uid': ['kthompson']
+            })
+
+        self.users.addChild(
+            rdn='uid=bgates',
+            attributes={
+                'objectClass': ['top', 'inetOrgPerson'],
+                'uid': ['bgates']
+            })
+
+        # Add Groups Subtree
+        self.groups = self.root.addChild(
+            rdn='ou=Groups',
+            attributes={
+                'objectClass': ['top', 'organizationalunit'],
+                'ou': ['Groups']
+            })
+
+        self.groups.addChild(
+            rdn='cn=unix',
+            attributes={
+                'uniquemember': ['uid=kthompson,ou=People,dc=example,dc=com'],
+                'objectClass': ['top', 'groupOfUniqueNames'],
+                'cn': ['unix']
+            })
+
         server = ldapserver.LDAPServer()
         server.factory = self.root
         server.transport = proto_helpers.StringTransport()
@@ -187,6 +226,66 @@ class LDAPServerTest(unittest.TestCase):
         self.server.dataReceived(
             str(pureldap.LDAPMessage(pureldap.LDAPUnbindRequest(), id=7)))
         self.assertEquals(self.server.transport.value(), '')
+
+    def test_compare_outOfTree(self):
+        dn = 'dc=invalid'
+        attribute_desc = pureldap.LDAPString('objectClass')
+        attribute_value = pureldap.LDAPString('groupOfUniqueNames')
+        ava = pureldap.LDAPAttributeValueAssertion(attribute_desc, attribute_value)
+
+        self.server.dataReceived(
+            str(
+                pureldap.LDAPMessage(
+                    pureldap.LDAPCompareRequest(entry=dn, ava=ava),
+                    id=2)))
+
+        self.assertEquals(
+            self.server.transport.value(),
+            str(
+                pureldap.LDAPMessage(
+                    pureldap.LDAPCompareResponse(
+                        resultCode=ldaperrors.LDAPNoSuchObject.resultCode),
+                    id=2)))
+
+    def test_compare_inGroup(self):
+        dn = 'cn=unix,ou=Groups,dc=example,dc=com'
+        attribute_desc = pureldap.LDAPString('uniquemember')
+        attribute_value = pureldap.LDAPString('uid=kthompson,ou=People,dc=example,dc=com')
+        ava = pureldap.LDAPAttributeValueAssertion(attribute_desc, attribute_value)
+
+        self.server.dataReceived(
+            str(
+                pureldap.LDAPMessage(
+                    pureldap.LDAPCompareRequest(entry=dn, ava=ava),
+                    id=2)))
+
+        self.assertEquals(
+            self.server.transport.value(),
+            str(
+                pureldap.LDAPMessage(
+                    pureldap.LDAPCompareResponse(
+                        resultCode=ldaperrors.LDAPCompareTrue.resultCode),
+                    id=2)))
+
+    def test_compare_notInGroup(self):
+        dn = 'cn=unix,ou=Groups,dc=example,dc=com'
+        attribute_desc = pureldap.LDAPString('uniquemember')
+        attribute_value = pureldap.LDAPString('uid=bgates,ou=People,dc=example,dc=com')
+        ava = pureldap.LDAPAttributeValueAssertion(attribute_desc, attribute_value)
+
+        self.server.dataReceived(
+            str(
+                pureldap.LDAPMessage(
+                    pureldap.LDAPCompareRequest(entry=dn, ava=ava),
+                    id=2)))
+
+        self.assertEquals(
+            self.server.transport.value(),
+            str(
+                pureldap.LDAPMessage(
+                    pureldap.LDAPCompareResponse(
+                        resultCode=ldaperrors.LDAPCompareFalse.resultCode),
+                    id=2)))
 
     def test_search_outOfTree(self):
         self.server.dataReceived(
