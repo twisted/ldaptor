@@ -33,7 +33,7 @@ class LDAPConnector(SRVConnector):
             overrides={}
         self.override = self._findOverRide(dn, overrides)
 
-        domain = dn.getDomainName()
+        domain = dn.getDomainName() or ''
         SRVConnector.__init__(self, reactor,
                   'ldap', domain, factory,
                   connectFuncKwArgs={'bindAddress': bindAddress})
