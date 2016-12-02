@@ -33,6 +33,14 @@ class LDAPStartTLSBusyError(ldaperrors.LDAPOperationsError):
     def __str__(self):
         return 'Cannot STARTTLS while operations on wire: %r' % self.onwire
 
+class LDAPStartTLSInvalidResponseName(ldaperrors.LDAPException):
+    def __init__(self, responseName):
+        self.responseName = responseName
+        ldaperrors.LDAPException.__init__(self)
+
+    def __str__(self):
+        return 'Invalid responseName in STARTTLS response: %r' % (self.responseName, )
+
 class LDAPClient(protocol.Protocol):
     """An LDAP client"""
     debug = False
@@ -205,6 +213,10 @@ class LDAPClient(protocol.Protocol):
         assert msg.referral is None #TODO
         if msg.resultCode!=ldaperrors.Success.resultCode:
             raise ldaperrors.get(msg.resultCode, msg.errorMessage)
+
+        if (msg.responseName is not None) and \
+                (msg.responseName != pureldap.LDAPStartTLSResponse.oid):
+            raise LDAPStartTLSInvalidResponseName(msg.responseName)
 
         self.transport.startTLS(ctx)
         return self
