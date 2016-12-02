@@ -1338,17 +1338,29 @@ class LDAPExtendedResponse(LDAPResult):
         l = berDecodeMultiple(content, LDAPBERDecoderContext_LDAPExtendedResponse(
             fallback=berdecoder))
 
-        assert 3<=len(l)<=4
+        assert 3<=len(l)<=6
 
         referral = None
-        #if (l[3:] and isinstance(l[3], LDAPReferral)):
-            #TODO support referrals
-            #self.referral=self.data[0]
+        responseName = None
+        response = None
+        for obj in l[3:]:
+            if isinstance(obj, LDAPResponseName):
+                responseName = obj.value
+            elif isinstance(obj, LDAPResponse):
+                response = obj.value
+            elif isinstance(obj, LDAPReferral):
+                #TODO support referrals
+                #self.referral=self.data[0]
+                pass
+            else:
+                assert False
 
         r = klass(resultCode=l[0].value,
                   matchedDN=l[1].value,
                   errorMessage=l[2].value,
                   referral=referral,
+                  responseName=responseName,
+                  response=response,
                   tag=tag)
         return r
     fromBER = classmethod(fromBER)
