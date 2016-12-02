@@ -561,6 +561,38 @@ class KnownValues(unittest.TestCase):
             + l('42.42.42'))
          ),
 
+        (pureldap.LDAPExtendedResponse,
+         [],
+         {'resultCode': 49,
+          'matchedDN': 'foo',
+          'errorMessage': 'bar',
+          'responseName': None,
+          'response': None,
+          },
+         None,
+         [0x40|0x20|24, 3+2+3+2+3,
+          0x0a, 1, 49,
+          0x04, len('foo')] + l('foo') + [
+          0x04, len('bar')] + l('bar'),
+         ),
+
+        (pureldap.LDAPExtendedResponse,
+         [],
+         {'resultCode': 49,
+          'matchedDN': 'foo',
+          'errorMessage': 'bar',
+          'responseName': '1.2.3.4.5.6.7.8.9',
+          'response': 'baz',
+          },
+         None,
+         [0x40|0x20|24, 3+2+3+2+3+2+len('1.2.3.4.5.6.7.8.9')+2+3,
+          0x0a, 1, 49,
+          0x04, len('foo')] + l('foo') + [
+          0x04, len('bar')] + l('bar') + [
+          0x8a, len('1.2.3.4.5.6.7.8.9')] + l('1.2.3.4.5.6.7.8.9') + [
+          0x8b, len('baz')] + l('baz'),
+         ),
+
         (pureldap.LDAPAbandonRequest,
          [],
          {'id': 3},
