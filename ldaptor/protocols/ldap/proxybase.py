@@ -13,7 +13,7 @@ class ProxyBase(ldapserver.BaseLDAPServer):
     An LDAP server proxy.
     Override `handleBeforeForwardRequest()` to inspect/modify requests from
     the client.
-    Override `handleBeforeForwardRequest()` to inspect/modify responses from
+    Override `handleProxiedResponse()` to inspect/modify responses from
     the proxied server.
     """
     client = None
@@ -30,7 +30,7 @@ class ProxyBase(ldapserver.BaseLDAPServer):
 
     def connectionMade(self):
         """
-        Establish a connection to the proxied LDAP server.
+        Establish a connection with an LDAP client.
         """
         assert self.clientConnector is not None, (
             "You must set the `clientConnector` property on this instance.  "
