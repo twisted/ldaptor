@@ -129,15 +129,10 @@ class SubtreeFromChildrenMixin(object):
         else:
             callback(self)
             d = self.children()
-            def _processOneChild(_, children, callback):
-                if not children:
-                    return None
-
-                c = children.pop()
-                d = c.subtree(callback)
-                d.addCallback(_processOneChild, children, callback)
             def _gotChildren(children, callback):
-                _processOneChild(None, children, callback)
+                if children:
+                    while len(children) > 0:
+                        children.pop().subtree(callback)
             d.addCallback(_gotChildren, callback)
             return d
 
