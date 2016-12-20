@@ -51,7 +51,7 @@ class TestInMemoryDatabase(unittest.TestCase):
 
     def test_children_empty(self):
         d = self.empty.children()
-        d.addCallback(self.assertEquals, [])
+        d.addCallback(self.assertItemsEqual, [])
         return d
 
     def test_children_oneChild(self):
@@ -62,7 +62,7 @@ class TestInMemoryDatabase(unittest.TestCase):
             want = [distinguishedname.DistinguishedName('cn=theChild,ou=oneChild,dc=example,dc=com')]
             got.sort()
             want.sort()
-            self.assertEquals(got, want)
+            self.assertItemsEqual(got, want)
         d.addCallback(cb)
         return d
 
@@ -92,7 +92,7 @@ class TestInMemoryDatabase(unittest.TestCase):
                 distinguishedname.DistinguishedName('cn=bar,ou=metasyntactic,dc=example,dc=com'),
                 ]
             got = [e.dn for e in children]
-            self.assertEquals(got, want)
+            self.assertItemsEqual(got, want)
         d.addCallback(cb)
         return d
 
@@ -112,7 +112,7 @@ class TestInMemoryDatabase(unittest.TestCase):
                 ]
             got.sort()
             want.sort()
-            self.assertEquals(got, want)
+            self.assertItemsEqual(got, want)
         d.addCallback(cb)
         return d
 
@@ -140,7 +140,7 @@ class TestInMemoryDatabase(unittest.TestCase):
 
     def test_subtree_oneChild(self):
         d = self.oneChild.subtree()
-        d.addCallback(self.assertEquals, [
+        d.addCallback(self.assertItemsEqual, [
             self.oneChild,
             self.theChild,
             ])
@@ -155,7 +155,7 @@ class TestInMemoryDatabase(unittest.TestCase):
                 self.oneChild,
                 self.theChild,
                 ]
-            self.assertEquals(got, want)
+            self.assertItemsEqual(got, want)
         d.addCallback(cb)
         return d
 
@@ -172,7 +172,7 @@ class TestInMemoryDatabase(unittest.TestCase):
                 self.bar,
                 self.foo,
                 ]
-            self.assertEquals(got, want)
+            self.assertItemsEqual(got, want)
         d.addCallback(cb)
         return d
 
@@ -191,7 +191,7 @@ class TestInMemoryDatabase(unittest.TestCase):
                 self.bar,
                 self.foo,
                 ]
-            self.assertEquals(got, want)
+            self.assertItemsEqual(got, want)
         d.addCallback(cb)
         return d
 
@@ -239,14 +239,14 @@ class TestInMemoryDatabase(unittest.TestCase):
         d = self.foo.delete()
         d.addCallback(self.assertEquals, self.foo)
         d.addCallback(lambda _: self.meta.children())
-        d.addCallback(self.assertEquals, [self.bar])
+        d.addCallback(self.assertItemsEqual, [self.bar])
         return d
 
     def test_deleteChild(self):
         d = self.meta.deleteChild('cn=bar')
         d.addCallback(self.assertEquals, self.bar)
         d.addCallback(lambda _: self.meta.children())
-        d.addCallback(self.assertEquals, [self.foo])
+        d.addCallback(self.assertItemsEqual, [self.foo])
         return d
 
     def test_deleteChild_NonExisting(self):
@@ -284,13 +284,13 @@ class TestInMemoryDatabase(unittest.TestCase):
                 self.bar,
                 self.foo,
                 ]
-            self.assertEquals(got, want)
+            self.assertItemsEqual(got, want)
         d.addCallback(cb)
         return d
 
     def testSearch_withoutCallback(self):
         d = self.root.search(filterText='(|(cn=foo)(cn=bar))')
-        d.addCallback(self.assertEquals, [
+        d.addCallback(self.assertItemsEqual, [
             self.bar,
             self.foo,
             ])
@@ -301,7 +301,7 @@ class TestInMemoryDatabase(unittest.TestCase):
         def getChildren(dummy):
             return self.root.children()
         d.addCallback(getChildren)
-        d.addCallback(self.assertEquals, [
+        d.addCallback(self.assertItemsEqual, [
             self.meta,
             inmemory.ReadOnlyInMemoryLDAPEntry(
             dn='ou=moved,dc=example,dc=com',
@@ -317,7 +317,7 @@ class TestInMemoryDatabase(unittest.TestCase):
         def getChildren(dummy):
             return self.root.children()
         d.addCallback(getChildren)
-        d.addCallback(self.assertEquals, [
+        d.addCallback(self.assertItemsEqual, [
             inmemory.ReadOnlyInMemoryLDAPEntry(
             dn='ou=moved,dc=example,dc=com',
             attributes={ 'objectClass': ['a', 'b'],
@@ -334,14 +334,14 @@ class TestInMemoryDatabase(unittest.TestCase):
         def getChildren(dummy):
             return self.root.children()
         d.addCallback(getChildren)
-        d.addCallback(self.assertEquals, [
+        d.addCallback(self.assertItemsEqual, [
             self.meta,
             self.oneChild,
             ])
         def getChildren2(dummy):
             return self.oneChild.children()
         d.addCallback(getChildren2)
-        d.addCallback(self.assertEquals, [
+        d.addCallback(self.assertItemsEqual, [
             self.theChild,
             inmemory.ReadOnlyInMemoryLDAPEntry(
             dn='ou=moved,ou=oneChild,dc=example,dc=com',
@@ -356,14 +356,14 @@ class TestInMemoryDatabase(unittest.TestCase):
         def getChildren(dummy):
             return self.root.children()
         d.addCallback(getChildren)
-        d.addCallback(self.assertEquals, [
+        d.addCallback(self.assertItemsEqual, [
             self.empty,
             self.oneChild,
             ])
         def getChildren2(dummy):
             return self.oneChild.children()
         d.addCallback(getChildren2)
-        d.addCallback(self.assertEquals, [
+        d.addCallback(self.assertItemsEqual, [
             self.theChild,
             inmemory.ReadOnlyInMemoryLDAPEntry(
             dn='ou=moved,ou=oneChild,dc=example,dc=com',
@@ -397,7 +397,7 @@ bValue: c
                 distinguishedname.DistinguishedName('cn=foo,dc=example,dc=com'))
             return db.children()
         d.addCallback(cb1)
-        d.addCallback(self.assertEquals, [])
+        d.addCallback(self.assertItemsEqual, [])
         return d
 
     def test_two(self):
@@ -425,7 +425,7 @@ cn: foo
                 distinguishedname.DistinguishedName('cn=foo,dc=example,dc=com'),
                 ]
             got = [e.dn for e in children]
-            self.assertEquals(got, want)
+            self.assertItemsEqual(got, want)
         d.addCallback(cb2)
         return d
 
