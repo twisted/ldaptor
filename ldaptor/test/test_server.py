@@ -531,7 +531,7 @@ class LDAPServerTest(unittest.TestCase):
                     pureldap.LDAPDelResponse(resultCode=0),
                     id=2)))
         d = self.stuff.children()
-        d.addCallback(self.assertEquals, [self.another])
+        d.addCallback(self.assertItemsEqual, [self.another])
         return d
 
     def test_add_success(self):
@@ -561,7 +561,7 @@ class LDAPServerTest(unittest.TestCase):
         # tree changed
         d = self.stuff.children()
         d.addCallback(
-            self.assertEquals,
+            self.assertItemsEqual,
             [
                 self.thingie,
                 self.another,
@@ -597,7 +597,7 @@ class LDAPServerTest(unittest.TestCase):
                     id=2)))
         # tree did not change
         d = self.stuff.children()
-        d.addCallback(self.assertEquals, [self.thingie, self.another])
+        d.addCallback(self.assertItemsEqual, [self.thingie, self.another])
         return d
 
     def test_modifyDN_rdnOnly_deleteOldRDN_success(self):
@@ -620,7 +620,7 @@ class LDAPServerTest(unittest.TestCase):
         # tree changed
         d = self.stuff.children()
         d.addCallback(
-            self.assertEquals,
+            self.assertItemsEqual,
             [
                 inmemory.ReadOnlyInMemoryLDAPEntry(
                     '%s,ou=stuff,dc=example,dc=com' % newrdn,
@@ -652,7 +652,7 @@ class LDAPServerTest(unittest.TestCase):
         # tree changed
         d = self.stuff.children()
         d.addCallback(
-            self.assertEquals,
+            self.assertItemEqual,
             sets.Set([
                 self.another,
                 inmemory.ReadOnlyInMemoryLDAPEntry(
