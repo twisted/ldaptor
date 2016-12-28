@@ -588,16 +588,33 @@ class LDAPMatchingRuleAssertion(BERSequence):
     dnAttributes=None
 
     def fromBER(klass, tag, content, berdecoder=None):
-        seq = berDecodeMultiple(content, LDAPBERDecoderContext_MatchingRuleAssertion(fallback=berdecoder,
-                                                                                     inherit=berdecoder))
-        l = len(seq)
-        assert 1 <= l <= 4
-
+        matchingRule = None
+        atype = None
+        matchValue = None
+        dnAttributes = None
+        l = berDecodeMultiple(content,
+                              LDAPBERDecoderContext_MatchingRuleAssertion(fallback=berdecoder, inherit=berdecoder))
+        assert 1 <= len(l) <= 4
+        if isinstance(l[0], LDAPMatchingRuleAssertion_matchingRule):
+            matchingRule = l[0]
+            del l[0]
+        if len(l) >= 1 and isinstance(l[0], LDAPMatchingRuleAssertion_type):
+            atype = l[0]
+            del l[0]
+        if len(l) >= 1 and isinstance(l[0], LDAPMatchingRuleAssertion_matchValue):
+            matchValue = l[0]
+            del l[0]
+        if len(l) >= 1 and isinstance(l[0], LDAPMatchingRuleAssertion_dnAttributes):
+            dnAttributes = l[0]
+            del l[0]
+        assert matchValue
+        if not dnAttributes:
+            dnAttributes = None
         r = klass(
-            matchingRule=seq[0],
-            type=seq[1] if l >= 2 else None,
-            matchValue=seq[2] if l >= 3 else None,
-            dnAttributes=seq[3] if l == 4 else None,
+            matchingRule=matchingRule,
+            type=atype,
+            matchValue=matchValue,
+            dnAttributes=dnAttributes,
             tag=tag)
 
         return r
