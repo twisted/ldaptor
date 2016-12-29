@@ -670,7 +670,7 @@ class LDAPServerTest(unittest.TestCase):
         # tree changed
         d = self.stuff.children()
         d.addCallback(
-            self.assertItemEqual,
+            self.assertItemsEqual,
             {self.another,
                 inmemory.ReadOnlyInMemoryLDAPEntry(
                     '%s,ou=stuff,dc=example,dc=com' % newrdn,
