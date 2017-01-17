@@ -3,7 +3,6 @@ Test cases for ldaptor.protocols.ldap.ldapserver module.
 """
 from __future__ import print_function
 import base64
-import sets
 import types
 from twisted.internet import address, protocol
 from twisted.python import components
@@ -96,6 +95,24 @@ class LDAPServerTest(unittest.TestCase):
         server.transport = proto_helpers.StringTransport()
         server.connectionMade()
         self.server = server
+
+    def _makeResultList(self, s):
+        berdecoder = pureldap.LDAPBERDecoderContext_TopLevel(
+            inherit=pureldap.LDAPBERDecoderContext_LDAPMessage(
+                fallback=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext()),
+                inherit=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext())))
+        buffer = s
+        value = []
+        while 1:
+            try:
+                o, bytes = pureber.berDecodeObject(berdecoder, buffer)
+            except pureber.BERExceptionInsufficientData:
+                o, bytes = None, 0
+            buffer = buffer[bytes:]
+            if not o:
+                break
+            value.append(str(o))
+        return value
 
     def test_bind(self):
         self.server.dataReceived(
@@ -309,9 +326,9 @@ class LDAPServerTest(unittest.TestCase):
                     pureldap.LDAPSearchRequest(
                         baseObject='cn=thingie,ou=stuff,dc=example,dc=com'),
                     id=2)))
-        self.assertEquals(
-            self.server.transport.value(),
-            str(
+        self.assertItemsEqual(
+            self._makeResultList(self.server.transport.value()),
+            [str(
                 pureldap.LDAPMessage(
                     pureldap.LDAPSearchResultEntry(
                         objectName='cn=thingie,ou=stuff,dc=example,dc=com',
@@ -319,10 +336,10 @@ class LDAPServerTest(unittest.TestCase):
                             ('objectClass', ['a', 'b']),
                             ('cn', ['thingie'])]),
                     id=2)
-            ) + str(
+            ), str(
                 pureldap.LDAPMessage(
                     pureldap.LDAPSearchResultDone(resultCode=0),
-                    id=2)))
+                    id=2))])
 
     def test_search_matchAll_oneResult_filtered(self):
         self.server.dataReceived(
@@ -332,19 +349,19 @@ class LDAPServerTest(unittest.TestCase):
                         baseObject='cn=thingie,ou=stuff,dc=example,dc=com',
                         attributes=['cn']),
                     id=2)))
-        self.assertEquals(
-            self.server.transport.value(),
-            str(
+        self.assertItemsEqual(
+            self._makeResultList(self.server.transport.value()),
+            [str(
                 pureldap.LDAPMessage(
                     pureldap.LDAPSearchResultEntry(
                         objectName='cn=thingie,ou=stuff,dc=example,dc=com',
                         attributes=[
                             ('cn', ['thingie'])]),
                     id=2)
-            ) + str(
+            ), str(
                 pureldap.LDAPMessage(
                     pureldap.LDAPSearchResultDone(resultCode=0),
-                    id=2)))
+                    id=2))])
 
     def test_search_matchAll_oneResult_filteredNoAttribsRemaining(self):
         self.server.dataReceived(
@@ -367,9 +384,9 @@ class LDAPServerTest(unittest.TestCase):
                 pureldap.LDAPMessage(
                     pureldap.LDAPSearchRequest(
                         baseObject='ou=stuff,dc=example,dc=com'), id=2)))
-        self.assertEquals(
-            self.server.transport.value(),
-            str(
+
+        self.assertItemsEqual(
+            [str(
                 pureldap.LDAPMessage(
                     pureldap.LDAPSearchResultEntry(
                         objectName='ou=stuff,dc=example,dc=com',
@@ -377,7 +394,7 @@ class LDAPServerTest(unittest.TestCase):
                             ('objectClass', ['a', 'b']),
                             ('ou', ['stuff'])]),
                     id=2)
-            ) + str(
+            ), str(
                 pureldap.LDAPMessage(
                     pureldap.LDAPSearchResultEntry(
                         objectName='cn=another,ou=stuff,dc=example,dc=com',
@@ -385,7 +402,7 @@ class LDAPServerTest(unittest.TestCase):
                             ('objectClass', ['a', 'b']),
                             ('cn', ['another'])]),
                     id=2)
-            ) + str(
+            ), str(
                 pureldap.LDAPMessage(
                     pureldap.LDAPSearchResultEntry(
                         objectName='cn=thingie,ou=stuff,dc=example,dc=com',
@@ -393,10 +410,11 @@ class LDAPServerTest(unittest.TestCase):
                             ('objectClass', ['a', 'b']),
                             ('cn', ['thingie'])]),
                     id=2)
-            ) + str(
+            ), str(
                 pureldap.LDAPMessage(
                     pureldap.LDAPSearchResultDone(resultCode=0),
-                    id=2)))
+                    id=2))],
+            self._makeResultList(self.server.transport.value()))
 
     def test_search_scope_oneLevel(self):
         self.server.dataReceived(
@@ -406,9 +424,9 @@ class LDAPServerTest(unittest.TestCase):
                         baseObject='ou=stuff,dc=example,dc=com',
                         scope=pureldap.LDAP_SCOPE_singleLevel),
                     id=2)))
-        self.assertEquals(
-            self.server.transport.value(),
-            str(
+        self.assertItemsEqual(
+            self._makeResultList(self.server.transport.value()),
+            [str(
                 pureldap.LDAPMessage(
                     pureldap.LDAPSearchResultEntry(
                         objectName='cn=thingie,ou=stuff,dc=example,dc=com',
@@ -416,7 +434,7 @@ class LDAPServerTest(unittest.TestCase):
                             ('objectClass', ['a', 'b']),
                             ('cn', ['thingie'])]),
                     id=2)
-            ) + str(
+            ), str(
                 pureldap.LDAPMessage(
                     pureldap.LDAPSearchResultEntry(
                         objectName='cn=another,ou=stuff,dc=example,dc=com',
@@ -424,10 +442,10 @@ class LDAPServerTest(unittest.TestCase):
                             ('objectClass', ['a', 'b']),
                             ('cn', ['another'])]),
                     id=2)
-            ) + str(
+            ), str(
                 pureldap.LDAPMessage(
                     pureldap.LDAPSearchResultDone(resultCode=0),
-                    id=2)))
+                    id=2))])
 
     def test_search_scope_wholeSubtree(self):
         self.server.dataReceived(
@@ -437,9 +455,9 @@ class LDAPServerTest(unittest.TestCase):
                         baseObject='ou=stuff,dc=example,dc=com',
                         scope=pureldap.LDAP_SCOPE_wholeSubtree),
                     id=2)))
-        self.assertEquals(
-            self.server.transport.value(),
-            str(
+        self.assertItemsEqual(
+            self._makeResultList(self.server.transport.value()),
+            [str(
                 pureldap.LDAPMessage(
                     pureldap.LDAPSearchResultEntry(
                         objectName='ou=stuff,dc=example,dc=com',
@@ -447,7 +465,7 @@ class LDAPServerTest(unittest.TestCase):
                             ('objectClass', ['a', 'b']),
                             ('ou', ['stuff'])]),
                     id=2)
-            ) + str(
+            ), str(
                 pureldap.LDAPMessage(
                     pureldap.LDAPSearchResultEntry(
                         objectName='cn=another,ou=stuff,dc=example,dc=com',
@@ -455,7 +473,7 @@ class LDAPServerTest(unittest.TestCase):
                             ('objectClass', ['a', 'b']),
                             ('cn', ['another'])]),
                     id=2)
-            ) + str(
+            ), str(
                 pureldap.LDAPMessage(
                     pureldap.LDAPSearchResultEntry(
                         objectName='cn=thingie,ou=stuff,dc=example,dc=com',
@@ -463,10 +481,10 @@ class LDAPServerTest(unittest.TestCase):
                             ('objectClass', ['a', 'b']),
                             ('cn', ['thingie'])]),
                     id=2)
-            ) + str(
+            ), str(
                 pureldap.LDAPMessage(
                     pureldap.LDAPSearchResultDone(resultCode=0),
-                    id=2)))
+                    id=2))])
 
     def test_search_scope_baseObject(self):
         self.server.dataReceived(
@@ -476,9 +494,9 @@ class LDAPServerTest(unittest.TestCase):
                         baseObject='ou=stuff,dc=example,dc=com',
                         scope=pureldap.LDAP_SCOPE_baseObject),
                     id=2)))
-        self.assertEquals(
-            self.server.transport.value(),
-            str(
+        self.assertItemsEqual(
+            self._makeResultList(self.server.transport.value()),
+            [str(
                 pureldap.LDAPMessage(
                     pureldap.LDAPSearchResultEntry(
                         objectName='ou=stuff,dc=example,dc=com',
@@ -486,10 +504,10 @@ class LDAPServerTest(unittest.TestCase):
                             ('objectClass', ['a', 'b']),
                             ('ou', ['stuff'])]),
                     id=2)
-            ) + str(
+            ), str(
                 pureldap.LDAPMessage(
                     pureldap.LDAPSearchResultDone(resultCode=0),
-                    id=2)))
+                    id=2))])
 
     def test_rootDSE(self):
         self.server.dataReceived(
@@ -500,9 +518,9 @@ class LDAPServerTest(unittest.TestCase):
                         scope=pureldap.LDAP_SCOPE_baseObject,
                         filter=pureldap.LDAPFilter_present('objectClass')),
                     id=2)))
-        self.assertEquals(
-            self.server.transport.value(),
-            str(
+        self.assertItemsEqual(
+            self._makeResultList(self.server.transport.value()),
+            [str(
                 pureldap.LDAPMessage(
                     pureldap.LDAPSearchResultEntry(
                         objectName='',
@@ -512,11 +530,11 @@ class LDAPServerTest(unittest.TestCase):
                             ('supportedExtension',
                                 [pureldap.LDAPPasswordModifyRequest.oid])]),
                     id=2)
-            ) + str(
+            ), str(
                 pureldap.LDAPMessage(
                     pureldap.LDAPSearchResultDone(
                         resultCode=ldaperrors.Success.resultCode),
-                    id=2)))
+                    id=2))])
 
     def test_delete(self):
         self.server.dataReceived(
@@ -652,15 +670,14 @@ class LDAPServerTest(unittest.TestCase):
         # tree changed
         d = self.stuff.children()
         d.addCallback(
-            self.assertItemEqual,
-            sets.Set([
-                self.another,
+            self.assertItemsEqual,
+            {self.another,
                 inmemory.ReadOnlyInMemoryLDAPEntry(
                     '%s,ou=stuff,dc=example,dc=com' % newrdn,
                     {
                         'objectClass': ['a', 'b'],
                         'cn': ['thingamagic', 'thingie']
-                    })]))
+                    })})
         return d
     test_modifyDN_rdnOnly_noDeleteOldRDN_success.todo = 'Not supported yet.'
 
