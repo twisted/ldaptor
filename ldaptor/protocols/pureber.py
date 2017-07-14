@@ -113,7 +113,7 @@ def ber2int(e, signed=True):
         v=(v<<8) | ord(e[i])
     return v
 
-class BERBase:
+class BERBase(object):
     tag = None
 
     def identification(self):
