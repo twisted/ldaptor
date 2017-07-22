@@ -15,6 +15,8 @@
 
 """LDAP protocol message conversion; no application logic here."""
 
+import string
+
 from pureber import (
 
     BERBoolean, BERDecoderContext, BEREnumerated, BERInteger, BERNull,
@@ -40,11 +42,23 @@ def escape(s):
     s = s.replace('\0', r'\00')
     return s
 
+def binary_escape(s):
+    return ''.join('\\{0:02x}'.format(ord(c)) for c in s)
+
+def smart_escape(s, threshold=0.30):
+    binary_count = sum(c not in string.printable for c in s)
+    if float(binary_count) / float(len(s)) > threshold:
+        return binary_escape(s)
+
+    return escape(s)
+
 class LDAPInteger(BERInteger):
     pass
 
 class LDAPString(BEROctetString):
-    pass
+    def __init__(self, *args, **kwargs):
+        self.escaper = kwargs.pop('escaper', escape)
+        super(LDAPString, self).__init__(*args, **kwargs)
 
 class LDAPAttributeValue(BEROctetString):
     pass
@@ -346,11 +360,12 @@ class LDAPAttributeValueAssertion(BERSequence):
         return r
     fromBER = classmethod(fromBER)
 
-    def __init__(self, attributeDesc=None, assertionValue=None, tag=None):
+    def __init__(self, attributeDesc=None, assertionValue=None, tag=None, escaper=escape):
         BERSequence.__init__(self, value=[], tag=tag)
         assert attributeDesc is not None
         self.attributeDesc=attributeDesc
         self.assertionValue=assertionValue
+        self.escaper=escaper
 
     def __str__(self):
         return str(BERSequence([self.attributeDesc,
@@ -428,26 +443,26 @@ class LDAPFilter_equalityMatch(LDAPAttributeValueAssertion):
 
     def asText(self):
         return '('+self.attributeDesc.value+'=' \
-               +escape(self.assertionValue.value)+')'
+               +self.escaper(self.assertionValue.value)+')'
 
 class LDAPFilter_substrings_initial(LDAPString):
     tag = CLASS_CONTEXT|0x00
 
     def asText(self):
-        return escape(self.value)
+        return self.escaper(self.value)
 
 
 class LDAPFilter_substrings_any(LDAPString):
     tag = CLASS_CONTEXT|0x01
 
     def asText(self):
-        return escape(self.value)
+        return self.escaper(self.value)
 
 class LDAPFilter_substrings_final(LDAPString):
     tag = CLASS_CONTEXT|0x02
 
     def asText(self):
-        return escape(self.value)
+        return self.escaper(self.value)
 
 class LDAPBERDecoderContext_Filter_substrings(BERDecoderContext):
     Identities = {
@@ -527,14 +542,14 @@ class LDAPFilter_greaterOrEqual(LDAPAttributeValueAssertion):
 
     def asText(self):
         return '('+self.attributeDesc.value+'>=' \
-               +escape(self.assertionValue.value)+')'
+               +self.escaper(self.assertionValue.value)+')'
 
 class LDAPFilter_lessOrEqual(LDAPAttributeValueAssertion):
     tag = CLASS_CONTEXT|0x06
 
     def asText(self):
         return '('+self.attributeDesc.value+'<=' \
-               +escape(self.assertionValue.value)+')'
+               +self.escaper(self.assertionValue.value)+')'
 
 class LDAPFilter_present(LDAPAttributeDescription):
     tag = CLASS_CONTEXT|0x07
@@ -548,7 +563,7 @@ class LDAPFilter_approxMatch(LDAPAttributeValueAssertion):
 
     def asText(self):
         return '('+self.attributeDesc.value+'~=' \
-               +escape(self.assertionValue.value)+')'
+               +self.escaper(self.assertionValue.value)+')'
 
 class LDAPMatchingRuleId(LDAPString):
     pass

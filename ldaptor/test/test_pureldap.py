@@ -703,3 +703,168 @@ class Substrings(unittest.TestCase):
         # current str()-to-wire-protocol system had len() > 1 even
         # when empty, and that tripped e.g. entry.match()
         self.assertEquals(len(filt.substrings), 1)
+
+class TestEscaping(unittest.TestCase):
+    def test_escape(self):
+        s = '\\*()\0'
+
+        result = pureldap.escape(s)
+        expected = '\\5c\\2a\\28\\29\\00'
+
+        self.assertEquals(expected, result)
+
+    def test_binary_escape(self):
+        s = 'HELLO'
+
+        result = pureldap.binary_escape(s)
+        expected = '\\48\\45\\4c\\4c\\4f'
+
+        self.assertEquals(expected, result)
+
+    def test_smart_escape_regular(self):
+        s = 'HELLO'
+
+        result = pureldap.smart_escape(s)
+        expected = 'HELLO'
+
+        self.assertEquals(expected, result)
+
+    def test_smart_escape_binary(self):
+        s = '\x10\x11\x12\x13\x14'
+
+        result = pureldap.smart_escape(s)
+        expected = '\\10\\11\\12\\13\\14'
+
+        self.assertEquals(expected, result)
+
+    def test_smart_escape_threshold(self):
+        s = '\x10\x11ABC'
+
+        result = pureldap.smart_escape(s, threshold=0.10)
+        expected = '\\10\\11\\41\\42\\43'
+
+        self.assertEquals(expected, result)
+
+    def test_default_escaper(self):
+        chars = '\\*()\0'
+        escaped_chars = '\\5c\\2a\\28\\29\\00'
+
+        filters = [
+            (
+                pureldap.LDAPFilter_equalityMatch(
+                    attributeDesc=pureldap.LDAPAttributeDescription('key'),
+                    assertionValue=pureldap.LDAPAttributeValue(chars)
+                ),
+                '(key={})'.format(escaped_chars)
+            ),
+            (
+                pureldap.LDAPFilter_substrings_initial(
+                    value=chars
+                ),
+                '{}'.format(escaped_chars)
+            ),
+            (
+                pureldap.LDAPFilter_substrings_any(
+                    value=chars
+                ),
+                '{}'.format(escaped_chars)
+            ),
+            (
+                pureldap.LDAPFilter_substrings_final(
+                    value=chars
+                ),
+                '{}'.format(escaped_chars)
+            ),
+            (
+                pureldap.LDAPFilter_greaterOrEqual(
+                    attributeDesc=pureldap.LDAPString('key'),
+                    assertionValue=pureldap.LDAPString(chars)
+                ),
+                '(key>={})'.format(escaped_chars)
+            ),
+            (
+                pureldap.LDAPFilter_lessOrEqual(
+                    attributeDesc=pureldap.LDAPString('key'),
+                    assertionValue=pureldap.LDAPString(chars)
+                ),
+                '(key<={})'.format(escaped_chars)
+            ),
+            (
+                pureldap.LDAPFilter_approxMatch(
+                    attributeDesc=pureldap.LDAPString('key'),
+                    assertionValue=pureldap.LDAPString(chars)
+                ),
+                '(key~={})'.format(escaped_chars)
+            ),
+        ]
+
+        for filt, expected in filters:
+            result = filt.asText()
+            self.assertEqual(expected, result)
+
+    def test_custom_escaper(self):
+        chars = 'HELLO'
+        escaped_chars = '0b10010000b10001010b10011000b10011000b1001111'
+
+        def custom_escaper(s):
+            return ''.join(bin(ord(c)) for c in s)
+
+        filters = [
+            (
+                pureldap.LDAPFilter_equalityMatch(
+                    attributeDesc=pureldap.LDAPAttributeDescription('key'),
+                    assertionValue=pureldap.LDAPAttributeValue(chars),
+                    escaper=custom_escaper
+                ),
+                '(key={})'.format(escaped_chars)
+            ),
+            (
+                pureldap.LDAPFilter_substrings_initial(
+                    value=chars,
+                    escaper=custom_escaper
+                ),
+                '{}'.format(escaped_chars)
+            ),
+            (
+                pureldap.LDAPFilter_substrings_any(
+                    value=chars,
+                    escaper=custom_escaper
+                ),
+                '{}'.format(escaped_chars)
+            ),
+            (
+                pureldap.LDAPFilter_substrings_final(
+                    value=chars,
+                    escaper=custom_escaper
+                ),
+                '{}'.format(escaped_chars)
+            ),
+            (
+                pureldap.LDAPFilter_greaterOrEqual(
+                    attributeDesc=pureldap.LDAPString('key'),
+                    assertionValue=pureldap.LDAPString(chars),
+                    escaper=custom_escaper
+                ),
+                '(key>={})'.format(escaped_chars)
+            ),
+            (
+                pureldap.LDAPFilter_lessOrEqual(
+                    attributeDesc=pureldap.LDAPString('key'),
+                    assertionValue=pureldap.LDAPString(chars),
+                    escaper=custom_escaper
+                ),
+                '(key<={})'.format(escaped_chars)
+            ),
+            (
+                pureldap.LDAPFilter_approxMatch(
+                    attributeDesc=pureldap.LDAPString('key'),
+                    assertionValue=pureldap.LDAPString(chars),
+                    escaper=custom_escaper
+                ),
+                '(key~={})'.format(escaped_chars)
+            ),
+        ]
+
+        for filt, expected in filters:
+            result = filt.asText()
+            self.assertEqual(expected, result)
