@@ -868,3 +868,173 @@ class TestEscaping(unittest.TestCase):
         for filt, expected in filters:
             result = filt.asText()
             self.assertEqual(expected, result)
+
+class TestFilterSetEquality(unittest.TestCase):
+    def test_basic_and_equal(self):
+        filter1 = pureldap.LDAPFilter_and([
+            pureldap.LDAPFilter_equalityMatch(
+                attributeDesc=pureldap.LDAPAttributeDescription('foo'),
+                assertionValue=pureldap.LDAPAttributeValue('1')
+            ),
+            pureldap.LDAPFilter_equalityMatch(
+                attributeDesc=pureldap.LDAPAttributeDescription('bar'),
+                assertionValue=pureldap.LDAPAttributeValue('2')
+            ),
+        ])
+        filter2 = pureldap.LDAPFilter_and([
+            pureldap.LDAPFilter_equalityMatch(
+                attributeDesc=pureldap.LDAPAttributeDescription('bar'),
+                assertionValue=pureldap.LDAPAttributeValue('2')
+            ),
+            pureldap.LDAPFilter_equalityMatch(
+                attributeDesc=pureldap.LDAPAttributeDescription('foo'),
+                assertionValue=pureldap.LDAPAttributeValue('1')
+            ),
+        ])
+
+        self.assertEqual(filter1, filter2)
+
+    def test_basic_and_not_equal(self):
+        filter1 = pureldap.LDAPFilter_and([
+            pureldap.LDAPFilter_equalityMatch(
+                attributeDesc=pureldap.LDAPAttributeDescription('foo'),
+                assertionValue=pureldap.LDAPAttributeValue('1')
+            ),
+            pureldap.LDAPFilter_equalityMatch(
+                attributeDesc=pureldap.LDAPAttributeDescription('bar'),
+                assertionValue=pureldap.LDAPAttributeValue('2')
+            ),
+        ])
+        filter2 = pureldap.LDAPFilter_and([
+            pureldap.LDAPFilter_equalityMatch(
+                attributeDesc=pureldap.LDAPAttributeDescription('bar'),
+                assertionValue=pureldap.LDAPAttributeValue('1')
+            ),
+            pureldap.LDAPFilter_equalityMatch(
+                attributeDesc=pureldap.LDAPAttributeDescription('foo'),
+                assertionValue=pureldap.LDAPAttributeValue('1')
+            ),
+        ])
+
+        self.assertNotEqual(filter1, filter2)
+
+    def test_basic_or_equal(self):
+        filter1 = pureldap.LDAPFilter_or([
+            pureldap.LDAPFilter_equalityMatch(
+                attributeDesc=pureldap.LDAPAttributeDescription('foo'),
+                assertionValue=pureldap.LDAPAttributeValue('1')
+            ),
+            pureldap.LDAPFilter_equalityMatch(
+                attributeDesc=pureldap.LDAPAttributeDescription('bar'),
+                assertionValue=pureldap.LDAPAttributeValue('2')
+            ),
+        ])
+        filter2 = pureldap.LDAPFilter_or([
+            pureldap.LDAPFilter_equalityMatch(
+                attributeDesc=pureldap.LDAPAttributeDescription('bar'),
+                assertionValue=pureldap.LDAPAttributeValue('2')
+            ),
+            pureldap.LDAPFilter_equalityMatch(
+                attributeDesc=pureldap.LDAPAttributeDescription('foo'),
+                assertionValue=pureldap.LDAPAttributeValue('1')
+            ),
+        ])
+
+        self.assertEqual(filter1, filter2)
+
+    def test_basic_or_not_equal(self):
+        filter1 = pureldap.LDAPFilter_or([
+            pureldap.LDAPFilter_equalityMatch(
+                attributeDesc=pureldap.LDAPAttributeDescription('foo'),
+                assertionValue=pureldap.LDAPAttributeValue('1')
+            ),
+            pureldap.LDAPFilter_equalityMatch(
+                attributeDesc=pureldap.LDAPAttributeDescription('bar'),
+                assertionValue=pureldap.LDAPAttributeValue('2')
+            ),
+        ])
+        filter2 = pureldap.LDAPFilter_or([
+            pureldap.LDAPFilter_equalityMatch(
+                attributeDesc=pureldap.LDAPAttributeDescription('bar'),
+                assertionValue=pureldap.LDAPAttributeValue('1')
+            ),
+            pureldap.LDAPFilter_equalityMatch(
+                attributeDesc=pureldap.LDAPAttributeDescription('foo'),
+                assertionValue=pureldap.LDAPAttributeValue('1')
+            ),
+        ])
+
+        self.assertNotEqual(filter1, filter2)
+
+    def test_nested_equal(self):
+        filter1 = pureldap.LDAPFilter_or([
+            pureldap.LDAPFilter_equalityMatch(
+                attributeDesc=pureldap.LDAPAttributeDescription('foo'),
+                assertionValue=pureldap.LDAPAttributeValue('1')
+            ),
+            pureldap.LDAPFilter_equalityMatch(
+                attributeDesc=pureldap.LDAPAttributeDescription('bar'),
+                assertionValue=pureldap.LDAPAttributeValue('2')
+            ),
+            pureldap.LDAPFilter_and([
+                pureldap.LDAPFilter_equalityMatch(
+                    attributeDesc=pureldap.LDAPAttributeDescription('baz'),
+                    assertionValue=pureldap.LDAPAttributeValue('1')
+                ),
+                pureldap.LDAPFilter_equalityMatch(
+                    attributeDesc=pureldap.LDAPAttributeDescription('bob'),
+                    assertionValue=pureldap.LDAPAttributeValue('2')
+                ),
+            ]),
+        ])
+        filter2 = pureldap.LDAPFilter_or([
+            pureldap.LDAPFilter_and([
+                pureldap.LDAPFilter_equalityMatch(
+                    attributeDesc=pureldap.LDAPAttributeDescription('bob'),
+                    assertionValue=pureldap.LDAPAttributeValue('2')
+                ),
+                pureldap.LDAPFilter_equalityMatch(
+                    attributeDesc=pureldap.LDAPAttributeDescription('baz'),
+                    assertionValue=pureldap.LDAPAttributeValue('1')
+                ),
+            ]),
+            pureldap.LDAPFilter_equalityMatch(
+                attributeDesc=pureldap.LDAPAttributeDescription('bar'),
+                assertionValue=pureldap.LDAPAttributeValue('2')
+            ),
+            pureldap.LDAPFilter_equalityMatch(
+                attributeDesc=pureldap.LDAPAttributeDescription('foo'),
+                assertionValue=pureldap.LDAPAttributeValue('1')
+            ),
+        ])
+
+        self.assertEqual(filter1, filter2)
+
+    def test_escape_and_equal(self):
+        def custom_escaper(s):
+            return ''.join(bin(ord(c)) for c in s)
+
+        filter1 = pureldap.LDAPFilter_and([
+            pureldap.LDAPFilter_equalityMatch(
+                attributeDesc=pureldap.LDAPAttributeDescription('foo'),
+                assertionValue=pureldap.LDAPAttributeValue('1'),
+                escaper=custom_escaper
+            ),
+            pureldap.LDAPFilter_equalityMatch(
+                attributeDesc=pureldap.LDAPAttributeDescription('foo'),
+                assertionValue=pureldap.LDAPAttributeValue('2')
+            ),
+        ])
+        filter2 = pureldap.LDAPFilter_and([
+            pureldap.LDAPFilter_equalityMatch(
+                attributeDesc=pureldap.LDAPAttributeDescription('foo'),
+                assertionValue=pureldap.LDAPAttributeValue('1')
+            ),
+            pureldap.LDAPFilter_equalityMatch(
+                attributeDesc=pureldap.LDAPAttributeDescription('foo'),
+                assertionValue=pureldap.LDAPAttributeValue('2'),
+                escaper=custom_escaper
+            ),
+        ])
+
+        self.assertEqual(filter1, filter2)

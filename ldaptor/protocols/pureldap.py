@@ -392,6 +392,15 @@ class LDAPFilterSet(BERSet):
         return r
     fromBER = classmethod(fromBER)
 
+    def __eq__(self, rhs):
+        # Fast paths
+        if self is rhs:
+            return True
+        elif len(self) != len(rhs):
+            return False
+
+        return sorted(self, key=str) == sorted(rhs, key=str)
+
 class LDAPFilter_and(LDAPFilterSet):
     tag = CLASS_CONTEXT|0x00
 
