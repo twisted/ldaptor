@@ -12,9 +12,11 @@ from ldaptor import inmemory
 from ldaptor.protocols.ldap import ldaperrors
 from ldaptor.protocols import pureldap
 
+# We inject the examples so that we can import them.
+# There is no cleanup, so this is leaving side effects.
 sys.path.append(os.path.abspath("docs/source/examples"))
-
 import ldaptor_with_upn_bind
+
 
 class LDAPServerWithUPNBind(unittest.TestCase):
     """
