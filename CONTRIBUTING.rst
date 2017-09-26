@@ -6,3 +6,13 @@ If you wish to contribute code, just fork it, make a branch and send us a pull r
 We'll review it, and push back if necessary.
 
 Ldaptor generally follows the coding and documentation standards of the Twisted project.
+
+
+Building the documentation
+--------------------------
+
+The documentation is managed using Python Sphinx.
+
+There is a helper to build the documentation using tox ::
+
+    tox -e documentation

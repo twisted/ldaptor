@@ -5,6 +5,8 @@ LDAP Servers
 An LDAP directory information tree (DIT) is a highly specialized
 database with entries arranged in a tree-like structure.
 
+.. contents:: :local:
+
 
 """"""""""""""""""""
 File-System LDAP DIT
@@ -164,3 +166,26 @@ Next, the server code-- :file:`fsdit.py`
         myService = service.IServiceCollection(application)
         reactor.listenTCP(port, factory)
         reactor.run()
+
+
+""""""""""""""""""""""""""""""""""""""
+LDAP Server which allows BIND with UPN
+""""""""""""""""""""""""""""""""""""""
+
+The LDAP server implemented by Microsoft Active Directory allows using the
+UPN as the BIND DN.
+
+It is possible to implement something similar using ldaptor.
+
+Below is a proof-of-concept implementation, which should not be used for
+production as it has an heuristic method for detecting which BIND DN is an
+UPN.
+
+`handle_LDAPBindRequest` is the method called when a BIND request is
+received.
+
+
+.. literalinclude:: /examples/ldaptor_with_upn_bind.py
+    :language: python
+    :emphasize-lines: 34
+    :linenos:
