@@ -11,7 +11,8 @@ Ldaptor generally follows the coding and documentation standards of the Twisted 
 Building the documentation
 --------------------------
 
-The documentation is managed using Python Sphinx.
+The documentation is managed using Python Sphinx and is generated in
+docs/build.
 
 There is a helper to build the documentation using tox ::
 
