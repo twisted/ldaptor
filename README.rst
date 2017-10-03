@@ -1,6 +1,9 @@
 Ldaptor
 =======
 
+.. image:: https://travis-ci.org/twisted/ldaptor.svg?branch=master
+    :target: https://travis-ci.org/twisted/ldaptor
+
 Ldaptor is a pure-Python library that implements:
 
 - LDAP client logic

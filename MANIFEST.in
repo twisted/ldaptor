@@ -2,7 +2,7 @@ include *.rst
 include *.txt
 include .travis.yml
 include LICENSE
-include docs/examples/ldif2ldif
+include docs/source/examples/ldif2ldif
 include ldaptor.schema
 include test-ldapserver.tac
 include tox.ini
@@ -21,6 +21,6 @@ recursive-include docs *.tac
 recursive-include docs *.txt
 recursive-include docs *.xhtml
 recursive-include docs Makefile
-recursive-include docs/examples/addressbook run
-recursive-include docs/examples/addressbook summary
+recursive-include docs/source/examples/addressbook run
+recursive-include docs/source/examples/addressbook summary
 recursive-include ldaptor *.ldif
