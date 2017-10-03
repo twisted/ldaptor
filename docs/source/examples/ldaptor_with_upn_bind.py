@@ -8,7 +8,7 @@ objectclass: top
 objectclass: person
 objectClass: inetOrgPerson
 uid: bob
-cn: boby
+cn: bobby
 gn: Bob
 sn: Roberts
 mail: bob@example.org
@@ -47,10 +47,10 @@ class LDAPServerWithUPNBind(LDAPServer):
 
         def _gotUPNResult(results):
             if len(results) != 1:
-                # Nothing found, so this might not be an UNP.
+                # Not exactly one result, so this might not be an UNP.
                 return distinguishedname.DistinguishedName(request.dn)
 
-            # We got a single result, so the UPN might exist.
+            # A single result, so the UPN might exist.
             return results[0].dn
 
         if '@' in request.dn and ',' not in request.dn:
@@ -61,7 +61,7 @@ class LDAPServerWithUPNBind(LDAPServer):
         else:
             d = defer.succeed(distinguishedname.DistinguishedName(request.dn))
 
-        # Once we know the BIND DN, search for the LDAP entry.
+        # Once the BIND DN is known, search for the LDAP entry.
         d.addCallback(lambda dn: root.lookup(dn))
 
         def _noEntry(fail):
