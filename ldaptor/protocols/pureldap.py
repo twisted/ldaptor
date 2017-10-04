@@ -67,6 +67,7 @@ class LDAPMessage(BERSequence):
     id = None
     value = None
 
+    @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
         l = berDecodeMultiple(content, berdecoder)
 
@@ -89,7 +90,6 @@ class LDAPMessage(BERSequence):
                   controls=controls,
                   tag=tag)
         return r
-    fromBER = classmethod(fromBER)
 
     def __init__(self, value=None, controls=None, id=None, tag=None):
         BERSequence.__init__(self, value=[], tag=tag)
@@ -137,6 +137,7 @@ class LDAPBERDecoderContext_LDAPBindRequest(BERDecoderContext):
 class LDAPBindRequest(LDAPProtocolRequest, BERSequence):
     tag=CLASS_APPLICATION|0x00
 
+    @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
         l = berDecodeMultiple(content,
                               LDAPBERDecoderContext_LDAPBindRequest(
@@ -156,7 +157,6 @@ class LDAPBindRequest(LDAPProtocolRequest, BERSequence):
                   tag=tag,
                   sasl=sasl)
         return r
-    fromBER = classmethod(fromBER)
 
     def __init__(self, version=None, dn=None, auth=None, tag=None, sasl=False):
         """Constructor for LDAP Bind Request
@@ -210,10 +210,10 @@ class LDAPSearchResultReference(LDAPProtocolResponse):
     def __init__(self):
         LDAPProtocolResponse.__init__(self)
 
+    @classmethod
     def fromBER(cls, tag, content, berdecoder=None):
         r = cls()
         return r
-    fromBER = classmethod(fromBER)
 
     def __str__(self):
         return object.__str__(self)
@@ -223,6 +223,7 @@ class LDAPSearchResultReference(LDAPProtocolResponse):
 
 
 class LDAPResult(LDAPProtocolResponse, BERSequence):
+    @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
         l = berDecodeMultiple(content, LDAPBERDecoderContext_LDAPBindRequest(
             fallback=berdecoder))
@@ -240,7 +241,6 @@ class LDAPResult(LDAPProtocolResponse, BERSequence):
                   referral=referral,
                   tag=tag)
         return r
-    fromBER = classmethod(fromBER)
 
     def __init__(self, resultCode=None, matchedDN=None, errorMessage=None, referral=None, serverSaslCreds=None, tag=None):
         LDAPProtocolResponse.__init__(self)
@@ -297,6 +297,7 @@ class LDAPBindResponse(LDAPResult):
     referral = None
     serverSaslCreds = None
 
+    @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
         l = berDecodeMultiple(content, LDAPBERDecoderContext_BindResponse(
                 fallback=berdecoder))
@@ -323,7 +324,6 @@ class LDAPBindResponse(LDAPResult):
                   serverSaslCreds=serverSaslCreds,
                   tag=tag)
         return r
-    fromBER = classmethod(fromBER)
 
     def __init__(self, resultCode=None, matchedDN=None, errorMessage=None, referral=None, serverSaslCreds=None, tag=None):
         LDAPResult.__init__(self, resultCode=resultCode, matchedDN=matchedDN, errorMessage=errorMessage,
@@ -350,6 +350,7 @@ class LDAPAttributeDescription(BEROctetString):
     pass
 
 class LDAPAttributeValueAssertion(BERSequence):
+    @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
         l = berDecodeMultiple(content, berdecoder)
         assert len(l) == 2
@@ -358,7 +359,6 @@ class LDAPAttributeValueAssertion(BERSequence):
                   assertionValue=l[1],
                   tag=tag)
         return r
-    fromBER = classmethod(fromBER)
 
     def __init__(self, attributeDesc=None, assertionValue=None, tag=None, escaper=escape):
         BERSequence.__init__(self, value=[], tag=tag)
@@ -386,11 +386,11 @@ class LDAPFilter(BERStructured):
         BERStructured.__init__(self, tag=tag)
 
 class LDAPFilterSet(BERSet):
+    @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
         l = berDecodeMultiple(content, LDAPBERDecoderContext_Filter(fallback=berdecoder))
         r = klass(l, tag=tag)
         return r
-    fromBER = classmethod(fromBER)
 
     def __eq__(self, rhs):
         # Fast paths
@@ -416,6 +416,7 @@ class LDAPFilter_or(LDAPFilterSet):
 class LDAPFilter_not(LDAPFilter):
     tag = CLASS_CONTEXT|0x02
 
+    @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
         value, bytes = berDecodeObject(LDAPBERDecoderContext_Filter(fallback=berdecoder, inherit=berdecoder), content)
         assert bytes == len(content)
@@ -423,7 +424,6 @@ class LDAPFilter_not(LDAPFilter):
         r = klass(value=value,
                   tag=tag)
         return r
-    fromBER = classmethod(fromBER)
 
     def __init__(self, value, tag=tag):
         LDAPFilter.__init__(self, tag=tag)
@@ -483,6 +483,7 @@ class LDAPBERDecoderContext_Filter_substrings(BERDecoderContext):
 class LDAPFilter_substrings(BERSequence):
     tag = CLASS_CONTEXT|0x04
 
+    @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
         l = berDecodeMultiple(content, LDAPBERDecoderContext_Filter_substrings(fallback=berdecoder))
         assert len(l) == 2
@@ -492,7 +493,6 @@ class LDAPFilter_substrings(BERSequence):
                   substrings=list(l[1]),
                   tag=tag)
         return r
-    fromBER = classmethod(fromBER)
 
     def __init__(self, type=None, substrings=None, tag=None):
         BERSequence.__init__(self, value=[], tag=tag)
@@ -611,6 +611,7 @@ class LDAPMatchingRuleAssertion(BERSequence):
     matchValue=None
     dnAttributes=None
 
+    @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
         matchingRule = None
         atype = None
@@ -642,7 +643,6 @@ class LDAPMatchingRuleAssertion(BERSequence):
             tag=tag)
 
         return r
-    fromBER = classmethod(fromBER)
 
     def __init__(self, matchingRule=None, type=None, matchValue=None, dnAttributes=None, tag=None):
         BERSequence.__init__(self, value=[], tag=tag)
@@ -726,6 +726,7 @@ class LDAPSearchRequest(LDAPProtocolRequest, BERSequence):
 
     #TODO decode
 
+    @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
         l = berDecodeMultiple(content, LDAPBERDecoderContext_Filter(fallback=berdecoder, inherit=berdecoder))
 
@@ -740,7 +741,6 @@ class LDAPSearchRequest(LDAPProtocolRequest, BERSequence):
                   attributes=[x.value for x in l[7]],
                   tag=tag)
         return r
-    fromBER = classmethod(fromBER)
 
     def __init__(self,
                  baseObject=None,
@@ -808,6 +808,7 @@ class LDAPSearchRequest(LDAPProtocolRequest, BERSequence):
 class LDAPSearchResultEntry(LDAPProtocolResponse, BERSequence):
     tag=CLASS_APPLICATION|0x04
 
+    @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
         l = berDecodeMultiple(content, LDAPBERDecoderContext_Filter(fallback=berdecoder, inherit=berdecoder))
 
@@ -819,7 +820,6 @@ class LDAPSearchResultEntry(LDAPProtocolResponse, BERSequence):
                   attributes=attributes,
                   tag=tag)
         return r
-    fromBER = classmethod(fromBER)
 
     def __init__(self, objectName, attributes, tag=None):
         LDAPProtocolResponse.__init__(self)
@@ -867,18 +867,19 @@ class LDAPSearchResultDone(LDAPResult):
 class LDAPControls(BERSequence):
     tag = CLASS_CONTEXT|0x00
 
+    @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
         l = berDecodeMultiple(content, LDAPBERDecoderContext_LDAPControls(
                 inherit=berdecoder))
 
         r = klass(l, tag=tag)
         return r
-    fromBER = classmethod(fromBER)
 
 class LDAPControl(BERSequence):
     criticality = None
     controlValue = None
 
+    @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
         l = berDecodeMultiple(content, berdecoder)
 
@@ -898,7 +899,6 @@ class LDAPControl(BERSequence):
                   tag=tag,
                   **kw)
         return r
-    fromBER = classmethod(fromBER)
 
     def __init__(self,
                  controlType, criticality=None, controlValue=None,
@@ -938,6 +938,7 @@ class LDAPModifyRequest(LDAPProtocolRequest, BERSequence):
     object = None
     modification = None
 
+    @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
         l = berDecodeMultiple(content, berdecoder)
 
@@ -947,7 +948,6 @@ class LDAPModifyRequest(LDAPProtocolRequest, BERSequence):
                   modification=l[1].data,
                   tag=tag)
         return r
-    fromBER = classmethod(fromBER)
 
     def __init__(self, object=None, modification=None, tag=None):
         """
@@ -1013,6 +1013,7 @@ class LDAPModifyResponse(LDAPResult):
 class LDAPAddRequest(LDAPProtocolRequest, BERSequence):
     tag = CLASS_APPLICATION|0x08
 
+    @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
         l = berDecodeMultiple(content, berdecoder)
 
@@ -1020,7 +1021,6 @@ class LDAPAddRequest(LDAPProtocolRequest, BERSequence):
                   attributes=l[1],
                   tag=tag)
         return r
-    fromBER = classmethod(fromBER)
 
     def __init__(self, entry=None, attributes=None, tag=None):
         """
@@ -1116,6 +1116,7 @@ class LDAPModifyDNRequest(LDAPProtocolRequest, BERSequence):
     deleteoldrdn=None
     newSuperior=None
 
+    @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
         l = berDecodeMultiple(content, LDAPBERDecoderContext_ModifyDNRequest(fallback=berdecoder))
 
@@ -1131,7 +1132,6 @@ class LDAPModifyDNRequest(LDAPProtocolRequest, BERSequence):
                   tag=tag,
                   **kw)
         return r
-    fromBER = classmethod(fromBER)
 
     def __init__(self, entry, newrdn, deleteoldrdn, newSuperior=None,
                  tag=None):
@@ -1194,6 +1194,7 @@ class LDAPCompareRequest(LDAPProtocolRequest, BERSequence):
     entry = None
     ava = None
 
+    @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
         l = berDecodeMultiple(
                 content,
@@ -1208,7 +1209,6 @@ class LDAPCompareRequest(LDAPProtocolRequest, BERSequence):
                   tag=tag)
 
         return r
-    fromBER = classmethod(fromBER)
 
     def __init__(self, entry, ava, tag=None):
         LDAPProtocolRequest.__init__(self)
@@ -1279,6 +1279,7 @@ class LDAPExtendedRequest(LDAPProtocolRequest, BERSequence):
     requestName = None
     requestValue = None
 
+    @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
         l = berDecodeMultiple(content,
                               LDAPBERDecoderContext_LDAPExtendedRequest(
@@ -1294,7 +1295,6 @@ class LDAPExtendedRequest(LDAPProtocolRequest, BERSequence):
                   tag=tag,
                   **kw)
         return r
-    fromBER = classmethod(fromBER)
 
     def __init__(self, requestName=None, requestValue=None,
                  tag=None):
@@ -1375,6 +1375,7 @@ class LDAPExtendedResponse(LDAPResult):
     responseName = None
     response = None
 
+    @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
         l = berDecodeMultiple(content, LDAPBERDecoderContext_LDAPExtendedResponse(
             fallback=berdecoder))
@@ -1404,7 +1405,6 @@ class LDAPExtendedResponse(LDAPResult):
                   response=response,
                   tag=tag)
         return r
-    fromBER = classmethod(fromBER)
 
     def __init__(self, resultCode=None, matchedDN=None, errorMessage=None,
                  referral=None, serverSaslCreds=None,
