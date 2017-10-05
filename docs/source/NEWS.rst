@@ -10,6 +10,11 @@ Features
 - Ability to logically compare ldaptor.protocols.pureldap.LDAPFilter_and and ldaptor.protocols.pureldap.LDAPFilter_or objects with ==.
 - Ability to customize ldaptor.protocols.pureldap.LDAPFilter_* object's encoding of values when using asText.
 
+Changes
+^^^^^^^
+
+- Using modern classmethod decorator instead of old-style method call.
+
 Release 16.0 (2016-06-07)
 -------------------------
 

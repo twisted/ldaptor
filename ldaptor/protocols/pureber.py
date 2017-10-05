@@ -161,12 +161,12 @@ class BERInteger(BERBase):
     tag = 0x02
     value = None
 
+    @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
         assert len(content)>0
         value=ber2int(content)
         r = klass(value=value, tag=tag)
         return r
-    fromBER = classmethod(fromBER)
 
     def __init__(self, value=None, tag=None):
         """Create a new BERInteger object.
@@ -194,11 +194,11 @@ class BEROctetString(BERBase):
 
     value = None
 
+    @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
         assert len(content)>=0
         r = klass(value=content, tag=tag)
         return r
-    fromBER = classmethod(fromBER)
 
     def __init__(self, value=None, tag=None):
         BERBase.__init__(self, tag)
@@ -223,11 +223,11 @@ class BEROctetString(BERBase):
 class BERNull(BERBase):
     tag = 0x05
 
+    @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
         assert len(content) == 0
         r = klass(tag=tag)
         return r
-    fromBER = classmethod(fromBER)
 
     def __init__(self, tag=None):
         BERBase.__init__(self, tag)
@@ -244,12 +244,12 @@ class BERNull(BERBase):
 class BERBoolean(BERBase):
     tag = 0x01
 
+    @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
         assert len(content) > 0
         value = ber2int(content)
         r = klass(value=value, tag=tag)
         return r
-    fromBER = classmethod(fromBER)
 
     def __init__(self, value=None, tag=None):
         """Create a new BERInteger object.
@@ -282,11 +282,11 @@ class BERSequence(BERStructured, UserList.UserList):
     # TODO __getslice__ calls __init__ with no args.
     tag = 0x10
 
+    @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
         l = berDecodeMultiple(content, berdecoder)
         r = klass(l, tag=tag)
         return r
-    fromBER = classmethod(fromBER)
 
     def __init__(self, value=None, tag=None):
         BERStructured.__init__(self, tag)

@@ -135,13 +135,14 @@ class ModifyOp(Operation):
             object=str(self.dn),
             modification=[x.asLDAP() for x in self.modifications])
 
+    @classmethod
     def _getClassFromOp(class_, op):
         for mod in [Add, Delete, Replace]:
             if op == mod._LDAP_OP:
                 return mod
         return None
-    _getClassFromOp = classmethod(_getClassFromOp)
 
+    @classmethod
     def fromLDAP(class_, request):
         if not isinstance(request, pureldap.LDAPModifyRequest):
             raise RuntimeError("%s.fromLDAP needs an LDAPModifyRequest"
@@ -161,7 +162,6 @@ class ModifyOp(Operation):
             m = klass(key, vals)
             result.append(m)
         return class_(dn, result)
-    fromLDAP = classmethod(fromLDAP)
 
     def patch(self, root):
         d = root.lookup(self.dn)
