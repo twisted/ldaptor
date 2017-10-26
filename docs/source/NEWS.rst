@@ -15,6 +15,11 @@ Changes
 
 - Using modern classmethod decorator instead of old-style method call.
 
+Bugfixes
+^^^^^^^^
+
+- DN matching now case insensitive.
+
 Release 16.0 (2016-06-07)
 -------------------------
 

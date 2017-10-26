@@ -110,8 +110,8 @@ class LDAPAttributeTypeAndValue:
     def __eq__(self, other):
         if not isinstance(other, LDAPAttributeTypeAndValue):
             return NotImplemented
-        return (self.attributeType == other.attributeType
-                and self.value == other.value)
+        return (self.attributeType.lower() == other.attributeType.lower()
+                and self.value.lower() == other.value.lower())
 
     def __ne__(self, other):
         return not (self == other)
