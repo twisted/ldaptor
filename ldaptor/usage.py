@@ -95,7 +95,9 @@ class Options_bind:
          "use Distinguished Name to bind to the directory"),
         ('bind-auth-fd', None, None,
          "read bind password from filedescriptor"),
-        )
+        ('bind-sasl-mech', None, None,
+         "SASL Mechanism to use for binding to the directory"),
+    )
 
     def postOptions_bind_auth_fd_numeric(self):
         val=self.opts['bind-auth-fd']
@@ -105,6 +107,14 @@ class Options_bind:
             except ValueError:
                 raise usage.UsageError, "%s value must be numeric" % 'bind-auth-fd'
             self.opts['bind-auth-fd'] = val
+
+    def postOptions_bind_sasl_mech(self):
+        val = self.opts['bind-sasl-mech']
+        MECHANISM = ('GSSAPI',)
+        if val is not None:
+            if val.upper() not in ('GSSAPI',):
+                raise usage.UsageError, "%s : unknown SASL mechanism" % 'bind-sasl-mech'
+
 
 class Options_bind_mandatory(Options_bind):
     def postOptions_bind_mandatory(self):

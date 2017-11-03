@@ -1,29 +1,46 @@
 #!/usr/bin/python
 
 import sys
-from ldaptor.protocols.ldap import ldapclient, ldif, ldapsyntax, ldapconnector
-from ldaptor.protocols import pureber, pureldap
-from ldaptor import usage, ldapfilter, config
-from twisted.internet import protocol, reactor, defer
+from ldaptor.protocols.ldap import ldapclient, ldapsyntax, ldapconnector
+from ldaptor import usage, config
+from twisted.internet import reactor
 
 def printResults(o):
     sys.stdout.write(str(o))
 
-def search(client, baseDN, filter_text, attributes):
-    o=ldapsyntax.LDAPEntry(client=client, dn=baseDN)
-    d=o.search(filterText=filter_text,
-               attributes=attributes,
-               callback=printResults)
+
+def do_anon_bind(client, bindDN):
+    o=ldapsyntax.LDAPEntryWithClient(client, bindDN)
+    d = o.bind(None)
+    d.addCallback(lambda x: client)
     return d
+
+
+def do_sasl_bind(client, bindDN):
+    from ldaptor import gssapi
+    o=ldapsyntax.LDAPEntryWithClient(client, bindDN)
+    service = 'ldap'
+    host = client.transport.addr[0]
+    ctx = gssapi.SASL_GSSAPIClientContext(service, host)
+    d = o.bind(None, sasl=True, sasl_ctx=ctx)
+    d.addCallback(lambda x: client)
+    return d
+
+
+def do_search(client, baseDN, filter_text, attributes):
+    o=ldapsyntax.LDAPEntryWithClient(client, baseDN)
+    return o.search(filterText=filter_text, attributes=attributes, callback=printResults)
+
 
 exitStatus=0
 
 def error(fail):
     print >>sys.stderr, 'fail:', fail.getErrorMessage()
+    print >>sys.stderr, fail.getTraceback()
     global exitStatus
     exitStatus=1
 
-def main(cfg, filter_text, attributes):
+def main(cfg, bindfunc, bindDN, filter_text, attributes):
     try:
         baseDN = cfg.getBaseDN()
     except config.MissingBaseDNError, e:
@@ -32,16 +49,21 @@ def main(cfg, filter_text, attributes):
 
     c = ldapconnector.LDAPClientCreator(reactor,
                                         ldapclient.LDAPClient)
-    d = c.connectAnonymously(dn=baseDN,
-                             overrides=cfg.getServiceLocationOverrides())
-    d.addCallback(search, baseDN, filter_text, attributes)
+    d = c.connect(dn=baseDN,
+                  overrides=cfg.getServiceLocationOverrides())
+
+    if not bindDN:
+        bindDN = baseDN
+    d.addCallback(bindfunc, bindDN)
+    d.addCallback(do_search, baseDN, filter_text, attributes)
     d.addErrback(error)
     d.addBoth(lambda x: reactor.stop())
 
     reactor.run()
     sys.exit(exitStatus)
 
-class MyOptions(usage.Options, usage.Options_service_location, usage.Options_base_optional):
+class MyOptions(usage.Options, usage.Options_service_location,
+                usage.Options_base_optional, usage.Options_bind):
     """LDAPtor command line search utility"""
 
     def parseArgs(self, filter, *attributes):
@@ -58,6 +80,14 @@ if __name__ == "__main__":
 
     cfg = config.LDAPConfig(baseDN=opts['base'],
                             serviceLocationOverrides=opts['service-location'])
+
+    if opts['bind-sasl-mech'] == 'GSSAPI':
+        bindfunc = do_sasl_bind
+    else:
+        bindfunc = do_anon_bind
+
     main(cfg,
+         bindfunc,
+         opts['binddn'],
          opts['filter'],
          opts['attributes'])

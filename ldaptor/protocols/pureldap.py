@@ -1467,13 +1467,13 @@ class LDAPStartTLSResponse(LDAPExtendedResponse):
                  referral=None, serverSaslCreds=None,
                  responseName=None, response=None,
                  tag=None):
-        LDAPExtendedResponse.__init__(self, 
-            resultCode=resultCode, 
-            matchedDN=matchedDN, 
+        LDAPExtendedResponse.__init__(self,
+            resultCode=resultCode,
+            matchedDN=matchedDN,
             errorMessage=errorMessage,
-            referral=referral, 
+            referral=referral,
             serverSaslCreds=serverSaslCreds,
-            responseName=responseName, 
+            responseName=responseName,
             response=response,
             tag=tag)
 
