@@ -117,7 +117,7 @@ class LDAPServerTest(unittest.TestCase):
     def test_bind(self):
         self.server.dataReceived(
             str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(), id=4)))
-        self.assertEquals(
+        self.assertEqual(
             self.server.transport.value(),
             str(
                 pureldap.LDAPMessage(
@@ -133,7 +133,7 @@ class LDAPServerTest(unittest.TestCase):
                         dn='cn=thingie,ou=stuff,dc=example,dc=com',
                         auth='secret'),
                     id=4)))
-        self.assertEquals(
+        self.assertEqual(
             self.server.transport.value(),
             str(
                 pureldap.LDAPMessage(
@@ -150,7 +150,7 @@ class LDAPServerTest(unittest.TestCase):
                         dn='cn=thingie,ou=stuff,dc=example,dc=com',
                         auth='invalid'),
                     id=734)))
-        self.assertEquals(
+        self.assertEqual(
             self.server.transport.value(),
             str(
                 pureldap.LDAPMessage(
@@ -166,7 +166,7 @@ class LDAPServerTest(unittest.TestCase):
                         dn='cn=non-existing,dc=example,dc=com',
                         auth='invalid'),
                     id=78)))
-        self.assertEquals(
+        self.assertEqual(
             self.server.transport.value(),
             str(
                 pureldap.LDAPMessage(
@@ -180,7 +180,7 @@ class LDAPServerTest(unittest.TestCase):
                 pureldap.LDAPMessage(
                     pureldap.LDAPBindRequest(version=1),
                     id=32)))
-        self.assertEquals(
+        self.assertEqual(
             self.server.transport.value(),
             str(
                 pureldap.LDAPMessage(
@@ -195,7 +195,7 @@ class LDAPServerTest(unittest.TestCase):
                 pureldap.LDAPMessage(
                     pureldap.LDAPBindRequest(version=2),
                     id=32)))
-        self.assertEquals(
+        self.assertEqual(
             self.server.transport.value(),
             str(
                 pureldap.LDAPMessage(
@@ -210,7 +210,7 @@ class LDAPServerTest(unittest.TestCase):
                 pureldap.LDAPMessage(
                     pureldap.LDAPBindRequest(version=4),
                     id=32)))
-        self.assertEquals(
+        self.assertEqual(
             self.server.transport.value(),
             str(
                 pureldap.LDAPMessage(
@@ -230,7 +230,7 @@ class LDAPServerTest(unittest.TestCase):
                         dn='cn=non-existing,dc=example,dc=com',
                         auth='invalid'),
                     id=11)))
-        self.assertEquals(
+        self.assertEqual(
             self.server.transport.value(),
             str(
                 pureldap.LDAPMessage(
@@ -242,7 +242,7 @@ class LDAPServerTest(unittest.TestCase):
     def test_unbind(self):
         self.server.dataReceived(
             str(pureldap.LDAPMessage(pureldap.LDAPUnbindRequest(), id=7)))
-        self.assertEquals(self.server.transport.value(), '')
+        self.assertEqual(self.server.transport.value(), '')
 
     def test_compare_outOfTree(self):
         dn = 'dc=invalid'
@@ -256,7 +256,7 @@ class LDAPServerTest(unittest.TestCase):
                     pureldap.LDAPCompareRequest(entry=dn, ava=ava),
                     id=2)))
 
-        self.assertEquals(
+        self.assertEqual(
             self.server.transport.value(),
             str(
                 pureldap.LDAPMessage(
@@ -276,7 +276,7 @@ class LDAPServerTest(unittest.TestCase):
                     pureldap.LDAPCompareRequest(entry=dn, ava=ava),
                     id=2)))
 
-        self.assertEquals(
+        self.assertEqual(
             self.server.transport.value(),
             str(
                 pureldap.LDAPMessage(
@@ -296,7 +296,7 @@ class LDAPServerTest(unittest.TestCase):
                     pureldap.LDAPCompareRequest(entry=dn, ava=ava),
                     id=2)))
 
-        self.assertEquals(
+        self.assertEqual(
             self.server.transport.value(),
             str(
                 pureldap.LDAPMessage(
@@ -311,7 +311,7 @@ class LDAPServerTest(unittest.TestCase):
                     pureldap.LDAPSearchRequest(
                         baseObject='dc=invalid'),
                     id=2)))
-        self.assertEquals(
+        self.assertEqual(
             self.server.transport.value(),
             str(
                 pureldap.LDAPMessage(
@@ -371,7 +371,7 @@ class LDAPServerTest(unittest.TestCase):
                         baseObject='cn=thingie,ou=stuff,dc=example,dc=com',
                         attributes=['xyzzy']),
                     id=2)))
-        self.assertEquals(
+        self.assertEqual(
             self.server.transport.value(),
             str(
                 pureldap.LDAPMessage(
@@ -542,7 +542,7 @@ class LDAPServerTest(unittest.TestCase):
                 pureldap.LDAPMessage(
                     pureldap.LDAPDelRequest(str(self.thingie.dn)),
                     id=2)))
-        self.assertEquals(
+        self.assertEqual(
             self.server.transport.value(),
             str(
                 pureldap.LDAPMessage(
@@ -569,7 +569,7 @@ class LDAPServerTest(unittest.TestCase):
                             )
                         ]),
                     id=2)))
-        self.assertEquals(
+        self.assertEqual(
             self.server.transport.value(),
             str(
                 pureldap.LDAPMessage(
@@ -605,7 +605,7 @@ class LDAPServerTest(unittest.TestCase):
                             )
                         ]),
                     id=2)))
-        self.assertEquals(
+        self.assertEqual(
             self.server.transport.value(),
             str(
                 pureldap.LDAPMessage(
@@ -628,7 +628,7 @@ class LDAPServerTest(unittest.TestCase):
                         newrdn=newrdn,
                         deleteoldrdn=True),
                     id=2)))
-        self.assertEquals(
+        self.assertEqual(
             self.server.transport.value(),
             str(
                 pureldap.LDAPMessage(
@@ -660,7 +660,7 @@ class LDAPServerTest(unittest.TestCase):
                         newrdn=newrdn,
                         deleteoldrdn=False),
                     id=2)))
-        self.assertEquals(
+        self.assertEqual(
             self.server.transport.value(),
             str(
                 pureldap.LDAPMessage(
@@ -679,6 +679,7 @@ class LDAPServerTest(unittest.TestCase):
                         'cn': ['thingamagic', 'thingie']
                     })})
         return d
+
     test_modifyDN_rdnOnly_noDeleteOldRDN_success.todo = 'Not supported yet.'
 
     def test_modify(self):
@@ -691,7 +692,7 @@ class LDAPServerTest(unittest.TestCase):
                             delta.Add('foo', ['bar']).asLDAP(),
                         ]),
                     id=2)))
-        self.assertEquals(
+        self.assertEqual(
             self.server.transport.value(),
             str(
                 pureldap.LDAPMessage(
@@ -699,7 +700,7 @@ class LDAPServerTest(unittest.TestCase):
                         resultCode=ldaperrors.Success.resultCode),
                     id=2)))
         # tree changed
-        self.assertEquals(
+        self.assertEqual(
             self.stuff,
             inmemory.ReadOnlyInMemoryLDAPEntry(
                 'ou=stuff,dc=example,dc=com',
@@ -717,7 +718,7 @@ class LDAPServerTest(unittest.TestCase):
                         requestName='42.42.42',
                         requestValue='foo'),
                     id=2)))
-        self.assertEquals(
+        self.assertEqual(
             self.server.transport.value(),
             str(
                 pureldap.LDAPMessage(
@@ -734,7 +735,7 @@ class LDAPServerTest(unittest.TestCase):
                         userIdentity='cn=thingie,ou=stuff,dc=example,dc=com',
                         newPasswd='hushhush'),
                     id=2)))
-        self.assertEquals(
+        self.assertEqual(
             self.server.transport.value(),
             str(
                 pureldap.LDAPMessage(
@@ -759,7 +760,7 @@ class LDAPServerTest(unittest.TestCase):
                     dn='cn=thingie,ou=stuff,dc=example,dc=com',
                     auth='secret'),
                 id=4)))
-        self.assertEquals(
+        self.assertEqual(
             self.server.transport.value(),
             str(
                 pureldap.LDAPMessage(
@@ -775,8 +776,8 @@ class LDAPServerTest(unittest.TestCase):
                         userIdentity='cn=thingie,ou=stuff,dc=example,dc=com',
                         newPasswd='hushhush'),
                     id=2)))
-        self.assertEquals(data['committed'], True, "Server never committed data.")
-        self.assertEquals(
+        self.assertEqual(data['committed'], True, "Server never committed data.")
+        self.assertEqual(
             self.server.transport.value(),
             str(
                 pureldap.LDAPMessage(
@@ -786,22 +787,23 @@ class LDAPServerTest(unittest.TestCase):
                     id=2)))
         # tree changed
         secrets = self.thingie.get('userPassword', [])
-        self.assertEquals(len(secrets), 1)
+        self.assertEqual(len(secrets), 1)
         for secret in secrets:
-            self.assertEquals(secret[:len('{SSHA}')], '{SSHA}')
+            self.assertEqual(secret[:len('{SSHA}')], '{SSHA}')
             raw = base64.decodestring(secret[len('{SSHA}'):])
             salt = raw[20:]
-            self.assertEquals(entry.sshaDigest('hushhush', salt), secret)
+            self.assertEqual(entry.sshaDigest('hushhush', salt), secret)
 
     def test_unknownRequest(self):
         # make server miss one of the handle_* attributes
         # without having to modify the LDAPServer class
         class MockServer(ldapserver.LDAPServer):
             handle_LDAPBindRequest = property()
+
         self.server.__class__ = MockServer
         self.server.dataReceived(str(pureldap.LDAPMessage(
             pureldap.LDAPBindRequest(), id=2)))
-        self.assertEquals(
+        self.assertEqual(
             self.server.transport.value(),
             str(
                 pureldap.LDAPMessage(
@@ -816,7 +818,7 @@ class LDAPServerTest(unittest.TestCase):
             pureldap.LDAPBindRequest(), id=2,
             controls=[('42.42.42.42', True, None),
                       ])))
-        self.assertEquals(
+        self.assertEqual(
             self.server.transport.value(),
             str(
                 pureldap.LDAPMessage(
@@ -832,7 +834,7 @@ class LDAPServerTest(unittest.TestCase):
                                      auth='secret'),
             controls=[('42.42.42.42', False, None)],
             id=4)))
-        self.assertEquals(
+        self.assertEqual(
             self.server.transport.value(),
             str(
                 pureldap.LDAPMessage(

@@ -101,7 +101,7 @@ class TestModifications(unittest.TestCase):
 class TestModificationOpLDIF(unittest.TestCase):
     def testAdd(self):
         m=delta.Add('foo', ['bar', 'baz'])
-        self.assertEquals(m.asLDIF(),
+        self.assertEqual(m.asLDIF(),
                           """\
 add: foo
 foo: bar
@@ -111,7 +111,7 @@ foo: baz
 
     def testDelete(self):
         m=delta.Delete('foo', ['bar', 'baz'])
-        self.assertEquals(m.asLDIF(),
+        self.assertEqual(m.asLDIF(),
                           """\
 delete: foo
 foo: bar
@@ -121,7 +121,7 @@ foo: baz
 
     def testDeleteAll(self):
         m=delta.Delete('foo')
-        self.assertEquals(m.asLDIF(),
+        self.assertEqual(m.asLDIF(),
                           """\
 delete: foo
 -
@@ -129,7 +129,7 @@ delete: foo
 
     def testReplace(self):
         m=delta.Replace('foo', ['bar', 'baz'])
-        self.assertEquals(m.asLDIF(),
+        self.assertEqual(m.asLDIF(),
                           """\
 replace: foo
 foo: bar
@@ -139,7 +139,7 @@ foo: baz
 
     def testReplaceAll(self):
         m=delta.Replace('thud')
-        self.assertEquals(m.asLDIF(),
+        self.assertEqual(m.asLDIF(),
                           """\
 replace: thud
 -
@@ -152,7 +152,7 @@ class TestAddOpLDIF(unittest.TestCase):
             dn='dc=example,dc=com',
             attributes={'foo': ['bar', 'baz'],
                         'quux': ['thud']}))
-        self.assertEquals(op.asLDIF(),
+        self.assertEqual(op.asLDIF(),
                           """\
 dn: dc=example,dc=com
 changetype: add
@@ -166,7 +166,7 @@ quux: thud
 class TestDeleteOpLDIF(unittest.TestCase):
     def testSimple(self):
         op=delta.DeleteOp('dc=example,dc=com')
-        self.assertEquals(op.asLDIF(),
+        self.assertEqual(op.asLDIF(),
                           """\
 dn: dc=example,dc=com
 changetype: delete
@@ -185,7 +185,7 @@ class TestOperationLDIF(unittest.TestCase):
             delta.Replace('telephonenumber', ['+1 408 555 1234', '+1 408 555 5678']),
             delta.Delete('facsimiletelephonenumber', ['+1 408 555 9876']),
             ])
-        self.assertEquals(op.asLDIF(),
+        self.assertEqual(op.asLDIF(),
                           """\
 dn: cn=Paula Jensen,ou=Product Development,dc=airius,dc=com
 changetype: modify
@@ -208,7 +208,7 @@ class TestModificationComparison(unittest.TestCase):
     def testEquality_Add_True(self):
         a = delta.Add('k', ['b', 'c', 'd'])
         b = delta.Add('k', ['b', 'c', 'd'])
-        self.assertEquals(a, b)
+        self.assertEqual(a, b)
 
     def testEquality_AddVsDelete_False(self):
         a = delta.Add('k', ['b', 'c', 'd'])

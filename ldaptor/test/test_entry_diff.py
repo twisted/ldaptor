@@ -16,7 +16,7 @@ class TestDiffEntry(unittest.TestCase):
             'foo': ['bar'],
             })
         result = a.diff(b)
-        self.assertEquals(result, None)
+        self.assertEqual(result, None)
 
     def testAdd_New_OneType_OneValue(self):
         a = entry.BaseLDAPEntry(dn='dc=foo',
@@ -29,7 +29,7 @@ class TestDiffEntry(unittest.TestCase):
             'baz': ['quux'],
             })
         result = a.diff(b)
-        self.assertEquals(result,
+        self.assertEqual(result,
                           delta.ModifyOp('dc=foo',
                                          [
             delta.Add('baz', ['quux']),
@@ -46,7 +46,7 @@ class TestDiffEntry(unittest.TestCase):
             'baz': ['quux', 'thud', 'foo'],
             })
         result = a.diff(b)
-        self.assertEquals(result,
+        self.assertEqual(result,
                           delta.ModifyOp('dc=foo',
                                          [
             delta.Add('baz', ['quux', 'thud', 'foo']),
@@ -64,7 +64,7 @@ class TestDiffEntry(unittest.TestCase):
             'bang': ['thud'],
             })
         result = a.diff(b)
-        self.assertEquals(result,
+        self.assertEqual(result,
                           delta.ModifyOp('dc=foo',
                                          [
             delta.Add('bang', ['thud']),
@@ -81,7 +81,7 @@ class TestDiffEntry(unittest.TestCase):
             'foo': ['bar', 'quux'],
             })
         result = a.diff(b)
-        self.assertEquals(result,
+        self.assertEqual(result,
                           delta.ModifyOp('dc=foo',
                                          [
             delta.Add('foo', ['quux']),
@@ -97,7 +97,7 @@ class TestDiffEntry(unittest.TestCase):
             'foo': ['bar', 'quux', 'thud', 'foo'],
             })
         result = a.diff(b)
-        self.assertEquals(result,
+        self.assertEqual(result,
                           delta.ModifyOp('dc=foo',
                                          [
             delta.Add('foo', ['quux', 'thud', 'foo']),
@@ -116,7 +116,7 @@ class TestDiffEntry(unittest.TestCase):
             'bang': ['thud', 'barble'],
             })
         result = a.diff(b)
-        self.assertEquals(result,
+        self.assertEqual(result,
                           delta.ModifyOp('dc=foo',
                                          [
             delta.Add('bang', ['thud', 'barble']),
@@ -135,7 +135,7 @@ class TestDiffEntry(unittest.TestCase):
             'foo': ['bar'],
             })
         result = a.diff(b)
-        self.assertEquals(result,
+        self.assertEqual(result,
                           delta.ModifyOp('dc=foo',
                                          [
             delta.Delete('baz', ['quux', 'thud']),
@@ -153,7 +153,7 @@ class TestDiffEntry(unittest.TestCase):
             'baz': ['thud'],
             })
         result = a.diff(b)
-        self.assertEquals(result,
+        self.assertEqual(result,
                           delta.ModifyOp('dc=foo',
                                          [
             delta.Delete('baz', ['quux']),
@@ -172,7 +172,7 @@ class TestDiffEntry(unittest.TestCase):
             'telephonenumber': ['+1 408 555 1234', '+1 408 555 5678'],
             })
         result = a.diff(b)
-        self.assertEquals(result,
+        self.assertEqual(result,
                           delta.ModifyOp('cn=Paula Jensen,ou=Product Development,dc=airius,dc=com',
                                          [
             delta.Add('postalAddress', ['123 Anystreet $ Sunnyvale, CA $ 94086']),

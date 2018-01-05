@@ -11,22 +11,22 @@ class TestComparison(unittest.TestCase):
     def testEquality_True_Set(self):
         a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
         b = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
-        self.assertEquals(a, b)
+        self.assertEqual(a, b)
 
     def testEquality_True_Set_Ordering(self):
         a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
         b = attributeset.LDAPAttributeSet('k', ['b', 'd', 'c'])
-        self.assertEquals(a, b)
+        self.assertEqual(a, b)
 
     def testEquality_True_List(self):
         a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
         b = ['b', 'c', 'd']
-        self.assertEquals(a, b)
+        self.assertEqual(a, b)
 
     def testEquality_True_List_Ordering(self):
         a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
         b = ['b', 'd', 'c']
-        self.assertEquals(a, b)
+        self.assertEqual(a, b)
 
     def testEquality_False_Value(self):
         a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
@@ -43,22 +43,22 @@ class TestSetOperations(unittest.TestCase):
     def testDifference(self):
         a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
         b = attributeset.LDAPAttributeSet('k', ['b', 'c', 'e'])
-        self.assertEquals(a - b, sets.Set(['d']))
+        self.assertEqual(a - b, sets.Set(['d']))
 
     def testUnion(self):
         a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
         b = attributeset.LDAPAttributeSet('k', ['b', 'c', 'e'])
-        self.assertEquals(a | b, sets.Set(['b', 'c', 'd', 'e']))
+        self.assertEqual(a | b, sets.Set(['b', 'c', 'd', 'e']))
 
     def testIntersection(self):
         a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
         b = attributeset.LDAPAttributeSet('k', ['b', 'c', 'e'])
-        self.assertEquals(a & b, sets.Set(['b', 'c']))
+        self.assertEqual(a & b, sets.Set(['b', 'c']))
 
     def testSymmetricDifference(self):
         a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
         b = attributeset.LDAPAttributeSet('k', ['b', 'c', 'e'])
-        self.assertEquals(a ^ b, sets.Set(['d', 'e']))
+        self.assertEqual(a ^ b, sets.Set(['d', 'e']))
 
     def testCopy(self):
         class Magic:
@@ -66,17 +66,17 @@ class TestSetOperations(unittest.TestCase):
         m1 = Magic()
         a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd', m1])
         b = a.__copy__()
-        self.assertEquals(a, b)
+        self.assertEqual(a, b)
         self.assertNotIdentical(a, b)
 
         magicFromA = [val for val in a if isinstance(val, Magic)][0]
         magicFromB = [val for val in b if isinstance(val, Magic)][0]
-        self.assertEquals(magicFromA, magicFromB)
+        self.assertEqual(magicFromA, magicFromB)
         self.assertIdentical(magicFromA, magicFromB)
 
         a.update('x')
-        self.assertEquals(a, sets.Set(['b', 'c', 'd', m1, 'x']))
-        self.assertEquals(b, sets.Set(['b', 'c', 'd', m1]))
+        self.assertEqual(a, sets.Set(['b', 'c', 'd', m1, 'x']))
+        self.assertEqual(b, sets.Set(['b', 'c', 'd', m1]))
 
     def testDeepCopy(self):
         class Magic:
@@ -88,14 +88,14 @@ class TestSetOperations(unittest.TestCase):
         m1 = Magic()
         a = attributeset.LDAPAttributeSet('k', ['a', m1])
         b = a.__deepcopy__({})
-        self.assertEquals(a, b)
+        self.assertEqual(a, b)
         self.assertNotIdentical(a, b)
 
         magicFromA = [val for val in a if isinstance(val, Magic)][0]
         magicFromB = [val for val in b if isinstance(val, Magic)][0]
-        self.assertEquals(magicFromA, magicFromB)
+        self.assertEqual(magicFromA, magicFromB)
         self.assertNotIdentical(magicFromA, magicFromB)
 
         a.update('x')
-        self.assertEquals(a, sets.Set(['a', m1, 'x']))
-        self.assertEquals(b, sets.Set(['a', m1]))
+        self.assertEqual(a, sets.Set(['a', m1, 'x']))
+        self.assertEqual(b, sets.Set(['a', m1]))

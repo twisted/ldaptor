@@ -168,11 +168,11 @@ class AttributeType_KnownValues(unittest.TestCase):
                 if key in defaults:
                     del defaults[key]
                 got = getattr(a, key)
-                self.assertEquals(got, want)
+                self.assertEqual(got, want)
 
             for key, want in defaults.items():
                 got = getattr(a, key)
-                self.assertEquals(got, want)
+                self.assertEqual(got, want)
 
     def testStringification(self):
         for want, values in self.knownValues:
@@ -182,7 +182,7 @@ class AttributeType_KnownValues(unittest.TestCase):
 
             want = ' '.join(want.split(None))
             got = ' '.join(str(a).split(None))
-            self.assertEquals(got, want)
+            self.assertEqual(got, want)
 
 class ObjectClass_KnownValues(unittest.TestCase):
     knownValues = [
@@ -241,11 +241,11 @@ class ObjectClass_KnownValues(unittest.TestCase):
                 if key in defaults:
                     del defaults[key]
                 got = getattr(a, key)
-                self.assertEquals(got, want)
+                self.assertEqual(got, want)
 
             for key, want in defaults.items():
                 got = getattr(a, key)
-                self.assertEquals(got, want)
+                self.assertEqual(got, want)
 
     def testStringification(self):
         for want, values in self.knownValues:
@@ -255,7 +255,7 @@ class ObjectClass_KnownValues(unittest.TestCase):
 
             want = ' '.join(want.split(None))
             got = ' '.join(str(a).split(None))
-            self.assertEquals(got, want)
+            self.assertEqual(got, want)
 
 
 class TestComparison(unittest.TestCase):

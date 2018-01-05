@@ -104,7 +104,7 @@ class ProxyBase(unittest.TestCase):
         server = self.createServer([pureldap.LDAPBindResponse(resultCode=0)])
         server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(), id=4)))
         server.reactor.advance(1)
-        self.assertEquals(server.transport.value(),
+        self.assertEqual(server.transport.value(),
                           str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=0), id=4)))
 
     def test_search(self):
@@ -120,7 +120,7 @@ class ProxyBase(unittest.TestCase):
         server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(), id=2)))
         server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPSearchRequest(), id=3)))
         server.reactor.advance(1)
-        self.assertEquals(server.transport.value(),
+        self.assertEqual(server.transport.value(),
                           str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=0), id=2))
                           + str(pureldap.LDAPMessage(pureldap.LDAPSearchResultEntry('cn=foo,dc=example,dc=com', [('a', ['b'])]), id=3))
                           + str(pureldap.LDAPMessage(pureldap.LDAPSearchResultEntry('cn=bar,dc=example,dc=com', [('b', ['c'])]), id=3))
@@ -136,14 +136,14 @@ class ProxyBase(unittest.TestCase):
         server.reactor.advance(1)
         client = server.client
         client.assertSent(pureldap.LDAPBindRequest())
-        self.assertEquals(server.transport.value(),
+        self.assertEqual(server.transport.value(),
                           str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=0), id=2)))
         server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPUnbindRequest(), id=3)))
         server.connectionLost(error.ConnectionDone)
         server.reactor.advance(1)
         client.assertSent(pureldap.LDAPBindRequest(),
                           pureldap.LDAPUnbindRequest())
-        self.assertEquals(server.transport.value(),
+        self.assertEqual(server.transport.value(),
                           str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=0), id=2)))
 
     def test_unbind_clientEOF(self):
@@ -156,7 +156,7 @@ class ProxyBase(unittest.TestCase):
         server.reactor.advance(1)
         client = server.client
         client.assertSent(pureldap.LDAPBindRequest())
-        self.assertEquals(
+        self.assertEqual(
             server.transport.value(),
             str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=0), id=2)))
         server.connectionLost(error.ConnectionDone)
@@ -164,7 +164,7 @@ class ProxyBase(unittest.TestCase):
         client.assertSent(
             pureldap.LDAPBindRequest(),
             'fake-unbind-by-LDAPClientTestDriver')
-        self.assertEquals(server.transport.value(),
+        self.assertEqual(server.transport.value(),
                           str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=0), id=2)))
 
     def test_intercepted_search_request(self):
@@ -185,8 +185,8 @@ class ProxyBase(unittest.TestCase):
             pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode)]
         server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPSearchRequest(), id=1)))
         server.reactor.advance(1)
-        self.assertEquals(len(server.clientTestDriver.sent), 0)
-        self.assertEquals(server.transport.value(),
+        self.assertEqual(len(server.clientTestDriver.sent), 0)
+        self.assertEqual(server.transport.value(),
                           str(pureldap.LDAPMessage(pureldap.LDAPSearchResultEntry('cn=xyzzy,dc=example,dc=com', [('frobnitz', ['zork'])]), id=1))
                           + str(pureldap.LDAPMessage(pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode), id=1)))
 
@@ -204,7 +204,7 @@ class ProxyBase(unittest.TestCase):
         server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPSearchRequest(), id=3)))
         server.reactor.advance(1)
         server.reactor.advance(5)
-        self.assertEquals(server.transport.value(),
+        self.assertEqual(server.transport.value(),
                           str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=0), id=2))
                           + str(pureldap.LDAPMessage(pureldap.LDAPSearchResultEntry('cn=foo,dc=example,dc=com', [('a', ['b']), ('frotz', ['xyzzy'])]), id=3))
                           + str(pureldap.LDAPMessage(pureldap.LDAPSearchResultEntry('cn=bar,dc=example,dc=com', [('b', ['c']), ('frotz', ['xyzzy'])]), id=3))
@@ -221,9 +221,9 @@ class ProxyBase(unittest.TestCase):
             [], 
             clientConnector=connector, 
             clock=clock)
-        self.assertEquals(connector, server.clientConnector)
+        self.assertEqual(connector, server.clientConnector)
         server.reactor.advance(1)
-        self.assertEquals(server.transport.value(), "")
+        self.assertEqual(server.transport.value(), "")
 
     def test_cannot_connect_to_proxied_server_pending_requests(self):
         """
@@ -237,9 +237,9 @@ class ProxyBase(unittest.TestCase):
             [], 
             clientConnector=connector, 
             clock=clock)
-        self.assertEquals(connector, server.clientConnector)
+        self.assertEqual(connector, server.clientConnector)
         server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(), id=4)))
         server.reactor.advance(2)
-        self.assertEquals(
+        self.assertEqual(
             server.transport.value(),
             str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=52), id=4)))

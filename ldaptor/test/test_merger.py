@@ -52,7 +52,7 @@ class MergedLDAPServerTest(unittest.TestCase):
         def test_f(server):
             server.dataReceived(str(LDAPMessage(LDAPBindRequest(), id=4)))
 
-            self.assertEquals(server.transport.value(),
+            self.assertEqual(server.transport.value(),
                               str(LDAPMessage(LDAPBindResponse(resultCode=0), id=4)))
 
         d.addCallback(test_f)
@@ -65,7 +65,7 @@ class MergedLDAPServerTest(unittest.TestCase):
 
         def test_f(server):
             server.dataReceived(str(LDAPMessage(LDAPBindRequest(), id=4)))
-            self.assertEquals(server.transport.value(),
+            self.assertEqual(server.transport.value(),
                               str(LDAPMessage(LDAPBindResponse(resultCode=0), id=4))) 
         d.addCallback(test_f)
         return d
@@ -76,7 +76,7 @@ class MergedLDAPServerTest(unittest.TestCase):
 
         def test_f(server):
             server.dataReceived(str(LDAPMessage(LDAPBindRequest(), id=4)))
-            self.assertEquals(server.transport.value(),
+            self.assertEqual(server.transport.value(),
                               str(LDAPMessage(LDAPBindResponse(resultCode=ldaperrors.LDAPInvalidCredentials.resultCode), id=4)))
 
         d.addCallback(test_f)
@@ -92,7 +92,7 @@ class MergedLDAPServerTest(unittest.TestCase):
 
         def test_f(server):
             server.dataReceived(str(LDAPMessage(LDAPSearchRequest(), id=3)))
-            self.assertEquals(server.transport.value(),
+            self.assertEqual(server.transport.value(),
                               str(LDAPMessage(LDAPSearchResultEntry('cn=foo,dc=example,dc=com', [('a', ['b'])]), id=3))
                               +str(LDAPMessage(LDAPSearchResultEntry('cn=bar2,dc=example,dc=com', [('b', ['c'])]), id=3))
                               +str(LDAPMessage(LDAPSearchResultEntry('cn=foo,dc=example,dc=com', [('a', ['b'])]), id=3))
@@ -112,7 +112,7 @@ class MergedLDAPServerTest(unittest.TestCase):
 
         def test_f(server):
             server.dataReceived(str(LDAPMessage(LDAPSearchRequest(), id=3)))
-            self.assertEquals(server.transport.value(),
+            self.assertEqual(server.transport.value(),
                               str(LDAPMessage(LDAPSearchResultEntry('cn=foo,dc=example,dc=com', [('a', ['b'])]), id=3))
                               +str(LDAPMessage(LDAPSearchResultEntry('cn=bar,dc=example,dc=com', [('b', ['c'])]), id=3))
                               +str(LDAPMessage(LDAPSearchResultDone(ldaperrors.Success.resultCode), id=3)))
@@ -129,7 +129,7 @@ class MergedLDAPServerTest(unittest.TestCase):
             server.connectionLost(error.ConnectionDone)
             for c in self.clients:
                 c.assertSent(LDAPUnbindRequest())
-            self.assertEquals(server.transport.value(), "")
+            self.assertEqual(server.transport.value(), "")
         d.addCallback(test_f)
 
         return d
@@ -141,7 +141,7 @@ class MergedLDAPServerTest(unittest.TestCase):
             server.connectionLost(error.ConnectionDone)
             for c in server.clients:
                 c.assertSent('fake-unbind-by-LDAPClientTestDriver')
-            self.assertEquals(server.transport.value(), "")
+            self.assertEqual(server.transport.value(), "")
 
         d.addCallback(test_f)
 
@@ -159,7 +159,7 @@ class MergedLDAPServerTest(unittest.TestCase):
             for c in server.clients:
                 c.assertNothingSent()
 
-            self.assertEquals(server.transport.value(),
+            self.assertEqual(server.transport.value(),
                               str(LDAPMessage(LDAPAddResponse(resultCode=ldaperrors.LDAPUnwillingToPerform.resultCode), id=3))
                               +str(LDAPMessage(LDAPDelResponse(resultCode=ldaperrors.LDAPUnwillingToPerform.resultCode), id=4))
                               +str(LDAPMessage(LDAPModifyResponse(resultCode=ldaperrors.LDAPUnwillingToPerform.resultCode), id=5))

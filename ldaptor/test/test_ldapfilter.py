@@ -26,8 +26,8 @@ class RFC2254Examples(unittest.TestCase):
         filt = pureldap.LDAPFilter_equalityMatch(
             attributeDesc=pureldap.LDAPAttributeDescription(value='cn'),
             assertionValue=pureldap.LDAPAssertionValue(value='Babs Jensen'))
-        self.assertEquals(ldapfilter.parseFilter(text), filt)
-        self.assertEquals(filt.asText(), text)
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
     def test_not_cn(self):
         text = '(!(cn=Tim Howes))'
@@ -35,8 +35,8 @@ class RFC2254Examples(unittest.TestCase):
             pureldap.LDAPFilter_equalityMatch(
             attributeDesc=pureldap.LDAPAttributeDescription(value='cn'),
             assertionValue=pureldap.LDAPAssertionValue(value='Tim Howes')))
-        self.assertEquals(ldapfilter.parseFilter(text), filt)
-        self.assertEquals(filt.asText(), text)
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
     def test_and_or(self):
         text = '(&(objectClass=Person)(|(sn=Jensen)(cn=Babs J*)))'
@@ -53,8 +53,8 @@ class RFC2254Examples(unittest.TestCase):
                          ])
                                        ]),
               ])
-        self.assertEquals(ldapfilter.parseFilter(text), filt)
-        self.assertEquals(filt.asText(), text)
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
     def test_substrings(self):
         text = '(o=univ*of*mich*)'
@@ -64,13 +64,13 @@ class RFC2254Examples(unittest.TestCase):
                          pureldap.LDAPFilter_substrings_any(value='of'),
                          pureldap.LDAPFilter_substrings_any(value='mich'),
                          ])
-        self.assertEquals(ldapfilter.parseFilter(text), filt)
-        self.assertEquals(filt.asText(), text)
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
 
     def test_extensible_1(self):
         text = '(cn:1.2.3.4.5:=Fred Flintstone)'
-        self.assertEquals(ldapfilter.parseFilter(text),
+        self.assertEqual(ldapfilter.parseFilter(text),
                           pureldap.LDAPFilter_extensibleMatch(
             type='cn',
             dnAttributes=False,
@@ -80,7 +80,7 @@ class RFC2254Examples(unittest.TestCase):
 
     def test_extensible_2(self):
         text = '(sn:dn:2.4.6.8.10:=Barney Rubble)'
-        self.assertEquals(ldapfilter.parseFilter(text),
+        self.assertEqual(ldapfilter.parseFilter(text),
                           pureldap.LDAPFilter_extensibleMatch(
             type='sn',
             dnAttributes=True,
@@ -90,7 +90,7 @@ class RFC2254Examples(unittest.TestCase):
 
     def test_extensible_3(self):
         text = '(o:dn:=Ace Industry)'
-        self.assertEquals(ldapfilter.parseFilter(text),
+        self.assertEqual(ldapfilter.parseFilter(text),
                           pureldap.LDAPFilter_extensibleMatch(
             type='o',
             dnAttributes=True,
@@ -100,7 +100,7 @@ class RFC2254Examples(unittest.TestCase):
 
     def test_extensible_4(self):
         text = '(:dn:2.4.6.8.10:=Dino)'
-        self.assertEquals(ldapfilter.parseFilter(text),
+        self.assertEqual(ldapfilter.parseFilter(text),
                           pureldap.LDAPFilter_extensibleMatch(
             type=None,
             dnAttributes=True,
@@ -113,8 +113,8 @@ class RFC2254Examples(unittest.TestCase):
         filt = pureldap.LDAPFilter_equalityMatch(
             attributeDesc=pureldap.LDAPAttributeDescription(value='o'),
             assertionValue=pureldap.LDAPAssertionValue(value='Parens R Us (for all your parenthetical needs)'))
-        self.assertEquals(ldapfilter.parseFilter(text), filt)
-        self.assertEquals(filt.asText(), text)
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
     def test_escape_asterisk(self):
         text = r'(cn=*\2A*)'
@@ -122,46 +122,46 @@ class RFC2254Examples(unittest.TestCase):
             type='cn',
             substrings=[ pureldap.LDAPFilter_substrings_any(value='*'),
                          ])
-        self.assertEquals(ldapfilter.parseFilter(text), filt)
-        self.assertEquals(filt.asText(), text.lower())
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text.lower())
 
     def test_escape_backslash(self):
         text = r'(filename=C:\5cMyFile)'
         filt = pureldap.LDAPFilter_equalityMatch(
             attributeDesc=pureldap.LDAPAttributeDescription(value='filename'),
             assertionValue=pureldap.LDAPAssertionValue(value=r'C:\MyFile'))
-        self.assertEquals(ldapfilter.parseFilter(text), filt)
-        self.assertEquals(filt.asText(), text)
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
     def test_escape_binary(self):
         text = r'(bin=\00\00\00\04)'
         filt = pureldap.LDAPFilter_equalityMatch(
             attributeDesc=pureldap.LDAPAttributeDescription(value='bin'),
             assertionValue=pureldap.LDAPAssertionValue(value='\00\00\00\04'))
-        self.assertEquals(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
 
     def test_escape_utf8(self):
         text = r'(sn=Lu\c4\8di\c4\87)'
         filt = pureldap.LDAPFilter_equalityMatch(
             attributeDesc=pureldap.LDAPAttributeDescription(value='sn'),
             assertionValue=pureldap.LDAPAssertionValue(value='Lu\xc4\x8di\xc4\x87'))
-        self.assertEquals(ldapfilter.parseFilter(text), filt)
-        #self.assertEquals(filt.asText(), text)
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        #self.assertEqual(filt.asText(), text)
 
 class TestValid(unittest.TestCase):
     def test_item_present(self):
         text = r'(cn=*)'
         filt = pureldap.LDAPFilter_present(value='cn')
-        self.assertEquals(ldapfilter.parseFilter(text), filt)
-        self.assertEquals(filt.asText(), text)
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
     def test_item_simple(self):
         text = r'(cn=foo)'
         filt = pureldap.LDAPFilter_equalityMatch(
             attributeDesc=pureldap.LDAPAttributeDescription(value='cn'),
             assertionValue=pureldap.LDAPAssertionValue(value='foo'))
-        self.assertEquals(ldapfilter.parseFilter(text), filt)
-        self.assertEquals(filt.asText(), text)
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
     def test_item_substring_init(self):
         text = r'(cn=foo*)'
@@ -169,8 +169,8 @@ class TestValid(unittest.TestCase):
             type='cn',
             substrings=[pureldap.LDAPFilter_substrings_initial('foo'),
                         ])
-        self.assertEquals(ldapfilter.parseFilter(text), filt)
-        self.assertEquals(filt.asText(), text)
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
     def test_item_substring_final(self):
         text = r'(cn=*foo)'
@@ -178,8 +178,8 @@ class TestValid(unittest.TestCase):
             type='cn',
             substrings=[pureldap.LDAPFilter_substrings_final('foo'),
                         ])
-        self.assertEquals(ldapfilter.parseFilter(text), filt)
-        self.assertEquals(filt.asText(), text)
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
     def test_item_substring_any(self):
         text = r'(cn=*foo*)'
@@ -187,8 +187,8 @@ class TestValid(unittest.TestCase):
             type='cn',
             substrings=[pureldap.LDAPFilter_substrings_any('foo'),
                         ])
-        self.assertEquals(ldapfilter.parseFilter(text), filt)
-        self.assertEquals(filt.asText(), text)
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
     def test_item_substring_aa(self):
         text = r'(cn=*foo*bar*)'
@@ -197,8 +197,8 @@ class TestValid(unittest.TestCase):
             substrings=[pureldap.LDAPFilter_substrings_any('foo'),
                         pureldap.LDAPFilter_substrings_any('bar'),
                         ])
-        self.assertEquals(ldapfilter.parseFilter(text), filt)
-        self.assertEquals(filt.asText(), text)
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
     def test_item_substring_ia(self):
         text = r'(cn=foo*bar*)'
@@ -207,8 +207,8 @@ class TestValid(unittest.TestCase):
             substrings=[pureldap.LDAPFilter_substrings_initial('foo'),
                         pureldap.LDAPFilter_substrings_any('bar'),
                         ])
-        self.assertEquals(ldapfilter.parseFilter(text), filt)
-        self.assertEquals(filt.asText(), text)
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
     def test_item_substring_iaa(self):
         text = r'(cn=foo*bar*baz*)'
@@ -218,8 +218,8 @@ class TestValid(unittest.TestCase):
                         pureldap.LDAPFilter_substrings_any('bar'),
                         pureldap.LDAPFilter_substrings_any('baz'),
                         ])
-        self.assertEquals(ldapfilter.parseFilter(text), filt)
-        self.assertEquals(filt.asText(), text)
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
     def test_item_substring_if(self):
         text = r'(cn=foo*bar)'
@@ -228,8 +228,8 @@ class TestValid(unittest.TestCase):
             substrings=[pureldap.LDAPFilter_substrings_initial('foo'),
                         pureldap.LDAPFilter_substrings_final('bar'),
                         ])
-        self.assertEquals(ldapfilter.parseFilter(text), filt)
-        self.assertEquals(filt.asText(), text)
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
     def test_item_substring_iaf(self):
         text = r'(cn=foo*bar*baz)'
@@ -239,8 +239,8 @@ class TestValid(unittest.TestCase):
                         pureldap.LDAPFilter_substrings_any('bar'),
                         pureldap.LDAPFilter_substrings_final('baz'),
                         ])
-        self.assertEquals(ldapfilter.parseFilter(text), filt)
-        self.assertEquals(filt.asText(), text)
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
     def test_item_substring_iaaf(self):
         text = r'(cn=foo*bar*baz*quux)'
@@ -251,8 +251,8 @@ class TestValid(unittest.TestCase):
                         pureldap.LDAPFilter_substrings_any('baz'),
                         pureldap.LDAPFilter_substrings_final('quux'),
                         ])
-        self.assertEquals(ldapfilter.parseFilter(text), filt)
-        self.assertEquals(filt.asText(), text)
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
     def test_item_substring_af(self):
         text = r'(cn=*foo*bar)'
@@ -261,8 +261,8 @@ class TestValid(unittest.TestCase):
             substrings=[pureldap.LDAPFilter_substrings_any('foo'),
                         pureldap.LDAPFilter_substrings_final('bar'),
                         ])
-        self.assertEquals(ldapfilter.parseFilter(text), filt)
-        self.assertEquals(filt.asText(), text)
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
     def test_item_substring_aaf(self):
         text = r'(cn=*foo*bar*baz)'
@@ -272,8 +272,8 @@ class TestValid(unittest.TestCase):
                         pureldap.LDAPFilter_substrings_any('bar'),
                         pureldap.LDAPFilter_substrings_final('baz'),
                         ])
-        self.assertEquals(ldapfilter.parseFilter(text), filt)
-        self.assertEquals(filt.asText(), text)
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
     def test_not_item(self):
         text = r'(!(cn=foo))'
@@ -281,8 +281,8 @@ class TestValid(unittest.TestCase):
             pureldap.LDAPFilter_equalityMatch(
             attributeDesc=pureldap.LDAPAttributeDescription(value='cn'),
             assertionValue=pureldap.LDAPAssertionValue(value='foo')))
-        self.assertEquals(ldapfilter.parseFilter(text), filt)
-        self.assertEquals(filt.asText(), text)
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
     def test_or_item(self):
         text = r'(|(cn=foo)(cn=bar))'
@@ -294,8 +294,8 @@ class TestValid(unittest.TestCase):
             attributeDesc=pureldap.LDAPAttributeDescription(value='cn'),
             assertionValue=pureldap.LDAPAssertionValue(value='bar')),
             ])
-        self.assertEquals(ldapfilter.parseFilter(text), filt)
-        self.assertEquals(filt.asText(), text)
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
     def test_and_item(self):
         text = r'(&(cn=foo)(cn=bar))'
@@ -307,8 +307,8 @@ class TestValid(unittest.TestCase):
             attributeDesc=pureldap.LDAPAttributeDescription(value='cn'),
             assertionValue=pureldap.LDAPAssertionValue(value='bar')),
             ])
-        self.assertEquals(ldapfilter.parseFilter(text), filt)
-        self.assertEquals(filt.asText(), text)
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
     def test_andornot(self):
         text = r'(&(!(|(cn=foo)(cn=bar)))(sn=a*b*c*d))'
@@ -329,16 +329,16 @@ class TestValid(unittest.TestCase):
                         pureldap.LDAPFilter_substrings_any('c'),
                         pureldap.LDAPFilter_substrings_final('d'),
                         ])])
-        self.assertEquals(ldapfilter.parseFilter(text), filt)
-        self.assertEquals(filt.asText(), text)
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
     def test_whitespace_beforeCloseParen(self):
         text = r'(cn=foo )'
         filt = pureldap.LDAPFilter_equalityMatch(
             attributeDesc=pureldap.LDAPAttributeDescription(value='cn'),
             assertionValue=pureldap.LDAPAssertionValue(value='foo '))
-        self.assertEquals(ldapfilter.parseFilter(text), filt)
-        self.assertEquals(filt.asText(), text)
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
 
     def test_whitespace_afterEq(self):
@@ -346,8 +346,8 @@ class TestValid(unittest.TestCase):
         filt = pureldap.LDAPFilter_equalityMatch(
             attributeDesc=pureldap.LDAPAttributeDescription(value='cn'),
             assertionValue=pureldap.LDAPAssertionValue(value=' foo'))
-        self.assertEquals(ldapfilter.parseFilter(text), filt)
-        self.assertEquals(filt.asText(), text)
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
 class TestInvalid(unittest.TestCase):
     def test_closeParen_1(self):
@@ -415,14 +415,14 @@ class TestMaybeSubstring(unittest.TestCase):
     def test_item_present(self):
         text = r'*'
         filt = pureldap.LDAPFilter_present(value='cn')
-        self.assertEquals(ldapfilter.parseMaybeSubstring('cn', text), filt)
+        self.assertEqual(ldapfilter.parseMaybeSubstring('cn', text), filt)
 
     def test_item_simple(self):
         text = r'foo'
         filt = pureldap.LDAPFilter_equalityMatch(
             attributeDesc=pureldap.LDAPAttributeDescription(value='cn'),
             assertionValue=pureldap.LDAPAssertionValue(value='foo'))
-        self.assertEquals(ldapfilter.parseMaybeSubstring('cn', text), filt)
+        self.assertEqual(ldapfilter.parseMaybeSubstring('cn', text), filt)
 
     def test_item_substring_init(self):
         text = r'foo*'
@@ -430,7 +430,7 @@ class TestMaybeSubstring(unittest.TestCase):
             type='cn',
             substrings=[pureldap.LDAPFilter_substrings_initial('foo'),
                         ])
-        self.assertEquals(ldapfilter.parseMaybeSubstring('cn', text), filt)
+        self.assertEqual(ldapfilter.parseMaybeSubstring('cn', text), filt)
 
     def test_item_substring_final(self):
         text = r'*foo'
@@ -438,7 +438,7 @@ class TestMaybeSubstring(unittest.TestCase):
             type='cn',
             substrings=[pureldap.LDAPFilter_substrings_final('foo'),
                         ])
-        self.assertEquals(ldapfilter.parseMaybeSubstring('cn', text), filt)
+        self.assertEqual(ldapfilter.parseMaybeSubstring('cn', text), filt)
 
     def test_item_substring_any(self):
         text = r'*foo*'
@@ -446,7 +446,7 @@ class TestMaybeSubstring(unittest.TestCase):
             type='cn',
             substrings=[pureldap.LDAPFilter_substrings_any('foo'),
                         ])
-        self.assertEquals(ldapfilter.parseMaybeSubstring('cn', text), filt)
+        self.assertEqual(ldapfilter.parseMaybeSubstring('cn', text), filt)
 
     def test_item_substring_aa(self):
         text = r'*foo*bar*'
@@ -455,7 +455,7 @@ class TestMaybeSubstring(unittest.TestCase):
             substrings=[pureldap.LDAPFilter_substrings_any('foo'),
                         pureldap.LDAPFilter_substrings_any('bar'),
                         ])
-        self.assertEquals(ldapfilter.parseMaybeSubstring('cn', text), filt)
+        self.assertEqual(ldapfilter.parseMaybeSubstring('cn', text), filt)
 
     def test_item_substring_ia(self):
         text = r'foo*bar*'
@@ -464,7 +464,7 @@ class TestMaybeSubstring(unittest.TestCase):
             substrings=[pureldap.LDAPFilter_substrings_initial('foo'),
                         pureldap.LDAPFilter_substrings_any('bar'),
                         ])
-        self.assertEquals(ldapfilter.parseMaybeSubstring('cn', text), filt)
+        self.assertEqual(ldapfilter.parseMaybeSubstring('cn', text), filt)
 
     def test_item_substring_iaa(self):
         text = r'foo*bar*baz*'
@@ -474,7 +474,7 @@ class TestMaybeSubstring(unittest.TestCase):
                         pureldap.LDAPFilter_substrings_any('bar'),
                         pureldap.LDAPFilter_substrings_any('baz'),
                         ])
-        self.assertEquals(ldapfilter.parseMaybeSubstring('cn', text), filt)
+        self.assertEqual(ldapfilter.parseMaybeSubstring('cn', text), filt)
 
     def test_item_substring_if(self):
         text = r'foo*bar'
@@ -483,7 +483,7 @@ class TestMaybeSubstring(unittest.TestCase):
             substrings=[pureldap.LDAPFilter_substrings_initial('foo'),
                         pureldap.LDAPFilter_substrings_final('bar'),
                         ])
-        self.assertEquals(ldapfilter.parseMaybeSubstring('cn', text), filt)
+        self.assertEqual(ldapfilter.parseMaybeSubstring('cn', text), filt)
 
     def test_item_substring_iaf(self):
         text = r'foo*bar*baz'
@@ -493,7 +493,7 @@ class TestMaybeSubstring(unittest.TestCase):
                         pureldap.LDAPFilter_substrings_any('bar'),
                         pureldap.LDAPFilter_substrings_final('baz'),
                         ])
-        self.assertEquals(ldapfilter.parseMaybeSubstring('cn', text), filt)
+        self.assertEqual(ldapfilter.parseMaybeSubstring('cn', text), filt)
 
     def test_item_substring_iaaf(self):
         text = r'foo*bar*baz*quux'
@@ -504,7 +504,7 @@ class TestMaybeSubstring(unittest.TestCase):
                         pureldap.LDAPFilter_substrings_any('baz'),
                         pureldap.LDAPFilter_substrings_final('quux'),
                         ])
-        self.assertEquals(ldapfilter.parseMaybeSubstring('cn', text), filt)
+        self.assertEqual(ldapfilter.parseMaybeSubstring('cn', text), filt)
 
     def test_item_substring_af(self):
         text = r'*foo*bar'
@@ -513,7 +513,7 @@ class TestMaybeSubstring(unittest.TestCase):
             substrings=[pureldap.LDAPFilter_substrings_any('foo'),
                         pureldap.LDAPFilter_substrings_final('bar'),
                         ])
-        self.assertEquals(ldapfilter.parseMaybeSubstring('cn', text), filt)
+        self.assertEqual(ldapfilter.parseMaybeSubstring('cn', text), filt)
 
     def test_item_substring_aaf(self):
         text = r'*foo*bar*baz'
@@ -523,14 +523,14 @@ class TestMaybeSubstring(unittest.TestCase):
                         pureldap.LDAPFilter_substrings_any('bar'),
                         pureldap.LDAPFilter_substrings_final('baz'),
                         ])
-        self.assertEquals(ldapfilter.parseMaybeSubstring('cn', text), filt)
+        self.assertEqual(ldapfilter.parseMaybeSubstring('cn', text), filt)
 
     def test_escape_simple(self):
         text = r'f\2aoo(bar'
         filt = pureldap.LDAPFilter_equalityMatch(
             attributeDesc=pureldap.LDAPAttributeDescription(value='cn'),
             assertionValue=pureldap.LDAPAssertionValue(value='f*oo(bar'))
-        self.assertEquals(ldapfilter.parseMaybeSubstring('cn', text), filt)
+        self.assertEqual(ldapfilter.parseMaybeSubstring('cn', text), filt)
 
 class TestWhitespace(unittest.TestCase):
     def test_escape(self):
