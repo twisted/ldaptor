@@ -2,14 +2,17 @@
 Test cases for the ldaptor.config module.
 """
 
-from twisted.trial import unittest
 import os
+
+from twisted.trial import unittest
 from ldaptor import config
 
+
 def writeFile(path, content):
-    f = file(path, 'w')
+    f = open(path, 'w')
     f.write(content)
     f.close()
+
 
 class TestConfig(unittest.TestCase):
     def testSomething(self):

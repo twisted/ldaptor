@@ -12,6 +12,7 @@ def safelower(s):
     except AttributeError:
         return s
 
+
 class DiffTreeMixin(object):
     def _diffTree_gotMyChildren(self, myChildren, other, result):
         d = other.children()
@@ -33,7 +34,7 @@ class DiffTreeMixin(object):
 
         # differences in common children
         commonRDN = list(my & his)
-        commonRDN.sort() # for reproducability only
+        commonRDN.sort()  # for reproducability only
         d = self._diffTree_commonChildren([
             (rdnToChild(rdn, myChildren), rdnToChild(rdn, otherChildren))
             for rdn in commonRDN
@@ -41,7 +42,7 @@ class DiffTreeMixin(object):
 
         # added children
         addedRDN = list(his - my)
-        addedRDN.sort() # for reproducability only
+        addedRDN.sort()  # for reproducability only
         d2 = self._diffTree_addedChildren([
             rdnToChild(rdn, otherChildren)
             for rdn in addedRDN
@@ -50,7 +51,7 @@ class DiffTreeMixin(object):
 
         # deleted children
         deletedRDN = list(my - his)
-        deletedRDN.sort() # for reproducability only
+        deletedRDN.sort()  # for reproducability only
         d3 = self._diffTree_deletedChildren([
             rdnToChild(rdn, myChildren)
             for rdn in deletedRDN
@@ -74,11 +75,13 @@ class DiffTreeMixin(object):
         first, rest = children[0], children[1:]
 
         d = first.subtree()
+
         def _gotSubtree(l, result):
             for c in l:
                 o = delta.AddOp(c)
                 result.append(o)
             return result
+
         d.addCallback(_gotSubtree, result)
 
         d.addCallback(lambda _: self._diffTree_addedChildren(rest, result))
@@ -90,12 +93,14 @@ class DiffTreeMixin(object):
         first, rest = children[0], children[1:]
 
         d = first.subtree()
+
         def _gotSubtree(l, result):
-            l.reverse() # remove children before their parent
+            l.reverse()  # remove children before their parent
             for c in l:
                 o = delta.DeleteOp(c)
                 result.append(o)
             return result
+
         d.addCallback(_gotSubtree, result)
 
         d.addCallback(lambda _: self._diffTree_deletedChildren(rest, result))
@@ -119,6 +124,7 @@ class DiffTreeMixin(object):
 
         return d
 
+
 class SubtreeFromChildrenMixin(object):
     def subtree(self, callback=None):
         if callback is None:
@@ -135,6 +141,7 @@ class SubtreeFromChildrenMixin(object):
                         children.pop().subtree(callback)
             d.addCallback(_gotChildren, callback)
             return d
+
 
 class MatchMixin(object):
     def match(self, filter):
@@ -225,9 +232,10 @@ class MatchMixin(object):
                                 return True
                 return False
             else:
-                raise ldapsyntax.MatchNotImplemented, filter
+                raise ldapsyntax.MatchNotImplemented(filter)
         else:
-            raise ldapsyntax.MatchNotImplemented, filter
+            raise ldapsyntax.MatchNotImplemented(filter)
+
 
 class SearchByTreeWalkingMixin(object):
     def search(self,
@@ -241,14 +249,14 @@ class SearchByTreeWalkingMixin(object):
                typesOnly=0,
                callback=None):
         if filterObject is None and filterText is None:
-            filterObject=pureldap.LDAPFilterMatchAll
+            filterObject = pureldap.LDAPFilterMatchAll
         elif filterObject is None and filterText is not None:
-            filterObject=ldapfilter.parseFilter(filterText)
+            filterObject = ldapfilter.parseFilter(filterText)
         elif filterObject is not None and filterText is None:
             pass
         elif filterObject is not None and filterText is not None:
-            f=ldapfilter.parseFilter(filterText)
-            filterObject=pureldap.LDAPFilter_and((f, filterObject))
+            f = ldapfilter.parseFilter(filterText)
+            filterObject = pureldap.LDAPFilter_and((f, filterObject))
 
         if scope is None:
             scope = pureldap.LDAP_SCOPE_wholeSubtree
@@ -264,10 +272,10 @@ class SearchByTreeWalkingMixin(object):
             def iterateSelf(callback):
                 callback(self)
                 return defer.succeed(None)
+
             iterator = iterateSelf
         else:
-            raise ldaperrors.LDAPProtocolError, \
-                  'unknown search scope: %r' % scope
+            raise ldaperrors.LDAPProtocolError('unknown search scope: %r' % scope)
 
         results = []
         if callback is None:

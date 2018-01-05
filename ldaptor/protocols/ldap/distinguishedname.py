@@ -7,62 +7,66 @@ escapedChars = r',+"\<>;='
 escapedChars_leading = r' #'
 escapedChars_trailing = r' #'
 
+
 def escape(s):
-    r=''
-    r_trailer=''
+    r = ''
+    r_trailer = ''
 
     if s and s[0] in escapedChars_leading:
-        r='\\'+s[0]
-        s=s[1:]
+        r = '\\' + s[0]
+        s = s[1:]
 
     if s and s[-1] in escapedChars_trailing:
-        r_trailer='\\'+s[-1]
-        s=s[:-1]
+        r_trailer = '\\' + s[-1]
+        s = s[:-1]
 
     for c in s:
         if c in escapedChars:
-            r=r+'\\'+c
-        elif ord(c)<=31:
-            r=r+'\\%02X' % ord(c)
+            r = r + '\\' + c
+        elif ord(c) <= 31:
+            r = r + '\\%02X' % ord(c)
         else:
-            r=r+c
+            r = r + c
 
-    return r+r_trailer
+    return r + r_trailer
+
 
 def unescape(s):
-    r=''
+    r = ''
     while s:
-        if s[0]=='\\':
+        if s[0] == '\\':
             if s[1] in '0123456789abcdef':
-                r=r+chr(int(s[1:3], 16))
-                s=s[3:]
+                r = r + chr(int(s[1:3], 16))
+                s = s[3:]
             else:
-                r=r+s[1]
-                s=s[2:]
+                r = r + s[1]
+                s = s[2:]
         else:
-            r=r+s[0]
-            s=s[1:]
+            r = r + s[0]
+            s = s[1:]
     return r
+
 
 def _splitOnNotEscaped(s, separator):
     if not s:
         return []
 
-    r=['']
+    r = ['']
     while s:
-        if s[0]=='\\':
-            r[-1]=r[-1]+s[:2]
-            s=s[2:]
+        if s[0] == '\\':
+            r[-1] = r[-1] + s[:2]
+            s = s[2:]
         else:
             if s[0] in separator:
                 r.append('')
-                s=s[1:]
-                while s[0]==' ':
-                    s=s[1:]
+                s = s[1:]
+                while s[0] == ' ':
+                    s = s[1:]
             else:
-                r[-1]=r[-1]+s[0]
-                s=s[1:]
+                r[-1] = r[-1] + s[0]
+                s = s[1:]
     return r
+
 
 class InvalidRelativeDistinguishedName(Exception):
     """Invalid relative distinguished name."""
@@ -74,6 +78,7 @@ class InvalidRelativeDistinguishedName(Exception):
     def __str__(self):
         return "Invalid relative distinguished name %s." \
                % repr(self.rdn)
+
 
 class LDAPAttributeTypeAndValue:
     # TODO I should be used everywhere
@@ -90,7 +95,7 @@ class LDAPAttributeTypeAndValue:
             assert attributeType is None
             assert value is None
             if '=' not in stringValue:
-                raise InvalidRelativeDistinguishedName, stringValue
+                raise InvalidRelativeDistinguishedName(stringValue)
             self.attributeType, self.value = stringValue.split('=', 1)
 
     def __str__(self):
@@ -133,6 +138,7 @@ class LDAPAttributeTypeAndValue:
 
     def __ge__(self, other):
         return not self < other
+
 
 class RelativeDistinguishedName:
     """LDAP Relative Distinguished Name."""
@@ -205,6 +211,7 @@ class RelativeDistinguishedName:
 class DistinguishedName:
     """LDAP Distinguished Name."""
     listOfRDNs = None
+
     def __init__(self, magic=None, stringValue=None, listOfRDNs=None):
         assert (magic is not None
                 or stringValue is not None
@@ -266,7 +273,7 @@ class DistinguishedName:
 
     def getDomainName(self):
         domainParts = []
-        l=list(self.listOfRDNs)
+        l = list(self.listOfRDNs)
         l.reverse()
         for rdn in l:
             if rdn.count() != 1:
@@ -285,14 +292,14 @@ class DistinguishedName:
         if self == other:
             return 1
         if not isinstance(other, DistinguishedName):
-            other=DistinguishedName(other)
-        its=list(other.split())
-        mine=list(self.split())
+            other = DistinguishedName(other)
+        its = list(other.split())
+        mine = list(self.split())
 
         while mine and its:
-            m=mine.pop()
-            i=its.pop()
-            if m!=i:
+            m = mine.pop()
+            i = its.pop()
+            if m != i:
                 return 0
         if mine:
             return 0

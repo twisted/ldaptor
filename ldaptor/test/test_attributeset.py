@@ -6,6 +6,7 @@ from twisted.trial import unittest
 import sets
 from ldaptor import attributeset
 
+
 class TestComparison(unittest.TestCase):
     def testEquality_True_Set(self):
         a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
@@ -36,6 +37,7 @@ class TestComparison(unittest.TestCase):
         a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
         b = attributeset.LDAPAttributeSet('l', ['b', 'c', 'd'])
         self.assertNotEqual(a, b)
+
 
 class TestSetOperations(unittest.TestCase):
     def testDifference(self):
@@ -80,6 +82,7 @@ class TestSetOperations(unittest.TestCase):
         class Magic:
             def __eq__(self, other):
                 return isinstance(other, self.__class__)
+
             def __hash__(self):
                 return 42
         m1 = Magic()

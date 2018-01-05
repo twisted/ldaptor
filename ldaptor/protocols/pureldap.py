@@ -27,12 +27,15 @@ from pureber import (
     berDecodeMultiple, berDecodeObject, int2berlen,
     )
 
-next_ldap_message_id=1
+next_ldap_message_id = 1
+
+
 def alloc_ldap_message_id():
     global next_ldap_message_id
-    r=next_ldap_message_id
-    next_ldap_message_id=next_ldap_message_id+1
+    r = next_ldap_message_id
+    next_ldap_message_id = next_ldap_message_id + 1
     return r
+
 
 def escape(s):
     s = s.replace('\\', r'\5c')
@@ -55,6 +58,7 @@ def smart_escape(s, threshold=0.30):
 class LDAPInteger(BERInteger):
     pass
 
+
 class LDAPString(BEROctetString):
     def __init__(self, *args, **kwargs):
         self.escaper = kwargs.pop('escaper', escape)
@@ -62,6 +66,7 @@ class LDAPString(BEROctetString):
 
 class LDAPAttributeValue(BEROctetString):
     pass
+
 
 class LDAPMessage(BERSequence):
     id = None
@@ -71,8 +76,8 @@ class LDAPMessage(BERSequence):
     def fromBER(klass, tag, content, berdecoder=None):
         l = berDecodeMultiple(content, berdecoder)
 
-        id_=l[0].value
-        value=l[1]
+        id_ = l[0].value
+        value = l[1]
         if l[2:]:
             controls = []
             for c in l[2]:
@@ -94,10 +99,10 @@ class LDAPMessage(BERSequence):
     def __init__(self, value=None, controls=None, id=None, tag=None):
         BERSequence.__init__(self, value=[], tag=tag)
         assert value is not None
-        self.id=id
+        self.id = id
         if self.id is None:
-            self.id=alloc_ldap_message_id()
-        self.value=value
+            self.id = alloc_ldap_message_id()
+        self.value = value
         self.controls = controls
 
     def __str__(self):
@@ -107,12 +112,13 @@ class LDAPMessage(BERSequence):
         return str(BERSequence(l))
 
     def __repr__(self):
-        l=[]
+        l = []
         l.append('id=%r' % self.id)
         l.append('value=%r' % self.value)
-        if self.tag!=self.__class__.tag:
+        if self.tag != self.__class__.tag:
             l.append('tag=%d' % self.tag)
-        return self.__class__.__name__+'('+', '.join(l)+')'
+        return self.__class__.__name__ + '(' + ', '.join(l) + ')'
+
 
 class LDAPProtocolOp:
     def __init__(self):
@@ -121,27 +127,31 @@ class LDAPProtocolOp:
     def __str__(self):
         raise NotImplementedError
 
+
 class LDAPProtocolRequest(LDAPProtocolOp):
-    needs_answer=1
+    needs_answer = 1
     pass
+
 
 class LDAPProtocolResponse(LDAPProtocolOp):
     pass
 
+
 class LDAPBERDecoderContext_LDAPBindRequest(BERDecoderContext):
     Identities = {
-        CLASS_CONTEXT|0x00: BEROctetString,
-        CLASS_CONTEXT|0x03: BERSequence,
-        }
+        CLASS_CONTEXT | 0x00: BEROctetString,
+        CLASS_CONTEXT | 0x03: BERSequence,
+    }
+
 
 class LDAPBindRequest(LDAPProtocolRequest, BERSequence):
-    tag=CLASS_APPLICATION|0x00
+    tag = CLASS_APPLICATION | 0x00
 
     @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
         l = berDecodeMultiple(content,
                               LDAPBERDecoderContext_LDAPBindRequest(
-            fallback=berdecoder))
+                                  fallback=berdecoder))
 
         sasl = False
         auth = None
@@ -166,23 +176,24 @@ class LDAPBindRequest(LDAPProtocolRequest, BERSequence):
 
         LDAPProtocolRequest.__init__(self)
         BERSequence.__init__(self, [], tag=tag)
-        self.version=version
+        self.version = version
         if self.version is None:
-            self.version=3
-        self.dn=dn
+            self.version = 3
+        self.dn = dn
         if self.dn is None:
-            self.dn=''
-        self.auth=auth
+            self.dn = ''
+        self.auth = auth
         if self.auth is None:
-            self.auth=''
-            assert(not sasl)
-        self.sasl=sasl
+            self.auth = ''
+            assert (not sasl)
+        self.sasl = sasl
 
     def __str__(self):
         if not self.sasl:
-            auth_ber = BEROctetString(self.auth, tag=CLASS_CONTEXT|0)
+            auth_ber = BEROctetString(self.auth, tag=CLASS_CONTEXT | 0)
         else:
-            auth_ber = BERSequence([BEROctetString(self.auth[0]), BEROctetString(self.auth[1])], tag=CLASS_CONTEXT|3)
+            auth_ber = BERSequence([BEROctetString(self.auth[0]), BEROctetString(self.auth[1])],
+                                   tag=CLASS_CONTEXT | 3)
         return str(BERSequence([
             BERInteger(self.version),
             BEROctetString(self.dn),
@@ -190,14 +201,15 @@ class LDAPBindRequest(LDAPProtocolRequest, BERSequence):
             ], tag=self.tag))
 
     def __repr__(self):
-        l=[]
+        l = []
         l.append('version=%d' % self.version)
         l.append('dn=%s' % repr(self.dn))
         l.append('auth=%s' % repr(self.auth))
-        if self.tag!=self.__class__.tag:
+        if self.tag != self.__class__.tag:
             l.append('tag=%d' % self.tag)
         l.append('sasl=%s' % repr(self.sasl))
-        return self.__class__.__name__+'('+', '.join(l)+')'
+        return self.__class__.__name__ + '(' + ', '.join(l) + ')'
+
 
 class LDAPReferral(BERSequence):
     tag = CLASS_CONTEXT | 0x03
@@ -228,12 +240,12 @@ class LDAPResult(LDAPProtocolResponse, BERSequence):
         l = berDecodeMultiple(content, LDAPBERDecoderContext_LDAPBindRequest(
             fallback=berdecoder))
 
-        assert 3<=len(l)<=4
+        assert 3 <= len(l) <= 4
 
         referral = None
-        #if (l[3:] and isinstance(l[3], LDAPReferral)):
-            #TODO support referrals
-            #self.referral=self.data[0]
+        # if (l[3:] and isinstance(l[3], LDAPReferral)):
+            # TODO support referrals
+            # self.referral=self.data[0]
 
         r = klass(resultCode=l[0].value,
                   matchedDN=l[1].value,
@@ -246,18 +258,18 @@ class LDAPResult(LDAPProtocolResponse, BERSequence):
         LDAPProtocolResponse.__init__(self)
         BERSequence.__init__(self, value=[], tag=tag)
         assert resultCode is not None
-        self.resultCode=resultCode
+        self.resultCode = resultCode
         if matchedDN is None:
-            matchedDN=''
-        self.matchedDN=matchedDN
+            matchedDN = ''
+        self.matchedDN = matchedDN
         if errorMessage is None:
-            errorMessage=''
-        self.errorMessage=errorMessage
-        self.referral=referral
-        self.serverSaslCreds=serverSaslCreds
+            errorMessage = ''
+        self.errorMessage = errorMessage
+        self.referral = referral
+        self.serverSaslCreds = serverSaslCreds
 
     def __str__(self):
-        assert self.referral is None #TODO
+        assert self.referral is None  # TODO
         return str(BERSequence([
             BEREnumerated(self.resultCode),
             BEROctetString(self.matchedDN),
@@ -266,7 +278,7 @@ class LDAPResult(LDAPProtocolResponse, BERSequence):
             ], tag=self.tag))
 
     def __repr__(self):
-        l=[]
+        l = []
         l.append('resultCode=%r' % self.resultCode)
         if self.matchedDN:
             l.append('matchedDN=%r' % str(self.matchedDN))
@@ -274,22 +286,25 @@ class LDAPResult(LDAPProtocolResponse, BERSequence):
             l.append('errorMessage=%r' % str(self.errorMessage))
         if self.referral:
             l.append('referral=%r' % self.referral)
-        if self.tag!=self.__class__.tag:
+        if self.tag != self.__class__.tag:
             l.append('tag=%d' % self.tag)
-        return self.__class__.__name__+'('+', '.join(l)+')'
+        return self.__class__.__name__ + '(' + ', '.join(l) + ')'
+
 
 class LDAPBindResponse_serverSaslCreds(BEROctetString):
-    tag = CLASS_CONTEXT|0x07
+    tag = CLASS_CONTEXT | 0x07
 
     pass
+
 
 class LDAPBERDecoderContext_BindResponse(BERDecoderContext):
     Identities = {
         LDAPBindResponse_serverSaslCreds.tag: LDAPBindResponse_serverSaslCreds,
         }
 
+
 class LDAPBindResponse(LDAPResult):
-    tag=CLASS_APPLICATION|0x01
+    tag = CLASS_APPLICATION | 0x01
 
     resultCode = None
     matchedDN = None
@@ -302,15 +317,15 @@ class LDAPBindResponse(LDAPResult):
         l = berDecodeMultiple(content, LDAPBERDecoderContext_BindResponse(
                 fallback=berdecoder))
 
-        assert 3<=len(l)<=4
+        assert 3 <= len(l) <= 4
 
         try:
             if isinstance(l[3], LDAPBindResponse_serverSaslCreds):
-                serverSaslCreds=l[3]
+                serverSaslCreds = l[3]
             else:
-                serverSaslCreds=None
+                serverSaslCreds = None
         except IndexError:
-            serverSaslCreds=None
+            serverSaslCreds = None
 
         referral = None
         #if (l[3:] and isinstance(l[3], LDAPReferral)):
@@ -335,9 +350,10 @@ class LDAPBindResponse(LDAPResult):
     def __repr__(self):
         return LDAPResult.__repr__(self)
 
+
 class LDAPUnbindRequest(LDAPProtocolRequest, BERNull):
-    tag=CLASS_APPLICATION|0x02
-    needs_answer=0
+    tag = CLASS_APPLICATION | 0x02
+    needs_answer = 0
 
     def __init__(self, *args, **kwargs):
         LDAPProtocolRequest.__init__(self)
@@ -346,8 +362,10 @@ class LDAPUnbindRequest(LDAPProtocolRequest, BERNull):
     def __str__(self):
         return BERNull.__str__(self)
 
+
 class LDAPAttributeDescription(BEROctetString):
     pass
+
 
 class LDAPAttributeValueAssertion(BERSequence):
     @classmethod
@@ -363,9 +381,9 @@ class LDAPAttributeValueAssertion(BERSequence):
     def __init__(self, attributeDesc=None, assertionValue=None, tag=None, escaper=escape):
         BERSequence.__init__(self, value=[], tag=tag)
         assert attributeDesc is not None
-        self.attributeDesc=attributeDesc
-        self.assertionValue=assertionValue
-        self.escaper=escaper
+        self.attributeDesc = attributeDesc
+        self.assertionValue = assertionValue
+        self.escaper = escaper
 
     def __str__(self):
         return str(BERSequence([self.attributeDesc,
@@ -373,12 +391,12 @@ class LDAPAttributeValueAssertion(BERSequence):
                                tag=self.tag))
 
     def __repr__(self):
-        if self.tag==self.__class__.tag:
-            return self.__class__.__name__+"(attributeDesc=%s, assertionValue=%s)"\
-                   %(repr(self.attributeDesc), repr(self.assertionValue))
+        if self.tag == self.__class__.tag:
+            return self.__class__.__name__ + "(attributeDesc=%s, assertionValue=%s)" \
+                   % (repr(self.attributeDesc), repr(self.assertionValue))
         else:
-            return self.__class__.__name__+"(attributeDesc=%s, assertionValue=%s, tag=%d)"\
-                   %(repr(self.attributeDesc), repr(self.assertionValue), self.tag)
+            return self.__class__.__name__ + "(attributeDesc=%s, assertionValue=%s, tag=%d)" \
+                   % (repr(self.attributeDesc), repr(self.assertionValue), self.tag)
 
 
 class LDAPFilter(BERStructured):
@@ -402,19 +420,21 @@ class LDAPFilterSet(BERSet):
         return sorted(self, key=str) == sorted(rhs, key=str)
 
 class LDAPFilter_and(LDAPFilterSet):
-    tag = CLASS_CONTEXT|0x00
+    tag = CLASS_CONTEXT | 0x00
 
     def asText(self):
-        return '(&'+''.join([x.asText() for x in self])+')'
+        return '(&' + ''.join([x.asText() for x in self]) + ')'
+
 
 class LDAPFilter_or(LDAPFilterSet):
-    tag = CLASS_CONTEXT|0x01
+    tag = CLASS_CONTEXT | 0x01
 
     def asText(self):
-        return '(|'+''.join([x.asText() for x in self])+')'
+        return '(|' + ''.join([x.asText() for x in self]) + ')'
+
 
 class LDAPFilter_not(LDAPFilter):
-    tag = CLASS_CONTEXT|0x02
+    tag = CLASS_CONTEXT | 0x02
 
     @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
@@ -428,47 +448,49 @@ class LDAPFilter_not(LDAPFilter):
     def __init__(self, value, tag=tag):
         LDAPFilter.__init__(self, tag=tag)
         assert value is not None
-        self.value=value
+        self.value = value
 
     def __repr__(self):
-        if self.tag==self.__class__.tag:
-            return self.__class__.__name__\
-                   +"(value=%s)"\
-                   %repr(self.value)
+        if self.tag == self.__class__.tag:
+            return self.__class__.__name__ \
+                   + "(value=%s)" \
+                     % repr(self.value)
         else:
-            return self.__class__.__name__\
-                   +"(value=%s, tag=%d)"\
-                   %(repr(self.value), self.tag)
+            return self.__class__.__name__ \
+                   + "(value=%s, tag=%d)" \
+                     % (repr(self.value), self.tag)
 
     def __str__(self):
-        r=str(self.value)
-        return chr(self.identification())+int2berlen(len(r))+r
+        r = str(self.value)
+        return chr(self.identification()) + int2berlen(len(r)) + r
 
     def asText(self):
-        return '(!'+self.value.asText()+')'
+        return '(!' + self.value.asText() + ')'
+
 
 class LDAPFilter_equalityMatch(LDAPAttributeValueAssertion):
-    tag = CLASS_CONTEXT|0x03
+    tag = CLASS_CONTEXT | 0x03
 
     def asText(self):
-        return '('+self.attributeDesc.value+'=' \
-               +self.escaper(self.assertionValue.value)+')'
+        return '(' + self.attributeDesc.value + '=' \
+               + escape(self.assertionValue.value) + ')'
+
 
 class LDAPFilter_substrings_initial(LDAPString):
-    tag = CLASS_CONTEXT|0x00
+    tag = CLASS_CONTEXT | 0x00
 
     def asText(self):
         return self.escaper(self.value)
 
 
 class LDAPFilter_substrings_any(LDAPString):
-    tag = CLASS_CONTEXT|0x01
+    tag = CLASS_CONTEXT | 0x01
 
     def asText(self):
         return self.escaper(self.value)
 
 class LDAPFilter_substrings_final(LDAPString):
-    tag = CLASS_CONTEXT|0x02
+    tag = CLASS_CONTEXT | 0x02
 
     def asText(self):
         return self.escaper(self.value)
@@ -481,13 +503,13 @@ class LDAPBERDecoderContext_Filter_substrings(BERDecoderContext):
         }
 
 class LDAPFilter_substrings(BERSequence):
-    tag = CLASS_CONTEXT|0x04
+    tag = CLASS_CONTEXT | 0x04
 
     @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
         l = berDecodeMultiple(content, LDAPBERDecoderContext_Filter_substrings(fallback=berdecoder))
         assert len(l) == 2
-        assert len(l[1])>=1
+        assert len(l[1]) >= 1
 
         r = klass(type=l[0].value,
                   substrings=list(l[1]),
@@ -498,8 +520,8 @@ class LDAPFilter_substrings(BERSequence):
         BERSequence.__init__(self, value=[], tag=tag)
         assert type is not None
         assert substrings is not None
-        self.type=type
-        self.substrings=substrings
+        self.type = type
+        self.substrings = substrings
 
     def __str__(self):
         return str(BERSequence([
@@ -507,19 +529,19 @@ class LDAPFilter_substrings(BERSequence):
             BERSequence(self.substrings)], tag=self.tag))
 
     def __repr__(self):
-        if self.tag==self.__class__.tag:
-            return self.__class__.__name__\
-                   +"(type=%s, substrings=%s)"\
-                   %(repr(self.type), repr(self.substrings))
+        if self.tag == self.__class__.tag:
+            return self.__class__.__name__ \
+                   + "(type=%s, substrings=%s)" \
+                     % (repr(self.type), repr(self.substrings))
         else:
-            return self.__class__.__name__\
-                   +"(type=%s, substrings=%s, tag=%d)"\
-                   %(repr(self.type), repr(self.substrings), self.tag)
+            return self.__class__.__name__ \
+                   + "(type=%s, substrings=%s, tag=%d)" \
+                     % (repr(self.type), repr(self.substrings), self.tag)
 
     def asText(self):
-        initial=None
-        final=None
-        any=[]
+        initial = None
+        final = None
+        any = []
 
         for s in self.substrings:
             assert s is not None
@@ -527,10 +549,10 @@ class LDAPFilter_substrings(BERSequence):
                 assert initial is None
                 assert not any
                 assert final is None
-                initial=s.asText()
+                initial = s.asText()
             elif isinstance(s, LDAPFilter_substrings_final):
                 assert final is None
-                final=s.asText()
+                final = s.asText()
             elif isinstance(s, LDAPFilter_substrings_any):
                 assert final is None
                 any.append(s.asText())
@@ -538,63 +560,72 @@ class LDAPFilter_substrings(BERSequence):
                 raise NotImplementedError('TODO: Filter type not supported %r' % s)
 
         if initial is None:
-            initial=''
+            initial = ''
         if final is None:
-            final=''
+            final = ''
 
+        return '(' + self.type + '=' \
+               + '*'.join([initial] + any + [final]) + ')'
 
-        return '('+self.type+'=' \
-               +'*'.join([initial]+any+[final])+')'
 
 class LDAPFilter_greaterOrEqual(LDAPAttributeValueAssertion):
-    tag = CLASS_CONTEXT|0x05
+    tag = CLASS_CONTEXT | 0x05
 
     def asText(self):
-        return '('+self.attributeDesc.value+'>=' \
-               +self.escaper(self.assertionValue.value)+')'
+        return '(' + self.attributeDesc.value + '>=' \
+               + escape(self.assertionValue.value) + ')'
+
 
 class LDAPFilter_lessOrEqual(LDAPAttributeValueAssertion):
-    tag = CLASS_CONTEXT|0x06
+    tag = CLASS_CONTEXT | 0x06
 
     def asText(self):
-        return '('+self.attributeDesc.value+'<=' \
-               +self.escaper(self.assertionValue.value)+')'
+        return '(' + self.attributeDesc.value + '<=' \
+               + escape(self.assertionValue.value) + ')'
+
 
 class LDAPFilter_present(LDAPAttributeDescription):
-    tag = CLASS_CONTEXT|0x07
+    tag = CLASS_CONTEXT | 0x07
 
     def asText(self):
         return '(%s=*)' % self.value
 
-class LDAPFilter_approxMatch(LDAPAttributeValueAssertion):
-    tag = CLASS_CONTEXT|0x08
 
+class LDAPFilter_approxMatch(LDAPAttributeValueAssertion):
+    tag = CLASS_CONTEXT | 0x08
 
     def asText(self):
-        return '('+self.attributeDesc.value+'~=' \
-               +self.escaper(self.assertionValue.value)+')'
+        return '(' + self.attributeDesc.value + '~=' \
+               + escape(self.assertionValue.value) + ')'
+
 
 class LDAPMatchingRuleId(LDAPString):
     pass
 
+
 class LDAPAssertionValue(BEROctetString):
     pass
 
+
 class LDAPMatchingRuleAssertion_matchingRule(LDAPMatchingRuleId):
-    tag = CLASS_CONTEXT|0x01
+    tag = CLASS_CONTEXT | 0x01
     pass
+
 
 class LDAPMatchingRuleAssertion_type(LDAPAttributeDescription):
-    tag = CLASS_CONTEXT|0x02
+    tag = CLASS_CONTEXT | 0x02
     pass
+
 
 class LDAPMatchingRuleAssertion_matchValue(LDAPAssertionValue):
-    tag = CLASS_CONTEXT|0x03
+    tag = CLASS_CONTEXT | 0x03
     pass
 
+
 class LDAPMatchingRuleAssertion_dnAttributes(BERBoolean):
-    tag = CLASS_CONTEXT|0x04
+    tag = CLASS_CONTEXT | 0x04
     pass
+
 
 class LDAPBERDecoderContext_MatchingRuleAssertion(BERDecoderContext):
     Identities = {
@@ -606,10 +637,10 @@ class LDAPBERDecoderContext_MatchingRuleAssertion(BERDecoderContext):
 
 
 class LDAPMatchingRuleAssertion(BERSequence):
-    matchingRule=None
-    type=None
-    matchValue=None
-    dnAttributes=None
+    matchingRule = None
+    type = None
+    matchValue = None
+    dnAttributes = None
 
     @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
@@ -677,13 +708,13 @@ class LDAPMatchingRuleAssertion(BERSequence):
         l.append('type=%s' % repr(self.type))
         l.append('matchValue=%s' % repr(self.matchValue))
         l.append('dnAttributes=%s' % repr(self.dnAttributes))
-        if self.tag!=self.__class__.tag:
+        if self.tag != self.__class__.tag:
             l.append('tag=%d' % self.tag)
-        return self.__class__.__name__+'('+', '.join(l)+')'
+        return self.__class__.__name__ + '(' + ', '.join(l) + ')'
 
 
 class LDAPFilter_extensibleMatch(LDAPMatchingRuleAssertion):
-    tag = CLASS_CONTEXT|0x09
+    tag = CLASS_CONTEXT | 0x09
     pass
 
 
@@ -701,36 +732,37 @@ class LDAPBERDecoderContext_Filter(BERDecoderContext):
         LDAPFilter_extensibleMatch.tag: LDAPFilter_extensibleMatch,
         }
 
-LDAP_SCOPE_baseObject=0
-LDAP_SCOPE_singleLevel=1
-LDAP_SCOPE_wholeSubtree=2
+LDAP_SCOPE_baseObject = 0
+LDAP_SCOPE_singleLevel = 1
+LDAP_SCOPE_wholeSubtree = 2
 
-LDAP_DEREF_neverDerefAliases=0
-LDAP_DEREF_derefInSearching=1
-LDAP_DEREF_derefFindingBaseObj=2
-LDAP_DEREF_derefAlways=3
+LDAP_DEREF_neverDerefAliases = 0
+LDAP_DEREF_derefInSearching = 1
+LDAP_DEREF_derefFindingBaseObj = 2
+LDAP_DEREF_derefAlways = 3
 
 LDAPFilterMatchAll = LDAPFilter_present('objectClass')
 
+
 class LDAPSearchRequest(LDAPProtocolRequest, BERSequence):
-    tag=CLASS_APPLICATION|0x03
+    tag = CLASS_APPLICATION | 0x03
 
-    baseObject=''
-    scope=LDAP_SCOPE_wholeSubtree
-    derefAliases=LDAP_DEREF_neverDerefAliases
-    sizeLimit=0
-    timeLimit=0
-    typesOnly=0
-    filter=LDAPFilterMatchAll
-    attributes=[] #TODO AttributeDescriptionList
+    baseObject = ''
+    scope = LDAP_SCOPE_wholeSubtree
+    derefAliases = LDAP_DEREF_neverDerefAliases
+    sizeLimit = 0
+    timeLimit = 0
+    typesOnly = 0
+    filter = LDAPFilterMatchAll
+    attributes = []  # TODO AttributeDescriptionList
 
-    #TODO decode
+    # TODO decode
 
     @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
         l = berDecodeMultiple(content, LDAPBERDecoderContext_Filter(fallback=berdecoder, inherit=berdecoder))
 
-        assert 8<=len(l)<=8
+        assert 8 <= len(l) <= 8
         r = klass(baseObject=l[0].value,
                   scope=l[1].value,
                   derefAliases=l[2].value,
@@ -756,21 +788,21 @@ class LDAPSearchRequest(LDAPProtocolRequest, BERSequence):
         BERSequence.__init__(self, [], tag=tag)
 
         if baseObject is not None:
-            self.baseObject=baseObject
+            self.baseObject = baseObject
         if scope is not None:
-            self.scope=scope
+            self.scope = scope
         if derefAliases is not None:
-            self.derefAliases=derefAliases
+            self.derefAliases = derefAliases
         if sizeLimit is not None:
-            self.sizeLimit=sizeLimit
+            self.sizeLimit = sizeLimit
         if timeLimit is not None:
-            self.timeLimit=timeLimit
+            self.timeLimit = timeLimit
         if typesOnly is not None:
-            self.typesOnly=typesOnly
+            self.typesOnly = typesOnly
         if filter is not None:
-            self.filter=filter
+            self.filter = filter
         if attributes is not None:
-            self.attributes=attributes
+            self.attributes = attributes
 
     def __str__(self):
         return str(BERSequence([
@@ -785,35 +817,36 @@ class LDAPSearchRequest(LDAPProtocolRequest, BERSequence):
             ], tag=self.tag))
 
     def __repr__(self):
-        if self.tag==self.__class__.tag:
-            return self.__class__.__name__\
-                   +("(baseObject=%s, scope=%s, derefAliases=%s, " \
-                     +"sizeLimit=%s, timeLimit=%s, typesOnly=%s, " \
-                     "filter=%s, attributes=%s)") \
-                     %(repr(self.baseObject), self.scope,
-                       self.derefAliases, self.sizeLimit,
-                       self.timeLimit, self.typesOnly,
-                       repr(self.filter), self.attributes)
+        if self.tag == self.__class__.tag:
+            return self.__class__.__name__ \
+                   + ("(baseObject=%s, scope=%s, derefAliases=%s, " \
+                      + "sizeLimit=%s, timeLimit=%s, typesOnly=%s, " \
+                        "filter=%s, attributes=%s)") \
+                     % (repr(self.baseObject), self.scope,
+                        self.derefAliases, self.sizeLimit,
+                        self.timeLimit, self.typesOnly,
+                        repr(self.filter), self.attributes)
 
         else:
-            return self.__class__.__name__\
-                   +("(baseObject=%s, scope=%s, derefAliases=%s, " \
-                     +"sizeLimit=%s, timeLimit=%s, typesOnly=%s, " \
-                     "filter=%s, attributes=%s, tag=%d)") \
-                     %(repr(self.baseObject), self.scope,
-                       self.derefAliases, self.sizeLimit,
-                       self.timeLimit, self.typesOnly,
-                       self.filter, self.attributes, self.tag)
+            return self.__class__.__name__ \
+                   + ("(baseObject=%s, scope=%s, derefAliases=%s, " \
+                      + "sizeLimit=%s, timeLimit=%s, typesOnly=%s, " \
+                        "filter=%s, attributes=%s, tag=%d)") \
+                     % (repr(self.baseObject), self.scope,
+                        self.derefAliases, self.sizeLimit,
+                        self.timeLimit, self.typesOnly,
+                        self.filter, self.attributes, self.tag)
+
 
 class LDAPSearchResultEntry(LDAPProtocolResponse, BERSequence):
-    tag=CLASS_APPLICATION|0x04
+    tag = CLASS_APPLICATION | 0x04
 
     @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
         l = berDecodeMultiple(content, LDAPBERDecoderContext_Filter(fallback=berdecoder, inherit=berdecoder))
 
-        objectName=l[0].value
-        attributes=[]
+        objectName = l[0].value
+        attributes = []
         for attr, li in l[1].data:
             attributes.append((attr.value, map(lambda x: x.value, li)))
         r = klass(objectName=objectName,
@@ -826,8 +859,8 @@ class LDAPSearchResultEntry(LDAPProtocolResponse, BERSequence):
         BERSequence.__init__(self, [], tag=tag)
         assert objectName is not None
         assert attributes is not None
-        self.objectName=objectName
-        self.attributes=attributes
+        self.objectName = objectName
+        self.attributes = attributes
 
     def __str__(self):
         return str(BERSequence([
@@ -860,12 +893,13 @@ class LDAPSearchResultEntry(LDAPProtocolResponse, BERSequence):
 
 
 class LDAPSearchResultDone(LDAPResult):
-    tag=CLASS_APPLICATION|0x05
+    tag = CLASS_APPLICATION | 0x05
 
     pass
 
+
 class LDAPControls(BERSequence):
-    tag = CLASS_CONTEXT|0x00
+    tag = CLASS_CONTEXT | 0x00
 
     @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
@@ -874,6 +908,7 @@ class LDAPControls(BERSequence):
 
         r = klass(l, tag=tag)
         return r
+
 
 class LDAPControl(BERSequence):
     criticality = None
@@ -910,12 +945,13 @@ class LDAPControl(BERSequence):
         self.controlValue = controlValue
 
     def __str__(self):
-        self.data=[LDAPOID(self.controlType)]
+        self.data = [LDAPOID(self.controlType)]
         if self.criticality is not None:
             self.data.append(BERBoolean(self.criticality))
         if self.controlValue is not None:
             self.data.append(BEROctetString(self.controlValue))
         return BERSequence.__str__(self)
+
 
 class LDAPBERDecoderContext_LDAPControls(BERDecoderContext):
     Identities = {
@@ -934,7 +970,7 @@ class LDAPBERDecoderContext_TopLevel(BERDecoderContext):
         }
 
 class LDAPModifyRequest(LDAPProtocolRequest, BERSequence):
-    tag=CLASS_APPLICATION|0x06
+    tag = CLASS_APPLICATION | 0x06
     object = None
     modification = None
 
@@ -989,11 +1025,11 @@ class LDAPModifyRequest(LDAPProtocolRequest, BERSequence):
 
         LDAPProtocolRequest.__init__(self)
         BERSequence.__init__(self, [], tag=tag)
-        self.object=object
-        self.modification=modification
+        self.object = object
+        self.modification = modification
 
     def __str__(self):
-        l=[LDAPString(self.object)]
+        l = [LDAPString(self.object)]
         if self.modification is not None:
             l.append(BERSequence(self.modification))
         return str(BERSequence(l, tag=self.tag))
@@ -1008,10 +1044,11 @@ class LDAPModifyRequest(LDAPProtocolRequest, BERSequence):
 
 
 class LDAPModifyResponse(LDAPResult):
-    tag = CLASS_APPLICATION|0x07
+    tag = CLASS_APPLICATION | 0x07
+
 
 class LDAPAddRequest(LDAPProtocolRequest, BERSequence):
-    tag = CLASS_APPLICATION|0x08
+    tag = CLASS_APPLICATION | 0x08
 
     @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
@@ -1044,8 +1081,8 @@ class LDAPAddRequest(LDAPProtocolRequest, BERSequence):
 
         LDAPProtocolRequest.__init__(self)
         BERSequence.__init__(self, [], tag=tag)
-        self.entry=entry
-        self.attributes=attributes
+        self.entry = entry
+        self.attributes = attributes
 
     def __str__(self):
         return str(BERSequence([
@@ -1064,10 +1101,11 @@ class LDAPAddRequest(LDAPProtocolRequest, BERSequence):
 
 
 class LDAPAddResponse(LDAPResult):
-    tag = CLASS_APPLICATION|0x09
+    tag = CLASS_APPLICATION | 0x09
+
 
 class LDAPDelRequest(LDAPProtocolRequest, LDAPString):
-    tag = CLASS_APPLICATION|0x0a
+    tag = CLASS_APPLICATION | 0x0a
 
     def __init__(self, value=None, entry=None, tag=None):
         """
@@ -1084,24 +1122,25 @@ class LDAPDelRequest(LDAPProtocolRequest, LDAPString):
         return LDAPString.__str__(self)
 
     def __repr__(self):
-        if self.tag==self.__class__.tag:
-            return self.__class__.__name__+"(entry=%s)" \
-                   %repr(self.value)
+        if self.tag == self.__class__.tag:
+            return self.__class__.__name__ + "(entry=%s)" \
+                   % repr(self.value)
         else:
             return self.__class__.__name__ \
-                   +"(entry=%s, tag=%d)" \
-                   %(repr(self.value), self.tag)
+                   + "(entry=%s, tag=%d)" \
+                     % (repr(self.value), self.tag)
 
 
 class LDAPDelResponse(LDAPResult):
-    tag = CLASS_APPLICATION|0x0b
+    tag = CLASS_APPLICATION | 0x0b
     pass
 
 
 class LDAPModifyDNResponse_newSuperior(LDAPString):
-    tag = CLASS_CONTEXT|0x00
+    tag = CLASS_CONTEXT | 0x00
 
     pass
+
 
 class LDAPBERDecoderContext_ModifyDNRequest(BERDecoderContext):
     Identities = {
@@ -1109,12 +1148,12 @@ class LDAPBERDecoderContext_ModifyDNRequest(BERDecoderContext):
         }
 
 class LDAPModifyDNRequest(LDAPProtocolRequest, BERSequence):
-    tag=CLASS_APPLICATION|12
+    tag = CLASS_APPLICATION | 12
 
-    entry=None
-    newrdn=None
-    deleteoldrdn=None
-    newSuperior=None
+    entry = None
+    newrdn = None
+    deleteoldrdn = None
+    newSuperior = None
 
     @classmethod
     def fromBER(klass, tag, content, berdecoder=None):
@@ -1150,19 +1189,19 @@ class LDAPModifyDNRequest(LDAPProtocolRequest, BERSequence):
         assert entry is not None
         assert newrdn is not None
         assert deleteoldrdn is not None
-        self.entry=entry
-        self.newrdn=newrdn
-        self.deleteoldrdn=deleteoldrdn
-        self.newSuperior=newSuperior
+        self.entry = entry
+        self.newrdn = newrdn
+        self.deleteoldrdn = deleteoldrdn
+        self.newSuperior = newSuperior
 
     def __str__(self):
-        l=[
+        l = [
             LDAPString(self.entry),
             LDAPString(self.newrdn),
             BERBoolean(self.deleteoldrdn),
             ]
         if self.newSuperior is not None:
-            l.append(LDAPString(self.newSuperior, tag=CLASS_CONTEXT|0))
+            l.append(LDAPString(self.newSuperior, tag=CLASS_CONTEXT | 0))
         return str(BERSequence(l, tag=self.tag))
 
     def __repr__(self):
@@ -1173,13 +1212,13 @@ class LDAPModifyDNRequest(LDAPProtocolRequest, BERSequence):
             ]
         if self.newSuperior is not None:
             l.append("newSuperior=%s" % repr(self.newSuperior))
-        if self.tag!=self.__class__.tag:
+        if self.tag != self.__class__.tag:
             l.append("tag=%d" % self.tag)
         return self.__class__.__name__ + "(" + ', '.join(l) + ")"
 
 
 class LDAPModifyDNResponse(LDAPResult):
-    tag=CLASS_APPLICATION|13
+    tag = CLASS_APPLICATION | 13
 
 
 class LDAPBERDecoderContext_Compare(BERDecoderContext):
@@ -1232,8 +1271,8 @@ class LDAPCompareResponse(LDAPResult):
 
 
 class LDAPAbandonRequest(LDAPProtocolRequest, LDAPInteger):
-    tag = CLASS_APPLICATION|0x10
-    needs_answer=0
+    tag = CLASS_APPLICATION | 0x10
+    needs_answer = 0
 
     def __init__(self, value=None, id=None, tag=None):
         """
@@ -1255,26 +1294,31 @@ class LDAPAbandonRequest(LDAPProtocolRequest, LDAPInteger):
                    %repr(self.value)
         else:
             return self.__class__.__name__ \
-                   +"(id=%s, tag=%d)" \
-                   %(repr(self.value), self.tag)
+                   + "(id=%s, tag=%d)" \
+                     % (repr(self.value), self.tag)
+
 
 class LDAPOID(BEROctetString):
     pass
 
+
 class LDAPResponseName(LDAPOID):
-    tag = CLASS_CONTEXT|10
+    tag = CLASS_CONTEXT | 10
+
 
 class LDAPResponse(BEROctetString):
-    tag = CLASS_CONTEXT|11
+    tag = CLASS_CONTEXT | 11
+
 
 class LDAPBERDecoderContext_LDAPExtendedRequest(BERDecoderContext):
     Identities = {
-        CLASS_CONTEXT|0x00: BEROctetString,
-        CLASS_CONTEXT|0x01: BEROctetString,
+        CLASS_CONTEXT | 0x00: BEROctetString,
+        CLASS_CONTEXT | 0x01: BEROctetString,
         }
 
+
 class LDAPExtendedRequest(LDAPProtocolRequest, BERSequence):
-    tag = CLASS_APPLICATION|23
+    tag = CLASS_APPLICATION | 23
 
     requestName = None
     requestValue = None
@@ -1283,7 +1327,7 @@ class LDAPExtendedRequest(LDAPProtocolRequest, BERSequence):
     def fromBER(klass, tag, content, berdecoder=None):
         l = berDecodeMultiple(content,
                               LDAPBERDecoderContext_LDAPExtendedRequest(
-            fallback=berdecoder))
+                                  fallback=berdecoder))
 
         kw = {}
         try:
@@ -1303,33 +1347,40 @@ class LDAPExtendedRequest(LDAPProtocolRequest, BERSequence):
         assert requestName is not None
         assert isinstance(requestName, basestring)
         assert requestValue is None or isinstance(requestValue, basestring)
-        self.requestName=requestName
-        self.requestValue=requestValue
+        self.requestName = requestName
+        self.requestValue = requestValue
 
     def __str__(self):
-        l=[LDAPOID(self.requestName, tag=CLASS_CONTEXT|0)]
+        l = [LDAPOID(self.requestName, tag=CLASS_CONTEXT | 0)]
         if self.requestValue is not None:
-            l.append(BEROctetString(str(self.requestValue), tag=CLASS_CONTEXT|1))
+            l.append(BEROctetString(str(self.requestValue), tag=CLASS_CONTEXT | 1))
         return str(BERSequence(l, tag=self.tag))
 
+
 class LDAPPasswordModifyRequest_userIdentity(BEROctetString):
-    tag=CLASS_CONTEXT|0
+    tag = CLASS_CONTEXT | 0
+
+
 class LDAPPasswordModifyRequest_oldPasswd(BEROctetString):
-    tag=CLASS_CONTEXT|1
+    tag = CLASS_CONTEXT | 1
+
+
 class LDAPPasswordModifyRequest_newPasswd(BEROctetString):
-    tag=CLASS_CONTEXT|2
+    tag = CLASS_CONTEXT | 2
+
 
 class LDAPBERDecoderContext_LDAPPasswordModifyRequest(BERDecoderContext):
     Identities = {
         LDAPPasswordModifyRequest_userIdentity.tag:
-        LDAPPasswordModifyRequest_userIdentity,
+            LDAPPasswordModifyRequest_userIdentity,
 
         LDAPPasswordModifyRequest_oldPasswd.tag:
-        LDAPPasswordModifyRequest_oldPasswd,
+            LDAPPasswordModifyRequest_oldPasswd,
 
         LDAPPasswordModifyRequest_newPasswd.tag:
-        LDAPPasswordModifyRequest_newPasswd,
+            LDAPPasswordModifyRequest_newPasswd,
         }
+
 
 class LDAPPasswordModifyRequest(LDAPExtendedRequest):
     oid = '1.3.6.1.4.1.4203.1.11.1'
@@ -1343,7 +1394,7 @@ class LDAPPasswordModifyRequest(LDAPExtendedRequest):
                 % (self.__class__.__name__, requestName, self.oid)
         #TODO genPasswd
 
-        l=[]
+        l = []
         if userIdentity is not None:
             l.append(LDAPPasswordModifyRequest_userIdentity(userIdentity))
         if oldPasswd is not None:
@@ -1357,11 +1408,12 @@ class LDAPPasswordModifyRequest(LDAPExtendedRequest):
             tag=tag)
 
     def __repr__(self):
-        l=[]
+        l = []
         # TODO userIdentity, oldPasswd, newPasswd
-        if self.tag!=self.__class__.tag:
+        if self.tag != self.__class__.tag:
             l.append('tag=%d' % self.tag)
-        return self.__class__.__name__+'('+', '.join(l)+')'
+        return self.__class__.__name__ + '(' + ', '.join(l) + ')'
+
 
 class LDAPBERDecoderContext_LDAPExtendedResponse(BERDecoderContext):
     Identities = {
@@ -1370,7 +1422,7 @@ class LDAPBERDecoderContext_LDAPExtendedResponse(BERDecoderContext):
         }
 
 class LDAPExtendedResponse(LDAPResult):
-    tag = CLASS_APPLICATION|0x18
+    tag = CLASS_APPLICATION | 0x18
 
     responseName = None
     response = None
@@ -1380,7 +1432,7 @@ class LDAPExtendedResponse(LDAPResult):
         l = berDecodeMultiple(content, LDAPBERDecoderContext_LDAPExtendedResponse(
             fallback=berdecoder))
 
-        assert 3<=len(l)<=6
+        assert 3 <= len(l) <= 4
 
         referral = None
         responseName = None
@@ -1416,21 +1468,22 @@ class LDAPExtendedResponse(LDAPResult):
                             errorMessage=errorMessage,
                             referral=referral,
                             serverSaslCreds=serverSaslCreds)
-        self.responseName=responseName
-        self.response=response
+        self.responseName = responseName
+        self.response = response
 
     def __str__(self):
-        assert self.referral is None #TODO
-        l=[BEREnumerated(self.resultCode),
-           BEROctetString(self.matchedDN),
-           BEROctetString(self.errorMessage),
-           #TODO referral [3] Referral OPTIONAL
-           ]
+        assert self.referral is None  # TODO
+        l = [BEREnumerated(self.resultCode),
+             BEROctetString(self.matchedDN),
+             BEROctetString(self.errorMessage),
+             # TODO referral [3] Referral OPTIONAL
+             ]
         if self.responseName is not None:
-            l.append(LDAPOID(self.responseName, tag=CLASS_CONTEXT|0x0a))
+            l.append(LDAPOID(self.responseName, tag=CLASS_CONTEXT | 0x0a))
         if self.response is not None:
-            l.append(BEROctetString(self.response, tag=CLASS_CONTEXT|0x0b))
+            l.append(BEROctetString(self.response, tag=CLASS_CONTEXT | 0x0b))
         return str(BERSequence(l, tag=self.tag))
+
 
 class LDAPStartTLSRequest(LDAPExtendedRequest):
     """
@@ -1442,8 +1495,8 @@ class LDAPStartTLSRequest(LDAPExtendedRequest):
     def __init__(self, requestName=None, tag=None):
         assert (requestName is None
                 or requestName == self.oid), \
-                '%s requestName was %s instead of %s' \
-                % (self.__class__.__name__, requestName, self.oid)
+            '%s requestName was %s instead of %s' \
+            % (self.__class__.__name__, requestName, self.oid)
 
         LDAPExtendedRequest.__init__(
             self,
@@ -1454,7 +1507,8 @@ class LDAPStartTLSRequest(LDAPExtendedRequest):
         l = []
         if self.tag != self.__class__.tag:
             l.append('tag={0}'.format(self.tag))
-        return self.__class__.__name__+'('+', '.join(l)+')'
+        return self.__class__.__name__ + '(' + ', '.join(l) + ')'
+
 
 class LDAPStartTLSResponse(LDAPExtendedResponse):
     """
@@ -1479,9 +1533,10 @@ class LDAPStartTLSResponse(LDAPExtendedResponse):
 
     def __repr__(self):
         l = []
-        if self.tag!=self.__class__.tag:
+        if self.tag != self.__class__.tag:
             l.append('tag={0}'.format(self.tag))
-        return self.__class__.__name__+'('+', '.join(l)+')'
+        return self.__class__.__name__ + '(' + ', '.join(l) + ')'
+
 
 class LDAPBERDecoderContext(BERDecoderContext):
     Identities = {

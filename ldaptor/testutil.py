@@ -6,18 +6,23 @@ from twisted.trial import unittest
 from twisted.test import proto_helpers
 from ldaptor import config
 
+
 def mustRaise(dummy):
     raise unittest.FailTest('Should have raised an exception.')
 
+
 def calltrace():
     """Print out all function calls. For debug use only."""
+
     def printfuncnames(frame, event, arg):
-        print "|%s: %s:%d:%s" % (event,
-                                 frame.f_code.co_filename,
-                                 frame.f_code.co_firstlineno,
-                                 frame.f_code.co_name)
+        print("|%s: %s:%d:%s" %
+              (event, frame.f_code.co_filename,
+               frame.f_code.co_firstlineno,
+               frame.f_code.co_name))
+
     import sys
     sys.setprofile(printfuncnames)
+
 
 class FakeTransport:
     def __init__(self, proto):
@@ -25,6 +30,7 @@ class FakeTransport:
 
     def loseConnection(self):
         self.proto.connectionLost()
+
 
 class LDAPClientTestDriver:
     """
@@ -44,8 +50,8 @@ class LDAPClientTestDriver:
     fakeUnbindResponse = 'fake-unbind-by-LDAPClientTestDriver'
 
     def __init__(self, *responses):
-        self.sent=[]
-        self.responses=list(responses)
+        self.sent = []
+        self.responses = list(responses)
         self.connected = None
         self.transport = FakeTransport(self)
 
@@ -133,6 +139,7 @@ class LDAPClientTestDriver:
         self.send_noResponse(r)
         self.transport.loseConnection()
 
+
 def createServer(proto, *responses, **kw):
     """
     Create an LDAP server for testing.
@@ -145,16 +152,18 @@ def createServer(proto, *responses, **kw):
         del kw['proto_args']
     else:
         proto_args = {}
+
     def createClient(factory):
         factory.doStart()
         proto = factory.buildProtocol(addr=None)
         proto.connectionMade()
+
     overrides = kw.setdefault('serviceLocationOverrides', {})
     overrides.setdefault('', createClient)
     conf = config.LDAPConfig(**kw)
     server = proto(conf, **proto_args)
     clientTestDriver = LDAPClientTestDriver(*responses)
-    server.protocol = lambda : clientTestDriver
+    server.protocol = lambda: clientTestDriver
     server.clientTestDriver = clientTestDriver
     server.transport = proto_helpers.StringTransport()
     server.connectionMade()

@@ -1,5 +1,6 @@
 from twisted.internet import protocol, defer
 from twisted.internet.endpoints import clientFromString
+
 try:
     from twisted.internet import endpoints
     connectProtocol = endpoints.connectProtocol
@@ -18,6 +19,7 @@ try:
 except AttributeError:
     from twisted.names.srvconnect import SRVConnector
 
+
 def connectToLDAPEndpoint(reactor, endpointStr, clientProtocol):
     e = clientFromString(reactor, endpointStr)
     d = connectProtocol(e, clientProtocol())
@@ -30,7 +32,7 @@ class LDAPConnector(SRVConnector):
         if not isinstance(dn, distinguishedname.DistinguishedName):
             dn = distinguishedname.DistinguishedName(stringValue=dn)
         if overrides is None:
-            overrides={}
+            overrides = {}
         self.override = self._findOverRide(dn, overrides)
 
         domain = dn.getDomainName() or ''
@@ -39,7 +41,7 @@ class LDAPConnector(SRVConnector):
                   connectFuncKwArgs={'bindAddress': bindAddress})
 
     def __getstate__(self):
-        r={}
+        r = {}
         r.update(self.__dict__)
         r['connector'] = None
         return r
@@ -104,6 +106,7 @@ class LDAPConnector(SRVConnector):
             port = 389
         return host, port
 
+
 class LDAPClientCreator(protocol.ClientCreator):
     def connect(self, dn, overrides=None, bindAddress=None):
         """Connect to remote host, return Deferred of resulting protocol instance."""
@@ -119,8 +122,9 @@ class LDAPClientCreator(protocol.ClientCreator):
         d = self.connect(dn, overrides=overrides)
 
         def _bind(proto):
-            d=proto.bind()
+            d = proto.bind()
             d.addCallback(lambda _: proto)
             return d
+
         d.addCallback(_bind)
         return d
