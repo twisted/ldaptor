@@ -869,6 +869,7 @@ class TestEscaping(unittest.TestCase):
             result = filt.asText()
             self.assertEqual(expected, result)
 
+
 class TestFilterSetEquality(unittest.TestCase):
     def test_basic_and_equal(self):
         filter1 = pureldap.LDAPFilter_and([

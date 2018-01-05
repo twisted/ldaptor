@@ -472,9 +472,8 @@ class LDAPFilter_equalityMatch(LDAPAttributeValueAssertion):
     tag = CLASS_CONTEXT | 0x03
 
     def asText(self):
-        return '(' + self.attributeDesc.value + '=' \
-               + escape(self.assertionValue.value) + ')'
-
+        return '('+self.attributeDesc.value+'=' \
+               +self.escaper(self.assertionValue.value)+')'
 
 class LDAPFilter_substrings_initial(LDAPString):
     tag = CLASS_CONTEXT | 0x00
@@ -529,14 +528,14 @@ class LDAPFilter_substrings(BERSequence):
             BERSequence(self.substrings)], tag=self.tag))
 
     def __repr__(self):
-        if self.tag == self.__class__.tag:
-            return self.__class__.__name__ \
-                   + "(type=%s, substrings=%s)" \
-                     % (repr(self.type), repr(self.substrings))
+        if self.tag==self.__class__.tag:
+            return self.__class__.__name__\
+                   +"(type=%s, substrings=%s)"\
+                   %(repr(self.type), repr(self.substrings))
         else:
-            return self.__class__.__name__ \
-                   + "(type=%s, substrings=%s, tag=%d)" \
-                     % (repr(self.type), repr(self.substrings), self.tag)
+            return self.__class__.__name__\
+                   +"(type=%s, substrings=%s, tag=%d)"\
+                   %(repr(self.type), repr(self.substrings), self.tag)
 
     def asText(self):
         initial = None
@@ -572,17 +571,15 @@ class LDAPFilter_greaterOrEqual(LDAPAttributeValueAssertion):
     tag = CLASS_CONTEXT | 0x05
 
     def asText(self):
-        return '(' + self.attributeDesc.value + '>=' \
-               + escape(self.assertionValue.value) + ')'
-
+        return '(' + self.attributeDesc.value + '>=' + \
+               self.escaper(self.assertionValue.value) + ')'
 
 class LDAPFilter_lessOrEqual(LDAPAttributeValueAssertion):
     tag = CLASS_CONTEXT | 0x06
 
     def asText(self):
-        return '(' + self.attributeDesc.value + '<=' \
-               + escape(self.assertionValue.value) + ')'
-
+        return '(' + self.attributeDesc.value + '<=' + \
+               self.escaper(self.assertionValue.value) + ')'
 
 class LDAPFilter_present(LDAPAttributeDescription):
     tag = CLASS_CONTEXT | 0x07
@@ -595,8 +592,8 @@ class LDAPFilter_approxMatch(LDAPAttributeValueAssertion):
     tag = CLASS_CONTEXT | 0x08
 
     def asText(self):
-        return '(' + self.attributeDesc.value + '~=' \
-               + escape(self.assertionValue.value) + ')'
+        return '(' + self.attributeDesc.value + '~=' + \
+               self.escaper(self.assertionValue.value) + ')'
 
 
 class LDAPMatchingRuleId(LDAPString):
@@ -1432,7 +1429,7 @@ class LDAPExtendedResponse(LDAPResult):
         l = berDecodeMultiple(content, LDAPBERDecoderContext_LDAPExtendedResponse(
             fallback=berdecoder))
 
-        assert 3 <= len(l) <= 4
+        assert 3 <= len(l) <= 6
 
         referral = None
         responseName = None
