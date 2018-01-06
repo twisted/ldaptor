@@ -1,3 +1,4 @@
+import warnings
 try:
     import string
     maketrans = string.maketrans

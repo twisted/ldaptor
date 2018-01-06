@@ -9,14 +9,14 @@ env:
   - TOX_ENV=py27-tw160
   - TOX_ENV=py27-tw150
   - TOX_ENV=py27-tw140
-  - TOX_ENV=py35-twtrunk
+  - TOX_ENV=py34-twtrunk
   - TOX_ENV=pyflakes
   - TOX_ENV=manifest
 
 matrix:
   fast_finish: true
   allow_failures:
-    - env: TOX_ENV=py35-twtrunk
+    - env: TOX_ENV=py34-twtrunk
 
 install:
   - pip install tox coveralls
