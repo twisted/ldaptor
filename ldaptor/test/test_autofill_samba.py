@@ -1,9 +1,8 @@
 """
 Test cases for ldaptor.protocols.ldap.autofill.sambaAccount module.
 """
-
-import sets
 from twisted.trial import unittest
+
 from ldaptor.protocols.ldap import ldapsyntax
 from ldaptor.protocols.ldap.autofill import sambaAccount, sambaSamAccount
 from ldaptor import testutil
@@ -153,7 +152,7 @@ class LDAPAutoFill_sambaSamAccount(unittest.TestCase):
         def cb(dummy):
             client.assertNothingSent()
 
-            self.failUnlessEqual(sets.Set(o.keys()), sets.Set([
+            self.failUnlessEqual(set(o.keys()), {
                 'objectClass',
                 'sambaAcctFlags',
                 'sambaLogoffTime',
@@ -161,7 +160,7 @@ class LDAPAutoFill_sambaSamAccount(unittest.TestCase):
                 'sambaPwdCanChange',
                 'sambaPwdLastSet',
                 'sambaPwdMustChange',
-                ]))
+                })
 
             self.failUnlessEqual(o['sambaAcctFlags'], ['[UX         ]'])
             self.failUnlessEqual(o['sambaPwdLastSet'], ['1'])
@@ -187,7 +186,7 @@ class LDAPAutoFill_sambaSamAccount(unittest.TestCase):
         def cb(dummy):
             client.assertNothingSent()
 
-            self.failUnlessEqual(sets.Set(o.keys()), sets.Set([
+            self.failUnlessEqual(set(o.keys()), {
                 'objectClass',
                 'sambaAcctFlags',
                 'sambaLogoffTime',
@@ -196,7 +195,7 @@ class LDAPAutoFill_sambaSamAccount(unittest.TestCase):
                 'sambaPwdLastSet',
                 'sambaPwdMustChange',
                 'sambaPrimaryGroupSID',
-                ]))
+                })
 
             self.failUnlessEqual(o['sambaPrimaryGroupSID'], ['foo-4131312'])
             self.failUnlessEqual(o['sambaAcctFlags'], ['[UX         ]'])

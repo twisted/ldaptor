@@ -30,8 +30,9 @@
 #     Only some BOOLEAN and INTEGER types have default values in
 #     this protocol definition.
 
-
 import string
+
+from six.moves import UserList
 
 # xxxxxxxx
 # |/|\.../
@@ -70,7 +71,6 @@ class UnknownBERTag(Exception):
         return "BERDecoderContext has no tag 0x%02x: %s" \
                % (self.tag, self.context)
 
-import UserList
 
 def berDecodeLength(m, offset=0):
     """
@@ -117,6 +117,7 @@ def ber2int(e, signed=True):
         v = (v << 8) | ord(e[i])
     return v
 
+
 class BERBase(object):
     tag = None
 
@@ -147,6 +148,9 @@ class BERBase(object):
             return str(self) != str(other)
         else:
             return False
+
+    def __hash__(self):
+        return id(self)
 
 
 class BERStructured(BERBase):
@@ -289,7 +293,8 @@ class BERBoolean(BERBase):
 class BEREnumerated(BERInteger):
     tag = 0x0a
 
-class BERSequence(BERStructured, UserList.UserList):
+
+class BERSequence(BERStructured, UserList):
     # TODO __getslice__ calls __init__ with no args.
     tag = 0x10
 
@@ -301,9 +306,8 @@ class BERSequence(BERStructured, UserList.UserList):
 
     def __init__(self, value=None, tag=None):
         BERStructured.__init__(self, tag)
-        UserList.UserList.__init__(self)
         assert value is not None
-        self[:] = value
+        UserList.__init__(self, value)
 
     def __str__(self):
         r=string.join(map(str, self.data), '')

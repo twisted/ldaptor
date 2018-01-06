@@ -88,7 +88,7 @@ class LDAPClient(protocol.Protocol):
         msg = pureldap.LDAPMessage(op)
         if self.debug:
             log.msg('C->S %s' % repr(msg))
-        assert not self.onwire.has_key(msg.id)
+        assert msg.id not in self.onwire
         return msg
 
     def _cbSend(self, msg, d):

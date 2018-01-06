@@ -40,7 +40,7 @@ class LDAPSyntaxBasics(unittest.TestCase):
             })
         seen={}
         for k in o.keys():
-            assert not seen.has_key(k)
+            assert k not in seen
             seen[k]=1
         assert seen == {'objectClass': 1,
                         'aValue': 1,
@@ -59,7 +59,7 @@ class LDAPSyntaxBasics(unittest.TestCase):
             })
         seen={}
         for k,vs in o.items():
-            assert not seen.has_key(k)
+            assert k not in seen
             seen[k]=vs
         assert seen == {'objectClass': ['a', 'b'],
                         'aValue': ['a'],
@@ -126,8 +126,8 @@ class LDAPSyntaxAttributes(unittest.TestCase):
         o['aValue']=['quux']
         del o['aValue']
         del o['bValue']
-        self.failIf(o.has_key('aValue'))
-        self.failIf(o.has_key('bValue'))
+        self.failIf('aValue' in o)
+        self.failIf('bValue' in o)
 
     def testAttributeAdd(self):
         client=LDAPClientTestDriver()
@@ -229,7 +229,7 @@ class LDAPSyntaxAttributes(unittest.TestCase):
             o.undo()
             self.failUnlessEqual(o['aValue'], ['foo', 'bar'])
             self.failUnlessEqual(o['bValue'], ['quux'])
-            self.failIf(o.has_key('cValue'))
+            self.failIf('cValue' in o)
         d.addCallback(cb)
         return d
 

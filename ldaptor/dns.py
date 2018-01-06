@@ -2,13 +2,14 @@
 
 from socket import inet_aton, inet_ntoa
 
+
 def aton_octets(ip):
-    s=inet_aton(ip)
-    octets=map(None, s)
+    s = inet_aton(ip)
+    octets = list(s)
     n = 0
     for o in octets:
-        n=n<<8
-        n+=ord(o)
+        n = n << 8
+        n += ord(o)
     return n
 
 def aton_numbits(num):

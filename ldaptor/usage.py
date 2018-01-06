@@ -27,7 +27,7 @@ class Options_service_location:
     def opt_service_location(self, value):
         """Service location, in the form BASEDN:HOST[:PORT]"""
 
-        if not self.opts.has_key('service-location'):
+        if 'service-location' not in self.opts:
             self.opts['service-location']={}
 
         base, location = value.split(':', 1)
@@ -53,7 +53,7 @@ class Options_service_location:
         self.opts['service-location'][dn] = (host, port)
 
     def postOptions_service_location(self):
-        if not self.opts.has_key('service-location'):
+        if 'service-location' not in self.opts:
             self.opts['service-location']={}
 
 class Options_base_optional:

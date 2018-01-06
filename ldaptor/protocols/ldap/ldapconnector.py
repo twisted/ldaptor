@@ -48,7 +48,7 @@ class LDAPConnector(SRVConnector):
 
     def _findOverRide(self, dn, overrides):
         while True:
-            if overrides.has_key(dn):
+            if dn in overrides:
                 return overrides[dn]
             if dn == '':
                 break

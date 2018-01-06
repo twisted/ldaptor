@@ -195,6 +195,10 @@ class ModifyOp(Operation):
     def __ne__(self, other):
         return not self==other
 
+    def __hash__(self):
+        return id(self)
+
+
 class AddOp(Operation):
     def __init__(self, entry):
         self.entry = entry
@@ -227,6 +231,10 @@ class AddOp(Operation):
 
     def __ne__(self, other):
         return not self==other
+
+    def __hash__(self):
+        return id(self)
+
 
 class DeleteOp(Operation):
     def __init__(self, dn):
@@ -262,3 +270,5 @@ class DeleteOp(Operation):
     def __ne__(self, other):
         return not self==other
 
+    def __hash__(self):
+        return id(self)
