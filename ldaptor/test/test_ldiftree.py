@@ -180,7 +180,7 @@ objectClass: organizationalUnit
     def _cb_testSimpleWrite(self, entry):
         path = os.path.join(self.tree, 'dc=com.dir', 'dc=example.dir', 'cn=foo.ldif')
         self.failUnless(os.path.isfile(path))
-        self.failUnlessEqual(file(path).read(),
+        self.failUnlessEqual(open(path).read(),
                              """\
 dn: cn=foo,dc=example,dc=com
 objectClass: top
@@ -202,7 +202,7 @@ cn: foo
         path = os.path.join(self.tree, 'dc=com.dir', 'dc=example.dir',
                             'ou=OrgUnit.dir', 'cn=create-me.ldif')
         self.failUnless(os.path.isfile(path))
-        self.failUnlessEqual(file(path).read(),
+        self.failUnlessEqual(open(path).read(),
                              """\
 dn: cn=create-me,ou=OrgUnit,dc=example,dc=com
 objectClass: top
@@ -226,7 +226,7 @@ cn: create-me
     def _cb_testDirExists(self, entry, dirpath):
         path = os.path.join(dirpath, 'cn=create-me.ldif')
         self.failUnless(os.path.isfile(path))
-        self.failUnlessEqual(file(path).read(),
+        self.failUnlessEqual(open(path).read(),
                              """\
 dn: cn=create-me,ou=OrgUnit,dc=example,dc=com
 objectClass: top
@@ -263,7 +263,7 @@ cn: create-me
     def _cb_testAddTopLevel(self, entry):
         path = os.path.join(self.tree, 'dc=org.ldif')
         self.failUnless(os.path.isfile(path))
-        self.failUnlessEqual(file(path).read(),
+        self.failUnlessEqual(open(path).read(),
                              """\
 dn: dc=org
 objectClass: dcObject

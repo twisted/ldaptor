@@ -19,10 +19,10 @@ def sshaDigest(passphrase, salt=None):
     if salt is None:
         salt = ''
         for i in range(8):
-            salt += chr(random.randint(0, 127))
+            salt += chr(random.randint(0, 255))
 
     s = sha1()
-    s.update(passphrase.encode('utf-8'))
+    s.update(passphrase)
     s.update(salt)
     encoded = base64.encodestring(s.digest() + salt).rstrip()
     crypt = '{SSHA}' + encoded
