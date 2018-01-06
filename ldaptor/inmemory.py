@@ -28,7 +28,7 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
 
     def children(self, callback=None):
         if callback is None:
-            return defer.succeed(self._children.values())
+            return defer.succeed(list(self._children.values()))
         else:
             for c in self._children.values():
                 callback(c)

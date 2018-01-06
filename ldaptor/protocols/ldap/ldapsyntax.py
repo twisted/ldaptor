@@ -415,7 +415,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             ldapAttrType = pureldap.LDAPAttributeDescription(attrType)
             l = []
             for value in values:
-                if (isinstance(value, unicode)):
+                if (isinstance(value, six.text_type)):
                     value = value.encode('utf-8')
                 l.append(pureldap.LDAPAttributeValue(value))
             ldapValues = pureber.BERSet(l)

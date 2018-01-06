@@ -47,7 +47,7 @@ def _have_lmhash(password=''):
     if not config.useLMhash():
         return lmhash_locked()
 
-    password = (password + 14 * '\0')[:14]
+    password = (password + 14 * b'\0')[:14]
     password = password.upper()
 
     return _deshash(password[:7]) + _deshash(password[7:])

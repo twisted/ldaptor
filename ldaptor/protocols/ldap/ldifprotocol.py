@@ -10,8 +10,8 @@ class LDIFParseError(Exception):
 
     def __str__(self):
         s = self.__doc__
-        if self[:]:
-            s = ': '.join([s]+map(str, self[:]))
+        if self.args:
+            s = ': '.join([s] + list(map(str, self.args)))
         return s + '.'
 
 
@@ -50,7 +50,7 @@ WAIT_FOR_DN = 'WAIT_FOR_DN'
 IN_ENTRY = 'IN_ENTRY'
 
 class LDIF(basic.LineReceiver, object):
-    delimiter = '\n'
+    delimiter = b'\n'
     mode = HEADER
 
     dn = None
@@ -60,13 +60,13 @@ class LDIF(basic.LineReceiver, object):
     version = None
 
     def logicalLineReceived(self, line):
-        if line.startswith('#'):
+        if line.startswith(b'#'):
             # comments are allowed everywhere
             return
         getattr(self, 'state_' + self.mode)(line)
 
     def lineReceived(self, line):
-        if line.startswith(' '):
+        if line.startswith(b' '):
             if self.lastLine is None:
                 raise LDIFEntryStartsWithSpaceError()
             self.lastLine = self.lastLine + line[1:]
@@ -74,21 +74,21 @@ class LDIF(basic.LineReceiver, object):
             if self.lastLine is not None:
                 self.logicalLineReceived(self.lastLine)
             self.lastLine = line
-            if line == '':
+            if line == b'':
                 self.logicalLineReceived(line)
                 self.lastLine = None
 
     def parseValue(self, val):
-        if val.startswith(':'):
-            return base64.decodestring(val[1:].lstrip(' '))
-        elif val.startswith('<'):
+        if val.startswith(b':'):
+            return base64.decodestring(val[1:].lstrip(b' '))
+        elif val.startswith(b'<'):
             raise NotImplementedError()
         else:
-            return val.lstrip(' ')
+            return val.lstrip(b' ')
 
     def _parseLine(self, line):
         try:
-            key, val = line.split(':', 1)
+            key, val = line.split(b':', 1)
         except ValueError:
             # unpack list of wrong size
             # -> invalid input data
@@ -100,7 +100,7 @@ class LDIF(basic.LineReceiver, object):
         key, val = self._parseLine(line)
         self.mode = WAIT_FOR_DN
 
-        if key != 'version':
+        if key != b'version':
             self.logicalLineReceived(line)
         else:
             try:
@@ -114,13 +114,13 @@ class LDIF(basic.LineReceiver, object):
     def state_WAIT_FOR_DN(self, line):
         assert self.dn is None, 'self.dn must not be set when waiting for DN'
         assert self.data is None, 'self.data must not be set when waiting for DN'
-        if line == '':
+        if line == b'':
             # too many empty lines, but be tolerant
             return
 
         key, val = self._parseLine(line)
 
-        if key.upper() != 'DN':
+        if key.upper() != b'DN':
             raise LDIFEntryStartsWithNonDNError(line)
 
         self.dn = val
@@ -131,7 +131,7 @@ class LDIF(basic.LineReceiver, object):
         assert self.dn is not None, 'self.dn must be set when in entry'
         assert self.data is not None, 'self.data must be set when in entry'
 
-        if line == '':
+        if line == b'':
             # end of entry
             self.mode = WAIT_FOR_DN
             o = entry.BaseLDAPEntry(dn=self.dn,

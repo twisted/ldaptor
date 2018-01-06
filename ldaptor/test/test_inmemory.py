@@ -74,7 +74,6 @@ class TestInMemoryDatabase(unittest.TestCase):
         d = self.oneChild.children()
         def cb1(children1):
             self.assertEqual(len(children1), 1)
-
             children1.pop()
 
             d = self.oneChild.children()
@@ -266,9 +265,9 @@ class TestInMemoryDatabase(unittest.TestCase):
 
     def test_setPassword(self):
         self.foo.setPassword('s3krit', salt=b'\xf2\x4a')
-        self.failUnless('userPassword' in self.foo)
-        self.assertEqual(self.foo['userPassword'],
-                          ['{SSHA}0n/Iw1NhUOKyaI9gm9v5YsO3ZInySg=='])
+        self.assertEqual(
+            self.foo['userPassword'],
+            [b'{SSHA}0n/Iw1NhUOKyaI9gm9v5YsO3ZInySg=='])
 
     def test_setPassword_noSalt(self):
         self.foo.setPassword('s3krit')

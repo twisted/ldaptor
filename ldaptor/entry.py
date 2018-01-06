@@ -19,13 +19,14 @@ def sshaDigest(passphrase, salt=None):
     if salt is None:
         salt = ''
         for i in range(8):
-            salt += chr(random.randint(0, 255))
+            salt += chr(random.randint(0, 127))
+        salt = salt.encode('ascii')
 
     s = sha1()
     s.update(passphrase)
     s.update(salt)
     encoded = base64.encodestring(s.digest() + salt).rstrip()
-    crypt = '{SSHA}' + encoded
+    crypt = b'{SSHA}' + encoded
     return crypt
 
 
@@ -206,7 +207,7 @@ class BaseLDAPEntry(object):
 
     def _bind(self, password):
         for digest in self.get('userPassword', ()):
-            if digest.startswith('{SSHA}'):
+            if digest.startswith(b'{SSHA}'):
                 raw = base64.decodestring(digest[len('{SSHA}'):])
                 salt = raw[20:]
                 got = sshaDigest(password, salt)

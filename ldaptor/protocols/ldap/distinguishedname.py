@@ -54,17 +54,18 @@ def _splitOnNotEscaped(s, separator):
 
     r = ['']
     while s:
-        if s[0] == '\\':
+        first = s[0:1]
+        if first == '\\':
             r[-1] = r[-1] + s[:2]
             s = s[2:]
         else:
-            if s[0] in separator:
+            if first in separator:
                 r.append('')
                 s = s[1:]
-                while s[0] == ' ':
+                while s[0:1] == ' ':
                     s = s[1:]
             else:
-                r[-1] = r[-1] + s[0]
+                r[-1] = r[-1] + first
                 s = s[1:]
     return r
 
@@ -221,6 +222,10 @@ class DistinguishedName:
             assert listOfRDNs is None
             if isinstance(magic, DistinguishedName):
                 listOfRDNs = magic.split()
+            elif isinstance(magic, six.binary_type):
+                # This might need to be expended if we want to support
+                # different encodings.
+                stringValue = magic
             elif isinstance(magic, six.string_types):
                 stringValue = magic
             else:
