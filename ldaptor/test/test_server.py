@@ -27,7 +27,7 @@ def wrapCommit(entry, cb, *args, **kwds):
         d.addCallback(cb, *args, **kwds)
         return d
 
-    f = types.MethodType(commit_, entry, entry.__class__)
+    f = types.MethodType(commit_, entry)
     entry.commit = f
 
 

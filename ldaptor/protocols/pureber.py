@@ -30,8 +30,6 @@
 #     Only some BOOLEAN and INTEGER types have default values in
 #     this protocol definition.
 
-import string
-
 from six.moves import UserList
 
 # xxxxxxxx
@@ -133,7 +131,7 @@ class BERBase(object):
 
     def __cmp__(self, other):
         if isinstance(other, BERBase):
-            return cmp(str(self), str(other))
+            return (str(self) > str(other)) - (str(self) < str(other))
         else:
             return -1
 
@@ -310,8 +308,8 @@ class BERSequence(BERStructured, UserList):
         UserList.__init__(self, value)
 
     def __str__(self):
-        r=string.join(map(str, self.data), '')
-        return chr(self.identification())+int2berlen(len(r))+r
+        r = ''.join(map(str, self.data))
+        return chr(self.identification()) + int2berlen(len(r)) + r
 
     def __repr__(self):
         if self.tag == self.__class__.tag:

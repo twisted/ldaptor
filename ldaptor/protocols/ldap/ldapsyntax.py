@@ -564,7 +564,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         def _passwordChangerPriorityComparison(me, other):
             mePri = getattr(self, '_setPasswordPriority_' + me)
             otherPri = getattr(self, '_setPasswordPriority_' + other)
-            return cmp(mePri, otherPri)
+            return (mePri > otherPri) - (mePri < otherPri)
 
         prefix = 'setPasswordMaybe_'
         names = [name[len(prefix):] for name in dir(self) if name.startswith(prefix)]

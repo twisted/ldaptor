@@ -287,7 +287,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
     def __cmp__(self, other):
         if not isinstance(other, LDIFTreeEntry):
             return NotImplemented
-        return cmp(self.dn, other.dn)
+        return (self.dn > other.dn) - (self.dn < other.dn)
 
     def commit(self):
         assert self.path.endswith('.dir')

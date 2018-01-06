@@ -266,10 +266,10 @@ class DistinguishedName:
 
     def __cmp__(self, other):
         if isinstance(other, six.string_types):
-            return cmp(str(self), other)
+            return (str(self) > other) - (str(self) < other)
         if not isinstance(other, DistinguishedName):
             return NotImplemented
-        return cmp(self.split(), other.split())
+        return (self.split() > other.split()) - (self.split() < other.split())
 
     def getDomainName(self):
         domainParts = []
