@@ -83,7 +83,7 @@ class ServiceBindingProxy(unittest.TestCase):
                                                                      +')'),
                                        attributes=('1.1',)),
             )
-        self.assertEquals(server.transport.value(),
+        self.assertEqual(server.transport.value(),
                           str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=ldaperrors.LDAPInvalidCredentials.resultCode), id=4)))
 
     def test_bind_noMatchingServicesFound_fallback_success(self):
@@ -144,7 +144,7 @@ class ServiceBindingProxy(unittest.TestCase):
                                                                      +')'),
                                        attributes=('1.1',)),
             pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='s3krit'))
-        self.assertEquals(server.transport.value(),
+        self.assertEqual(server.transport.value(),
                           str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=ldaperrors.Success.resultCode), id=4)))
 
     def test_bind_noMatchingServicesFound_fallback_badAuth(self):
@@ -206,7 +206,7 @@ class ServiceBindingProxy(unittest.TestCase):
                                                                      +')'),
                                        attributes=('1.1',)),
             pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='wrong-s3krit'))
-        self.assertEquals(server.transport.value(),
+        self.assertEqual(server.transport.value(),
                           str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=ldaperrors.LDAPInvalidCredentials.resultCode), id=4)))
 
 
@@ -246,7 +246,7 @@ class ServiceBindingProxy(unittest.TestCase):
                                        attributes=('1.1',)),
             pureldap.LDAPBindRequest(dn=r'cn=svc1+owner=cn\=jack\,dc\=example\,dc\=com,dc=example,dc=com', auth='secret'),
             )
-        self.assertEquals(server.transport.value(),
+        self.assertEqual(server.transport.value(),
                           str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=ldaperrors.Success.resultCode,
                                                                              matchedDN='cn=jack,dc=example,dc=com'), id=4)))
 
@@ -322,7 +322,7 @@ class ServiceBindingProxy(unittest.TestCase):
                                        attributes=('1.1',)),
             pureldap.LDAPBindRequest(dn='cn=svc3+owner=cn\=jack\,dc\=example\,dc\=com,dc=example,dc=com', auth='secret'),
             )
-        self.assertEquals(server.transport.value(),
+        self.assertEqual(server.transport.value(),
                           str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=ldaperrors.Success.resultCode,
                                                                              matchedDN='cn=jack,dc=example,dc=com'), id=4)))
 
@@ -400,5 +400,5 @@ class ServiceBindingProxy(unittest.TestCase):
             pureldap.LDAPBindRequest(dn='cn=svc3+owner=cn\=jack\,dc\=example\,dc\=com,dc=example,dc=com', auth='wrong-s3krit'),
             pureldap.LDAPBindRequest(version=3, dn='cn=jack,dc=example,dc=com', auth='wrong-s3krit'),
             )
-        self.assertEquals(server.transport.value(),
+        self.assertEqual(server.transport.value(),
                           str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=ldaperrors.LDAPInvalidCredentials.resultCode), id=4)))

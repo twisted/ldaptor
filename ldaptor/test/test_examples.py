@@ -53,7 +53,7 @@ class LDAPServerWithUPNBind(unittest.TestCase):
                         dn=bind_dn,
                         auth=password),
                     id=4)))
-        self.assertEquals(
+        self.assertEqual(
             self.server.transport.value(),
             str(
                 pureldap.LDAPMessage(
@@ -87,7 +87,7 @@ class LDAPServerWithUPNBind(unittest.TestCase):
                         dn='bob@ad.example.com',
                         auth='invalid'),
                     id=734)))
-        self.assertEquals(
+        self.assertEqual(
             self.server.transport.value(),
             str(
                 pureldap.LDAPMessage(

@@ -1,5 +1,6 @@
 import base64
 import random
+
 from ldaptor import interfaces, attributeset, delta
 from ldaptor.protocols.ldap import distinguishedname, ldif, ldaperrors
 from twisted.internet import defer
@@ -21,7 +22,7 @@ def sshaDigest(passphrase, salt=None):
     s = sha1()
     s.update(passphrase)
     s.update(salt)
-    encoded = base64.encodestring(s.digest()+salt).rstrip()
+    encoded = base64.encodestring(s.digest() + salt).rstrip()
     crypt = '{SSHA}' + encoded
     return crypt
 

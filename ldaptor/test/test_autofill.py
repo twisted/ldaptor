@@ -6,7 +6,8 @@ from twisted.trial import unittest
 from ldaptor.protocols.ldap import ldapsyntax
 from ldaptor.testutil import LDAPClientTestDriver
 
-class Autofill_sum: #TODO baseclass
+
+class Autofill_sum:  # TODO baseclass
     def __init__(self, resultAttr, sumAttrs):
         self.resultAttr = resultAttr
         self.sumAttrs = sumAttrs
@@ -27,6 +28,7 @@ class Autofill_sum: #TODO baseclass
                 sum += val
         sum = str(sum)
         ldapObject[self.resultAttr] = [sum]
+
 
 class LDAPAutoFill_Simple(unittest.TestCase):
     def testSimpleSum(self):

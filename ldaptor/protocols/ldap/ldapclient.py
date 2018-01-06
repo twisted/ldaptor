@@ -21,9 +21,11 @@ from ldaptor.protocols.ldap import ldaperrors
 from twisted.python import log
 from twisted.internet import protocol, defer, ssl, reactor
 
+
 class LDAPClientConnectionLostException(ldaperrors.LDAPException):
     def __str__(self):
         return 'Connection lost'
+
 
 class LDAPStartTLSBusyError(ldaperrors.LDAPOperationsError):
     def __init__(self, onwire, message=None):
@@ -83,7 +85,7 @@ class LDAPClient(protocol.Protocol):
     def _send(self, op):
         if not self.connected:
             raise LDAPClientConnectionLostException()
-        msg=pureldap.LDAPMessage(op)
+        msg = pureldap.LDAPMessage(op)
         if self.debug:
             log.msg('C->S %s' % repr(msg))
         assert not self.onwire.has_key(msg.id)
@@ -108,7 +110,7 @@ class LDAPClient(protocol.Protocol):
         msg = self._send(op)
         assert op.needs_answer
         d = defer.Deferred()
-        self.onwire[msg.id]=(d, None, None, None)
+        self.onwire[msg.id] = (d, None, None, None)
         self.transport.write(str(msg))
         return d
 
@@ -137,7 +139,7 @@ class LDAPClient(protocol.Protocol):
         msg = self._send(op)
         assert op.needs_answer
         d = defer.Deferred()
-        self.onwire[msg.id]=(d, handler, args, kwargs)
+        self.onwire[msg.id] = (d, handler, args, kwargs)
         self.transport.write(str(msg))
         return d
 
@@ -161,7 +163,7 @@ class LDAPClient(protocol.Protocol):
         if self.debug:
             log.msg('C<-S %s' % repr(msg))
 
-        if msg.id==0:
+        if msg.id == 0:
             self.unsolicitedNotification(msg.value)
         else:
             d, handler, args, kwargs = self.onwire[msg.id]
@@ -188,30 +190,30 @@ class LDAPClient(protocol.Protocol):
         if not self.connected:
             raise LDAPClientConnectionLostException()
         else:
-            r=pureldap.LDAPBindRequest(dn=dn, auth=auth)
+            r = pureldap.LDAPBindRequest(dn=dn, auth=auth)
             d = self.send(r)
             d.addCallback(self._handle_bind_msg)
         return d
 
     def _handle_bind_msg(self, msg):
         assert isinstance(msg, pureldap.LDAPBindResponse)
-        assert msg.referral is None #TODO
-        if msg.resultCode!=ldaperrors.Success.resultCode:
+        assert msg.referral is None  # TODO
+        if msg.resultCode != ldaperrors.Success.resultCode:
             raise ldaperrors.get(msg.resultCode, msg.errorMessage)
         return (msg.matchedDN, msg.serverSaslCreds)
 
     ##Unbind
     def unbind(self):
         if not self.connected:
-            raise Exception("Not connected (TODO)") #TODO make this a real object
-        r=pureldap.LDAPUnbindRequest()
+            raise Exception("Not connected (TODO)")  # TODO make this a real object
+        r = pureldap.LDAPUnbindRequest()
         self.send_noResponse(r)
         self.transport.loseConnection()
 
     def _cbStartTLS(self, msg, ctx):
         assert isinstance(msg, pureldap.LDAPExtendedResponse)
-        assert msg.referral is None #TODO
-        if msg.resultCode!=ldaperrors.Success.resultCode:
+        assert msg.referral is None  # TODO
+        if msg.resultCode != ldaperrors.Success.resultCode:
             raise ldaperrors.get(msg.resultCode, msg.errorMessage)
 
         if (msg.responseName is not None) and \
@@ -236,7 +238,7 @@ class LDAPClient(protocol.Protocol):
         # we always delay by one event loop iteration to make
         # sure the previous handler has exited and self.onwire
         # has been cleaned up
-        d=defer.Deferred()
+        d = defer.Deferred()
         d.addCallback(self._startTLS)
         reactor.callLater(0, d.callback, ctx)
         return d
@@ -245,9 +247,9 @@ class LDAPClient(protocol.Protocol):
         if not self.connected:
             raise LDAPClientConnectionLostException
         elif self.onwire:
-            raise LDAPStartTLSBusyError, self.onwire
+            raise LDAPStartTLSBusyError(self.onwire)
         else:
-            op=pureldap.LDAPStartTLSRequest()
+            op = pureldap.LDAPStartTLSRequest()
             d = self.send(op)
             d.addCallback(self._cbStartTLS, ctx)
             return d

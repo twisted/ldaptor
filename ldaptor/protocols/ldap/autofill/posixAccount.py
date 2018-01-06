@@ -2,7 +2,8 @@ from twisted.internet import defer
 from ldaptor import numberalloc
 from ldaptor.protocols.ldap import ldapsyntax, autofill
 
-class Autofill_posix: #TODO baseclass
+
+class Autofill_posix:  # TODO baseclass
     def __init__(self,
                  baseDN,
                  freeNumberGetter=numberalloc.getFreeNumber):
@@ -25,7 +26,7 @@ class Autofill_posix: #TODO baseclass
     def start(self, ldapObject):
         assert 'objectClass' in ldapObject
         if 'posixAccount' not in ldapObject['objectClass']:
-            raise autofill.ObjectMissingObjectClassException, ldapObject
+            raise autofill.ObjectMissingObjectClassException(ldapObject)
 
         assert 'loginShell' not in ldapObject
         ldapObject['loginShell'] = ['/bin/sh']
@@ -39,8 +40,8 @@ class Autofill_posix: #TODO baseclass
         d = defer.DeferredList([d1, d2], fireOnOneErrback=1)
 
         # silence the log
-        d1.addErrback(lambda x:None)
-        d2.addErrback(lambda x:None)
+        d1.addErrback(lambda x: None)
+        d2.addErrback(lambda x: None)
 
         d.addCallback(self._cb_gotNumbers, ldapObject)
         return d

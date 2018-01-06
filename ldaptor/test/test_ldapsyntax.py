@@ -584,7 +584,7 @@ class LDAPSyntaxSearch(unittest.TestCase):
                    attributes=['bar'],
                    callback=process)
         def cb(val):
-            self.assertEquals(val, None)
+            self.assertEqual(val, None)
 
             client.assertSent(pureldap.LDAPSearchRequest(
                 baseObject='dc=example,dc=com',
@@ -627,7 +627,7 @@ class LDAPSyntaxSearch(unittest.TestCase):
         d=o.search(filterText='(foo=a)')
         def eb(fail):
             fail.trap(ldaperrors.LDAPBusy)
-            self.assertEquals(fail.value.message, 'Go away')
+            self.assertEqual(fail.value.message, 'Go away')
 
             client.assertSent(pureldap.LDAPSearchRequest(
                 baseObject='dc=example,dc=com',
@@ -754,7 +754,7 @@ class LDAPSyntaxDelete(unittest.TestCase):
         d=o.delete()
         def eb(fail):
             fail.trap(ldaperrors.LDAPBusy)
-            self.assertEquals(fail.value.message, 'Go away')
+            self.assertEqual(fail.value.message, 'Go away')
 
             client.assertSent(pureldap.LDAPDelRequest(
                 entry='cn=foo,dc=example,dc=com',
@@ -777,7 +777,7 @@ class LDAPSyntaxDelete(unittest.TestCase):
         d=o.delete()
         def eb(fail):
             fail.trap(ldaperrors.LDAPProtocolError)
-            self.assertEquals(fail.value.message, 'Unknown request')
+            self.assertEqual(fail.value.message, 'Unknown request')
 
             client.assertSent(pureldap.LDAPDelRequest(
                 entry='cn=foo,dc=example,dc=com',
@@ -960,7 +960,7 @@ class LDAPSyntaxPasswords(unittest.TestCase):
         d=defer.maybeDeferred(o.setPassword_Samba, newPasswd='new', style='foo')
         def eb(fail):
             fail.trap(RuntimeError)
-            self.assertEquals(fail.getErrorMessage(),
+            self.assertEqual(fail.getErrorMessage(),
                               "Unknown samba password style 'foo'")
             client.assertNothingSent()
         d.addCallbacks(testutil.mustRaise, eb)
@@ -1230,7 +1230,7 @@ class LDAPSyntaxPasswords(unittest.TestCase):
         def chainMustErrback(dummy):
             raise RuntimeError('Should never get here')
         d.addCallbacks(callback=chainMustErrback, errback=checkError)
-        d.addCallback(self.assertEquals, 'This test run should succeed')
+        d.addCallback(self.assertEqual, 'This test run should succeed')
         def cb(dummy):
             client.assertSent(
                 pureldap.LDAPPasswordModifyRequest(userIdentity='cn=foo,dc=example,dc=com',
@@ -1268,12 +1268,12 @@ class LDAPSyntaxPasswords(unittest.TestCase):
             assert len(l)==2
 
             assert len(l[0])==2
-            self.assertEquals(l[0][0], 'ExtendedOperation')
+            self.assertEqual(l[0][0], 'ExtendedOperation')
             assert isinstance(l[0][1], failure.Failure)
             l[0][1].trap(ldaperrors.LDAPInsufficientAccessRights)
 
             assert len(l[1])==2
-            self.assertEquals(l[1][0], 'Samba')
+            self.assertEqual(l[1][0], 'Samba')
             assert isinstance(l[1][1], failure.Failure)
             l[1][1].trap(ldapsyntax.PasswordSetAborted)
 
@@ -1322,9 +1322,9 @@ class LDAPSyntaxFetch(unittest.TestCase):
             has.sort()
             want=['foo', 'bar']
             want.sort()
-            self.assertEquals(has, want)
-            self.assertEquals(o['foo'], ['a'])
-            self.assertEquals(o['bar'], ['b', 'c'])
+            self.assertEqual(has, want)
+            self.assertEqual(o['foo'], ['a'])
+            self.assertEqual(o['bar'], ['b', 'c'])
         d.addCallback(cb)
         return d
 
@@ -1357,9 +1357,9 @@ class LDAPSyntaxFetch(unittest.TestCase):
             has.sort()
             want=['foo', 'bar']
             want.sort()
-            self.assertEquals(has, want)
-            self.assertEquals(o['foo'], ['a'])
-            self.assertEquals(o['bar'], ['b', 'c'])
+            self.assertEqual(has, want)
+            self.assertEqual(o['foo'], ['a'])
+            self.assertEqual(o['bar'], ['b', 'c'])
         d.addCallback(cb)
         return d
 
@@ -1393,10 +1393,10 @@ class LDAPSyntaxFetch(unittest.TestCase):
             has.sort()
             want=['foo', 'bar', 'quux']
             want.sort()
-            self.assertEquals(has, want)
-            self.assertEquals(o['foo'], ['a'])
-            self.assertEquals(o['bar'], ['b', 'c'])
-            self.assertEquals(o['quux'], ['baz', 'xyzzy'])
+            self.assertEqual(has, want)
+            self.assertEqual(o['foo'], ['a'])
+            self.assertEqual(o['bar'], ['b', 'c'])
+            self.assertEqual(o['quux'], ['baz', 'xyzzy'])
         d.addCallback(cb)
         return d
 
@@ -1493,7 +1493,7 @@ class LDAPSyntaxMove(unittest.TestCase):
                 newSuperior='ou=somewhere,dc=example,dc=com',
                 ))
 
-            self.assertEquals(o.dn, 'cn=bar,ou=somewhere,dc=example,dc=com')
+            self.assertEqual(o.dn, 'cn=bar,ou=somewhere,dc=example,dc=com')
         d.addCallback(cb)
         return d
 

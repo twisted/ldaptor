@@ -33,7 +33,7 @@ class TestCallableOverride(unittest.TestCase):
                           overrides={
             'dc=example,dc=com': ('server.example.com', 1389),
             })
-        self.assertEquals(o, ('server.example.com', 1389))
+        self.assertEqual(o, ('server.example.com', 1389))
 
     def testFindOverride_root(self):
         """Empty dn can be used as override."""
@@ -44,4 +44,4 @@ class TestCallableOverride(unittest.TestCase):
                           overrides={
             '': ('server.example.com', 1389),
             })
-        self.assertEquals(o, ('server.example.com', 1389))
+        self.assertEqual(o, ('server.example.com', 1389))

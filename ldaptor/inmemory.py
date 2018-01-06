@@ -122,7 +122,6 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
 
 
 class InMemoryLDIFProtocol(ldifprotocol.LDIF):
-
     """
     Receive LDIF data and gather results into an ReadOnlyInMemoryLDAPEntry.
 
@@ -150,11 +149,13 @@ class InMemoryLDIFProtocol(ldifprotocol.LDIF):
             if parent is not None:
                 parent.addChild(rdn=entry.dn.split()[0],
                                 attributes=entry)
+
         d.addCallback(_add, entry)
         d.addErrback(self.addFailed, entry)
 
         def _passDB(_, db):
             return db
+
         d.addCallback(_passDB, db)
         return d
 

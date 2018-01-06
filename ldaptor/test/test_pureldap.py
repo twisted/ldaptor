@@ -632,7 +632,7 @@ class KnownValues(unittest.TestCase):
                     fallback=pureber.BERDecoderContext())
             m=s(*encoded)
             result, bytes = pureber.berDecodeObject(decoder, m)
-            self.assertEquals(bytes, len(m))
+            self.assertEqual(bytes, len(m))
 
             shouldBe = klass(*args, **kwargs)
             #TODO shouldn't use str below
@@ -653,7 +653,7 @@ class KnownValues(unittest.TestCase):
                 self.assertRaises(pureber.BERExceptionInsufficientData,
                                   pureber.berDecodeObject,
                                   decoder, m)
-            self.assertEquals((None, 0), pureber.berDecodeObject(decoder, ''))
+            self.assertEqual((None, 0), pureber.berDecodeObject(decoder, ''))
 
 class TestEquality(unittest.TestCase):
     valuesToTest=(
@@ -673,8 +673,8 @@ class TestEquality(unittest.TestCase):
         for class_, args in self.valuesToTest:
             x=class_(*args)
             y=class_(*args)
-            self.assertEquals(x, x)
-            self.assertEquals(x, y)
+            self.assertEqual(x, x)
+            self.assertEqual(x, y)
 
     def testInEquality(self):
         """LDAP objects do not equal LDAP objects with different type or content"""
@@ -702,7 +702,7 @@ class Substrings(unittest.TestCase):
         # filt.substrings was left as a BERSequence, which under the
         # current str()-to-wire-protocol system had len() > 1 even
         # when empty, and that tripped e.g. entry.match()
-        self.assertEquals(len(filt.substrings), 1)
+        self.assertEqual(len(filt.substrings), 1)
 
 class TestEscaping(unittest.TestCase):
     def test_escape(self):
@@ -711,7 +711,7 @@ class TestEscaping(unittest.TestCase):
         result = pureldap.escape(s)
         expected = '\\5c\\2a\\28\\29\\00'
 
-        self.assertEquals(expected, result)
+        self.assertEqual(expected, result)
 
     def test_binary_escape(self):
         s = 'HELLO'
@@ -719,7 +719,7 @@ class TestEscaping(unittest.TestCase):
         result = pureldap.binary_escape(s)
         expected = '\\48\\45\\4c\\4c\\4f'
 
-        self.assertEquals(expected, result)
+        self.assertEqual(expected, result)
 
     def test_smart_escape_regular(self):
         s = 'HELLO'
@@ -727,7 +727,7 @@ class TestEscaping(unittest.TestCase):
         result = pureldap.smart_escape(s)
         expected = 'HELLO'
 
-        self.assertEquals(expected, result)
+        self.assertEqual(expected, result)
 
     def test_smart_escape_binary(self):
         s = '\x10\x11\x12\x13\x14'
@@ -735,7 +735,7 @@ class TestEscaping(unittest.TestCase):
         result = pureldap.smart_escape(s)
         expected = '\\10\\11\\12\\13\\14'
 
-        self.assertEquals(expected, result)
+        self.assertEqual(expected, result)
 
     def test_smart_escape_threshold(self):
         s = '\x10\x11ABC'
@@ -743,7 +743,7 @@ class TestEscaping(unittest.TestCase):
         result = pureldap.smart_escape(s, threshold=0.10)
         expected = '\\10\\11\\41\\42\\43'
 
-        self.assertEquals(expected, result)
+        self.assertEqual(expected, result)
 
     def test_default_escaper(self):
         chars = '\\*()\0'
@@ -868,6 +868,7 @@ class TestEscaping(unittest.TestCase):
         for filt, expected in filters:
             result = filt.asText()
             self.assertEqual(expected, result)
+
 
 class TestFilterSetEquality(unittest.TestCase):
     def test_basic_and_equal(self):

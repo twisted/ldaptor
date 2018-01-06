@@ -1,16 +1,17 @@
 import string, warnings
 from ldaptor import md4, config
 
-lower='abcdefghijklmnopqrstuvwxyz'
-upper=lower.upper()
+lower = 'abcdefghijklmnopqrstuvwxyz'
+upper = lower.upper()
 toupper=string.maketrans(lower, upper)
 
 def nthash(password=''):
     """Generates nt md4 password hash for a given password."""
 
-    password=password[:128]
-    password=''.join([c+'\000' for c in password])
+    password = password[:128]
+    password = ''.join([c + '\000' for c in password])
     return md4.new(password).hexdigest().translate(toupper);
+
 
 def lmhash_locked(password=''):
     """
@@ -19,12 +20,14 @@ def lmhash_locked(password=''):
     Note that the author thinks LanMan hashes should be banished from
     the face of the earth.
     """
-    return 32*'X'
+    return 32 * 'X'
+
 
 def _no_lmhash(password=''):
     if config.useLMhash():
         warnings.warn("Cannot import Crypto.Cipher.DES, lmhash passwords disabled.")
     return lmhash_locked()
+
 
 def _have_lmhash(password=''):
     """
@@ -37,10 +40,11 @@ def _have_lmhash(password=''):
     if not config.useLMhash():
         return lmhash_locked()
 
-    password = (password+14*'\0')[:14]
+    password = (password + 14 * '\0')[:14]
     password = password.upper()
 
     return _deshash(password[:7]) + _deshash(password[7:])
+
 
 try:
     from Crypto.Cipher import DES
@@ -50,6 +54,8 @@ else:
     lmhash = _have_lmhash
 
 LM_MAGIC = "KGS!@#$%"
+
+
 def _deshash(p):
     # Insert parity bits. I'm not going to bother myself with smart
     # implementations.
@@ -63,6 +69,7 @@ def _deshash(p):
                      bool(byte & 4),
                      bool(byte & 2),
                      bool(byte & 1)])
+
     def _pack(bits):
         x = ((bits[0] << 7)
              + (bits[1] << 6)
@@ -86,4 +93,3 @@ def _deshash(p):
     raw = cipher.encrypt(LM_MAGIC)
     l = ['%02X' % ord(x) for x in raw]
     return ''.join(l)
-

@@ -57,7 +57,7 @@ class TestInMemoryDatabase(unittest.TestCase):
     def test_children_oneChild(self):
         d = self.oneChild.children()
         def cb(children):
-            self.assertEquals(len(children), 1)
+            self.assertEqual(len(children), 1)
             got = [e.dn for e in children]
             want = [distinguishedname.DistinguishedName('cn=theChild,ou=oneChild,dc=example,dc=com')]
             got.sort()
@@ -70,7 +70,7 @@ class TestInMemoryDatabase(unittest.TestCase):
         """Test that .children() returns a copy of the data so that modifying it does not affect behaviour."""
         d = self.oneChild.children()
         def cb1(children1):
-            self.assertEquals(len(children1), 1)
+            self.assertEqual(len(children1), 1)
 
             children1.pop()
 
@@ -79,14 +79,14 @@ class TestInMemoryDatabase(unittest.TestCase):
         d.addCallback(cb1)
 
         def cb2(children2):
-            self.assertEquals(len(children2), 1)
+            self.assertEqual(len(children2), 1)
         d.addCallback(cb2)
         return d
 
     def test_children_twoChildren(self):
         d = self.meta.children()
         def cb(children):
-            self.assertEquals(len(children), 2)
+            self.assertEqual(len(children), 2)
             want = [
                 distinguishedname.DistinguishedName('cn=foo,ou=metasyntactic,dc=example,dc=com'),
                 distinguishedname.DistinguishedName('cn=bar,ou=metasyntactic,dc=example,dc=com'),
@@ -105,7 +105,7 @@ class TestInMemoryDatabase(unittest.TestCase):
             })
         d = self.empty.children()
         def cb(children):
-            self.assertEquals(len(children), 1)
+            self.assertEqual(len(children), 1)
             got = [e.dn for e in children]
             want = [
                 distinguishedname.DistinguishedName('a=b,ou=empty,dc=example,dc=com'),
@@ -126,15 +126,15 @@ class TestInMemoryDatabase(unittest.TestCase):
             })
 
     def test_parent(self):
-        self.assertEquals(self.foo.parent(), self.meta)
-        self.assertEquals(self.meta.parent(), self.root)
-        self.assertEquals(self.root.parent(), None)
+        self.assertEqual(self.foo.parent(), self.meta)
+        self.assertEqual(self.meta.parent(), self.root)
+        self.assertEqual(self.root.parent(), None)
 
 
     def test_subtree_empty(self):
         d = self.empty.subtree()
         def cb(entries):
-            self.assertEquals(len(entries), 1)
+            self.assertEqual(len(entries), 1)
         d.addCallback(cb)
         return d
 
@@ -149,7 +149,7 @@ class TestInMemoryDatabase(unittest.TestCase):
     def test_subtree_oneChild_cb(self):
         got = []
         d = self.oneChild.subtree(got.append)
-        d.addCallback(self.assertEquals, None)
+        d.addCallback(self.assertEqual, None)
         def cb(dummy):
             want = [
                 self.oneChild,
@@ -180,7 +180,7 @@ class TestInMemoryDatabase(unittest.TestCase):
         got = []
         d = self.root.subtree(callback=got.append)
         def cb(r):
-            self.assertEquals(r, None)
+            self.assertEqual(r, None)
 
             want = [
                 self.root,
@@ -200,7 +200,7 @@ class TestInMemoryDatabase(unittest.TestCase):
         d = self.root.lookup(dn)
         def eb(fail):
             fail.trap(ldaperrors.LDAPNoSuchObject)
-            self.assertEquals(fail.value.message, dn)
+            self.assertEqual(fail.value.message, dn)
         d.addCallbacks(testutil.mustRaise, eb)
         return d
 
@@ -209,14 +209,14 @@ class TestInMemoryDatabase(unittest.TestCase):
         d = self.root.lookup(dn)
         def eb(fail):
             fail.trap(ldaperrors.LDAPNoSuchObject)
-            self.assertEquals(fail.value.message, dn)
+            self.assertEqual(fail.value.message, dn)
         d.addCallbacks(testutil.mustRaise, eb)
         return d
 
     def test_lookup_deep(self):
         dn = distinguishedname.DistinguishedName('cn=bar,ou=metasyntactic,dc=example,dc=com')
         d = self.root.lookup(dn)
-        d.addCallback(self.assertEquals, self.bar)
+        d.addCallback(self.assertEqual, self.bar)
         return d
 
     def test_delete_root(self):
@@ -237,14 +237,14 @@ class TestInMemoryDatabase(unittest.TestCase):
 
     def test_delete(self):
         d = self.foo.delete()
-        d.addCallback(self.assertEquals, self.foo)
+        d.addCallback(self.assertEqual, self.foo)
         d.addCallback(lambda _: self.meta.children())
         d.addCallback(self.assertItemsEqual, [self.bar])
         return d
 
     def test_deleteChild(self):
         d = self.meta.deleteChild('cn=bar')
-        d.addCallback(self.assertEquals, self.bar)
+        d.addCallback(self.assertEqual, self.bar)
         d.addCallback(lambda _: self.meta.children())
         d.addCallback(self.assertItemsEqual, [self.foo])
         return d
@@ -259,7 +259,7 @@ class TestInMemoryDatabase(unittest.TestCase):
     def test_setPassword(self):
         self.foo.setPassword('s3krit', salt='\xf2\x4a')
         self.failUnless('userPassword' in self.foo)
-        self.assertEquals(self.foo['userPassword'],
+        self.assertEqual(self.foo['userPassword'],
                           ['{SSHA}0n/Iw1NhUOKyaI9gm9v5YsO3ZInySg=='])
 
     def test_setPassword_noSalt(self):
@@ -278,7 +278,7 @@ class TestInMemoryDatabase(unittest.TestCase):
         d = self.root.search(filterText='(|(cn=foo)(cn=bar))',
                              callback=got.append)
         def cb(r):
-            self.assertEquals(r, None)
+            self.assertEqual(r, None)
 
             want = [
                 self.bar,
@@ -392,7 +392,7 @@ bValue: c
 ''')
         d = inmemory.fromLDIFFile(ldif)
         def cb1(db):
-            self.assertEquals(
+            self.assertEqual(
                 db.dn,
                 distinguishedname.DistinguishedName('cn=foo,dc=example,dc=com'))
             return db.children()
@@ -413,13 +413,13 @@ cn: foo
 ''')
         d = inmemory.fromLDIFFile(ldif)
         def cb1(db):
-            self.assertEquals(
+            self.assertEqual(
                 db.dn,
                 distinguishedname.DistinguishedName('dc=example,dc=com'))
             return db.subtree()
         d.addCallback(cb1)
         def cb2(children):
-            self.assertEquals(len(children), 2)
+            self.assertEqual(len(children), 2)
             want = [
                 distinguishedname.DistinguishedName('dc=example,dc=com'),
                 distinguishedname.DistinguishedName('cn=foo,dc=example,dc=com'),
@@ -461,7 +461,7 @@ class TestDiff(unittest.TestCase):
             'dc': ['example'],
             })
         d = a.diffTree(b)
-        d.addCallback(self.assertEquals, [])
+        d.addCallback(self.assertEqual, [])
         return d
 
     def testRootChange_Add(self):
@@ -475,7 +475,7 @@ class TestDiff(unittest.TestCase):
             'foo': ['bar'],
             })
         d = a.diffTree(b)
-        d.addCallback(self.assertEquals,
+        d.addCallback(self.assertEqual,
                       [ delta.ModifyOp('dc=example,dc=com',
                                        [
             delta.Add('foo', ['bar']),
@@ -500,7 +500,7 @@ class TestDiff(unittest.TestCase):
                      'foo': ['bar'],
                      })
         d = a.diffTree(b)
-        d.addCallback(self.assertEquals,
+        d.addCallback(self.assertEqual,
                       [ delta.ModifyOp('cn=foo,dc=example,dc=com',
                                        [
             delta.Add('foo', ['bar']),
@@ -528,7 +528,7 @@ class TestDiff(unittest.TestCase):
             })
 
         d = a.diffTree(b)
-        d.addCallback(self.assertEquals, [
+        d.addCallback(self.assertEqual, [
             delta.AddOp(bar),
             delta.AddOp(foo),
             ])
@@ -560,7 +560,7 @@ class TestDiff(unittest.TestCase):
             })
 
         d = a.diffTree(b)
-        d.addCallback(self.assertEquals, [
+        d.addCallback(self.assertEqual, [
             delta.AddOp(bar),
             delta.AddOp(foo),
             delta.AddOp(baz),
@@ -587,7 +587,7 @@ class TestDiff(unittest.TestCase):
             })
 
         d = a.diffTree(b)
-        d.addCallback(self.assertEquals, [
+        d.addCallback(self.assertEqual, [
             delta.DeleteOp(bar),
             delta.DeleteOp(foo),
             ])
@@ -619,7 +619,7 @@ class TestDiff(unittest.TestCase):
             })
 
         d = a.diffTree(b)
-        d.addCallback(self.assertEquals, [
+        d.addCallback(self.assertEqual, [
             delta.DeleteOp(bar),
             delta.DeleteOp(baz),
             delta.DeleteOp(foo),

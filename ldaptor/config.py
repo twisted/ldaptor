@@ -5,6 +5,7 @@ from ldaptor import interfaces
 from ldaptor.insensitive import InsensitiveString
 from ldaptor.protocols.ldap import distinguishedname
 
+
 class MissingBaseDNError(Exception):
     """Configuration must specify a base DN"""
 
@@ -30,7 +31,7 @@ class LDAPConfig(object):
         if serviceLocationOverrides is not None:
             for k,v in serviceLocationOverrides.items():
                 dn = distinguishedname.DistinguishedName(k)
-                self.serviceLocationOverrides[dn]=v
+                self.serviceLocationOverrides[dn] = v
         if identityBaseDN is not None:
             identityBaseDN = distinguishedname.DistinguishedName(identityBaseDN)
             self.identityBaseDN = identityBaseDN
@@ -73,7 +74,7 @@ class LDAPConfig(object):
                         port = None
 
                 dn = distinguishedname.DistinguishedName(stringValue=base)
-                serviceLocationOverride[dn]=(host, port)
+                serviceLocationOverride[dn] = (host, port)
         return serviceLocationOverride
 
     def copy(self, **kw):
@@ -117,9 +118,8 @@ class LDAPConfig(object):
 
 
 DEFAULTS = {
-    'samba': { 'use-lmhash': 'no',
-               },
-    }
+    'samba': {'use-lmhash': 'no'},
+}
 
 CONFIG_FILES = [
     '/etc/ldaptor/global.cfg',
@@ -127,6 +127,7 @@ CONFIG_FILES = [
     ]
 
 __config = None
+
 
 def loadConfig(configFiles=None,
                reload=False):
@@ -148,6 +149,7 @@ def loadConfig(configFiles=None,
         x.read(configFiles)
         __config = x
     return __config
+
 
 def useLMhash():
     """

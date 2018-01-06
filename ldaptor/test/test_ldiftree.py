@@ -100,7 +100,7 @@ objectClass: top
         d = ldiftree.get(self.tree, 'cn=foo,dc=example,dc=com')
         def eb(fail):
             fail.trap(IOError)
-            self.assertEquals(fail.value.errno, errno.EACCES)
+            self.assertEqual(fail.value.errno, errno.EACCES)
         d.addCallbacks(testutil.mustRaise, eb)
         return d
 
@@ -350,7 +350,7 @@ cn: theChild
     def test_children_empty(self):
         d = self.empty.children()
         def cb(children):
-            self.assertEquals(children, [])
+            self.assertEqual(children, [])
         d.addCallback(cb)
         return d
 
@@ -360,12 +360,12 @@ cn: theChild
         return d
 
     def _cb_test_children_oneChild(self, children):
-        self.assertEquals(len(children), 1)
+        self.assertEqual(len(children), 1)
         got = [e.dn for e in children]
         want = ['cn=theChild,ou=oneChild,dc=example,dc=com']
         got.sort()
         want.sort()
-        self.assertEquals(got, want)
+        self.assertEqual(got, want)
 
     def test_children_repeat(self):
         """Test that .children() returns a copy of the data so that modifying it does not affect behaviour."""
@@ -374,7 +374,7 @@ cn: theChild
         return d
 
     def _cb_test_children_repeat_1(self, children1):
-        self.assertEquals(len(children1), 1)
+        self.assertEqual(len(children1), 1)
 
         children1.pop()
 
@@ -383,7 +383,7 @@ cn: theChild
         return d
 
     def _cb_test_children_repeat_2(self, children2):
-        self.assertEquals(len(children2), 1)
+        self.assertEqual(len(children2), 1)
 
     def test_children_twoChildren(self):
         d = self.meta.children()
@@ -391,7 +391,7 @@ cn: theChild
         return d
 
     def _cb_test_children_twoChildren(self, children):
-        self.assertEquals(len(children), 2)
+        self.assertEqual(len(children), 2)
         want = [
             'cn=foo,ou=metasyntactic,dc=example,dc=com',
             'cn=bar,ou=metasyntactic,dc=example,dc=com',
@@ -399,7 +399,7 @@ cn: theChild
         got = [e.dn for e in children]
         got.sort()
         want.sort()
-        self.assertEquals(got, want)
+        self.assertEqual(got, want)
 
     def test_children_twoChildren_callback(self):
         children = []
@@ -409,7 +409,7 @@ cn: theChild
 
     def _cb_test_children_twoChildren_callback(self, r, children):
         self.assertIdentical(r, None)
-        self.assertEquals(len(children), 2)
+        self.assertEqual(len(children), 2)
         want = [
             'cn=foo,ou=metasyntactic,dc=example,dc=com',
             'cn=bar,ou=metasyntactic,dc=example,dc=com',
@@ -417,14 +417,14 @@ cn: theChild
         got = [e.dn for e in children]
         got.sort()
         want.sort()
-        self.assertEquals(got, want)
+        self.assertEqual(got, want)
 
     def test_children_noAccess_dir_noRead(self):
         os.chmod(self.meta.path, 0300)
         d = self.meta.children()
         def eb(fail):
             fail.trap(OSError)
-            self.assertEquals(fail.value.errno, errno.EACCES)
+            self.assertEqual(fail.value.errno, errno.EACCES)
             os.chmod(self.meta.path, 0755)
         d.addCallbacks(testutil.mustRaise, eb)
         return d
@@ -437,7 +437,7 @@ cn: theChild
         d = self.meta.children()
         def eb(fail):
             fail.trap(IOError)
-            self.assertEquals(fail.value.errno, errno.EACCES)
+            self.assertEqual(fail.value.errno, errno.EACCES)
             os.chmod(self.meta.path, 0755)
         d.addCallbacks(testutil.mustRaise, eb)
         return d
@@ -450,7 +450,7 @@ cn: theChild
         d = self.meta.children()
         def eb(fail):
             fail.trap(IOError)
-            self.assertEquals(fail.value.errno, errno.EACCES)
+            self.assertEqual(fail.value.errno, errno.EACCES)
         d.addCallbacks(testutil.mustRaise, eb)
         return d
 
@@ -469,14 +469,14 @@ cn: theChild
         return d
 
     def _cb_test_addChild(self, children):
-        self.assertEquals(len(children), 1)
+        self.assertEqual(len(children), 1)
         got = [e.dn for e in children]
         want = [
             'a=b,ou=empty,dc=example,dc=com',
             ]
         got.sort()
         want.sort()
-        self.assertEquals(got, want)
+        self.assertEqual(got, want)
 
     def test_addChild_Exists(self):
         self.assertRaises(ldaperrors.LDAPEntryAlreadyExists,
@@ -488,9 +488,9 @@ cn: theChild
             })
 
     def test_parent(self):
-        self.assertEquals(self.foo.parent(), self.meta)
-        self.assertEquals(self.meta.parent(), self.example)
-        self.assertEquals(self.root.parent(), None)
+        self.assertEqual(self.foo.parent(), self.meta)
+        self.assertEqual(self.meta.parent(), self.example)
+        self.assertEqual(self.root.parent(), None)
 
 
     def test_subtree_empty(self):
@@ -499,7 +499,7 @@ cn: theChild
         return d
 
     def _cb_test_subtree_empty(self, entries):
-        self.assertEquals(len(entries), 1)
+        self.assertEqual(len(entries), 1)
 
     def test_subtree_oneChild(self):
         d = self.oneChild.subtree()
@@ -512,7 +512,7 @@ cn: theChild
             self.oneChild,
             self.theChild,
             ]
-        self.assertEquals(got, want)
+        self.assertEqual(got, want)
 
     def test_subtree_oneChild_cb(self):
         got = []
@@ -521,13 +521,13 @@ cn: theChild
         return d
 
     def _cb_test_subtree_oneChild_cb(self, r, got):
-        self.assertEquals(r, None)
+        self.assertEqual(r, None)
 
         want = [
             self.oneChild,
             self.theChild,
             ]
-        self.assertEquals(got, want)
+        self.assertEqual(got, want)
 
     def test_subtree_many(self):
         d = self.example.subtree()
@@ -547,7 +547,7 @@ cn: theChild
             ]
         got.sort()
         want.sort()
-        self.assertEquals(got, want)
+        self.assertEqual(got, want)
 
     def test_subtree_many_cb(self):
         got = []
@@ -556,7 +556,7 @@ cn: theChild
         return d
 
     def _cb_test_subtree_many_cb(self, r, got):
-        self.assertEquals(r, None)
+        self.assertEqual(r, None)
 
         want = [
             self.example,
@@ -569,14 +569,14 @@ cn: theChild
             ]
         got.sort()
         want.sort()
-        self.assertEquals(got, want)
+        self.assertEqual(got, want)
 
     def test_lookup_fail(self):
         dn = 'cn=thud,ou=metasyntactic,dc=example,dc=com'
         d = self.root.lookup(dn)
         def eb(fail):
             fail.trap(ldaperrors.LDAPNoSuchObject)
-            self.assertEquals(fail.value.message, dn)
+            self.assertEqual(fail.value.message, dn)
         d.addCallbacks(testutil.mustRaise, eb)
         return d
 
@@ -585,7 +585,7 @@ cn: theChild
         d = self.root.lookup(dn)
         def eb(fail):
             fail.trap(ldaperrors.LDAPNoSuchObject)
-            self.assertEquals(fail.value.message, dn)
+            self.assertEqual(fail.value.message, dn)
         d.addCallbacks(testutil.mustRaise, eb)
         return d
 
@@ -594,7 +594,7 @@ cn: theChild
         d = self.example.lookup(dn)
         def eb(fail):
             fail.trap(ldaperrors.LDAPNoSuchObject)
-            self.assertEquals(fail.value.message, dn)
+            self.assertEqual(fail.value.message, dn)
         d.addCallbacks(testutil.mustRaise, eb)
 
     def test_lookup_fail_multipleError(self):
@@ -631,7 +631,7 @@ objectClass: top
         return d
 
     def _cb_test_lookup_deep(self, r):
-        self.assertEquals(r, self.bar)
+        self.assertEqual(r, self.bar)
 
     def test_delete_root(self):
         d = self.root.delete()
@@ -653,13 +653,13 @@ objectClass: top
         return d
 
     def _cb_test_delete_1(self, r):
-        self.assertEquals(r, self.foo)
+        self.assertEqual(r, self.foo)
         d = self.meta.children()
         d.addCallback(self._cb_test_delete_2)
         return d
 
     def _cb_test_delete_2(self, r):
-        self.assertEquals(r, [self.bar])
+        self.assertEqual(r, [self.bar])
 
     def test_deleteChild(self):
         d = self.meta.deleteChild('cn=bar')
@@ -667,13 +667,13 @@ objectClass: top
         return d
 
     def _cb_test_deleteChild_1(self, r):
-        self.assertEquals(r, self.bar)
+        self.assertEqual(r, self.bar)
         d = self.meta.children()
         d.addCallback(self._cb_test_deleteChild_2)
         return d
 
     def _cb_test_deleteChild_2(self, r):
-        self.assertEquals(r, [self.foo])
+        self.assertEqual(r, [self.foo])
 
     def test_deleteChild_NonExisting(self):
         d = self.root.deleteChild('cn=not-exist')
@@ -685,7 +685,7 @@ objectClass: top
     def test_setPassword(self):
         self.foo.setPassword('s3krit', salt='\xf2\x4a')
         self.failUnless('userPassword' in self.foo)
-        self.assertEquals(self.foo['userPassword'],
+        self.assertEqual(self.foo['userPassword'],
                           ['{SSHA}0n/Iw1NhUOKyaI9gm9v5YsO3ZInySg=='])
 
     def test_setPassword_noSalt(self):
@@ -701,7 +701,7 @@ objectClass: top
 
     def test_diffTree_self(self):
         d = self.root.diffTree(self.root)
-        d.addCallback(self.assertEquals, [])
+        d.addCallback(self.assertEqual, [])
         return d
 
     def test_diffTree_copy(self):
@@ -709,7 +709,7 @@ objectClass: top
         shutil.copytree(self.tree, otherDir)
         other = ldiftree.LDIFTreeEntry(otherDir)
         d = self.root.diffTree(other)
-        d.addCallback(self.assertEquals, [])
+        d.addCallback(self.assertEqual, [])
         return d
 
     def test_diffTree_addChild(self):
@@ -725,7 +725,7 @@ objectClass: top
 
         def cb2(r):
             d = self.root.diffTree(other)
-            d.addCallback(self.assertEquals, [delta.AddOp(r)])
+            d.addCallback(self.assertEqual, [delta.AddOp(r)])
             return d
         d.addCallback(cb2)
         return d
@@ -744,7 +744,7 @@ objectClass: top
             return self.root.diffTree(other)
         d.addCallback(cb2)
         def cb3(got):
-            self.assertEquals(got, [delta.DeleteOp(self.empty)])
+            self.assertEqual(got, [delta.DeleteOp(self.empty)])
         d.addCallback(cb3)
         return d
 
@@ -764,7 +764,7 @@ objectClass: top
         d.addCallback(cb2)
 
         def cb3(got):
-            self.assertEquals(got, [
+            self.assertEqual(got, [
                 delta.ModifyOp(self.empty.dn,
                                [delta.Add('foo', ['bar'])],
                                ),
@@ -779,7 +779,7 @@ objectClass: top
             return self.example.children()
         d.addCallback(getChildren)
         d.addCallback(set)
-        d.addCallback(self.assertEquals, set([
+        d.addCallback(self.assertEqual, set([
             self.meta,
             BaseLDAPEntry(
             dn='ou=moved,dc=example,dc=com',
@@ -796,7 +796,7 @@ objectClass: top
             return self.example.children()
         d.addCallback(getChildren)
         d.addCallback(set)
-        d.addCallback(self.assertEquals, set([
+        d.addCallback(self.assertEqual, set([
             BaseLDAPEntry(dn='ou=moved,dc=example,dc=com',
                           attributes={ 'objectClass': ['a', 'b'],
                                        'ou': ['moved'],
@@ -813,7 +813,7 @@ objectClass: top
             return self.example.children()
         d.addCallback(getChildren)
         d.addCallback(set)
-        d.addCallback(self.assertEquals, set([
+        d.addCallback(self.assertEqual, set([
             self.meta,
             self.oneChild,
             ]))
@@ -821,7 +821,7 @@ objectClass: top
             return self.oneChild.children()
         d.addCallback(getChildren2)
         d.addCallback(set)
-        d.addCallback(self.assertEquals, set([
+        d.addCallback(self.assertEqual, set([
             self.theChild,
             BaseLDAPEntry(
             dn='ou=moved,ou=oneChild,dc=example,dc=com',
@@ -837,7 +837,7 @@ objectClass: top
             return self.example.children()
         d.addCallback(getChildren)
         d.addCallback(set)
-        d.addCallback(self.assertEquals, set([
+        d.addCallback(self.assertEqual, set([
             self.empty,
             self.oneChild,
             ]))
@@ -845,7 +845,7 @@ objectClass: top
             return self.oneChild.children()
         d.addCallback(getChildren2)
         d.addCallback(set)
-        d.addCallback(self.assertEquals, set([
+        d.addCallback(self.assertEqual, set([
             self.theChild,
             BaseLDAPEntry(dn='ou=moved,ou=oneChild,dc=example,dc=com',
                           attributes={ 'objectClass': ['a', 'b'],

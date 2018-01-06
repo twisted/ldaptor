@@ -290,9 +290,9 @@ class LDAPServer(BaseLDAPServer):
     def handle_LDAPSearchRequest(self, request, controls, reply):
         self.checkControls(controls)
 
-        if (request.baseObject == '' and
-                request.scope == pureldap.LDAP_SCOPE_baseObject and
-                request.filter == pureldap.LDAPFilter_present('objectClass')):
+        if (request.baseObject == ''
+                and request.scope == pureldap.LDAP_SCOPE_baseObject
+                and request.filter == pureldap.LDAPFilter_present('objectClass')):
             return self.getRootDSE(request, reply)
         dn = distinguishedname.DistinguishedName(request.baseObject)
         root = interfaces.IConnectedLDAPEntry(self.factory)
@@ -472,15 +472,15 @@ class LDAPServer(BaseLDAPServer):
         if self.boundUser is None:
             raise ldaperrors.LDAPStrongAuthRequired()
 
-        if (userIdentity is not None and
-                userIdentity != self.boundUser.dn):
+        if (userIdentity is not None
+                and userIdentity != self.boundUser.dn):
             log.msg('User %(actor)s tried to change password of %(target)s' % {
                 'actor': str(self.boundUser.dn),
                 'target': str(userIdentity),
                 })
             raise ldaperrors.LDAPInsufficientAccessRights()
-        if (oldPasswd is not None or
-                newPasswd is None):
+        if (oldPasswd is not None
+                or newPasswd is None):
             raise ldaperrors.LDAPOperationsError(
                 'Password does not support this case.')
         self.boundUser.setPassword(newPasswd)

@@ -20,7 +20,7 @@ class TestCaseWithKnownValues(unittest.TestCase):
                 listOfRDNs.append(r)
             fromList = dn.DistinguishedName(listOfRDNs)
 
-            self.assertEquals(fromString, fromList)
+            self.assertEqual(fromString, fromList)
 
             fromStringToString = str(fromString)
             fromListToString = str(fromList)
@@ -31,17 +31,17 @@ class TestCaseWithKnownValues(unittest.TestCase):
             # DNs equal their string representation. Note this does
             # not mean they equal all the possible string
             # representations -- just the canonical one.
-            self.assertEquals(fromString, canon)
-            self.assertEquals(fromList, canon)
-            self.assertEquals(canon, fromString)
-            self.assertEquals(canon, fromList)
+            self.assertEqual(fromString, canon)
+            self.assertEqual(fromList, canon)
+            self.assertEqual(canon, fromString)
+            self.assertEqual(canon, fromList)
 
             # DNs can be used interchangeably with their canonical
             # string representation as hash keys.
-            self.assertEquals(hash(fromString), hash(canon))
-            self.assertEquals(hash(fromList), hash(canon))
-            self.assertEquals(hash(canon), hash(fromString))
-            self.assertEquals(hash(canon), hash(fromList))
+            self.assertEqual(hash(fromString), hash(canon))
+            self.assertEqual(hash(fromList), hash(canon))
+            self.assertEqual(hash(canon), hash(fromString))
+            self.assertEqual(hash(canon), hash(fromList))
 
 
 class LDAPDistinguishedName_Escaping(TestCaseWithKnownValues):
@@ -120,7 +120,7 @@ class LDAPDistinguishedName_Escaping(TestCaseWithKnownValues):
             dn.RelativeDistinguishedName('dc=com'),
             ])
         got = str(got)
-        self.assertEquals(got,
+        self.assertEqual(got,
                           r'cn=test+owner=uid\=foo\,ou\=depar'
                           +r'tment\,dc\=example\,dc\=com,dc=ex'
                           +r'ample,dc=com')
@@ -304,22 +304,22 @@ class LDAPDistinguishedName_Prettify(unittest.TestCase):
 class DistinguishedName_Init(unittest.TestCase):
     def testString(self):
         d=dn.DistinguishedName('dc=example,dc=com')
-        self.assertEquals(str(d), 'dc=example,dc=com')
+        self.assertEqual(str(d), 'dc=example,dc=com')
 
     def testDN(self):
         proto=dn.DistinguishedName('dc=example,dc=com')
         d=dn.DistinguishedName(proto)
-        self.assertEquals(str(d), 'dc=example,dc=com')
+        self.assertEqual(str(d), 'dc=example,dc=com')
 
 class RelativeDistinguishedName_Init(unittest.TestCase):
     def testString(self):
         rdn=dn.RelativeDistinguishedName('dc=example')
-        self.assertEquals(str(rdn), 'dc=example')
+        self.assertEqual(str(rdn), 'dc=example')
 
     def testRDN(self):
         proto=dn.RelativeDistinguishedName('dc=example')
         rdn=dn.RelativeDistinguishedName(proto)
-        self.assertEquals(str(rdn), 'dc=example')
+        self.assertEqual(str(rdn), 'dc=example')
 
 class DistinguishedName_Comparison(unittest.TestCase):
     # TODO test more carefully

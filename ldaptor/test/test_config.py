@@ -2,14 +2,17 @@
 Test cases for the ldaptor.config module.
 """
 
-from twisted.trial import unittest
 import os
+
+from twisted.trial import unittest
 from ldaptor import config
 
+
 def writeFile(path, content):
-    f = file(path, 'w')
+    f = open(path, 'w')
     f.write(content)
     f.close()
+
 
 class TestConfig(unittest.TestCase):
     def testSomething(self):
@@ -33,10 +36,10 @@ fooVar = val2
             reload=True)
 
         val = self.cfg.get('fooSection', 'fooVar')
-        self.assertEquals(val, 'val2')
+        self.assertEqual(val, 'val2')
 
         val = self.cfg.get('barSection', 'barVar')
-        self.assertEquals(val, 'anotherVal')
+        self.assertEqual(val, 'anotherVal')
 
 class IdentitySearch(unittest.TestCase):
     def setUp(self):
@@ -53,15 +56,15 @@ identity-search = (something=%(name)s)
         self.config = config.LDAPConfig()
 
     def testConfig(self):
-        self.assertEquals(self.config.getIdentitySearch('foo'),
+        self.assertEqual(self.config.getIdentitySearch('foo'),
                           '(something=foo)')
 
     def testCopy(self):
         conf = self.config.copy(identitySearch='(&(bar=baz)(quux=%(name)s))')
-        self.assertEquals(conf.getIdentitySearch('foo'),
+        self.assertEqual(conf.getIdentitySearch('foo'),
                           '(&(bar=baz)(quux=foo))')
 
     def testInitArg(self):
         conf = config.LDAPConfig(identitySearch='(&(bar=thud)(quux=%(name)s))')
-        self.assertEquals(conf.getIdentitySearch('foo'),
+        self.assertEqual(conf.getIdentitySearch('foo'),
                           '(&(bar=thud)(quux=foo))')

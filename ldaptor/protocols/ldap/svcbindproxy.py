@@ -1,7 +1,8 @@
+import datetime
+
 from ldaptor.protocols.ldap import proxy
 from ldaptor.protocols.ldap import ldapsyntax, ldaperrors
 from ldaptor.protocols import pureldap
-import datetime
 
 class ServiceBindingProxy(proxy.Proxy):
     """
@@ -111,7 +112,7 @@ class ServiceBindingProxy(proxy.Proxy):
         def _gotEntries(entries):
             if not entries:
                 return None
-            assert len(entries)==1 #TODO
+            assert len(entries) == 1  # TODO
             e = entries[0]
             d = e.bind(request.auth)
             return d
@@ -162,6 +163,7 @@ if __name__ == '__main__':
     from twisted.internet import reactor, protocol
     from twisted.python import log
     import sys
+
     log.startLogging(sys.stderr)
     from ldaptor import config
 
