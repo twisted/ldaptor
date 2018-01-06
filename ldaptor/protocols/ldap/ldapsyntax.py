@@ -1,6 +1,7 @@
 """Pythonic API for LDAP operations."""
 import functools
 
+import six
 from twisted.internet import defer
 from twisted.python.failure import Failure
 from zope.interface import implementer
@@ -179,8 +180,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 
         """
         self._checkState()
-        import types
-        assert not isinstance(self.dn, types.StringType)
+        assert not isinstance(self.dn, six.string_types)
         for keyval in self.dn.split()[0].split():
             if keyval.attributeType == key:
                 raise CannotRemoveRDNError(key)

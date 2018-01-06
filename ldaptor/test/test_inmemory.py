@@ -1,8 +1,9 @@
 """
 Test cases for ldaptor.inmemory module.
 """
+from io import BytesIO
+
 from twisted.trial import unittest
-from cStringIO import StringIO
 from ldaptor import inmemory, delta, testutil
 from ldaptor.protocols.ldap import distinguishedname, ldaperrors
 
@@ -381,7 +382,7 @@ class TestInMemoryDatabase(unittest.TestCase):
 
 class FromLDIF(unittest.TestCase):
     def test_single(self):
-        ldif = StringIO('''\
+        ldif = BytesIO(b'''\
 dn: cn=foo,dc=example,dc=com
 objectClass: a
 objectClass: b
@@ -401,7 +402,7 @@ bValue: c
         return d
 
     def test_two(self):
-        ldif = StringIO('''\
+        ldif = BytesIO(b'''\
 dn: dc=example,dc=com
 objectClass: dcObject
 dc: example
@@ -430,7 +431,7 @@ cn: foo
         return d
 
     def test_missingNode(self):
-        ldif = StringIO('''\
+        ldif = BytesIO(b'''\
 dn: dc=example,dc=com
 objectClass: dcObject
 dc: example

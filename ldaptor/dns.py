@@ -1,16 +1,13 @@
 """DNS-related utilities."""
 
 from socket import inet_aton, inet_ntoa
+import struct
 
 
 def aton_octets(ip):
     s = inet_aton(ip)
-    octets = list(s)
-    n = 0
-    for o in octets:
-        n = n << 8
-        n += ord(o)
-    return n
+    return struct.unpack('!I', s)[0]
+
 
 def aton_numbits(num):
     n = 0
@@ -20,6 +17,7 @@ def aton_numbits(num):
         num-=1
     return n
 
+
 def aton(ip):
     try:
         i=int(ip)
@@ -28,15 +26,12 @@ def aton(ip):
     else:
         return aton_numbits(i)
 
+
 def ntoa(n):
-    s=(
-        chr((n>>24)&0xFF)
-        + chr((n>>16)&0xFF)
-        + chr((n>>8)&0xFF)
-        + chr(n&0xFF)
-       )
-    ip=inet_ntoa(s)
+    s = struct.pack('!I', n)
+    ip = inet_ntoa(s)
     return ip
+
 
 def netmaskToNumbits(netmask):
     bits = aton(netmask)

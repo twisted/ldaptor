@@ -15,7 +15,7 @@ from ldaptor.protocols.ldap import ldaperrors, ldifprotocol
 
 
 def writeFile(path, content):
-    f = file(path, 'w')
+    f = open(path, 'w')
     f.write(content)
     f.close()
 

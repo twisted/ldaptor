@@ -1,5 +1,6 @@
-# See rfc2253
+import six
 
+# See rfc2253
 # Note that RFC 2253 sections 2.4 and 3 disagree whether "=" needs to
 # be quoted. Let's trust the syntax, slapd refuses to accept unescaped
 # "=" in RDN values.
@@ -151,7 +152,7 @@ class RelativeDistinguishedName:
             assert attributeTypesAndValues is None
             if isinstance(magic, RelativeDistinguishedName):
                 attributeTypesAndValues = magic.split()
-            elif isinstance(magic, basestring):
+            elif isinstance(magic, six.string_types):
                 stringValue = magic
             else:
                 attributeTypesAndValues = magic
@@ -159,7 +160,7 @@ class RelativeDistinguishedName:
         if stringValue is None:
             assert attributeTypesAndValues is not None
             import types
-            assert not isinstance(attributeTypesAndValues, types.StringType)
+            assert not isinstance(attributeTypesAndValues, six.string_types)
             self.attributeTypesAndValues = tuple(attributeTypesAndValues)
         else:
             assert attributeTypesAndValues is None
@@ -221,7 +222,7 @@ class DistinguishedName:
             assert listOfRDNs is None
             if isinstance(magic, DistinguishedName):
                 listOfRDNs = magic.split()
-            elif isinstance(magic, basestring):
+            elif isinstance(magic, six.string_types):
                 stringValue = magic
             else:
                 listOfRDNs = magic
@@ -255,7 +256,7 @@ class DistinguishedName:
         return hash(str(self))
 
     def __eq__(self, other):
-        if isinstance(other, basestring):
+        if isinstance(other, six.string_types):
             return str(self) == other
         if not isinstance(other, DistinguishedName):
             return NotImplemented
@@ -265,7 +266,7 @@ class DistinguishedName:
         return not (self == other)
 
     def __cmp__(self, other):
-        if isinstance(other, basestring):
+        if isinstance(other, six.string_types):
             return cmp(str(self), other)
         if not isinstance(other, DistinguishedName):
             return NotImplemented

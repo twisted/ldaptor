@@ -5,11 +5,12 @@
 """
 
 from twisted.internet import reactor, defer
+from six.moves.queue import Queue
+
 from ldaptor.protocols.ldap import ldapclient, ldapconnector
 from ldaptor.protocols.ldap import ldapserver
 from ldaptor.protocols.ldap import ldaperrors
 from ldaptor.protocols import pureldap
-from Queue import Queue
 from ldaptor.config import LDAPConfig
 
 

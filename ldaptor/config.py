@@ -1,6 +1,6 @@
 import os.path
-import ConfigParser
 
+from six.moves import configparser
 from zope.interface import implementer
 
 from ldaptor import interfaces
@@ -32,7 +32,7 @@ class LDAPConfig(object):
             self.baseDN = baseDN
         self.serviceLocationOverrides = {}
         if serviceLocationOverrides is not None:
-            for k,v in serviceLocationOverrides.items():
+            for k, v in list(serviceLocationOverrides.items()):
                 dn = distinguishedname.DistinguishedName(k)
                 self.serviceLocationOverrides[dn] = v
         if identityBaseDN is not None:
@@ -48,9 +48,9 @@ class LDAPConfig(object):
         cfg = loadConfig()
         try:
             return cfg.get('ldap', 'base')
-        except (ConfigParser.NoOptionError,
-                ConfigParser.NoSectionError):
-            raise MissingBaseDNError()
+        except (configparser.NoOptionError,
+                configparser.NoSectionError):
+            raise MissingBaseDNError
 
     def getServiceLocationOverrides(self):
         r = self._loadServiceLocationOverrides()
@@ -99,8 +99,8 @@ class LDAPConfig(object):
         cfg = loadConfig()
         try:
             return cfg.get('authentication', 'identity-base')
-        except (ConfigParser.NoOptionError,
-                ConfigParser.NoSectionError):
+        except (configparser.NoOptionError,
+                configparser.NoSectionError):
             return self.getBaseDN()
 
     def getIdentitySearch(self, name):
@@ -113,10 +113,10 @@ class LDAPConfig(object):
         else:
             cfg = loadConfig()
             try:
-                f=cfg.get('authentication', 'identity-search', vars=data)
-            except (ConfigParser.NoOptionError,
-                    ConfigParser.NoSectionError):
-                f='(|(cn=%(name)s)(uid=%(name)s))' % data
+                f = cfg.get('authentication', 'identity-search', vars=data)
+            except (configparser.NoOptionError,
+                    configparser.NoSectionError):
+                f = '(|(cn=%(name)s)(uid=%(name)s))' % data
         return f
 
 
@@ -139,7 +139,7 @@ def loadConfig(configFiles=None,
     """
     global __config
     if __config is None or reload:
-        x = ConfigParser.SafeConfigParser()
+        x = configparser.SafeConfigParser()
         x.optionxform = InsensitiveString
 
         for section, options in DEFAULTS.items():

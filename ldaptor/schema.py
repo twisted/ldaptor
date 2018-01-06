@@ -1,3 +1,5 @@
+import six
+
 def extractWord(text):
     if not text:
         return None
@@ -562,7 +564,7 @@ class AttributeTypeDescription(ASN1ParserThingie):
         if self.usage is not None:
             r.append('USAGE %s' % self.usage)
         for name, value in self.x_attrs:
-            if isinstance(value, basestring):
+            if isinstance(value, six.string_types):
                 r.append("%s '%s'" % (name, value))
             else:
                 r.append(

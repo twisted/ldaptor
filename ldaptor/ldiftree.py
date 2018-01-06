@@ -3,10 +3,10 @@ Manage LDAP data as a tree of LDIF files.
 """
 import errno
 import os
+import uuid
 
 from twisted.internet import defer, error
 from twisted.python import failure
-from twisted.mail.maildir import _generateMaildirName as tempName
 from zope.interface import implementer
 
 from ldaptor import entry, interfaces, attributeset, entryhelpers
@@ -57,7 +57,7 @@ def _get(path, dn):
     entry = os.path.join(path,
                          *['%s.dir' % rdn for rdn in l[:-1]])
     entry = os.path.join(entry, '%s.ldif' % l[-1])
-    f = file(entry)
+    f = open(entry)
     while 1:
         data = f.read(8192)
         if not data:
@@ -77,8 +77,8 @@ def _get(path, dn):
 
 def _putEntry(fileName, entry):
     """fileName is without extension."""
-    tmp = fileName + '.' + tempName() + '.tmp'
-    f = file(tmp, 'w')
+    tmp = fileName + '.' + str(uuid.uuid4()) + '.tmp'
+    f = open(tmp, 'w')
     f.write(str(entry))
     f.close()
     os.rename(tmp, fileName+'.ldif')
@@ -139,7 +139,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
         parser = StoreParsedLDIF()
 
         try:
-            f = file(entryPath)
+            f = open(entryPath)
         except IOError as e:
             if e.errno == errno.ENOENT:
                 return
@@ -241,8 +241,8 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
         if not os.path.exists(self.path):
             os.mkdir(self.path)
         fileName = os.path.join(self.path, '%s' % rdn)
-        tmp = fileName + '.' + tempName() + '.tmp'
-        f = file(tmp, 'w')
+        tmp = fileName + '.' + str(uuid.uuid4()) + '.tmp'
+        f = open(tmp, 'w')
         f.write(str(e))
         f.close()
         os.rename(tmp, fileName+'.ldif')
