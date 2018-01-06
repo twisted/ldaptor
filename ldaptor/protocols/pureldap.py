@@ -128,6 +128,7 @@ class LDAPProtocolOp:
         raise NotImplementedError()
 
 
+
 class LDAPProtocolRequest(LDAPProtocolOp):
     needs_answer = 1
     pass
