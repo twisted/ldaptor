@@ -17,7 +17,7 @@ from binascii import hexlify
 import struct
 from warnings import warn
 # site
-from compat import b, bytes, bascii_to_str, irange  # , PY3  # twisted isn't Python3, yet
+from ldaptor.compat import b, bytes, bascii_to_str, irange, PYPY
 # local
 __all__ = ["md4"]
 
@@ -244,7 +244,6 @@ _builtin_md4 = md4
 # check if hashlib provides accelarated md4
 # =============================================================================
 import hashlib
-from compat import PYPY
 
 
 def _has_native_md4():  # pragma: no cover -- runtime detection

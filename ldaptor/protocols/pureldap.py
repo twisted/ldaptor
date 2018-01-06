@@ -17,7 +17,7 @@
 
 import string
 
-from pureber import (
+from ldaptor.protocols.pureber import (
 
     BERBoolean, BERDecoderContext, BEREnumerated, BERInteger, BERNull,
     BEROctetString, BERSequence, BERSequenceOf, BERSet, BERStructured,
