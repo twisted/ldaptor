@@ -21,8 +21,8 @@ class TestNTHash(unittest.TestCase):
         for password, expected_result in self.knownValues:
             result = smbpassword.nthash(password)
             if result != expected_result:
-                raise AssertionError, 'nthash(%s)=%s, expected %s' \
-                      % (repr(password), repr(result), repr(expected_result))
+                raise AssertionError('nthash(%s)=%s, expected %s' % (
+                    repr(password), repr(result), repr(expected_result)))
 
 class TestLMHash(unittest.TestCase):
     knownValues=( # password, expected_result
@@ -49,5 +49,5 @@ class TestLMHash(unittest.TestCase):
             cfg.set('samba', 'use-lmhash', 'yes')
             result = smbpassword.lmhash(password)
             if result != expected_result:
-                raise AssertionError, 'lmhash(%s)=%s, expected %s' \
-                      % (repr(password), repr(result), repr(expected_result))
+                raise AssertionError('lmhash(%s)=%s, expected %s' % (
+                        repr(password), repr(result), repr(expected_result)))

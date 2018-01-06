@@ -1,11 +1,13 @@
 import base64
 import random
 
-from ldaptor import interfaces, attributeset, delta
-from ldaptor.protocols.ldap import distinguishedname, ldif, ldaperrors
 from twisted.internet import defer
 from twisted.python.util import InsensitiveDict
-from zope.interface import implements
+from zope.interface import implementer
+
+from ldaptor import interfaces, attributeset, delta
+from ldaptor.protocols.ldap import distinguishedname, ldif, ldaperrors
+
 
 try:
     from hashlib import sha1
@@ -27,8 +29,8 @@ def sshaDigest(passphrase, salt=None):
     return crypt
 
 
+@implementer(interfaces.ILDAPEntry)
 class BaseLDAPEntry(object):
-    implements(interfaces.ILDAPEntry)
     dn = None
 
     def __init__(self, dn, attributes={}):
@@ -214,7 +216,7 @@ class BaseLDAPEntry(object):
                 # Plaintext
                 if digest == password:
                     return self
-        raise ldaperrors.LDAPInvalidCredentials
+        raise ldaperrors.LDAPInvalidCredentials()
 
     def hasMember(self, dn):
         for memberDN in self.get('member', []):
@@ -226,8 +228,8 @@ class BaseLDAPEntry(object):
         return hash(self.dn)
 
 
+@implementer(interfaces.IEditableLDAPEntry)
 class EditableLDAPEntry(BaseLDAPEntry):
-    implements(interfaces.IEditableLDAPEntry)
 
     def __setitem__(self, key, value):
         new = self.buildAttributeSet(key, value)
@@ -237,16 +239,16 @@ class EditableLDAPEntry(BaseLDAPEntry):
         del self._attributes[key]
 
     def undo(self):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def commit(self):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def move(self, newDN):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def delete(self):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def setPassword(self, newPasswd, salt=None):
         crypt = sshaDigest(newPasswd, salt)

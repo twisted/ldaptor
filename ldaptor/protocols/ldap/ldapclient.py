@@ -245,7 +245,7 @@ class LDAPClient(protocol.Protocol):
 
     def _startTLS(self, ctx):
         if not self.connected:
-            raise LDAPClientConnectionLostException
+            raise LDAPClientConnectionLostException()
         elif self.onwire:
             raise LDAPStartTLSBusyError(self.onwire)
         else:

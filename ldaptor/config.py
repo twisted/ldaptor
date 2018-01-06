@@ -1,6 +1,8 @@
 import os.path
 import ConfigParser
-from zope.interface import implements
+
+from zope.interface import implementer
+
 from ldaptor import interfaces
 from ldaptor.insensitive import InsensitiveString
 from ldaptor.protocols.ldap import distinguishedname
@@ -12,8 +14,9 @@ class MissingBaseDNError(Exception):
     def __str__(self):
         return self.__doc__
 
+
+@implementer(interfaces.ILDAPConfig)
 class LDAPConfig(object):
-    implements(interfaces.ILDAPConfig)
 
     baseDN = None
     identityBaseDN = None
@@ -47,7 +50,7 @@ class LDAPConfig(object):
             return cfg.get('ldap', 'base')
         except (ConfigParser.NoOptionError,
                 ConfigParser.NoSectionError):
-            raise MissingBaseDNError
+            raise MissingBaseDNError()
 
     def getServiceLocationOverrides(self):
         r = self._loadServiceLocationOverrides()

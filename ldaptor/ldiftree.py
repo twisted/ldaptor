@@ -3,12 +3,15 @@ Manage LDAP data as a tree of LDIF files.
 """
 import errno
 import os
-from ldaptor import entry, interfaces, attributeset, entryhelpers
-from ldaptor.protocols.ldap import ldifprotocol, distinguishedname, ldaperrors
+
 from twisted.internet import defer, error
 from twisted.python import failure
 from twisted.mail.maildir import _generateMaildirName as tempName
-from zope.interface import implements
+from zope.interface import implementer
+
+from ldaptor import entry, interfaces, attributeset, entryhelpers
+from ldaptor.protocols.ldap import ldifprotocol, distinguishedname, ldaperrors
+
 
 
 class LDIFTreeEntryContainsMultipleEntries(Exception):
@@ -65,7 +68,7 @@ def _get(path, dn):
     assert parser.done
     entries = parser.seen
     if len(entries) == 0:
-        raise LDIFTreeEntryContainsNoEntries
+        raise LDIFTreeEntryContainsNoEntries()
     elif len(entries) > 1:
         raise LDIFTreeEntryContainsMultipleEntries(entries)
     else:
@@ -98,7 +101,7 @@ def _put(path, entry):
                 raise LDIFTreeNoSuchObject(entry.dn.up())
             try:
                 os.mkdir(parentDir)
-            except OSError, e:
+            except OSError as e:
                 if e.errno == errno.EEXIST:
                     # we lost a race to create the directory, safe to ignore
                     pass
@@ -113,13 +116,13 @@ def put(path, entry):
     return defer.execute(_put, path, entry)
 
 
+@implementer(interfaces.IConnectedLDAPEntry)
 class LDIFTreeEntry(entry.EditableLDAPEntry,
                     entryhelpers.DiffTreeMixin,
                     entryhelpers.SubtreeFromChildrenMixin,
                     entryhelpers.MatchMixin,
                     entryhelpers.SearchByTreeWalkingMixin,
                     ):
-    implements(interfaces.IConnectedLDAPEntry)
 
     def __init__(self, path, dn=None, *a, **kw):
         if dn is None:
@@ -137,7 +140,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
 
         try:
             f = file(entryPath)
-        except IOError, e:
+        except IOError as e:
             if e.errno == errno.ENOENT:
                 return
             else:
@@ -152,7 +155,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
 
         entries = parser.seen
         if len(entries) == 0:
-            raise LDIFTreeEntryContainsNoEntries
+            raise LDIFTreeEntryContainsNoEntries()
         elif len(entries) > 1:
             raise LDIFTreeEntryContainsMultipleEntries(entries)
         else:
@@ -171,7 +174,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
         children = []
         try:
             filenames = os.listdir(self.path)
-        except OSError, e:
+        except OSError as e:
             if e.errno == errno.ENOENT:
                 pass
             else:
@@ -230,7 +233,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
         rdn = distinguishedname.RelativeDistinguishedName(rdn)
         for c in self._sync_children():
             if c.dn.split()[0] == rdn:
-                raise ldaperrors.LDAPEntryAlreadyExists, c.dn
+                raise ldaperrors.LDAPEntryAlreadyExists(c.dn)
 
         dn = distinguishedname.DistinguishedName(
             listOfRDNs=(rdn,) + self.dn.split())
@@ -253,7 +256,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
 
     def _delete(self):
         if self.dn == '':
-            raise LDAPCannotRemoveRootError
+            raise LDAPCannotRemoveRootError()
         if self._sync_children():
             raise ldaperrors.LDAPNotAllowedOnNonLeaf(
                 'Cannot remove entry with children: %s' % self.dn)
@@ -271,7 +274,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
         for c in self._sync_children():
             if c.dn.split()[0] == rdn:
                 return c.delete()
-        raise ldaperrors.LDAPNoSuchObject, rdn
+        raise ldaperrors.LDAPNoSuchObject(rdn)
 
     def deleteChild(self, rdn):
         return defer.maybeDeferred(self._deleteChild, rdn)
@@ -335,7 +338,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
         newpath = os.path.join(dstdir, '%s.dir' % newRDN)
         try:
             os.rename(self.path, newpath)
-        except OSError, e:
+        except OSError as e:
             if e.errno == errno.ENOENT:
                 pass
             else:

@@ -3,7 +3,6 @@ Test cases for ldaptor.attributeset
 """
 
 from twisted.trial import unittest
-import sets
 from ldaptor import attributeset
 
 
@@ -43,26 +42,31 @@ class TestSetOperations(unittest.TestCase):
     def testDifference(self):
         a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
         b = attributeset.LDAPAttributeSet('k', ['b', 'c', 'e'])
-        self.assertEqual(a - b, sets.Set(['d']))
+        self.assertEqual(a - b, {'d'})
 
     def testUnion(self):
         a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
         b = attributeset.LDAPAttributeSet('k', ['b', 'c', 'e'])
-        self.assertEqual(a | b, sets.Set(['b', 'c', 'd', 'e']))
+        self.assertEqual(a | b, {'b', 'c', 'd', 'e'})
 
     def testIntersection(self):
         a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
         b = attributeset.LDAPAttributeSet('k', ['b', 'c', 'e'])
-        self.assertEqual(a & b, sets.Set(['b', 'c']))
+        self.assertEqual(a & b, {'b', 'c'})
 
     def testSymmetricDifference(self):
         a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
         b = attributeset.LDAPAttributeSet('k', ['b', 'c', 'e'])
-        self.assertEqual(a ^ b, sets.Set(['d', 'e']))
+        self.assertEqual(a ^ b, {'d', 'e'})
 
     def testCopy(self):
         class Magic:
-            pass
+            def __lt__(self, other):
+                return False
+
+            def __gt__(self, other):
+                return True
+
         m1 = Magic()
         a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd', m1])
         b = a.__copy__()
@@ -75,8 +79,8 @@ class TestSetOperations(unittest.TestCase):
         self.assertIdentical(magicFromA, magicFromB)
 
         a.update('x')
-        self.assertEqual(a, sets.Set(['b', 'c', 'd', m1, 'x']))
-        self.assertEqual(b, sets.Set(['b', 'c', 'd', m1]))
+        self.assertEqual(a, {'b', 'c', 'd', m1, 'x'})
+        self.assertEqual(b, {'b', 'c', 'd', m1})
 
     def testDeepCopy(self):
         class Magic:
@@ -85,6 +89,13 @@ class TestSetOperations(unittest.TestCase):
 
             def __hash__(self):
                 return 42
+
+            def __lt__(self, other):
+                return False
+
+            def __gt__(self, other):
+                return True
+
         m1 = Magic()
         a = attributeset.LDAPAttributeSet('k', ['a', m1])
         b = a.__deepcopy__({})
@@ -97,5 +108,5 @@ class TestSetOperations(unittest.TestCase):
         self.assertNotIdentical(magicFromA, magicFromB)
 
         a.update('x')
-        self.assertEqual(a, sets.Set(['a', m1, 'x']))
-        self.assertEqual(b, sets.Set(['a', m1]))
+        self.assertEqual(a, {'a', m1, 'x'})
+        self.assertEqual(b, {'a', m1})

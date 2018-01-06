@@ -125,7 +125,7 @@ class LDAPProtocolOp:
         pass
 
     def __str__(self):
-        raise NotImplementedError
+        raise NotImplementedError()
 
 
 class LDAPProtocolRequest(LDAPProtocolOp):
@@ -862,19 +862,20 @@ class LDAPSearchResultEntry(LDAPProtocolResponse, BERSequence):
     def __str__(self):
         return str(BERSequence([
             BEROctetString(self.objectName),
-            BERSequence(map(lambda (attr,li):
-                            BERSequence([BEROctetString(attr),
-                                         BERSet(map(BEROctetString,
-                                                    li))]),
-                            self.attributes)),
-            ], tag=self.tag))
+            BERSequence([
+                BERSequence([
+                    BEROctetString(attr_li[0]),
+                    BERSet(list(map(BEROctetString, attr_li[1])))])
+                for attr_li in self.attributes
+                ]),
+        ], tag=self.tag))
 
     def __repr__(self):
         if self.tag==self.__class__.tag:
             return self.__class__.__name__\
                    +"(objectName=%s, attributes=%s"\
                    %(repr(str(self.objectName)),
-                     repr(map(lambda (a,l):
+                     repr(map(lambda a, l:
                               (str(a),
                                map(lambda i, l=l: str(i), l)),
                               self.attributes)))
@@ -882,7 +883,7 @@ class LDAPSearchResultEntry(LDAPProtocolResponse, BERSequence):
             return self.__class__.__name__\
                    +"(objectName=%s, attributes=%s, tag=%d"\
                    %(repr(str(self.objectName)),
-                     repr(map(lambda (a,l):
+                     repr(map(lambda a,l:
                               (str(a),
                                map(lambda i, l=l: str(i), l)),
                               self.attributes)),

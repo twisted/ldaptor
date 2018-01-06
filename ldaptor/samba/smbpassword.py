@@ -1,9 +1,14 @@
-import string, warnings
+try:
+    import string
+    maketrans = string.maketrans
+except ImportError:
+    maketrans = bytes.maketrans
+
 from ldaptor import md4, config
 
-lower = 'abcdefghijklmnopqrstuvwxyz'
+lower = b'abcdefghijklmnopqrstuvwxyz'
 upper = lower.upper()
-toupper=string.maketrans(lower, upper)
+toupper= maketrans(lower, upper)
 
 def nthash(password=''):
     """Generates nt md4 password hash for a given password."""

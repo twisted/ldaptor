@@ -44,12 +44,12 @@ class LDIFDelta(ldifprotocol.LDIF):
         assert self.data is not None, 'self.data must be set when in entry'
 
         if line == '':
-            raise LDIFDeltaMissingChangeTypeError, self.dn
+            raise LDIFDeltaMissingChangeTypeError(self.dn)
 
         key, val = self._parseLine(line)
 
         if key != 'changetype':
-            raise LDIFDeltaMissingChangeTypeError, (self.dn, key, val)
+            raise LDIFDeltaMissingChangeTypeError(self.dn, key, val)
 
         if val == 'modify':
             self.modifications = []
@@ -59,7 +59,7 @@ class LDIFDelta(ldifprotocol.LDIF):
         elif val == 'delete':
             self.mode = IN_DELETE
         elif val == 'modrdn' or val == 'moddn':
-            raise NotImplementedError #TODO
+            raise NotImplementedError()  # TODO
 
     MOD_SPEC_TO_DELTA = {
         'add': delta.Add,
@@ -82,8 +82,7 @@ class LDIFDelta(ldifprotocol.LDIF):
         key, val = self._parseLine(line)
 
         if key not in self.MOD_SPEC_TO_DELTA:
-            raise LDIFDeltaUnknownModificationError, \
-                  (self.dn, key)
+            raise LDIFDeltaUnknownModificationError(self.dn, key)
 
         self.mod_spec = key
         self.mod_spec_attr = val
@@ -92,7 +91,7 @@ class LDIFDelta(ldifprotocol.LDIF):
 
     def state_IN_MOD_SPEC(self, line):
         if line == '':
-            raise LDIFDeltaModificationMissingEndDashError
+            raise LDIFDeltaModificationMissingEndDashError()
 
         if line == '-':
             mod = self.MOD_SPEC_TO_DELTA[self.mod_spec]
@@ -107,8 +106,8 @@ class LDIFDelta(ldifprotocol.LDIF):
         key, val = self._parseLine(line)
 
         if key != self.mod_spec_attr:
-            raise LDIFDeltaModificationDifferentAttributeTypeError, \
-                  (key, self.mod_spec_attr)
+            raise LDIFDeltaModificationDifferentAttributeTypeError(
+                key, self.mod_spec_attr)
 
         self.mod_spec_data.append(val)
 
@@ -119,8 +118,7 @@ class LDIFDelta(ldifprotocol.LDIF):
         if line == '':
             # end of entry
             if not self.data:
-                raise LDIFDeltaAddMissingAttributesError, \
-                      self.dn
+                raise LDIFDeltaAddMissingAttributesError(self.dn)
             self.mode = ldifprotocol.WAIT_FOR_DN
             o = delta.AddOp(entry.BaseLDAPEntry(dn=self.dn,
                                                 attributes=self.data))
@@ -148,8 +146,8 @@ class LDIFDelta(ldifprotocol.LDIF):
             self.gotEntry(o)
             return
 
-        raise LDIFDeltaDeleteHasJunkAfterChangeTypeError, \
-              (self.dn, line)
+        raise LDIFDeltaDeleteHasJunkAfterChangeTypeError(
+                self.dn, line)
 
 def fromLDIFFile(f):
     """Read LDIF data from a file."""
