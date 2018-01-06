@@ -1,8 +1,6 @@
 import base64
 import random
 
-from ldaptor import interfaces, attributeset, delta
-from ldaptor.protocols.ldap import distinguishedname, ldif, ldaperrors
 from twisted.internet import defer
 from twisted.python.util import InsensitiveDict
 from zope.interface import implementer
