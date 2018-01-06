@@ -159,7 +159,6 @@ class RelativeDistinguishedName:
 
         if stringValue is None:
             assert attributeTypesAndValues is not None
-            import types
             assert not isinstance(attributeTypesAndValues, six.string_types)
             self.attributeTypesAndValues = tuple(attributeTypesAndValues)
         else:
