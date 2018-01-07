@@ -18,12 +18,13 @@ matrix:
     - env: TOX_ENV=py34-twtrunk
 
 install:
-  - pip install tox coveralls
+  - pip install tox coveralls codecov
 
 script:
   - tox -e $TOX_ENV
 
 after_success:
+  - codecov
   - coveralls
 
 notifications:
