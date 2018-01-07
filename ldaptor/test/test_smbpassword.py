@@ -43,7 +43,7 @@ class TestLMHash(unittest.TestCase):
         for password, expected_result in self.knownValues:
             cfg.set('samba', 'use-lmhash', 'no')
             disabled = smbpassword.lmhash(password)
-            self.assertEqual(disabled, 32*'X',
+            self.assertEqual(disabled, 32 * b'X',
                               "Disabled lmhash must be X's: %r" % disabled)
 
             cfg.set('samba', 'use-lmhash', 'yes')

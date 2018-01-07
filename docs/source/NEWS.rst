@@ -9,6 +9,7 @@ Features
 
 - Ability to logically compare ldaptor.protocols.pureldap.LDAPFilter_and and ldaptor.protocols.pureldap.LDAPFilter_or objects with ==.
 - Ability to customize ldaptor.protocols.pureldap.LDAPFilter_* object's encoding of values when using asText.
+- Remove Python 3.3 from tox as it is EOL.
 
 Changes
 ^^^^^^^

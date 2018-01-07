@@ -23,7 +23,7 @@ def sshaDigest(passphrase, salt=None):
         salt = salt.encode('ascii')
 
     s = sha1()
-    s.update(passphrase)
+    s.update(passphrase.encode('utf-8'))
     s.update(salt)
     encoded = base64.encodestring(s.digest() + salt).rstrip()
     crypt = b'{SSHA}' + encoded

@@ -269,12 +269,19 @@ class DistinguishedName:
     def __ne__(self, other):
         return not (self == other)
 
-    def __cmp__(self, other):
+    def __lt__(self, other):
         if isinstance(other, six.string_types):
-            return (str(self) > other) - (str(self) < other)
+            return str(self) < other
         if not isinstance(other, DistinguishedName):
             return NotImplemented
-        return (self.split() > other.split()) - (self.split() < other.split())
+        return self.split() < other.split()
+
+    def __gt__(self, other):
+        if isinstance(other, six.string_types):
+            return str(self) > other
+        if not isinstance(other, DistinguishedName):
+            return NotImplemented
+        return self.split() > other.split()
 
     def getDomainName(self):
         domainParts = []

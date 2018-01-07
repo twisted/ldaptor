@@ -129,11 +129,15 @@ class BERBase(object):
     def __len__(self):
         return len(str(self))
 
-    def __cmp__(self, other):
-        if isinstance(other, BERBase):
-            return (str(self) > str(other)) - (str(self) < str(other))
-        else:
-            return -1
+    def __lt__(self, other):
+        if not isinstance(other, BERBase):
+            return NotImplemented
+        return str(self) < str(other)
+
+    def __gt__(self, other):
+        if not isinstance(other, BERBase):
+            return NotImplemented
+        return str(self) > str(other)
 
     def __eq__(self, other):
         if isinstance(other, BERBase):
