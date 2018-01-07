@@ -10,8 +10,7 @@ env:
   - TOX_ENV=py27-tw150
   - TOX_ENV=py27-tw140
   - TOX_ENV=py34-twtrunk
-  - TOX_ENV=pyflakes
-  - TOX_ENV=manifest
+  - TOX_ENV=linters
 
 matrix:
   fast_finish: true

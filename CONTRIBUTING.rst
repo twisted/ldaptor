@@ -1,11 +1,26 @@
 How to Contribute
 =================
 
-Head over to: https://github.com/twisted/ldaptor and submit your bugs or feature requests.
-If you wish to contribute code, just fork it, make a branch and send us a pull request.
+Head over to: https://github.com/twisted/ldaptor and submit your bugs or
+feature requests.
+
+If you wish to contribute code, just fork it,
+make a branch and send us a pull request.
 We'll review it, and push back if necessary.
 
-Ldaptor generally follows the coding and documentation standards of the Twisted project.
+Check docs/PULL_REQUEST_TEMPLATE.md for more info about how to pull request
+process.
+
+Ldaptor generally follows the coding and documentation standards of the Twisted
+project.
+
+
+Release notes
+-------------
+
+To simplify the release process each change should be recorded into the
+docs/source/NEWS.rst in a wording targeted to end users.
+Try not to write the release notes as a commit message.
 
 
 Building the documentation
