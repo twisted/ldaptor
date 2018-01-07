@@ -15,7 +15,7 @@ Changes
 
 - Using modern classmethod decorator instead of old-style method call.
 - Usage of zope.interfaces was updated in preparation for python3 port.
-- Code was updates to pass `python3 -m compileall` in preparation for py3 port.
+- Code was updated to pass `python3 -m compileall` in preparation for py3 port.
 
 Bugfixes
 ^^^^^^^^
