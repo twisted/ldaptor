@@ -32,7 +32,7 @@ class LDAPConfig(object):
             self.baseDN = baseDN
         self.serviceLocationOverrides = {}
         if serviceLocationOverrides is not None:
-            for k, v in list(serviceLocationOverrides.items()):
+            for k,v in serviceLocationOverrides.items():
                 dn = distinguishedname.DistinguishedName(k)
                 self.serviceLocationOverrides[dn] = v
         if identityBaseDN is not None:
