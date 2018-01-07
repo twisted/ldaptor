@@ -8,7 +8,7 @@ class Autofill_samba: #TODO baseclass
     def start(self, ldapObject):
         assert 'objectClass' in ldapObject
         if 'sambaSamAccount' not in ldapObject['objectClass']:
-            raise ObjectMissingObjectClassException, ldapObject
+            raise ObjectMissingObjectClassException(ldapObject)
 
         assert 'sambaAcctFlags' not in ldapObject
         ldapObject['sambaAcctFlags'] = ['[UX         ]']

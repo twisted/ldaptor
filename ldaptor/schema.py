@@ -493,7 +493,7 @@ class AttributeTypeDescription(ASN1ParserThingie):
                     value=self._strings_to_list(text[:end])
                     text=text[end+1:]
                 else:
-                    raise "TODO"
+                    raise NotImplementedError("TODO")
 
                 self.x_attrs.append((word, value))
             else:

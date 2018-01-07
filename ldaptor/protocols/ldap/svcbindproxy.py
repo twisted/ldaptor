@@ -4,6 +4,7 @@ from ldaptor.protocols.ldap import proxy
 from ldaptor.protocols.ldap import ldapsyntax, ldaperrors
 from ldaptor.protocols import pureldap
 
+
 class ServiceBindingProxy(proxy.Proxy):
     """
     An LDAP proxy that handles non-anonymous bind requests specially.
@@ -116,6 +117,7 @@ class ServiceBindingProxy(proxy.Proxy):
             e = entries[0]
             d = e.bind(request.auth)
             return d
+
         d.addCallback(_gotEntries)
         d.addCallbacks(
             callback=self._loopIfNone,
@@ -142,8 +144,8 @@ class ServiceBindingProxy(proxy.Proxy):
 
     def handle_LDAPBindRequest(self, request, controls, reply):
         if request.version != 3:
-            raise ldaperrors.LDAPProtocolError, \
-                  'Version %u not supported' % request.version
+            raise ldaperrors.LDAPProtocolError(
+                'Version %u not supported' % request.version)
 
         self.checkControls(controls)
 

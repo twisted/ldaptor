@@ -1,20 +1,21 @@
 language: python
 python:
-    - 2.7
+  - 2.7
 
 env:
-    - TOX_ENV=py27-twlatest
-    - TOX_ENV=py27-twtrunk
-    - TOX_ENV=py27-tw162
-    - TOX_ENV=py27-tw160
-    - TOX_ENV=py27-tw150
-    - TOX_ENV=py27-tw140
-    - TOX_ENV=linters
+  - TOX_ENV=py27-twlatest
+  - TOX_ENV=py27-twtrunk
+  - TOX_ENV=py27-tw162
+  - TOX_ENV=py27-tw160
+  - TOX_ENV=py27-tw150
+  - TOX_ENV=py27-tw140
+  - TOX_ENV=py34-twtrunk
+  - TOX_ENV=linters
 
 matrix:
   fast_finish: true
-#  allow_failures:
-#    - env: TOX_ENV=pyflakes
+  allow_failures:
+    - env: TOX_ENV=py34-twtrunk
 
 install:
   - pip install tox coveralls
@@ -23,7 +24,7 @@ script:
   - tox -e $TOX_ENV
 
 after_success:
-    - coveralls
+  - coveralls
 
 notifications:
     email: false

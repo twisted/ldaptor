@@ -133,7 +133,7 @@ def pumpingDeferredResult(d, timeout=None):
     result = _getDeferredResult(d, timeout)
     if isinstance(result, failure.Failure):
         if result.tb:
-            raise result.value.__class__, result.value, result.tb
+            raise result.value.__class__(result.value, result.tb)
         raise result.value
     else:
         return result

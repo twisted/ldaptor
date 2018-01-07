@@ -1,12 +1,15 @@
 """Pythonic API for LDAP operations."""
 
-from zope.interface import implements
 from twisted.internet import defer
 from twisted.python.failure import Failure
+from zope.interface import implementer
+
 from ldaptor.protocols.ldap import ldapclient, ldif, distinguishedname, ldaperrors
 from ldaptor.protocols import pureldap, pureber
 from ldaptor.samba import smbpassword
 from ldaptor import ldapfilter, interfaces, delta, attributeset, entry
+
+
 class PasswordSetAggregateError(Exception):
     """Some of the password plugins failed"""
 
@@ -108,12 +111,13 @@ class JournaledLDAPAttributeSet(attributeset.LDAPAttributeSet):
         super(JournaledLDAPAttributeSet, self).clear()
         self.ldapObject.journal(delta.Delete(self.key))
 
-class LDAPEntryWithClient(entry.EditableLDAPEntry):
-    implements(interfaces.ILDAPEntry,
-               interfaces.IEditableLDAPEntry,
-               interfaces.IConnectedLDAPEntry,
-               )
 
+@implementer(
+    interfaces.ILDAPEntry,
+    interfaces.IEditableLDAPEntry,
+    interfaces.IConnectedLDAPEntry,
+)
+class LDAPEntryWithClient(entry.EditableLDAPEntry):
     _state = 'invalid'
     """
 
@@ -164,7 +168,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         self._checkState()
         for rdn in self.dn.split()[0].split():
             if rdn.attributeType == key and rdn.value == value:
-                raise CannotRemoveRDNError, (key, value)
+                raise CannotRemoveRDNError(key, value)
 
     def _canRemoveAll(self, key):
         """
@@ -178,18 +182,16 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         assert not isinstance(self.dn, types.StringType)
         for keyval in self.dn.split()[0].split():
             if keyval.attributeType == key:
-                raise CannotRemoveRDNError, (key)
-
-
+                raise CannotRemoveRDNError(key)
 
     def _checkState(self):
         if self._state != 'ready':
             if self._state == 'deleted':
                 raise ObjectDeletedError
             else:
-                raise ObjectInBadStateError, \
-                      "State is %s while expecting %s" \
-                      % (repr(self._state), repr('ready'))
+                raise ObjectInBadStateError(
+                    "State is %s while expecting %s" % (
+                        repr(self._state), repr('ready')))
 
     def journal(self, journalOperation):
         """
@@ -498,7 +500,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 
         """
         if not self.complete and not self.has_key('objectClass'):
-            d=self.fetch('objectClass')
+            d = self.fetch('objectClass')
             d.addCallback(lambda dummy, self=self, newPasswd=newPasswd:
                           self.setPasswordMaybe_Samba(newPasswd))
         else:
@@ -518,7 +520,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             if not ok:
                 l.append((name, x))
         if l:
-            raise PasswordSetAggregateError, l
+            raise PasswordSetAggregateError(l)
         return self
 
     def _cbSetPassword_one(self, result):
@@ -528,6 +530,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         fail.trap(ldaperrors.LDAPException,
                   DNNotPresentError)
         return (False, fail)
+
     def _setPasswordAll(self, results, newPasswd, prefix, names):
         if not names:
             return results
@@ -541,8 +544,11 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             d = defer.maybeDeferred(fn, newPasswd)
             d.addCallbacks(self._cbSetPassword_one,
                            self._ebSetPassword_one)
-            def cb((success, info)):
-                return results+[(success, info)]
+
+            def cb(result):
+                (success, info) = result
+                return results + [(success, info)]
+
             d.addCallback(cb)
 
         d.addCallback(self._setPasswordAll,
@@ -595,9 +601,9 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         assert not self._journal
 
         if not overWrite:
-            for key in self._remoteData.keys():
+            for key in list(self._remoteData.keys()):
                 del self._remoteData[key]
-            overWrite=o.keys()
+            overWrite = o.keys()
             self.complete = 1
 
         for k in overWrite:
@@ -634,7 +640,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             if not isinstance(e, ldaperrors.Success):
                 try:
                     raise e
-                except ldaperrors.LDAPSizeLimitExceeded, e:
+                except ldaperrors.LDAPSizeLimitExceeded:
                     if sizeLimitIsNonFatal:
                         pass
                 except:
@@ -726,10 +732,10 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
     # end IConnectedLDAPEntry
 
     def __repr__(self):
-        x={}
+        x = {}
         for key in super(LDAPEntryWithClient, self).keys():
-            x[key]=self[key]
-        keys=x.keys()
+            x[key] = self[key]
+        keys = list(x.keys())
         keys.sort()
         a = []
         for key in keys:

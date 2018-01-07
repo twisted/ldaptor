@@ -164,7 +164,7 @@ class LDAPServer(BaseLDAPServer):
 
             def _gotEntry(entry, auth):
                 if entry is None:
-                    raise ldaperrors.LDAPInvalidCredentials
+                    raise ldaperrors.LDAPInvalidCredentials()
 
                 d = entry.bind(auth)
 

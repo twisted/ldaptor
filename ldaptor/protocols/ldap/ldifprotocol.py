@@ -68,7 +68,7 @@ class LDIF(object, basic.LineReceiver):
     def lineReceived(self, line):
         if line.startswith(' '):
             if self.lastLine is None:
-                raise LDIFEntryStartsWithSpaceError
+                raise LDIFEntryStartsWithSpaceError()
             self.lastLine = self.lastLine + line[1:]
         else:
             if self.lastLine is not None:
@@ -82,7 +82,7 @@ class LDIF(object, basic.LineReceiver):
         if val.startswith(':'):
             return base64.decodestring(val[1:].lstrip(' '))
         elif val.startswith('<'):
-            raise NotImplementedError
+            raise NotImplementedError()
         else:
             return val.lstrip(' ')
 

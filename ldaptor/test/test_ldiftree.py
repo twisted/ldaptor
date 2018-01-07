@@ -420,12 +420,12 @@ cn: theChild
         self.assertEqual(got, want)
 
     def test_children_noAccess_dir_noRead(self):
-        os.chmod(self.meta.path, 0300)
+        os.chmod(self.meta.path, 0o300)
         d = self.meta.children()
         def eb(fail):
             fail.trap(OSError)
             self.assertEqual(fail.value.errno, errno.EACCES)
-            os.chmod(self.meta.path, 0755)
+            os.chmod(self.meta.path, 0o755)
         d.addCallbacks(testutil.mustRaise, eb)
         return d
 
@@ -433,12 +433,12 @@ cn: theChild
         test_children_noAccess_dir_noRead.skip = "Can't test as root"
 
     def test_children_noAccess_dir_noExec(self):
-        os.chmod(self.meta.path, 0600)
+        os.chmod(self.meta.path, 0o600)
         d = self.meta.children()
         def eb(fail):
             fail.trap(IOError)
             self.assertEqual(fail.value.errno, errno.EACCES)
-            os.chmod(self.meta.path, 0755)
+            os.chmod(self.meta.path, 0o755)
         d.addCallbacks(testutil.mustRaise, eb)
         return d
 

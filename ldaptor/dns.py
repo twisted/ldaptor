@@ -5,14 +5,14 @@ from socket import inet_aton, inet_ntoa
 def aton_octets(ip):
     s=inet_aton(ip)
     octets=map(None, s)
-    n=0L
+    n = 0
     for o in octets:
         n=n<<8
         n+=ord(o)
     return n
 
 def aton_numbits(num):
-    n=0L
+    n = 0
     while num>0:
         n>>=1
         n |= 2**31
@@ -44,7 +44,7 @@ def netmaskToNumbits(netmask):
     while bits and i > 0:
         if (bits & i) == 0:
             if bits:
-                raise RuntimeError, "Invalid netmask: %s" % netmask
+                raise RuntimeError("Invalid netmask: %s" % netmask)
         n += 1
         bits -= i
         i = i >> 1

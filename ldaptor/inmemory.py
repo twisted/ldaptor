@@ -1,6 +1,7 @@
-from zope.interface import implements
 from twisted.internet import defer, error
 from twisted.python.failure import Failure
+from zope.interface import implementer
+
 from ldaptor import interfaces, entry, entryhelpers
 from ldaptor.protocols.ldap import distinguishedname, ldaperrors, ldifprotocol
 
@@ -9,13 +10,13 @@ class LDAPCannotRemoveRootError(ldaperrors.LDAPNamingViolation):
     """Cannot remove root of LDAP tree"""
 
 
+@implementer(interfaces.IConnectedLDAPEntry)
 class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
                                 entryhelpers.DiffTreeMixin,
                                 entryhelpers.SubtreeFromChildrenMixin,
                                 entryhelpers.MatchMixin,
                                 entryhelpers.SearchByTreeWalkingMixin,
                                 ):
-    implements(interfaces.IConnectedLDAPEntry)
 
     def __init__(self, *a, **kw):
         entry.BaseLDAPEntry.__init__(self, *a, **kw)
@@ -56,7 +57,7 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
         rdn = distinguishedname.RelativeDistinguishedName(rdn)
         rdn_str = str(rdn)
         if rdn_str in self._children:
-            raise ldaperrors.LDAPEntryAlreadyExists, self._children[rdn_str].dn
+            raise ldaperrors.LDAPEntryAlreadyExists(self._children[rdn_str].dn)
         dn = distinguishedname.DistinguishedName(
             listOfRDNs=(rdn,) + self.dn.split())
         e = ReadOnlyInMemoryLDAPEntry(dn, attributes)
@@ -66,9 +67,9 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
 
     def _delete(self):
         if self._parent is None:
-            raise LDAPCannotRemoveRootError
+            raise LDAPCannotRemoveRootError()
         if self._children:
-            raise ldaperrors.LDAPNotAllowedOnNonLeaf, self.dn
+            raise ldaperrors.LDAPNotAllowedOnNonLeaf(self.dn)
         return self._parent.deleteChild(self.dn.split()[0])
 
     def delete(self):
@@ -81,7 +82,7 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
         try:
             return self._children.pop(rdn_str)
         except KeyError:
-            raise ldaperrors.LDAPNoSuchObject, rdn
+            raise ldaperrors.LDAPNoSuchObject(rdn)
 
     def deleteChild(self, rdn):
         return defer.maybeDeferred(self._deleteChild, rdn)

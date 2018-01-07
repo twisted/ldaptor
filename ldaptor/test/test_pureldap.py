@@ -71,7 +71,7 @@ class KnownValues(unittest.TestCase):
          { "object": 'cn=foo, dc=example, dc=com',
            "modification": [
                       pureber.BERSequence([
-                        pureber.BEREnumerated(1L),
+                        pureber.BEREnumerated(1),
                         pureber.BERSequence([
                           pureber.BEROctetString('bar'),
                           pureber.BERSet([]),
@@ -479,7 +479,7 @@ class KnownValues(unittest.TestCase):
 
         (pureldap.LDAPMessage,
          [],
-         {'id': 1L,
+         {'id': 1,
           'value': pureldap.LDAPSearchRequest(
         baseObject='dc=example,dc=com',
         scope=pureldap.LDAP_SCOPE_wholeSubtree,
@@ -618,11 +618,11 @@ class KnownValues(unittest.TestCase):
             result = str(result)
             result = map(ord, result)
             if result!=encoded:
-                raise AssertionError, \
-                      "Class %s(*%s, **%s) doesn't encode properly: " \
+                raise AssertionError(
+                      "Class %s(*%s, **%s) doesn't encode properly: "
                       "%s != %s" % (klass.__name__,
                                     repr(args), repr(kwargs),
-                                    repr(result), repr(encoded))
+                                    repr(result), repr(encoded)))
 
     def testFromLDAP(self):
         """LDAPClass(encoded="...") should give known result with known input"""

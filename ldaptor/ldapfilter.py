@@ -45,7 +45,8 @@ class InvalidLDAPFilter(Exception):
 
 
 def parseExtensible(attr, s):
-    raise NotImplementedError
+    raise NotImplementedError()
+
 
 
 from pyparsing import Word, Literal, Optional, ZeroOrMore, Suppress, \

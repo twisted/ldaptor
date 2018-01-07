@@ -10,7 +10,8 @@ from ldaptor.protocols import pureldap, pureber
 from ldaptor.protocols.ldap import ldif, distinguishedname
 class Modification(attributeset.LDAPAttributeSet):
     def patch(self, entry):
-        raise NotImplementedError
+        raise NotImplementedError(
+            '%s.patch not implemented' % self.__class__.__name__)
 
     _LDAP_OP = None
 
@@ -112,7 +113,9 @@ class Operation(object):
 
         @returns: Deferred with None or failure.
         """
-        raise NotImplementedError
+        raise NotImplementedError(
+            '%s.patch not implemented' % self.__class__.__name__)
+
 
 class ModifyOp(Operation):
     def __init__(self, dn, modifications=[]):

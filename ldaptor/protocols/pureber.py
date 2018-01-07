@@ -110,7 +110,7 @@ def int2ber(i, signed=True):
 
 def ber2int(e, signed=True):
     need(e, 1)
-    v = 0L + ord(e[0])
+    v = 0 + ord(e[0])
     if v & 0x80 and signed:
         v = v - 256
     for i in range(1, len(e)):
@@ -385,7 +385,6 @@ def berDecodeObject(context, m):
                                  berdecoder=inh)
             return (r, 1 + lenlen + length)
         else:
-            # raise UnknownBERTag, (i, context)
             print(str(UnknownBERTag(i, context)))  # TODO
             return (None, 1 + lenlen + length)
     return (None, 0)

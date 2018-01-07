@@ -1,9 +1,11 @@
-from zope.interface import implements
+from zope.interface import implementer
 from twisted.cred import checkers, credentials, error
 from twisted.internet import reactor
 from twisted.python import failure
+
 from ldaptor import ldapfilter, config
 from ldaptor.protocols.ldap import ldapconnector, ldapclient, ldapsyntax, ldaperrors
+
 
 def makeFilter(name, template=None):
     filter=None
@@ -20,14 +22,14 @@ def makeFilter(name, template=None):
                     pass
     return filter
 
+
+@implementer(checkers.ICredentialsChecker)
 class LDAPBindingChecker:
     """
 
     The avatarID returned is an LDAPEntry.
 
     """
-
-    implements(checkers.ICredentialsChecker)
     credentialInterfaces = (credentials.IUsernamePassword,)
 
     def __init__(self, cfg):
@@ -58,7 +60,7 @@ class LDAPBindingChecker:
     def requestAvatarId(self, credentials):
         try:
             baseDN = self.config.getIdentityBaseDN()
-        except config.MissingBaseDNError, e:
+        except config.MissingBaseDNError as e:
             return failure.Failure(error.UnauthorizedLogin("Disabled due configuration error: %s." % e))
         if not credentials.username:
             return failure.Failure(error.UnauthorizedLogin("I don't support anonymous"))
