@@ -19,7 +19,7 @@ Test cases for ldaptor.protocols.pureber module.
 
 from twisted.trial import unittest
 from ldaptor.protocols import pureber
-import types
+
 
 def s(*l):
     """Join all members of list to a string. Integer members are chr()ed"""

@@ -248,8 +248,6 @@ cn: create-me
             'objectClass': ['top'],
             'cn': ['bad-create'],
             })
-        failures = []
-
 
         d = ldiftree.put(self.tree, e)
 

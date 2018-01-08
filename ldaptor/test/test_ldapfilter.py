@@ -5,7 +5,6 @@ Test cases for ldaptor.protocols.ldap.ldapfilter module.
 from twisted.trial import unittest
 from ldaptor.protocols import pureldap
 from ldaptor import ldapfilter
-import types
 
 
 class RFC2254Examples(unittest.TestCase):
