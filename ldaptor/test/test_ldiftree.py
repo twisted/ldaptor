@@ -20,25 +20,32 @@ def writeFile(path, content):
     f.close()
 
 
-class RandomizeListdirMixin(object):
-    @classmethod
-    def randomListdir(cls, *args, **kwargs):
-        r = cls.__listdir(*args, **kwargs)
+class RandomizeListdirTestCase(unittest.TestCase):
+    """
+    It patches the os.listdir to return the members in a random order.
+    """
+
+    def randomListdir(self, *args, **kwargs):
+        """
+        This is used to replace the os.listdir.
+        """
+        r = self.__os_listdir(*args, **kwargs)
         random.shuffle(r)
         return r
 
-    @classmethod
-    def setUpClass(cls):
-        cls.__listdir = os.listdir
-        os.listdir = cls.randomListdir
-
-    @classmethod
-    def tearDownClass(cls):
-        os.listdir = cls.__listdir
-
-
-class Dir2LDIF(RandomizeListdirMixin, unittest.TestCase):
     def setUp(self):
+        self.__os_listdir = os.listdir
+        os.listdir = self.randomListdir
+
+        def reverse_listdir():
+            os.listdir = self.__os_listdir
+
+        self.addCleanup(reverse_listdir)
+
+
+class Dir2LDIF(RandomizeListdirTestCase):
+    def setUp(self):
+        super(Dir2LDIF, self).setUp()
         self.tree = self.mktemp()
         os.mkdir(self.tree)
         com = os.path.join(self.tree, 'dc=com.dir')
@@ -104,7 +111,7 @@ objectClass: top
         d.addCallbacks(testutil.mustRaise, eb)
         return d
 
-    if os.getuid() == 0:
+    if os.getuid() == 0:  # pragma: no cover
         testNoAccess.skip = "Can't test as root"
 
     def gettingDNRaises(self, dn, exceptionClass):
@@ -144,8 +151,9 @@ objectClass: top
         d.addCallback(self.failUnlessEqual, want)
         return d
 
-class LDIF2Dir(RandomizeListdirMixin, unittest.TestCase):
+class LDIF2Dir(RandomizeListdirTestCase):
     def setUp(self):
+        super(LDIF2Dir, self).setUp()
         self.tree = self.mktemp()
         os.mkdir(self.tree)
         com = os.path.join(self.tree, 'dc=com.dir')
@@ -240,15 +248,13 @@ cn: create-me
             'objectClass': ['top'],
             'cn': ['bad-create'],
             })
-        d = ldiftree.put(self.tree, e)
-        d.addCallbacks(self._cb_testMissingLinkError,
-                       self._eb_testMissingLinkError)
-        return d
+        failures = []
 
-    def _cb_testMissingLinkError(self):
-        raise unittest.FailTest('Should have raised an exception.')
-    def _eb_testMissingLinkError(self, fail):
-        fail.trap(ldiftree.LDIFTreeNoSuchObject)
+
+        d = ldiftree.put(self.tree, e)
+
+        failure = self.failureResultOf(d)
+        self.assertIsInstance(failure.value, ldiftree.LDIFTreeNoSuchObject)
 
     def testAddTopLevel(self):
         e = BaseLDAPEntry(dn='dc=org',
@@ -272,10 +278,11 @@ dc: org
 """)
 
 
-class Tree(RandomizeListdirMixin, unittest.TestCase):
+class Tree(RandomizeListdirTestCase):
     # TODO share the actual tests with inmemory and any other
     # implementations of the same interface
     def setUp(self):
+        super(Tree, self).setUp()
         self.tree = self.mktemp()
         os.mkdir(self.tree)
         com = os.path.join(self.tree, 'dc=com.dir')
@@ -429,7 +436,7 @@ cn: theChild
         d.addCallbacks(testutil.mustRaise, eb)
         return d
 
-    if os.getuid() == 0:
+    if os.getuid() == 0:  # pragma: no cover
         test_children_noAccess_dir_noRead.skip = "Can't test as root"
 
     def test_children_noAccess_dir_noExec(self):
@@ -442,7 +449,7 @@ cn: theChild
         d.addCallbacks(testutil.mustRaise, eb)
         return d
 
-    if os.getuid() == 0:
+    if os.getuid() == 0:  # pragma: no cover
         test_children_noAccess_dir_noExec.skip = "Can't test as root"
 
     def test_children_noAccess_file(self):
@@ -454,7 +461,7 @@ cn: theChild
         d.addCallbacks(testutil.mustRaise, eb)
         return d
 
-    if os.getuid() == 0:
+    if os.getuid() == 0:  # pragma: no cover
         test_children_noAccess_file.skip = "Can't test as root"
 
     def test_addChild(self):

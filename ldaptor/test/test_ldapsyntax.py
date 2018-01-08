@@ -663,15 +663,6 @@ class LDAPSyntaxDNs(unittest.TestCase):
             'cn': ['foo'],
             })
 
-    def TODOtestDNKeyExistenceFailure(self):
-        client = LDAPClientTestDriver()
-        self.failUnlessRaises(ldapsyntax.DNNotPresentError,
-                              ldapsyntax.LDAPEntry,
-                              client=client,
-                              dn='cn=foo,dc=example,dc=com',
-                              attributes={
-            'foo': ['bar'],
-            })
 
 class LDAPSyntaxLDIF(unittest.TestCase):
     def testLDIFConversion(self):
@@ -1214,8 +1205,8 @@ class LDAPSyntaxPasswords(unittest.TestCase):
                                          errorMessage='')],
             )
 
-        o=ldapsyntax.LDAPEntry(client=client, dn='cn=foo,dc=example,dc=com')
-        d=o.setPassword(newPasswd='new')
+        o = ldapsyntax.LDAPEntry(client=client, dn='cn=foo,dc=example,dc=com')
+        d = o.setPassword(newPasswd='new')
 
         def checkError(fail):
             fail.trap(ldapsyntax.PasswordSetAggregateError)
@@ -1225,27 +1216,23 @@ class LDAPSyntaxPasswords(unittest.TestCase):
             assert l[0][0]=='Samba'
             assert isinstance(l[0][1], failure.Failure)
             l[0][1].trap(ldapsyntax.DNNotPresentError)
-            return 'This test run should succeed'
+            return 'All checks are fine'
 
-        def chainMustErrback(dummy):
-            raise RuntimeError('Should never get here')
-        d.addCallbacks(callback=chainMustErrback, errback=checkError)
-        d.addCallback(self.assertEqual, 'This test run should succeed')
-        def cb(dummy):
-            client.assertSent(
-                pureldap.LDAPPasswordModifyRequest(userIdentity='cn=foo,dc=example,dc=com',
-                                                   newPasswd='new'),
-                pureldap.LDAPSearchRequest(baseObject='cn=foo,dc=example,dc=com',
-                                           scope=pureldap.LDAP_SCOPE_baseObject,
-                                           derefAliases=pureldap.LDAP_DEREF_neverDerefAliases,
-                                           sizeLimit=0,
-                                           timeLimit=0,
-                                           typesOnly=0,
-                                           filter=pureldap.LDAPFilterMatchAll,
-                                           attributes=('objectClass',)),
-                )
-        d.addCallback(cb)
-        return d
+        d.addErrback(checkError)
+
+        self.assertEqual('All checks are fine', self.successResultOf(d))
+        client.assertSent(
+            pureldap.LDAPPasswordModifyRequest(userIdentity='cn=foo,dc=example,dc=com',
+                                               newPasswd='new'),
+            pureldap.LDAPSearchRequest(baseObject='cn=foo,dc=example,dc=com',
+                                       scope=pureldap.LDAP_SCOPE_baseObject,
+                                       derefAliases=pureldap.LDAP_DEREF_neverDerefAliases,
+                                       sizeLimit=0,
+                                       timeLimit=0,
+                                       typesOnly=0,
+                                       filter=pureldap.LDAPFilterMatchAll,
+                                       attributes=('objectClass',)),
+            )
 
     def testPasswordSetting_abortsOnFirstError(self):
         """LDAPEntry.setPassword() aborts on first error (does not parallelize, as it used to)."""
