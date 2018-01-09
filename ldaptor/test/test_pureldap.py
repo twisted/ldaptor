@@ -617,12 +617,12 @@ class KnownValues(unittest.TestCase):
             result = klass(*args, **kwargs)
             result = str(result)
             result = map(ord, result)
-            if result!=encoded:
-                raise AssertionError(
-                      "Class %s(*%s, **%s) doesn't encode properly: "
-                      "%s != %s" % (klass.__name__,
-                                    repr(args), repr(kwargs),
-                                    repr(result), repr(encoded)))
+
+            message = (
+                "Class %s(*%r, **%r) doesn't encode properly: "
+                "%r != %r" % (
+                    klass.__name__, args, kwargs, result, encoded))
+            self.assertEqual(encoded, result, message)
 
     def testFromLDAP(self):
         """LDAPClass(encoded="...") should give known result with known input"""
@@ -1012,14 +1012,11 @@ class TestFilterSetEquality(unittest.TestCase):
         self.assertEqual(filter1, filter2)
 
     def test_escape_and_equal(self):
-        def custom_escaper(s):
-            return ''.join(bin(ord(c)) for c in s)
 
         filter1 = pureldap.LDAPFilter_and([
             pureldap.LDAPFilter_equalityMatch(
                 attributeDesc=pureldap.LDAPAttributeDescription('foo'),
                 assertionValue=pureldap.LDAPAttributeValue('1'),
-                escaper=custom_escaper
             ),
             pureldap.LDAPFilter_equalityMatch(
                 attributeDesc=pureldap.LDAPAttributeDescription('foo'),
@@ -1034,7 +1031,6 @@ class TestFilterSetEquality(unittest.TestCase):
             pureldap.LDAPFilter_equalityMatch(
                 attributeDesc=pureldap.LDAPAttributeDescription('foo'),
                 assertionValue=pureldap.LDAPAttributeValue('2'),
-                escaper=custom_escaper
             ),
         ])
 
