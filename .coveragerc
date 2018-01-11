@@ -5,5 +5,5 @@ source = ldaptor
 [paths]
 source =
     ldaptor
-    */ldaptor
-    *\ldaptor
+    */site-packages/ldaptor
+    *\site-packages\ldaptor
