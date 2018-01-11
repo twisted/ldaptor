@@ -8,4 +8,4 @@ https://github.com/twisted/ldaptor/blob/master/CONTRIBUTING.rst
 
 * [ ] I have updated the release notes at `docs/source/NEWS.rst` 
 * [ ] I have updated the automated tests.
-* [ ] All tests pass on your local system for `tox -e py27-twlatest,linters`
+* [ ] All tests pass on your local system for `tox -e py27-dev,linters`

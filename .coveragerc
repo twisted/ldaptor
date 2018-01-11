@@ -1,0 +1,9 @@
+[run]
+branch = True
+source = ldaptor
+
+[paths]
+source =
+    ldaptor
+    */ldaptor
+    *\ldaptor
