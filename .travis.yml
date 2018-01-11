@@ -1,4 +1,11 @@
 language: python
+
+# Only run tests on push on a few branches.
+# Test on PR should be execute for all branches and forks.
+branches:
+  only:
+  - master
+
 python:
   - 2.7
 
