@@ -23,7 +23,7 @@ Tox is used to manage both local development and CI environment.
 The recommended local dev enviroment is `tox -e py27-dev`
 
 When running on local dev env, you will get a coverage report for whole
-code as well as for the changes since `master.
+code as well as for the changes since `master`.
 The reports are also produced in HTML at:
 * build/coverage-html/index.html
 * build/coverage-diff.html
