@@ -1,6 +1,7 @@
 Changelog
 =========
 
+
 Release 17.1 (UNRELEASED)
 -------------------------
 
@@ -16,11 +17,16 @@ Changes
 - Using modern classmethod decorator instead of old-style method call.
 - Usage of zope.interfaces was updated in preparation for python3 port.
 - Code was updated to pass `python3 -m compileall` in preparation for py3 port.
+- Continuous test are executed only against latest related Twisted and latest
+  Twisted trunk branch.
+- The local development environment was updated to produce overall and diff
+  coverage reports in HTML format.
 
 Bugfixes
 ^^^^^^^^
 
 - DN matching now case insensitive.
+
 
 Release 16.0 (2016-06-07)
 -------------------------
