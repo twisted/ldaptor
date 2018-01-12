@@ -1,7 +1,6 @@
 *.pyc
 *.pyo
 _trial_temp/
-.tox/
 ldaptor.test.*/
 ldaptor/test/ldif/webtests.tmp
 docs/*.png
