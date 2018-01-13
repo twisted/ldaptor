@@ -248,22 +248,22 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
-            return 0
+            return NotImplemented
         if self.dn != other.dn:
-            return 0
+            return False
 
         my=self.keys()
         my.sort()
         its=other.keys()
         its.sort()
         if my != its:
-            return 0
+            return False
         for key in my:
             myAttr = self[key]
             itsAttr = other[key]
             if myAttr != itsAttr:
-                return 0
-        return 1
+                return False
+        return True
 
     def __ne__(self, other):
         return not self == other
@@ -275,8 +275,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         return True
 
     def __hash__(self):
-        return id(self)
-
+        return hash(str(self))
 
     def bind(self, password):
         r = pureldap.LDAPBindRequest(dn=str(self.dn), auth=password)
