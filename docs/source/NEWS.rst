@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-Release 17.1 (UNRELEASED)
+Release 18.0 (UNRELEASED)
 -------------------------
 
 Features
@@ -21,11 +21,13 @@ Changes
   Twisted trunk branch.
 - The local development environment was updated to produce overall and diff
   coverage reports in HTML format.
+- `six` package is now a direct dependency in preparation for the Python 3
+  port.
 
 Bugfixes
 ^^^^^^^^
 
-- DN matching now case insensitive.
+- DN matching is now case insensitive.
 
 
 Release 16.0 (2016-06-07)

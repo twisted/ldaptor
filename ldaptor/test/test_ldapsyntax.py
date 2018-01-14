@@ -11,7 +11,11 @@ from twisted.internet import error
 from twisted.python import failure
 from ldaptor.testutil import LDAPClientTestDriver
 
-class LDAPSyntaxBasics(unittest.TestCase):
+class LDAPEntryTests(unittest.TestCase):
+    """
+    Unit tests for LDAPEntry.
+    """
+
     def testCreation(self):
         """Creating an LDAP object should succeed."""
         client = LDAPClientTestDriver()
@@ -40,7 +44,7 @@ class LDAPSyntaxBasics(unittest.TestCase):
             })
         seen={}
         for k in o.keys():
-            assert not seen.has_key(k)
+            assert k not in seen
             seen[k]=1
         assert seen == {'objectClass': 1,
                         'aValue': 1,
@@ -59,7 +63,7 @@ class LDAPSyntaxBasics(unittest.TestCase):
             })
         seen={}
         for k,vs in o.items():
-            assert not seen.has_key(k)
+            assert k not in seen
             seen[k]=vs
         assert seen == {'objectClass': ['a', 'b'],
                         'aValue': ['a'],
@@ -94,6 +98,131 @@ class LDAPSyntaxBasics(unittest.TestCase):
         assert '' not in o['aValue']
         assert None not in o['aValue']
 
+    def testInequalityOtherObject(self):
+        """
+        It is not equal with non LDAPEntry objects.
+        """
+        client = LDAPClientTestDriver()
+        sut = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=com',
+            )
+
+        self.assertNotEqual('dc=example,dc=com', sut)
+
+    def testInequalityDN(self):
+        """
+        Entries with different DN are not equal.
+        """
+        client = LDAPClientTestDriver()
+        first = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=com',
+            )
+        second = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=org',
+            )
+
+        self.assertNotEqual(first, second)
+
+    def testInequalityAttributes(self):
+        """
+        Entries with same DN but different attributes are not equal.
+        """
+        client = LDAPClientTestDriver()
+        first = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=com',
+            attributes={'attr_key1': ['some-value']},
+            )
+        second = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=com',
+            attributes={'attr_key2': ['some-value']},
+            )
+
+        self.assertNotEqual(first, second)
+
+    def testInequalityValues(self):
+        """
+        Entries with same DN same attributes, but different
+        values for attributes are not equal.
+        """
+        client = LDAPClientTestDriver()
+        first = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=com',
+            attributes={'attr_key1': ['some-value']},
+            )
+        second = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=com',
+            attributes={'attr_key1': ['other-value']},
+            )
+
+        self.assertNotEqual(first, second)
+
+    def testEquality(self):
+        """
+        Entries with same DN, same attributes, and same values for
+        attributes equal, regardless of the order of the attributes.
+        """
+        client = LDAPClientTestDriver()
+        first = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=com',
+            attributes={
+                'attr_key1': ['some-value'],
+                'attr_key2': ['second-value'],
+                },
+            )
+        second = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=com',
+            attributes={
+                'attr_key2': ['second-value'],
+                'attr_key1': ['some-value'],
+                },
+            )
+
+        self.assertEqual(first, second)
+
+    def testHashEqual(self):
+        """
+        Entries which are equal have the same hash.
+        """
+        client = LDAPClientTestDriver()
+        first = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=com',
+            )
+        second = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=com',
+            )
+
+        self.assertEqual(first, second)
+        self.assertEqual(hash(first), hash(second))
+
+    def testHashNotEqual(self):
+        """
+        Entries which are not equal have different hash values.
+        """
+        client = LDAPClientTestDriver()
+        first = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=com',
+            )
+        second = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=org',
+            )
+
+        self.assertNotEqual(first, second)
+        self.assertNotEqual(hash(first), hash(second))
+
+
 class LDAPSyntaxAttributes(unittest.TestCase):
     def testAttributeSetting(self):
         client=LDAPClientTestDriver()
@@ -126,8 +255,8 @@ class LDAPSyntaxAttributes(unittest.TestCase):
         o['aValue']=['quux']
         del o['aValue']
         del o['bValue']
-        self.failIf(o.has_key('aValue'))
-        self.failIf(o.has_key('bValue'))
+        self.failIf('aValue' in o)
+        self.failIf('bValue' in o)
 
     def testAttributeAdd(self):
         client=LDAPClientTestDriver()
@@ -229,7 +358,7 @@ class LDAPSyntaxAttributes(unittest.TestCase):
             o.undo()
             self.failUnlessEqual(o['aValue'], ['foo', 'bar'])
             self.failUnlessEqual(o['bValue'], ['quux'])
-            self.failIf(o.has_key('cValue'))
+            self.failIf('cValue' in o)
         d.addCallback(cb)
         return d
 

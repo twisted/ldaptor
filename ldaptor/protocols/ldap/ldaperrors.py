@@ -81,7 +81,7 @@ class LDAPUnknownError(LDAPException):
         else:
             return codeName
 
-import new
+
 def init(**errors):
     global reverse
     reverse = {}
@@ -90,11 +90,14 @@ def init(**errors):
             klass = Success
         else:
             classname = 'LDAP'+name[0].upper()+name[1:]
-            klass = new.classobj(classname,
-                                 (LDAPException,),
-                                 { 'resultCode': value,
-                                   'name': name,
-                                   })
+            klass = type(
+                classname,
+                (LDAPException,),
+                {
+                    'resultCode': value,
+                    'name': name,
+                    },
+                )
             globals()[classname] = klass
         reverse[value] = klass
 

@@ -3,7 +3,6 @@ Test cases for ldaptor.protocols.ldap.ldif module.
 """
 
 from twisted.trial import unittest
-import sets
 from ldaptor.protocols.ldap import ldifprotocol, distinguishedname
 
 class LDIFDriver(ldifprotocol.LDIF):
@@ -297,8 +296,8 @@ description:: V2hhdCBhIGNhcmVmdWwgcmVhZGVyIHlvdSBhcmUhICBUaGlzIHZhbHVlIGlzIGJhc2
                 o = proto.listOfCompleted.pop(0)
                 self.failUnlessEqual(o.dn, distinguishedname.DistinguishedName(dn))
 
-                got = sets.Set([x.lower() for x in o.keys()])
-                want = sets.Set([x.lower() for x in attr.keys()])
+                got = set([x.lower() for x in o.keys()])
+                want = set([x.lower() for x in attr.keys()])
                 self.failUnlessEqual(got, want)
 
                 for k, v in attr.items():

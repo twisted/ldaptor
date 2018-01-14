@@ -1,3 +1,6 @@
+"""
+Command line argument/options available to various ldaptor tools.
+"""
 from twisted.python import usage, reflect
 from twisted.python.usage import UsageError
 from ldaptor.protocols import pureldap
@@ -24,11 +27,18 @@ class Options(usage.Options):
             method()
 
 class Options_service_location:
+    """
+    Mixing for providing the --service-location option.
+    """
+
     def opt_service_location(self, value):
         """Service location, in the form BASEDN:HOST[:PORT]"""
 
-        if not self.opts.has_key('service-location'):
-            self.opts['service-location']={}
+        if 'service-location' not in self.opts:
+            self.opts['service-location'] = {}
+
+        if ':' not in value:
+            raise usage.UsageError("service-location must specify host")
 
         base, location = value.split(':', 1)
         try:
@@ -36,24 +46,15 @@ class Options_service_location:
         except distinguishedname.InvalidRelativeDistinguishedName as e:
             raise usage.UsageError(str(e))
 
-        if not location:
-            raise usage.UsageError("service-location must specify host")
-
         if ':' in location:
             host, port = location.split(':', 1)
         else:
             host, port = location, None
 
-        if not host:
-            host = None
-
-        if not port:
-            port = None
-
         self.opts['service-location'][dn] = (host, port)
 
     def postOptions_service_location(self):
-        if not self.opts.has_key('service-location'):
+        if 'service-location' not in self.opts:
             self.opts['service-location']={}
 
 class Options_base_optional:

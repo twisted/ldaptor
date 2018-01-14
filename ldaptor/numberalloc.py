@@ -1,4 +1,5 @@
 """Find an available uidNumber/gidNumber/other similar number."""
+from __future__ import division
 
 from ldaptor.protocols import pureldap
 
@@ -29,7 +30,7 @@ class freeNumberGuesser:
         if max is None:
             max=self.min+1000
 
-        guess=(max+self.min)/2
+        guess = (max + self.min) // 2
         d=self.makeAGuess(guess)
         d.addCallback(self._nextGuess, guess)
         return d

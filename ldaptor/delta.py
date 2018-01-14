@@ -185,15 +185,21 @@ class ModifyOp(Operation):
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
-            return 0
+            return NotImplemented
         if self.dn != other.dn:
             return 0
         if self.modifications != other.modifications:
             return 0
         return 1
 
+    def __hash__(self):
+        # We use the LDIF representation as similar objects
+        # should have the same LDIF.
+        return hash(self.asLDIF())
+
     def __ne__(self, other):
         return not self==other
+
 
 class AddOp(Operation):
     def __init__(self, entry):
@@ -220,13 +226,19 @@ class AddOp(Operation):
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
-            return False
+            return NotImplemented
         if self.entry != other.entry:
             return False
         return True
 
     def __ne__(self, other):
-        return not self==other
+        return not self == other
+
+    def __hash__(self):
+        # Use the LDIF representions as equal operations should
+        # have the same LDIF.
+        return hash(self.asLDIF())
+
 
 class DeleteOp(Operation):
     def __init__(self, dn):
@@ -254,7 +266,7 @@ class DeleteOp(Operation):
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
-            return False
+            return NotImplemented
         if self.dn != other.dn:
             return False
         return True
@@ -262,3 +274,5 @@ class DeleteOp(Operation):
     def __ne__(self, other):
         return not self==other
 
+    def __hash__(self):
+        return hash(self.dn)

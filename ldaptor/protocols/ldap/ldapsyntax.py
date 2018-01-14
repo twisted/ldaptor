@@ -1,4 +1,5 @@
 """Pythonic API for LDAP operations."""
+import functools
 
 from twisted.internet import defer
 from twisted.python.failure import Failure
@@ -247,22 +248,22 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
-            return 0
+            return NotImplemented
         if self.dn != other.dn:
-            return 0
+            return False
 
         my=self.keys()
         my.sort()
         its=other.keys()
         its.sort()
         if my != its:
-            return 0
+            return False
         for key in my:
             myAttr = self[key]
             itsAttr = other[key]
             if myAttr != itsAttr:
-                return 0
-        return 1
+                return False
+        return True
 
     def __ne__(self, other):
         return not self == other
@@ -272,6 +273,9 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 
     def __nonzero__(self):
         return True
+
+    def __hash__(self):
+        return hash(str(self))
 
     def bind(self, password):
         r = pureldap.LDAPBindRequest(dn=str(self.dn), auth=password)
@@ -563,7 +567,8 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 
         prefix = 'setPasswordMaybe_'
         names = [name[len(prefix):] for name in dir(self) if name.startswith(prefix)]
-        names.sort(_passwordChangerPriorityComparison)
+        names.sort(
+            key=functools.cmp_to_key(_passwordChangerPriorityComparison))
 
         d = defer.maybeDeferred(self._setPasswordAll,
                                 [],
