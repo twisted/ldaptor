@@ -19,15 +19,14 @@ Test cases for ldaptor.protocols.pureber module.
 
 from twisted.trial import unittest
 from ldaptor.protocols import pureber
-import types
+
 
 def s(*l):
     """Join all members of list to a string. Integer members are chr()ed"""
     r=''
     for e in l:
-        if isinstance(e, types.IntType):
-            e=chr(e)
-        r=r+str(e)
+        e = chr(e)
+        r = r + str(e)
     return r
 
 def l(s):
@@ -75,7 +74,11 @@ class BerLengths(unittest.TestCase):
         assert len(m)==101
         self.assertRaises(pureber.BERExceptionInsufficientData, pureber.berDecodeLength, m[:100])
 
-class BERBaseEquality(unittest.TestCase):
+
+class BERBaseTests(unittest.TestCase):
+    """
+    Unit tests for generic BERBase.
+    """
     valuesToTest=(
         (pureber.BERInteger, [0]),
         (pureber.BERInteger, [1]),
@@ -86,16 +89,20 @@ class BERBaseEquality(unittest.TestCase):
         (pureber.BEROctetString, ["b"+chr(0xe4)+chr(0xe4)]),
         )
 
-    def testBERBaseEquality(self):
-        """BER objects equal BER objects with same type and content"""
+    def testEquality(self):
+        """
+        BER objects equal BER objects with same type and content
+        """
         for class_, args in self.valuesToTest:
             x=class_(*args)
             y=class_(*args)
             assert x==x
             assert x==y
 
-    def testBERBaseInEquality(self):
-        """BER objects do not equal BER objects with different type or content"""
+    def testInequalityWithBER(self):
+        """
+        BER objects do not equal BER objects with different type or content
+        """
         for i in xrange(len(self.valuesToTest)):
             for j in xrange(len(self.valuesToTest)):
                 if i!=j:
@@ -104,6 +111,24 @@ class BERBaseEquality(unittest.TestCase):
                     x=i_class(*i_args)
                     y=j_class(*j_args)
                     assert x!=y
+
+    def testInequalityWithNonBER(self):
+        """
+        BER objects are equal with non-BER objects.
+        """
+        sut = pureber.BERInteger([0])
+
+        self.assertFalse(0 == sut)
+        self.assertNotEqual(0, sut)
+
+    def testHashEquality(self):
+        """
+        Objects which are equal have the same hash.
+        """
+        for klass, arguments in self.valuesToTest:
+            first = klass(*arguments)
+            second = klass(*arguments)
+            self.assertEqual(hash(first), hash(second))
 
 
 class BERIntegerKnownValues(unittest.TestCase):

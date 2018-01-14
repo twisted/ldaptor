@@ -5,20 +5,7 @@ Test cases for ldaptor.protocols.ldap.ldapfilter module.
 from twisted.trial import unittest
 from ldaptor.protocols import pureldap
 from ldaptor import ldapfilter
-import types
 
-def s(*l):
-    """Join all members of list to a string. Integer members are chr()ed"""
-    r=''
-    for e in l:
-        if isinstance(e, types.IntType):
-            e=chr(e)
-        r=r+str(e)
-    return r
-
-def l(s):
-    """Split a string to ord's of chars."""
-    return map(lambda x: ord(x), s)
 
 class RFC2254Examples(unittest.TestCase):
     def test_cn(self):

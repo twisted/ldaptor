@@ -11,7 +11,11 @@ from twisted.internet import error
 from twisted.python import failure
 from ldaptor.testutil import LDAPClientTestDriver
 
-class LDAPSyntaxBasics(unittest.TestCase):
+class LDAPEntryTests(unittest.TestCase):
+    """
+    Unit tests for LDAPEntry.
+    """
+
     def testCreation(self):
         """Creating an LDAP object should succeed."""
         client = LDAPClientTestDriver()
@@ -93,6 +97,131 @@ class LDAPSyntaxBasics(unittest.TestCase):
         assert 'foo' not in o['aValue']
         assert '' not in o['aValue']
         assert None not in o['aValue']
+
+    def testInequalityOtherObject(self):
+        """
+        It is not equal with non LDAPEntry objects.
+        """
+        client = LDAPClientTestDriver()
+        sut = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=com',
+            )
+
+        self.assertNotEqual('dc=example,dc=com', sut)
+
+    def testInequalityDN(self):
+        """
+        Entries with different DN are not equal.
+        """
+        client = LDAPClientTestDriver()
+        first = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=com',
+            )
+        second = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=org',
+            )
+
+        self.assertNotEqual(first, second)
+
+    def testInequalityAttributes(self):
+        """
+        Entries with same DN but different attributes are not equal.
+        """
+        client = LDAPClientTestDriver()
+        first = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=com',
+            attributes={'attr_key1': ['some-value']},
+            )
+        second = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=com',
+            attributes={'attr_key2': ['some-value']},
+            )
+
+        self.assertNotEqual(first, second)
+
+    def testInequalityValues(self):
+        """
+        Entries with same DN same attributes, but different
+        values for attributes are not equal.
+        """
+        client = LDAPClientTestDriver()
+        first = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=com',
+            attributes={'attr_key1': ['some-value']},
+            )
+        second = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=com',
+            attributes={'attr_key1': ['other-value']},
+            )
+
+        self.assertNotEqual(first, second)
+
+    def testEquality(self):
+        """
+        Entries with same DN, same attributes, and same values for
+        attributes equal, regardless of the order of the attributes.
+        """
+        client = LDAPClientTestDriver()
+        first = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=com',
+            attributes={
+                'attr_key1': ['some-value'],
+                'attr_key2': ['second-value'],
+                },
+            )
+        second = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=com',
+            attributes={
+                'attr_key2': ['second-value'],
+                'attr_key1': ['some-value'],
+                },
+            )
+
+        self.assertEqual(first, second)
+
+    def testHashEqual(self):
+        """
+        Entries which are equal have the same hash.
+        """
+        client = LDAPClientTestDriver()
+        first = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=com',
+            )
+        second = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=com',
+            )
+
+        self.assertEqual(first, second)
+        self.assertEqual(hash(first), hash(second))
+
+    def testHashNotEqual(self):
+        """
+        Entries which are not equal have different hash values.
+        """
+        client = LDAPClientTestDriver()
+        first = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=com',
+            )
+        second = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=org',
+            )
+
+        self.assertNotEqual(first, second)
+        self.assertNotEqual(hash(first), hash(second))
+
 
 class LDAPSyntaxAttributes(unittest.TestCase):
     def testAttributeSetting(self):
@@ -663,15 +792,6 @@ class LDAPSyntaxDNs(unittest.TestCase):
             'cn': ['foo'],
             })
 
-    def TODOtestDNKeyExistenceFailure(self):
-        client = LDAPClientTestDriver()
-        self.failUnlessRaises(ldapsyntax.DNNotPresentError,
-                              ldapsyntax.LDAPEntry,
-                              client=client,
-                              dn='cn=foo,dc=example,dc=com',
-                              attributes={
-            'foo': ['bar'],
-            })
 
 class LDAPSyntaxLDIF(unittest.TestCase):
     def testLDIFConversion(self):
@@ -1214,8 +1334,8 @@ class LDAPSyntaxPasswords(unittest.TestCase):
                                          errorMessage='')],
             )
 
-        o=ldapsyntax.LDAPEntry(client=client, dn='cn=foo,dc=example,dc=com')
-        d=o.setPassword(newPasswd='new')
+        o = ldapsyntax.LDAPEntry(client=client, dn='cn=foo,dc=example,dc=com')
+        d = o.setPassword(newPasswd='new')
 
         def checkError(fail):
             fail.trap(ldapsyntax.PasswordSetAggregateError)
@@ -1225,27 +1345,23 @@ class LDAPSyntaxPasswords(unittest.TestCase):
             assert l[0][0]=='Samba'
             assert isinstance(l[0][1], failure.Failure)
             l[0][1].trap(ldapsyntax.DNNotPresentError)
-            return 'This test run should succeed'
+            return 'All checks are fine'
 
-        def chainMustErrback(dummy):
-            raise RuntimeError('Should never get here')
-        d.addCallbacks(callback=chainMustErrback, errback=checkError)
-        d.addCallback(self.assertEqual, 'This test run should succeed')
-        def cb(dummy):
-            client.assertSent(
-                pureldap.LDAPPasswordModifyRequest(userIdentity='cn=foo,dc=example,dc=com',
-                                                   newPasswd='new'),
-                pureldap.LDAPSearchRequest(baseObject='cn=foo,dc=example,dc=com',
-                                           scope=pureldap.LDAP_SCOPE_baseObject,
-                                           derefAliases=pureldap.LDAP_DEREF_neverDerefAliases,
-                                           sizeLimit=0,
-                                           timeLimit=0,
-                                           typesOnly=0,
-                                           filter=pureldap.LDAPFilterMatchAll,
-                                           attributes=('objectClass',)),
-                )
-        d.addCallback(cb)
-        return d
+        d.addErrback(checkError)
+
+        self.assertEqual('All checks are fine', self.successResultOf(d))
+        client.assertSent(
+            pureldap.LDAPPasswordModifyRequest(userIdentity='cn=foo,dc=example,dc=com',
+                                               newPasswd='new'),
+            pureldap.LDAPSearchRequest(baseObject='cn=foo,dc=example,dc=com',
+                                       scope=pureldap.LDAP_SCOPE_baseObject,
+                                       derefAliases=pureldap.LDAP_DEREF_neverDerefAliases,
+                                       sizeLimit=0,
+                                       timeLimit=0,
+                                       typesOnly=0,
+                                       filter=pureldap.LDAPFilterMatchAll,
+                                       attributes=('objectClass',)),
+            )
 
     def testPasswordSetting_abortsOnFirstError(self):
         """LDAPEntry.setPassword() aborts on first error (does not parallelize, as it used to)."""

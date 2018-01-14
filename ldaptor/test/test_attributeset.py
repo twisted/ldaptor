@@ -6,43 +6,72 @@ from twisted.trial import unittest
 from ldaptor import attributeset
 
 
-class TestComparison(unittest.TestCase):
+class TestLDAPAttributeSet(unittest.TestCase):
+    """
+    Unit tests for LDAPAttributeSet.
+    """
     def testEquality_True_Set(self):
+        """
+        Attributes are equal when the have the same key and value.
+        """
         a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
         b = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
         self.assertEqual(a, b)
 
     def testEquality_True_Set_Ordering(self):
+        """
+        The order of the element in the value doesn't matter for
+        equality.
+        """
         a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
         b = attributeset.LDAPAttributeSet('k', ['b', 'd', 'c'])
         self.assertEqual(a, b)
 
     def testEquality_True_List(self):
+        """
+        It can be compared with a list and in this case the key is
+        ignored.
+        """
         a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
         b = ['b', 'c', 'd']
         self.assertEqual(a, b)
 
     def testEquality_True_List_Ordering(self):
+        """
+        For list comparison the order of the element don't matter.
+        """
         a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
         b = ['b', 'd', 'c']
         self.assertEqual(a, b)
 
     def testEquality_False_Value(self):
+        """
+        LDAPAttributeSet objects are not equal when they have
+        different values.
+        """
         a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
         b = attributeset.LDAPAttributeSet('k', ['b', 'c', 'e'])
         self.assertNotEqual(a, b)
 
     def testEquality_False_Key(self):
+        """
+        Equality fails if attributes have different keys.
+        """
         a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
         b = attributeset.LDAPAttributeSet('l', ['b', 'c', 'd'])
         self.assertNotEqual(a, b)
 
-
-class TestSetOperations(unittest.TestCase):
     def testDifference(self):
+        """
+        Different operation will ignore the attribute's key and will
+        perform the operation onlyb based on the attribute's value.
+        """
         a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
-        b = attributeset.LDAPAttributeSet('k', ['b', 'c', 'e'])
-        self.assertEqual(a - b, {'d'})
+        b = attributeset.LDAPAttributeSet('l', ['b', 'c', 'e'])
+
+        result = a - b
+
+        self.assertEqual({'d'}, result)
 
     def testUnion(self):
         a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])

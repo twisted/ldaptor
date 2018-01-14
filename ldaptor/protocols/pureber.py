@@ -136,19 +136,19 @@ class BERBase(object):
             return -1
 
     def __eq__(self, other):
-        if isinstance(other, BERBase):
-            return str(self) == str(other)
-        else:
-            return False
+        if not isinstance(other, BERBase):
+            return NotImplemented
+
+        return str(self) == str(other)
 
     def __ne__(self, other):
-        if isinstance(other, BERBase):
-            return str(self) != str(other)
-        else:
-            return False
+        if not isinstance(other, BERBase):
+            return NotImplemented
+
+        return str(self) != str(other)
 
     def __hash__(self):
-        return id(self)
+        return hash(str(self))
 
 
 class BERStructured(BERBase):

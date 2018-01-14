@@ -15,6 +15,27 @@ Ldaptor generally follows the coding and documentation standards of the Twisted
 project.
 
 
+Development environment
+-----------------------
+
+Tox is used to manage both local development and CI environment.
+
+The recommended local dev enviroment is `tox -e py27-dev`
+
+When running on local dev env, you will get a coverage report for whole
+code as well as for the changes since `master`.
+The reports are also produced in HTML at:
+
+* build/coverage-html/index.html
+* build/coverage-diff.html
+
+You can run a subset of the test by passing the dotted path to the test or
+test case, test module or test package::
+
+    tox -e py27-dev ldaptor.test.test_delta.TestModifyOp.testAsLDIF
+    tox -e py27-dev ldaptor.test.test_usage
+
+
 Release notes
 -------------
 
