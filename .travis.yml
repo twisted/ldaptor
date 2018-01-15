@@ -8,17 +8,15 @@ branches:
 
 python:
   - 2.7
-  - 3.4
   - 3.5
 
 env:
   - python: 2.7
-    TOX_ENV=py27-twlatest
+  - TOX_ENV=py27-test-twlatest
   - python: 2.7
-    TOX_ENV=py27-twtrunk
-  - python: 2.7
+  - TOX_ENV=py27-test-twtrunk
   - python: 3.5
-    TOX_ENV=py35-test-twtrunk
+  - TOX_ENV=py34-test-twtrunk
   - python: 2.7
     TOX_ENV=linters
 
