@@ -29,7 +29,6 @@
 # (4) If a value of a type is its default value, it MUST be absent.
 #     Only some BOOLEAN and INTEGER types have default values in
 #     this protocol definition.
-
 from six.moves import UserList
 
 # xxxxxxxx
@@ -140,19 +139,18 @@ class BERBase(object):
         return str(self) > str(other)
 
     def __eq__(self, other):
-        if isinstance(other, BERBase):
-            return str(self) == str(other)
-        else:
-            return False
+        if not isinstance(other, BERBase):
+            return NotImplemented
+        return str(self) == str(other)
 
     def __ne__(self, other):
-        if isinstance(other, BERBase):
-            return str(self) != str(other)
-        else:
-            return False
+        if not isinstance(other, BERBase):
+            return NotImplemented
+
+        return str(self) != str(other)
 
     def __hash__(self):
-        return id(self)
+        return hash(str(self))
 
 
 class BERStructured(BERBase):

@@ -6,9 +6,6 @@ include docs/source/examples/ldif2ldif
 include ldaptor.schema
 include test-ldapserver.tac
 include tox.ini
-exclude docs/PULL_REQUEST_TEMPLATE.md
-prune docs/build/html
-prune ldaptor/test/ldif/webtests.tmp
 recursive-include docs *.cfg
 recursive-include docs *.conf
 recursive-include docs *.dia
@@ -25,3 +22,14 @@ recursive-include docs Makefile
 recursive-include docs/source/examples/addressbook run
 recursive-include docs/source/examples/addressbook summary
 recursive-include ldaptor *.ldif
+
+# This is only needed by CI when reporting coverage.
+exclude codecov.yml
+
+# This is only needed by GitHub.
+exclude docs/PULL_REQUEST_TEMPLATE.md
+
+# This is only needed for dev purporse.
+exclude .coveragerc
+prune docs/build/html
+prune ldaptor/test/ldif/webtests.tmp

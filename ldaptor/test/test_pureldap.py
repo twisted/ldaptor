@@ -16,10 +16,13 @@
 """
 Test cases for ldaptor.protocols.pureldap module.
 """
-
-from twisted.trial import unittest
-from ldaptor.protocols import pureldap, pureber
 import types
+
+import six
+from twisted.trial import unittest
+
+from ldaptor.protocols import pureldap, pureber
+
 
 def s(*l):
     """Join all members of list to a string. Integer members are chr()ed"""
@@ -617,12 +620,12 @@ class KnownValues(unittest.TestCase):
             result = klass(*args, **kwargs)
             result = str(result)
             result = map(ord, result)
-            if result!=encoded:
-                raise AssertionError(
-                      "Class %s(*%s, **%s) doesn't encode properly: "
-                      "%s != %s" % (klass.__name__,
-                                    repr(args), repr(kwargs),
-                                    repr(result), repr(encoded)))
+
+            message = (
+                "Class %s(*%r, **%r) doesn't encode properly: "
+                "%r != %r" % (
+                    klass.__name__, args, kwargs, result, encoded))
+            self.assertEqual(encoded, result, message)
 
     def testFromLDAP(self):
         """LDAPClass(encoded="...") should give known result with known input"""
@@ -648,7 +651,7 @@ class KnownValues(unittest.TestCase):
             if decoder is None:
                 decoder = pureldap.LDAPBERDecoderContext(
                     fallback=pureber.BERDecoderContext())
-            for i in xrange(1, len(encoded)):
+            for i in six.moves.range(1, len(encoded)):
                 m=s(*encoded)[:i]
                 self.assertRaises(pureber.BERExceptionInsufficientData,
                                   pureber.berDecodeObject,
@@ -678,8 +681,8 @@ class TestEquality(unittest.TestCase):
 
     def testInEquality(self):
         """LDAP objects do not equal LDAP objects with different type or content"""
-        for i in xrange(len(self.valuesToTest)):
-            for j in xrange(len(self.valuesToTest)):
+        for i in six.moves.range(len(self.valuesToTest)):
+            for j in six.moves.range(len(self.valuesToTest)):
                 if i!=j:
                     i_class, i_args = self.valuesToTest[i]
                     j_class, j_args = self.valuesToTest[j]
@@ -1012,14 +1015,11 @@ class TestFilterSetEquality(unittest.TestCase):
         self.assertEqual(filter1, filter2)
 
     def test_escape_and_equal(self):
-        def custom_escaper(s):
-            return ''.join(bin(ord(c)) for c in s)
 
         filter1 = pureldap.LDAPFilter_and([
             pureldap.LDAPFilter_equalityMatch(
                 attributeDesc=pureldap.LDAPAttributeDescription('foo'),
                 assertionValue=pureldap.LDAPAttributeValue('1'),
-                escaper=custom_escaper
             ),
             pureldap.LDAPFilter_equalityMatch(
                 attributeDesc=pureldap.LDAPAttributeDescription('foo'),
@@ -1034,7 +1034,6 @@ class TestFilterSetEquality(unittest.TestCase):
             pureldap.LDAPFilter_equalityMatch(
                 attributeDesc=pureldap.LDAPAttributeDescription('foo'),
                 assertionValue=pureldap.LDAPAttributeValue('2'),
-                escaper=custom_escaper
             ),
         ])
 

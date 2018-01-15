@@ -1,4 +1,11 @@
 language: python
+
+# Only run tests on push on a few branches.
+# Test on PR should be execute for all branches and forks.
+branches:
+  only:
+  - master
+
 python:
   - 2.7
   - 3.4
@@ -10,34 +17,25 @@ env:
   - python: 2.7
     TOX_ENV=py27-twtrunk
   - python: 2.7
-    TOX_ENV=py27-tw162
-  - python: 2.7
-    TOX_ENV=py27-tw160
-  - python: 2.7
-    TOX_ENV=py27-tw150
-  - python: 2.7
-    TOX_ENV=py27-tw140
-  - python: 3.4
-    TOX_ENV=py34-twtrunk
   - python: 3.5
-    TOX_ENV=py35-twtrunk
+    TOX_ENV=py35-test-twtrunk
   - python: 2.7
     TOX_ENV=linters
 
 matrix:
   fast_finish: true
   allow_failures:
-    - env: TOX_ENV=py34-twtrunk
-    - env: TOX_ENV=py35-twtrunk
+    - env: TOX_ENV=py35-test-twtrunk
 
 install:
-  - pip install tox coveralls
+  - pip install tox codecov
 
 script:
   - tox -e $TOX_ENV
 
-after_success:
-  - coveralls
+after_script:
+  - codecov
+
 
 notifications:
     email: false

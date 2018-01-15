@@ -9,6 +9,8 @@ import six
 from ldaptor import attributeset
 from ldaptor.protocols import pureldap, pureber
 from ldaptor.protocols.ldap import ldif, distinguishedname
+
+
 class Modification(attributeset.LDAPAttributeSet):
     def patch(self, entry):
         raise NotImplementedError(
@@ -186,18 +188,20 @@ class ModifyOp(Operation):
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
-            return 0
+            return NotImplemented
         if self.dn != other.dn:
             return 0
         if self.modifications != other.modifications:
             return 0
         return 1
 
+    def __hash__(self):
+        # We use the LDIF representation as similar objects
+        # should have the same LDIF.
+        return hash(self.asLDIF())
+
     def __ne__(self, other):
         return not self==other
-
-    def __hash__(self):
-        return id(self)
 
 
 class AddOp(Operation):
@@ -225,16 +229,18 @@ class AddOp(Operation):
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
-            return False
+            return NotImplemented
         if self.entry != other.entry:
             return False
         return True
 
     def __ne__(self, other):
-        return not self==other
+        return not self == other
 
     def __hash__(self):
-        return id(self)
+        # Use the LDIF representions as equal operations should
+        # have the same LDIF.
+        return hash(self.asLDIF())
 
 
 class DeleteOp(Operation):
@@ -263,7 +269,7 @@ class DeleteOp(Operation):
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
-            return False
+            return NotImplemented
         if self.dn != other.dn:
             return False
         return True
@@ -272,4 +278,4 @@ class DeleteOp(Operation):
         return not self==other
 
     def __hash__(self):
-        return id(self)
+        return hash(self.dn)

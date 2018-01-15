@@ -30,8 +30,6 @@ class MergedLDAPServerTest(unittest.TestCase):
 
         clients = []
         for r in responses:
-            if not isinstance(r, list):
-                raise Exception()
             clients.append(testutil.LDAPClientTestDriver(*r))
 
         conf = config.LDAPConfig(serviceLocationOverrides={"": createClient})
@@ -135,12 +133,16 @@ class MergedLDAPServerTest(unittest.TestCase):
         return d
 
     def test_unbind_clientEOF(self):
+        """
+        No connection is done when client has nothing to say.
+        """
         d = self.createMergedServer([[]], [[]])
 
         def test_f(server):
             server.connectionLost(error.ConnectionDone)
-            for c in server.clients:
-                c.assertSent('fake-unbind-by-LDAPClientTestDriver')
+
+            self.assertEqual(
+              [], server.clients, 'A connection should not be done.')
             self.assertEqual(server.transport.value(), "")
 
         d.addCallback(test_f)

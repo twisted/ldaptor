@@ -16,18 +16,18 @@
 """
 Test cases for ldaptor.protocols.pureber module.
 """
-
+import six
 from twisted.trial import unittest
+
 from ldaptor.protocols import pureber
-import types
+
 
 def s(*l):
     """Join all members of list to a string. Integer members are chr()ed"""
     r=''
     for e in l:
-        if isinstance(e, types.IntType):
-            e=chr(e)
-        r=r+str(e)
+        e = chr(e)
+        r = r + str(e)
     return r
 
 def l(s):
@@ -75,7 +75,11 @@ class BerLengths(unittest.TestCase):
         assert len(m)==101
         self.assertRaises(pureber.BERExceptionInsufficientData, pureber.berDecodeLength, m[:100])
 
-class BERBaseEquality(unittest.TestCase):
+
+class BERBaseTests(unittest.TestCase):
+    """
+    Unit tests for generic BERBase.
+    """
     valuesToTest=(
         (pureber.BERInteger, [0]),
         (pureber.BERInteger, [1]),
@@ -86,24 +90,46 @@ class BERBaseEquality(unittest.TestCase):
         (pureber.BEROctetString, ["b"+chr(0xe4)+chr(0xe4)]),
         )
 
-    def testBERBaseEquality(self):
-        """BER objects equal BER objects with same type and content"""
+    def testEquality(self):
+        """
+        BER objects equal BER objects with same type and content
+        """
         for class_, args in self.valuesToTest:
             x=class_(*args)
             y=class_(*args)
             assert x==x
             assert x==y
 
-    def testBERBaseInEquality(self):
-        """BER objects do not equal BER objects with different type or content"""
-        for i in xrange(len(self.valuesToTest)):
-            for j in xrange(len(self.valuesToTest)):
+    def testInequalityWithBER(self):
+        """
+        BER objects do not equal BER objects with different type or content
+        """
+        for i in six.moves.range(len(self.valuesToTest)):
+            for j in six.moves.range(len(self.valuesToTest)):
                 if i!=j:
                     i_class, i_args = self.valuesToTest[i]
                     j_class, j_args = self.valuesToTest[j]
                     x=i_class(*i_args)
                     y=j_class(*j_args)
                     assert x!=y
+
+    def testInequalityWithNonBER(self):
+        """
+        BER objects are equal with non-BER objects.
+        """
+        sut = pureber.BERInteger([0])
+
+        self.assertFalse(0 == sut)
+        self.assertNotEqual(0, sut)
+
+    def testHashEquality(self):
+        """
+        Objects which are equal have the same hash.
+        """
+        for klass, arguments in self.valuesToTest:
+            first = klass(*arguments)
+            second = klass(*arguments)
+            self.assertEqual(hash(first), hash(second))
 
 
 class BERIntegerKnownValues(unittest.TestCase):
@@ -215,16 +241,6 @@ class BEROctetStringSanityCheck(unittest.TestCase):
             assert n*'x'==result
 
 
-
-
-
-
-
-
-
-
-
-
 class BERNullKnownValues(unittest.TestCase):
     def testToBERNullKnownValues(self):
         """str(BERNull()) should give known result"""
@@ -248,9 +264,6 @@ class BERNullKnownValues(unittest.TestCase):
         assert len(m)==2
         self.assertRaises(pureber.BERExceptionInsufficientData, pureber.berDecodeObject, pureber.BERDecoderContext(), m[:1])
         self.assertEqual((None, 0), pureber.berDecodeObject(pureber.BERDecoderContext(), ''))
-
-
-
 
 
 class BERBooleanKnownValues(unittest.TestCase):
@@ -300,12 +313,6 @@ class BERBooleanKnownValues(unittest.TestCase):
         self.assertRaises(pureber.BERExceptionInsufficientData, pureber.berDecodeObject, pureber.BERDecoderContext(), m[:2])
         self.assertRaises(pureber.BERExceptionInsufficientData, pureber.berDecodeObject, pureber.BERDecoderContext(), m[:1])
         self.assertEqual((None, 0), pureber.berDecodeObject(pureber.BERDecoderContext(), ''))
-
-
-
-
-
-
 
 
 class BEREnumeratedKnownValues(unittest.TestCase):
@@ -366,39 +373,88 @@ class BEREnumeratedSanityCheck(unittest.TestCase):
             assert n==result
 
 
-class BERSequenceKnownValues(unittest.TestCase):
-    knownValues=(
-        ([], [0x30, 0x00]),
-        ([pureber.BERInteger(2)], [0x30, 0x03, 0x02, 0x01, 2]),
-        ([pureber.BERInteger(3)], [0x30, 0x03, 0x02, 0x01, 3]),
-        ([pureber.BERInteger(128)], [0x30, 0x04, 0x02, 0x02, 0, 128]),
-        ([pureber.BERInteger(2), pureber.BERInteger(3), pureber.BERInteger(128)],
-         [0x30, 0x0a]+[0x02, 0x01, 2]+[0x02, 0x01, 3]+[0x02, 0x02, 0, 128]),
-        )
+class TestBERSequence(unittest.TestCase):
+    """
+    Unit test for BERSequence.
+    """
 
-    def testToBERSequenceKnownValues(self):
-        """str(BERSequence(x)) should give known result with known input"""
-        for content, encoded in self.knownValues:
-            result = pureber.BERSequence(content)
-            result = str(result)
-            result = map(ord, result)
-            assert encoded==result
+    def testStringRepresentationEmpty(self):
+        """
+        It can return the string representation for empty sequence which
+        is just the zero/null byte.
+        """
+        sut = pureber.BERSequence([])
 
-    def testFromBERSequenceKnownValues(self):
-        """BERSequence(encoded="...") should give known result with known input"""
-        for content, encoded in self.knownValues:
+        result = str(sut)
+
+        self.assertEqual('0\x00', result)
+
+    def testStringRepresentatinSmallInteger(self):
+        """
+        It can represent a sequence of a single integer which has a
+        single byte value.
+        """
+        sut = pureber.BERSequence([pureber.BERInteger(2)])
+
+        result = str(sut)
+
+        self.assertEqual('0\x03\x02\x01\x02', result)
+
+    def testStringRepresentatinLargerInteger(self):
+        """
+        It can represent a sequence of a single integer which has a
+        multi bites value.
+        """
+        sut = pureber.BERSequence([pureber.BERInteger(128)])
+
+        result = str(sut)
+
+        self.assertEqual('0\x04\x02\x02\x00\x80', result)
+
+    def testStringRepresentatinMultipleIntegers(self):
+        """
+        It can represent a sequence of multiple integer.
+        """
+        sut = pureber.BERSequence([
+            pureber.BERInteger(3), pureber.BERInteger(128)])
+
+        result = str(sut)
+
+        self.assertEqual('0\x07\x02\x01\x03\x02\x02\x00\x80', result)
+
+    def testDecodeValidInput(self):
+        """
+        It can be decoded from its bytes serialization.
+        """
+        knownValues=(
+            ([], [0x30, 0x00]),
+            ([pureber.BERInteger(2)], [0x30, 0x03, 0x02, 0x01, 2]),
+            ([pureber.BERInteger(3)], [0x30, 0x03, 0x02, 0x01, 3]),
+            ([pureber.BERInteger(128)], [0x30, 0x04, 0x02, 0x02, 0, 128]),
+            ([
+                pureber.BERInteger(2),
+                pureber.BERInteger(3),
+                pureber.BERInteger(128),
+                ],
+             [0x30, 0x0a] + [0x02, 0x01, 2] + [0x02, 0x01, 3] + [0x02, 0x02, 0, 128]),
+            )
+
+        for content, encoded in knownValues:
             m=s(*encoded)
             result, bytes = pureber.berDecodeObject(pureber.BERDecoderContext(), m)
             self.assertEqual(bytes, len(m))
             assert isinstance(result, pureber.BERSequence)
             result = result.data
             assert len(content)==len(result)
-            for i in xrange(len(content)):
+            for i in six.moves.range(len(content)):
                 assert content[i]==result[i]
             assert content==result
 
-    def testPartialBERSequenceEncodings(self):
-        """BERSequence(encoded="...") with too short input should throw BERExceptionInsufficientData"""
+    def testDecdeInvalidInput(self):
+        """
+        It raises BERExceptionInsufficientData when trying to decode from
+        data which is not valid.
+        """
         m=str(pureber.BERSequence([pureber.BERInteger(2)]))
         assert len(m)==5
 
@@ -407,6 +463,3 @@ class BERSequenceKnownValues(unittest.TestCase):
         self.assertRaises(pureber.BERExceptionInsufficientData, pureber.berDecodeObject, pureber.BERDecoderContext(), m[:2])
         self.assertRaises(pureber.BERExceptionInsufficientData, pureber.berDecodeObject, pureber.BERDecoderContext(), m[:1])
         self.assertEqual((None, 0), pureber.berDecodeObject(pureber.BERDecoderContext(), ''))
-
-# TODO BERSequenceOf
-# TODO BERSet

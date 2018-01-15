@@ -34,18 +34,6 @@ class LDAPAttributeSet(set):
     def __ne__(self, other):
         return not self == other
 
-    def difference(self, other):
-        return set(self) - set(other)
-
-    def union(self, other):
-        return set(self) | set(other)
-
-    def intersection(self, other):
-        return set(self) & set(other)
-
-    def symmetric_difference(self, other):
-        return set(self) ^ set(other)
-
     def copy(self):
         result = self.__class__(self.key)
         result.update(self)

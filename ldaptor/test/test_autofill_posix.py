@@ -18,16 +18,13 @@ class LDAPAutoFill_Posix(unittest.TestCase):
             'objectClass': ['something', 'other'],
             })
         autoFiller = posixAccount.Autofill_posix(baseDN='dc=example,dc=com')
+
         d = o.addAutofiller(autoFiller)
-        def _cbMustRaise(_):
-            raise unittest.FailTest('Should have raised an exception')
-        def _eb(fail):
-            client.assertNothingSent()
-            fail.trap(autofill.ObjectMissingObjectClassException)
-            return None
-        d.addCallbacks(_cbMustRaise,
-                       _eb)
-        return d
+
+        failure = self.failureResultOf(d)
+        self.assertIsInstance(
+          failure.value, autofill.ObjectMissingObjectClassException)
+        client.assertNothingSent()
 
     def testDefaultSetting(self):
         """Test that fields get their default values."""

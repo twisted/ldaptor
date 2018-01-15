@@ -108,10 +108,7 @@ class LDAPServerTest(unittest.TestCase):
         buffer = s
         value = []
         while 1:
-            try:
-                o, bytes = pureber.berDecodeObject(berdecoder, buffer)
-            except pureber.BERExceptionInsufficientData:
-                o, bytes = None, 0
+            o, bytes = pureber.berDecodeObject(berdecoder, buffer)
             buffer = buffer[bytes:]
             if not o:
                 break
@@ -657,39 +654,6 @@ class LDAPServerTest(unittest.TestCase):
                 self.another,
             ]))
         return d
-
-    def test_modifyDN_rdnOnly_noDeleteOldRDN_success(self):
-        newrdn = 'cn=thingamagic'
-        self.server.dataReceived(
-            str(
-                pureldap.LDAPMessage(
-                    pureldap.LDAPModifyDNRequest(
-                        entry=self.thingie.dn,
-                        newrdn=newrdn,
-                        deleteoldrdn=False),
-                    id=2)))
-        self.assertEqual(
-            self.server.transport.value(),
-            str(
-                pureldap.LDAPMessage(
-                    pureldap.LDAPModifyDNResponse(
-                        resultCode=ldaperrors.Success.resultCode),
-                    id=2)))
-        # tree changed
-        d = self.stuff.children()
-        d.addCallback(lambda actual: six.assertCountEqual(
-            self,
-            actual,
-            {self.another,
-                inmemory.ReadOnlyInMemoryLDAPEntry(
-                    '%s,ou=stuff,dc=example,dc=com' % newrdn,
-                    {
-                        'objectClass': ['a', 'b'],
-                        'cn': ['thingamagic', 'thingie']
-                    })}))
-        return d
-
-    test_modifyDN_rdnOnly_noDeleteOldRDN_success.todo = 'Not supported yet.'
 
     def test_modify(self):
         self.server.dataReceived(
