@@ -26,7 +26,7 @@ install:
 script:
   - tox -e $TOX_ENV
 
-after_success:
+after_script:
   - codecov
   - coveralls
 
