@@ -4,10 +4,13 @@ Changes to the content of one single LDAP entry.
 (This means these do not belong here: adding or deleting of entries,
 changing of location in tree)
 """
+import six
 
 from ldaptor import attributeset
 from ldaptor.protocols import pureldap, pureber
 from ldaptor.protocols.ldap import ldif, distinguishedname
+
+
 class Modification(attributeset.LDAPAttributeSet):
     def patch(self, entry):
         raise NotImplementedError(
@@ -22,7 +25,7 @@ class Modification(attributeset.LDAPAttributeSet):
         tmplist = list(self)
         newlist = []
         for x in range(len(tmplist)):
-            if (isinstance(tmplist[x], unicode)):
+            if (isinstance(tmplist[x], six.text_type)):
                 value = tmplist[x].encode('utf-8')
                 newlist.append(value)
             else:

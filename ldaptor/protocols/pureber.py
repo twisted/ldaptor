@@ -29,9 +29,6 @@
 # (4) If a value of a type is its default value, it MUST be absent.
 #     Only some BOOLEAN and INTEGER types have default values in
 #     this protocol definition.
-
-import string
-
 from six.moves import UserList
 
 # xxxxxxxx
@@ -130,12 +127,6 @@ class BERBase(object):
 
     def __len__(self):
         return len(str(self))
-
-    def __cmp__(self, other):
-        if isinstance(other, BERBase):
-            return cmp(str(self), str(other))
-        else:
-            return -1
 
     def __eq__(self, other):
         if not isinstance(other, BERBase):
@@ -310,8 +301,8 @@ class BERSequence(BERStructured, UserList):
         UserList.__init__(self, value)
 
     def __str__(self):
-        r=string.join(map(str, self.data), '')
-        return chr(self.identification())+int2berlen(len(r))+r
+        r = ''.join(map(str, self.data))
+        return chr(self.identification()) + int2berlen(len(r)) + r
 
     def __repr__(self):
         if self.tag == self.__class__.tag:

@@ -1,8 +1,10 @@
 import warnings
+
+import string
 try:
-    import string
     maketrans = string.maketrans
-except ImportError:
+except AttributeError:
+    # On Python3 we get it from bytes.
     maketrans = bytes.maketrans
 
 from ldaptor import md4, config

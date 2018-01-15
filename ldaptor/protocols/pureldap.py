@@ -17,6 +17,8 @@
 
 import string
 
+import six
+
 from ldaptor.protocols.pureber import (
 
     BERBoolean, BERDecoderContext, BEREnumerated, BERInteger, BERNull,
@@ -676,13 +678,13 @@ class LDAPMatchingRuleAssertion(BERSequence):
     def __init__(self, matchingRule=None, type=None, matchValue=None, dnAttributes=None, tag=None):
         BERSequence.__init__(self, value=[], tag=tag)
         assert matchValue is not None
-        if isinstance(matchingRule, basestring):
+        if isinstance(matchingRule, six.string_types):
             matchingRule = LDAPMatchingRuleAssertion_matchingRule(matchingRule)
 
-        if isinstance(type, basestring):
+        if isinstance(type, six.string_types):
             type = LDAPMatchingRuleAssertion_type(type)
 
-        if isinstance(matchValue, basestring):
+        if isinstance(matchValue, six.string_types):
             matchValue = LDAPMatchingRuleAssertion_matchValue(matchValue)
 
         if isinstance(dnAttributes, bool):
@@ -1344,8 +1346,9 @@ class LDAPExtendedRequest(LDAPProtocolRequest, BERSequence):
         LDAPProtocolRequest.__init__(self)
         BERSequence.__init__(self, [], tag=tag)
         assert requestName is not None
-        assert isinstance(requestName, basestring)
-        assert requestValue is None or isinstance(requestValue, basestring)
+        assert isinstance(requestName, six.string_types)
+        assert requestValue is None or isinstance(
+            requestValue, six.string_types)
         self.requestName = requestName
         self.requestValue = requestValue
 

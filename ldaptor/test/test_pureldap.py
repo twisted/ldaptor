@@ -16,10 +16,13 @@
 """
 Test cases for ldaptor.protocols.pureldap module.
 """
-
-from twisted.trial import unittest
-from ldaptor.protocols import pureldap, pureber
 import types
+
+import six
+from twisted.trial import unittest
+
+from ldaptor.protocols import pureldap, pureber
+
 
 def s(*l):
     """Join all members of list to a string. Integer members are chr()ed"""
@@ -648,7 +651,7 @@ class KnownValues(unittest.TestCase):
             if decoder is None:
                 decoder = pureldap.LDAPBERDecoderContext(
                     fallback=pureber.BERDecoderContext())
-            for i in xrange(1, len(encoded)):
+            for i in six.moves.range(1, len(encoded)):
                 m=s(*encoded)[:i]
                 self.assertRaises(pureber.BERExceptionInsufficientData,
                                   pureber.berDecodeObject,
@@ -678,8 +681,8 @@ class TestEquality(unittest.TestCase):
 
     def testInEquality(self):
         """LDAP objects do not equal LDAP objects with different type or content"""
-        for i in xrange(len(self.valuesToTest)):
-            for j in xrange(len(self.valuesToTest)):
+        for i in six.moves.range(len(self.valuesToTest)):
+            for j in six.moves.range(len(self.valuesToTest)):
                 if i!=j:
                     i_class, i_args = self.valuesToTest[i]
                     j_class, j_args = self.valuesToTest[j]

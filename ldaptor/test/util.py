@@ -1,16 +1,17 @@
+from io import BytesIO
+
 from twisted.python import failure
 from twisted.internet import reactor, protocol, address, error
 from twisted.test import testutils
 from twisted.trial import unittest
 
-from StringIO import StringIO
 
 class FakeTransport(protocol.FileWrapper):
     disconnecting = False
     disconnect_done = False
 
     def __init__(self, addr, peerAddr):
-        self.data = StringIO()
+        self.data = BytesIO()
         protocol.FileWrapper.__init__(self, self.data)
         self.addr = addr
         self.peerAddr = peerAddr

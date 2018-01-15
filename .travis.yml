@@ -10,15 +10,15 @@ python:
   - 2.7
 
 env:
-  - TOX_ENV=py27-twlatest
-  - TOX_ENV=py27-twtrunk
-  - TOX_ENV=py34-twtrunk
+  - TOX_ENV=py27-test-twlatest
+  - TOX_ENV=py27-test-twtrunk
+  - TOX_ENV=py34-test-twtrunk
   - TOX_ENV=linters
 
 matrix:
   fast_finish: true
   allow_failures:
-    - env: TOX_ENV=py34-twtrunk
+    - env: TOX_ENV=py34-test-twtrunk
 
 install:
   - pip install tox coveralls codecov
@@ -26,7 +26,7 @@ install:
 script:
   - tox -e $TOX_ENV
 
-after_success:
+after_script:
   - codecov
   - coveralls
 

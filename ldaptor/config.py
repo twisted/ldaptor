@@ -1,10 +1,9 @@
 import os.path
-import ConfigParser
 
+from six.moves import configparser
 from zope.interface import implementer
 
 from ldaptor import interfaces
-from ldaptor.insensitive import InsensitiveString
 from ldaptor.protocols.ldap import distinguishedname
 
 
@@ -48,8 +47,8 @@ class LDAPConfig(object):
         cfg = loadConfig()
         try:
             return cfg.get('ldap', 'base')
-        except (ConfigParser.NoOptionError,
-                ConfigParser.NoSectionError):
+        except (configparser.NoOptionError,
+                configparser.NoSectionError):
             raise MissingBaseDNError()
 
     def getServiceLocationOverrides(self):
@@ -99,8 +98,8 @@ class LDAPConfig(object):
         cfg = loadConfig()
         try:
             return cfg.get('authentication', 'identity-base')
-        except (ConfigParser.NoOptionError,
-                ConfigParser.NoSectionError):
+        except (configparser.NoOptionError,
+                configparser.NoSectionError):
             return self.getBaseDN()
 
     def getIdentitySearch(self, name):
@@ -113,10 +112,10 @@ class LDAPConfig(object):
         else:
             cfg = loadConfig()
             try:
-                f=cfg.get('authentication', 'identity-search', vars=data)
-            except (ConfigParser.NoOptionError,
-                    ConfigParser.NoSectionError):
-                f='(|(cn=%(name)s)(uid=%(name)s))' % data
+                f = cfg.get('authentication', 'identity-search', vars=data)
+            except (configparser.NoOptionError,
+                    configparser.NoSectionError):
+                f = '(|(cn=%(name)s)(uid=%(name)s))' % data
         return f
 
 
@@ -139,8 +138,7 @@ def loadConfig(configFiles=None,
     """
     global __config
     if __config is None or reload:
-        x = ConfigParser.SafeConfigParser()
-        x.optionxform = InsensitiveString
+        x = configparser.SafeConfigParser()
 
         for section, options in DEFAULTS.items():
             x.add_section(section)

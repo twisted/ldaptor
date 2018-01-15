@@ -1,6 +1,7 @@
 """Pythonic API for LDAP operations."""
 import functools
 
+import six
 from twisted.internet import defer
 from twisted.python.failure import Failure
 from zope.interface import implementer
@@ -179,8 +180,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 
         """
         self._checkState()
-        import types
-        assert not isinstance(self.dn, types.StringType)
+        assert not isinstance(self.dn, six.string_types)
         for keyval in self.dn.split()[0].split():
             if keyval.attributeType == key:
                 raise CannotRemoveRDNError(key)
@@ -414,7 +414,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             ldapAttrType = pureldap.LDAPAttributeDescription(attrType)
             l = []
             for value in values:
-                if (isinstance(value, unicode)):
+                if (isinstance(value, six.text_type)):
                     value = value.encode('utf-8')
                 l.append(pureldap.LDAPAttributeValue(value))
             ldapValues = pureber.BERSet(l)
@@ -563,7 +563,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         def _passwordChangerPriorityComparison(me, other):
             mePri = getattr(self, '_setPasswordPriority_' + me)
             otherPri = getattr(self, '_setPasswordPriority_' + other)
-            return cmp(mePri, otherPri)
+            return (mePri > otherPri) - (mePri < otherPri)
 
         prefix = 'setPasswordMaybe_'
         names = [name[len(prefix):] for name in dir(self) if name.startswith(prefix)]

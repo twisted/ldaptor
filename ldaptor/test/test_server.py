@@ -2,17 +2,21 @@
 Test cases for ldaptor.protocols.ldap.ldapserver module.
 """
 from __future__ import print_function
+
 import base64
 import types
+
+import six
 from twisted.internet import address, protocol
 from twisted.python import components
+from twisted.test import proto_helpers
+from twisted.trial import unittest
+
 from ldaptor import inmemory, interfaces, schema, delta, entry
 from ldaptor.protocols.ldap import ldapserver, ldapclient, ldaperrors, \
     fetchschema
 from ldaptor.protocols import pureldap, pureber
 from ldaptor.test import util, test_schema
-from twisted.test import proto_helpers
-from twisted.trial import unittest
 
 
 def wrapCommit(entry, cb, *args, **kwds):
@@ -23,7 +27,7 @@ def wrapCommit(entry, cb, *args, **kwds):
         d.addCallback(cb, *args, **kwds)
         return d
 
-    f = types.MethodType(commit_, entry, entry.__class__)
+    f = types.MethodType(commit_, entry)
     entry.commit = f
 
 
@@ -323,7 +327,7 @@ class LDAPServerTest(unittest.TestCase):
                     pureldap.LDAPSearchRequest(
                         baseObject='cn=thingie,ou=stuff,dc=example,dc=com'),
                     id=2)))
-        self.assertItemsEqual(
+        six.assertCountEqual(self,
             self._makeResultList(self.server.transport.value()),
             [str(
                 pureldap.LDAPMessage(
@@ -346,7 +350,7 @@ class LDAPServerTest(unittest.TestCase):
                         baseObject='cn=thingie,ou=stuff,dc=example,dc=com',
                         attributes=['cn']),
                     id=2)))
-        self.assertItemsEqual(
+        six.assertCountEqual(self,
             self._makeResultList(self.server.transport.value()),
             [str(
                 pureldap.LDAPMessage(
@@ -382,7 +386,7 @@ class LDAPServerTest(unittest.TestCase):
                     pureldap.LDAPSearchRequest(
                         baseObject='ou=stuff,dc=example,dc=com'), id=2)))
 
-        self.assertItemsEqual(
+        six.assertCountEqual(self,
             [str(
                 pureldap.LDAPMessage(
                     pureldap.LDAPSearchResultEntry(
@@ -421,7 +425,7 @@ class LDAPServerTest(unittest.TestCase):
                         baseObject='ou=stuff,dc=example,dc=com',
                         scope=pureldap.LDAP_SCOPE_singleLevel),
                     id=2)))
-        self.assertItemsEqual(
+        six.assertCountEqual(self,
             self._makeResultList(self.server.transport.value()),
             [str(
                 pureldap.LDAPMessage(
@@ -452,7 +456,7 @@ class LDAPServerTest(unittest.TestCase):
                         baseObject='ou=stuff,dc=example,dc=com',
                         scope=pureldap.LDAP_SCOPE_wholeSubtree),
                     id=2)))
-        self.assertItemsEqual(
+        six.assertCountEqual(self,
             self._makeResultList(self.server.transport.value()),
             [str(
                 pureldap.LDAPMessage(
@@ -491,7 +495,7 @@ class LDAPServerTest(unittest.TestCase):
                         baseObject='ou=stuff,dc=example,dc=com',
                         scope=pureldap.LDAP_SCOPE_baseObject),
                     id=2)))
-        self.assertItemsEqual(
+        six.assertCountEqual(self,
             self._makeResultList(self.server.transport.value()),
             [str(
                 pureldap.LDAPMessage(
@@ -515,7 +519,7 @@ class LDAPServerTest(unittest.TestCase):
                         scope=pureldap.LDAP_SCOPE_baseObject,
                         filter=pureldap.LDAPFilter_present('objectClass')),
                     id=2)))
-        self.assertItemsEqual(
+        six.assertCountEqual(self,
             self._makeResultList(self.server.transport.value()),
             [str(
                 pureldap.LDAPMessage(
@@ -546,7 +550,8 @@ class LDAPServerTest(unittest.TestCase):
                     pureldap.LDAPDelResponse(resultCode=0),
                     id=2)))
         d = self.stuff.children()
-        d.addCallback(self.assertItemsEqual, [self.another])
+        d.addCallback(lambda actual: six.assertCountEqual(
+            self, actual, [self.another]))
         return d
 
     def test_add_success(self):
@@ -575,15 +580,16 @@ class LDAPServerTest(unittest.TestCase):
                     id=2)))
         # tree changed
         d = self.stuff.children()
-        d.addCallback(
-            self.assertItemsEqual,
+        d.addCallback(lambda actual: six.assertCountEqual(
+            self,
+            actual,
             [
                 self.thingie,
                 self.another,
                 inmemory.ReadOnlyInMemoryLDAPEntry(
                     'cn=new,ou=stuff,dc=example,dc=com',
                     {'objectClass': ['something']})
-            ])
+            ]))
         return d
 
     def test_add_fail_existsAlready(self):
@@ -612,7 +618,8 @@ class LDAPServerTest(unittest.TestCase):
                     id=2)))
         # tree did not change
         d = self.stuff.children()
-        d.addCallback(self.assertItemsEqual, [self.thingie, self.another])
+        d.addCallback(lambda actual: six.assertCountEqual(
+            self, actual, [self.thingie, self.another]))
         return d
 
     def test_modifyDN_rdnOnly_deleteOldRDN_success(self):
@@ -634,8 +641,9 @@ class LDAPServerTest(unittest.TestCase):
                     id=2)))
         # tree changed
         d = self.stuff.children()
-        d.addCallback(
-            self.assertItemsEqual,
+        d.addCallback(lambda actual: six.assertCountEqual(
+            self,
+            actual,
             [
                 inmemory.ReadOnlyInMemoryLDAPEntry(
                     '%s,ou=stuff,dc=example,dc=com' % newrdn,
@@ -644,7 +652,7 @@ class LDAPServerTest(unittest.TestCase):
                         'cn': ['thingamagic']
                     }),
                 self.another,
-            ])
+            ]))
         return d
 
     def test_modify(self):
