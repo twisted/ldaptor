@@ -240,16 +240,6 @@ class BEROctetStringSanityCheck(unittest.TestCase):
             assert n*'x'==result
 
 
-
-
-
-
-
-
-
-
-
-
 class BERNullKnownValues(unittest.TestCase):
     def testToBERNullKnownValues(self):
         """str(BERNull()) should give known result"""
@@ -273,9 +263,6 @@ class BERNullKnownValues(unittest.TestCase):
         assert len(m)==2
         self.assertRaises(pureber.BERExceptionInsufficientData, pureber.berDecodeObject, pureber.BERDecoderContext(), m[:1])
         self.assertEqual((None, 0), pureber.berDecodeObject(pureber.BERDecoderContext(), ''))
-
-
-
 
 
 class BERBooleanKnownValues(unittest.TestCase):
@@ -325,12 +312,6 @@ class BERBooleanKnownValues(unittest.TestCase):
         self.assertRaises(pureber.BERExceptionInsufficientData, pureber.berDecodeObject, pureber.BERDecoderContext(), m[:2])
         self.assertRaises(pureber.BERExceptionInsufficientData, pureber.berDecodeObject, pureber.BERDecoderContext(), m[:1])
         self.assertEqual((None, 0), pureber.berDecodeObject(pureber.BERDecoderContext(), ''))
-
-
-
-
-
-
 
 
 class BEREnumeratedKnownValues(unittest.TestCase):
@@ -391,27 +372,73 @@ class BEREnumeratedSanityCheck(unittest.TestCase):
             assert n==result
 
 
-class BERSequenceKnownValues(unittest.TestCase):
-    knownValues=(
-        ([], [0x30, 0x00]),
-        ([pureber.BERInteger(2)], [0x30, 0x03, 0x02, 0x01, 2]),
-        ([pureber.BERInteger(3)], [0x30, 0x03, 0x02, 0x01, 3]),
-        ([pureber.BERInteger(128)], [0x30, 0x04, 0x02, 0x02, 0, 128]),
-        ([pureber.BERInteger(2), pureber.BERInteger(3), pureber.BERInteger(128)],
-         [0x30, 0x0a]+[0x02, 0x01, 2]+[0x02, 0x01, 3]+[0x02, 0x02, 0, 128]),
-        )
+class TestBERSequence(unittest.TestCase):
+    """
+    Unit test for BERSequence.
+    """
 
-    def testToBERSequenceKnownValues(self):
-        """str(BERSequence(x)) should give known result with known input"""
-        for content, encoded in self.knownValues:
-            result = pureber.BERSequence(content)
-            result = str(result)
-            result = map(ord, result)
-            assert encoded==result
+    def testStringRepresentationEmpty(self):
+        """
+        It can return the string representation for empty sequence which
+        is just the zero/null byte.
+        """
+        sut = pureber.BERSequence([])
 
-    def testFromBERSequenceKnownValues(self):
-        """BERSequence(encoded="...") should give known result with known input"""
-        for content, encoded in self.knownValues:
+        result = str(sut)
+
+        self.assertEqual('0\x00', result)
+
+    def testStringRepresentatinSmallInteger(self):
+        """
+        It can represent a sequence of a single integer which has a
+        single byte value. 
+        """
+        sut = pureber.BERSequence([pureber.BERInteger(2)])
+
+        result = str(sut)
+
+        self.assertEqual('0\x03\x02\x01\x02', result)
+
+    def testStringRepresentatinLargerInteger(self):
+        """
+        It can represent a sequence of a single integer which has a
+        multi bites value. 
+        """
+        sut = pureber.BERSequence([pureber.BERInteger(128)])
+
+        result = str(sut)
+
+        self.assertEqual('0\x04\x02\x02\x00\x80', result)
+
+    def testStringRepresentatinMultipleIntegers(self):
+        """
+        It can represent a sequence of multiple integer.
+        """
+        sut = pureber.BERSequence([
+            pureber.BERInteger(3), pureber.BERInteger(128)])
+
+        result = str(sut)
+
+        self.assertEqual('0\x07\x02\x01\x03\x02\x02\x00\x80', result)
+
+    def testDecodeValidInput(self):
+        """
+        It can be decoded from its bytes serialization.
+        """
+        knownValues=(
+            ([], [0x30, 0x00]),
+            ([pureber.BERInteger(2)], [0x30, 0x03, 0x02, 0x01, 2]),
+            ([pureber.BERInteger(3)], [0x30, 0x03, 0x02, 0x01, 3]),
+            ([pureber.BERInteger(128)], [0x30, 0x04, 0x02, 0x02, 0, 128]),
+            ([
+                pureber.BERInteger(2),
+                pureber.BERInteger(3),
+                pureber.BERInteger(128),
+                ],
+             [0x30, 0x0a] + [0x02, 0x01, 2] + [0x02, 0x01, 3] + [0x02, 0x02, 0, 128]),
+            )
+
+        for content, encoded in knownValues:
             m=s(*encoded)
             result, bytes = pureber.berDecodeObject(pureber.BERDecoderContext(), m)
             self.assertEqual(bytes, len(m))
@@ -422,8 +449,11 @@ class BERSequenceKnownValues(unittest.TestCase):
                 assert content[i]==result[i]
             assert content==result
 
-    def testPartialBERSequenceEncodings(self):
-        """BERSequence(encoded="...") with too short input should throw BERExceptionInsufficientData"""
+    def testDecdeInvalidInput(self):
+        """
+        It raises BERExceptionInsufficientData when trying to decode from
+        data which is not valid.
+        """
         m=str(pureber.BERSequence([pureber.BERInteger(2)]))
         assert len(m)==5
 
@@ -432,6 +462,3 @@ class BERSequenceKnownValues(unittest.TestCase):
         self.assertRaises(pureber.BERExceptionInsufficientData, pureber.berDecodeObject, pureber.BERDecoderContext(), m[:2])
         self.assertRaises(pureber.BERExceptionInsufficientData, pureber.berDecodeObject, pureber.BERDecoderContext(), m[:1])
         self.assertEqual((None, 0), pureber.berDecodeObject(pureber.BERDecoderContext(), ''))
-
-# TODO BERSequenceOf
-# TODO BERSet

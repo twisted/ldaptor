@@ -322,8 +322,16 @@ class RelativeDistinguishedName_Init(unittest.TestCase):
         self.assertEqual(str(rdn), 'dc=example')
 
 class DistinguishedName_Comparison(unittest.TestCase):
-    # TODO test more carefully
-    def testGT(self):
+    """
+    Tests for comparing DistinguishedName.
+    """
+
+    def test_parent_child(self):
+        """
+        The parent is greater than the child.
+        """
         dn1=dn.DistinguishedName('dc=example,dc=com')
-        dn2=dn.DistinguishedName('dc=bar,dc=example,dc=com')
-        self.failUnless(dn1 > dn2)
+        dn2=dn.DistinguishedName('dc=and,dc=example,dc=com')
+
+        self.assertLess(dn2, dn1)
+        self.assertGreater(dn1, dn2)

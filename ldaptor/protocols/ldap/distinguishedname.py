@@ -1,3 +1,5 @@
+from functools import total_ordering
+
 import six
 
 # See rfc2253
@@ -208,6 +210,7 @@ class RelativeDistinguishedName:
         return len(self.attributeTypesAndValues)
 
 
+@total_ordering
 class DistinguishedName:
     """LDAP Distinguished Name."""
     listOfRDNs = None
@@ -264,12 +267,16 @@ class DistinguishedName:
     def __ne__(self, other):
         return not (self == other)
 
-    def __cmp__(self, other):
-        if isinstance(other, six.string_types):
-            return (str(self) > other) - (str(self) < other)
+    def __lt__(self, other):
+        """
+        Comparison used for determining the hierarchy.
+        """
         if not isinstance(other, DistinguishedName):
             return NotImplemented
-        return (self.split() > other.split()) - (self.split() < other.split())
+
+        # The comparison is naive and broken.
+        # See https://github.com/twisted/ldaptor/issues/94
+        return self.split() < other.split()
 
     def getDomainName(self):
         domainParts = []
