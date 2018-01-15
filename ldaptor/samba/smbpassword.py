@@ -4,6 +4,7 @@ import string
 try:
     maketrans = string.maketrans
 except AttributeError:
+    # On Python3 we get it from bytes.
     maketrans = bytes.maketrans
 
 from ldaptor import md4, config

@@ -16,8 +16,9 @@
 """
 Test cases for ldaptor.protocols.pureber module.
 """
-
+import six
 from twisted.trial import unittest
+
 from ldaptor.protocols import pureber
 
 
@@ -103,8 +104,8 @@ class BERBaseTests(unittest.TestCase):
         """
         BER objects do not equal BER objects with different type or content
         """
-        for i in xrange(len(self.valuesToTest)):
-            for j in xrange(len(self.valuesToTest)):
+        for i in six.moves.range(len(self.valuesToTest)):
+            for j in six.moves.range(len(self.valuesToTest)):
                 if i!=j:
                     i_class, i_args = self.valuesToTest[i]
                     j_class, j_args = self.valuesToTest[j]
@@ -391,7 +392,7 @@ class TestBERSequence(unittest.TestCase):
     def testStringRepresentatinSmallInteger(self):
         """
         It can represent a sequence of a single integer which has a
-        single byte value. 
+        single byte value.
         """
         sut = pureber.BERSequence([pureber.BERInteger(2)])
 
@@ -402,7 +403,7 @@ class TestBERSequence(unittest.TestCase):
     def testStringRepresentatinLargerInteger(self):
         """
         It can represent a sequence of a single integer which has a
-        multi bites value. 
+        multi bites value.
         """
         sut = pureber.BERSequence([pureber.BERInteger(128)])
 
@@ -445,7 +446,7 @@ class TestBERSequence(unittest.TestCase):
             assert isinstance(result, pureber.BERSequence)
             result = result.data
             assert len(content)==len(result)
-            for i in xrange(len(content)):
+            for i in six.moves.range(len(content)):
                 assert content[i]==result[i]
             assert content==result
 

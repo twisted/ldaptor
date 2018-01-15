@@ -4,7 +4,6 @@ from six.moves import configparser
 from zope.interface import implementer
 
 from ldaptor import interfaces
-from ldaptor.insensitive import InsensitiveString
 from ldaptor.protocols.ldap import distinguishedname
 
 
@@ -50,7 +49,7 @@ class LDAPConfig(object):
             return cfg.get('ldap', 'base')
         except (configparser.NoOptionError,
                 configparser.NoSectionError):
-            raise MissingBaseDNError
+            raise MissingBaseDNError()
 
     def getServiceLocationOverrides(self):
         r = self._loadServiceLocationOverrides()
@@ -140,7 +139,6 @@ def loadConfig(configFiles=None,
     global __config
     if __config is None or reload:
         x = configparser.SafeConfigParser()
-        x.optionxform = InsensitiveString
 
         for section, options in DEFAULTS.items():
             x.add_section(section)
