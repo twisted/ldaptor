@@ -15,6 +15,11 @@ def escape(s):
     r = ''
     r_trailer = ''
 
+    have_bytes = False
+    if isinstance(s, bytes):
+        s = s.decode('utf-8')
+        have_bytes = True
+
     if s and s[0] in escapedChars_leading:
         r = '\\' + s[0]
         s = s[1:]
@@ -31,11 +36,21 @@ def escape(s):
         else:
             r = r + c
 
-    return r + r_trailer
+    result = r + r_trailer
+    if have_bytes:
+        return result.encode('utf-8')
+    else:
+        return result
 
 
 def unescape(s):
     r = ''
+
+    have_bytes = False
+    if isinstance(s, bytes):
+        s = s.decode('utf-8')
+        have_bytes = True
+
     while s:
         if s[0] == '\\':
             if s[1] in '0123456789abcdef':
@@ -47,18 +62,28 @@ def unescape(s):
         else:
             r = r + s[0]
             s = s[1:]
-    return r
+
+    if have_bytes:
+        return r.encode('utf-8')
+    else:
+        return r
 
 
 def _splitOnNotEscaped(s, separator):
     if not s:
         return []
 
+    have_bytes = False
+    if isinstance(s, bytes):
+        s = s.decode('utf-8')
+        have_bytes  = True
+
+
     r = ['']
     while s:
         first = s[0:1]
 
-        if first == b'\\':
+        if first == '\\':
             r[-1] = r[-1] + s[:2]
             s = s[2:]
         else:
@@ -66,12 +91,16 @@ def _splitOnNotEscaped(s, separator):
             if first == separator:
                 r.append('')
                 s = s[1:]
-                while s[0:1] == b' ':
+                while s[0:1] == ' ':
                     s = s[1:]
             else:
                 r[-1] = r[-1] + first
                 s = s[1:]
-    return r
+
+    if have_bytes:
+        return [x.encode('utf-8') for x in r]
+    else:
+        return r
 
 
 class InvalidRelativeDistinguishedName(Exception):
@@ -100,9 +129,15 @@ class LDAPAttributeTypeAndValue:
         else:
             assert attributeType is None
             assert value is None
-            if '=' not in stringValue:
+
+            if isinstance(stringValue, bytes):
+                equal_char = b'='
+            else:
+                equal_char = '='
+
+            if equal_char not in stringValue:
                 raise InvalidRelativeDistinguishedName(stringValue)
-            self.attributeType, self.value = stringValue.split('=', 1)
+            self.attributeType, self.value = stringValue.split(equal_char, 1)
 
     def __str__(self):
         return '='.join((escape(self.attributeType), escape(self.value)))
