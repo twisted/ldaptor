@@ -127,7 +127,7 @@ class LDAPDistinguishedName_Escaping(TestCaseWithKnownValues):
                           +r'ample,dc=com')
 
 
-class LDAPDistinguishedName_RFC2253_ExamplesAscii(TestCaseWithKnownValues):
+class LDAPDistinguishedName_RFC2253_ExamplesBytes(TestCaseWithKnownValues):
     """
     It can be initialized from text/Unicode input as long as they contain
     ASCII only characters.

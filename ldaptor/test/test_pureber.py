@@ -243,7 +243,7 @@ class TestBEROctetString(unittest.TestCase):
             self.assertEqual(bytes, len(encoded))
             self.assertIsInstance(result, pureber.BEROctetString)
             result = result.value
-            self.assertEqual(n * b'x', result)
+            self.assertEqual(n * 'x', result)
 
 
 class BERNullKnownValues(unittest.TestCase):

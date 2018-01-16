@@ -60,7 +60,7 @@ deleteoldrdn: 0 #OR 1
 class TestLDIFDeltaParsing(unittest.TestCase):
     def testModification_empty(self):
         proto = LDIFDeltaDriver()
-        proto.dataReceived("""\
+        proto.dataReceived(b"""\
 version: 1
 dn: cn=foo,dc=example,dc=com
 changetype: modify
@@ -74,7 +74,7 @@ changetype: modify
 
     def testModification_oneAdd(self):
         proto = LDIFDeltaDriver()
-        proto.dataReceived("""\
+        proto.dataReceived(b"""\
 version: 1
 dn: cn=foo,dc=example,dc=com
 changetype: modify
@@ -93,7 +93,7 @@ foo: bar
 
     def testModification_twoAdds(self):
         proto = LDIFDeltaDriver()
-        proto.dataReceived("""\
+        proto.dataReceived(b"""\
 version: 1
 dn: cn=foo,dc=example,dc=com
 changetype: modify
@@ -117,7 +117,7 @@ thud: baz
 
     def testModification_complex(self):
         proto = LDIFDeltaDriver()
-        proto.dataReceived("""\
+        proto.dataReceived(b"""\
 version: 1
 dn: cn=foo,dc=example,dc=com
 changetype: modify
@@ -160,7 +160,7 @@ add: silly
         proto = LDIFDeltaDriver()
         self.assertRaises(ldifdelta.LDIFDeltaModificationMissingEndDashError,
                           proto.dataReceived,
-                          """\
+                          b"""\
 version: 1
 dn: cn=foo,dc=example,dc=com
 changetype: modify
@@ -173,7 +173,7 @@ foo: bar
         proto = LDIFDeltaDriver()
         self.assertRaises(ldifdelta.LDIFDeltaModificationMissingEndDashError,
                           proto.dataReceived,
-                          """\
+                          b"""\
 version: 1
 dn: cn=foo,dc=example,dc=com
 changetype: modify
@@ -185,7 +185,7 @@ add: foo
         proto = LDIFDeltaDriver()
         self.assertRaises(ldifdelta.LDIFDeltaModificationDifferentAttributeTypeError,
                           proto.dataReceived,
-                          """\
+                          b"""\
 version: 1
 dn: cn=foo,dc=example,dc=com
 changetype: modify
@@ -199,7 +199,7 @@ bar: quux
         proto = LDIFDeltaDriver()
         self.assertRaises(ldifdelta.LDIFDeltaUnknownModificationError,
                           proto.dataReceived,
-                          """\
+                          b"""\
 version: 1
 dn: cn=foo,dc=example,dc=com
 changetype: modify
@@ -213,7 +213,7 @@ foo: bar
         proto = LDIFDeltaDriver()
         self.assertRaises(ldifdelta.LDIFDeltaMissingChangeTypeError,
                           proto.dataReceived,
-                          """\
+                          b"""\
 version: 1
 dn: cn=foo,dc=example,dc=com
 add: foo
@@ -224,7 +224,7 @@ foo: bar
 
     def testAdd(self):
         proto = LDIFDeltaDriver()
-        proto.dataReceived("""\
+        proto.dataReceived(b"""\
 version: 1
 dn: cn=foo,dc=example,dc=com
 changetype: add
@@ -245,7 +245,7 @@ thud: baz
     def testAdd_fail_noAttrvals(self):
         proto = LDIFDeltaDriver()
         self.assertRaises(ldifdelta.LDIFDeltaAddMissingAttributesError,
-                          proto.dataReceived, """\
+                          proto.dataReceived, b"""\
 version: 1
 dn: cn=foo,dc=example,dc=com
 changetype: add
@@ -254,7 +254,7 @@ changetype: add
 
     def testDelete(self):
         proto = LDIFDeltaDriver()
-        proto.dataReceived("""\
+        proto.dataReceived(b"""\
 version: 1
 dn: cn=foo,dc=example,dc=com
 changetype: delete

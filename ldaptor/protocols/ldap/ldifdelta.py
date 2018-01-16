@@ -3,11 +3,11 @@ from twisted.internet import error
 from ldaptor.protocols.ldap import ldifprotocol
 from ldaptor import delta, entry
 
-WAIT_FOR_CHANGETYPE = 'WAIT_FOR_CHANGETYPE'
-WAIT_FOR_MOD_SPEC = 'WAIT_FOR_MOD_SPEC'
-IN_MOD_SPEC = 'IN_MOD_SPEC'
-IN_ADD_ENTRY = 'IN_ADD_ENTRY'
-IN_DELETE = 'IN_DELETE'
+WAIT_FOR_CHANGETYPE = b'WAIT_FOR_CHANGETYPE'
+WAIT_FOR_MOD_SPEC = b'WAIT_FOR_MOD_SPEC'
+IN_MOD_SPEC = b'IN_MOD_SPEC'
+IN_ADD_ENTRY = b'IN_ADD_ENTRY'
+IN_DELETE = b'IN_DELETE'
 
 class LDIFDeltaMissingChangeTypeError(ldifprotocol.LDIFParseError):
     """LDIF delta entry has no changetype."""
@@ -48,23 +48,23 @@ class LDIFDelta(ldifprotocol.LDIF):
 
         key, val = self._parseLine(line)
 
-        if key != 'changetype':
+        if key != b'changetype':
             raise LDIFDeltaMissingChangeTypeError(self.dn, key, val)
 
-        if val == 'modify':
+        if val == b'modify':
             self.modifications = []
             self.mode = WAIT_FOR_MOD_SPEC
-        elif val == 'add':
+        elif val == b'add':
             self.mode = IN_ADD_ENTRY
-        elif val == 'delete':
+        elif val == b'delete':
             self.mode = IN_DELETE
-        elif val == 'modrdn' or val == 'moddn':
+        elif val == b'modrdn' or val == b'moddn':
             raise NotImplementedError()  # TODO
 
     MOD_SPEC_TO_DELTA = {
-        'add': delta.Add,
-        'delete': delta.Delete,
-        'replace': delta.Replace,
+        b'add': delta.Add,
+        b'delete': delta.Delete,
+        b'replace': delta.Replace,
         }
 
     def state_WAIT_FOR_MOD_SPEC(self, line):
@@ -90,10 +90,10 @@ class LDIFDelta(ldifprotocol.LDIF):
         self.mode = IN_MOD_SPEC
 
     def state_IN_MOD_SPEC(self, line):
-        if line == '':
+        if line == b'':
             raise LDIFDeltaModificationMissingEndDashError()
 
-        if line == '-':
+        if line == b'-':
             mod = self.MOD_SPEC_TO_DELTA[self.mod_spec]
             de = mod(self.mod_spec_attr, self.mod_spec_data)
             self.modifications.append(de)
@@ -115,7 +115,7 @@ class LDIFDelta(ldifprotocol.LDIF):
         assert self.dn is not None, 'self.dn must be set when in entry'
         assert self.data is not None, 'self.data must be set when in entry'
 
-        if line == '':
+        if line == b'':
             # end of entry
             if not self.data:
                 raise LDIFDeltaAddMissingAttributesError(self.dn)
@@ -137,7 +137,7 @@ class LDIFDelta(ldifprotocol.LDIF):
     def state_IN_DELETE(self, line):
         assert self.dn is not None, 'self.dn must be set when in entry'
 
-        if line == '':
+        if line == b'':
             # end of entry
             self.mode = ldifprotocol.WAIT_FOR_DN
             o = delta.DeleteOp(dn=self.dn)

@@ -4,26 +4,21 @@ language: python
 # Test on PR should be execute for all branches and forks.
 branches:
   only:
-  - master
-
-python:
-  - 2.7
-  - 3.5
-
-env:
-  - python: 2.7
-  - TOX_ENV=py27-test-twlatest
-  - python: 2.7
-  - TOX_ENV=py27-test-twtrunk
-  - python: 3.5
-  - TOX_ENV=py35-ported
-  - python: 3.5
-  - TOX_ENV=py35-test-twtrunk
-  - python: 2.7
-    TOX_ENV=linters
+    - master
 
 matrix:
   fast_finish: true
+  include:
+  - python: 2.7
+    env: TOX_ENV=py27-test-twlatest
+  - python: 2.7
+    env: TOX_ENV=py27-test-twtrunk
+  - python: 3.5
+    env: TOX_ENV=py35-ported
+  - python: 3.5
+    env: TOX_ENV=py35-test-twtrunk
+  - python: 2.7
+    env: TOX_ENV=linters
   allow_failures:
     - env: TOX_ENV=py35-test-twtrunk
 

@@ -72,7 +72,7 @@ class TestLDIFParsing(unittest.TestCase):
             "",
 
             ):
-            proto.lineReceived(line)
+            proto.lineReceived(line.encode('ascii'))
 
         self.failUnlessEqual(len(proto.listOfCompleted), 2)
 
@@ -93,16 +93,14 @@ class TestLDIFParsing(unittest.TestCase):
     def testSplitLines(self):
         proto = LDIFDriver()
         for line in (
-
             "dn: cn=foo,dc=ex",
             " ample,dc=com",
             "objectClass: a",
             "ob",
             " jectClass: b",
             "",
-
             ):
-            proto.lineReceived(line)
+            proto.lineReceived(line.encode('ascii'))
 
         self.failUnlessEqual(len(proto.listOfCompleted), 1)
 
@@ -114,7 +112,7 @@ class TestLDIFParsing(unittest.TestCase):
 
     def testCaseInsensitiveAttributeTypes(self):
         proto = LDIFDriver()
-        proto.dataReceived("""\
+        proto.dataReceived(b"""\
 dn: cn=foo,dc=example,dc=com
 objectClass: a
 obJeCtClass: b
@@ -136,7 +134,7 @@ aValUe: b
 
     def testVersion1(self):
         proto = LDIFDriver()
-        proto.dataReceived("""\
+        proto.dataReceived(b"""\
 version: 1
 dn: cn=foo,dc=example,dc=com
 objectClass: a
@@ -159,7 +157,7 @@ bValue: c
         proto = LDIFDriver()
         self.assertRaises(ldifprotocol.LDIFVersionNotANumberError,
                           proto.dataReceived,
-                          """\
+                          b"""\
 version: junk
 dn: cn=foo,dc=example,dc=com
 objectClass: a
@@ -174,7 +172,7 @@ bValue: c
         proto = LDIFDriver()
         self.assertRaises(ldifprotocol.LDIFUnsupportedVersionError,
                           proto.dataReceived,
-                          """\
+                          b"""\
 version: 2
 dn: cn=foo,dc=example,dc=com
 objectClass: a
@@ -187,7 +185,7 @@ bValue: c
 
     def testNoSpaces(self):
         proto = LDIFDriver()
-        proto.dataReceived("""\
+        proto.dataReceived(b"""\
 dn:cn=foo,dc=example,dc=com
 objectClass:a
 obJeCtClass:b
@@ -209,7 +207,7 @@ aValUe:b
 
     def testTruncatedFailure(self):
         proto = LDIFDriver()
-        proto.dataReceived("""\
+        proto.dataReceived(b"""\
 version: 1
 dn: cn=foo,dc=example,dc=com
 objectClass: a
@@ -226,8 +224,8 @@ bValue: c
 
 class RFC2849_Examples(unittest.TestCase):
     examples = [
-        ( """Example 1: An simple LDAP file with two entries""",
-          """\
+        ( b"""Example 1: An simple LDAP file with two entries""",
+          b"""\
 version: 1
 dn: cn=Barbara Jensen, ou=Product Development, dc=airius, dc=com
 objectclass: top
@@ -269,8 +267,8 @@ telephonenumber: +1 408 555 1212
                  }),
             ]),
 
-        ( """Example 2: A file containing an entry with a folded attribute value""",
-          """\
+        ( b"""Example 2: A file containing an entry with a folded attribute value""",
+          b"""\
 version: 1
 dn:cn=Barbara Jensen, ou=Product Development, dc=airius, dc=com
 objectclass:top
@@ -298,8 +296,8 @@ title:Product Manager, Rod and Reel Division
                 }),
             ]),
 
-        ( """Example 3: A file containing a base-64-encoded value""",
-          """\
+        ( b"""Example 3: A file containing a base-64-encoded value""",
+          b"""\
 version: 1
 dn: cn=Gern Jensen, ou=Product Testing, dc=airius, dc=com
 objectclass: top

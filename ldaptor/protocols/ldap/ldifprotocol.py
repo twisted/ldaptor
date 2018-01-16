@@ -11,7 +11,7 @@ class LDIFParseError(Exception):
     def __str__(self):
         s = self.__doc__
         if self.args:
-            s = ': '.join([s] + list(map(str, self.args)))
+            s = ': '.join([s] + [str(x) for x in self.args])
         return s + '.'
 
 
@@ -45,9 +45,9 @@ class LDIFTruncatedError(LDIFParseError):
     pass
 
 
-HEADER = 'HEADER'
-WAIT_FOR_DN = 'WAIT_FOR_DN'
-IN_ENTRY = 'IN_ENTRY'
+HEADER = b'HEADER'
+WAIT_FOR_DN = b'WAIT_FOR_DN'
+IN_ENTRY = b'IN_ENTRY'
 
 class LDIF(basic.LineReceiver, object):
     delimiter = b'\n'
@@ -63,7 +63,7 @@ class LDIF(basic.LineReceiver, object):
         if line.startswith(b'#'):
             # comments are allowed everywhere
             return
-        getattr(self, 'state_' + self.mode)(line)
+        getattr(self, 'state_' + self.mode.decode('ascii'))(line)
 
     def lineReceived(self, line):
         if line.startswith(b' '):
