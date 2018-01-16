@@ -28,14 +28,16 @@ def s(*l):
     """Join all members of list to a string. Integer members are chr()ed"""
     r=''
     for e in l:
-        if isinstance(e, types.IntType):
-            e=chr(e)
-        r=r+str(e)
+        if isinstance(e, int):
+            e = chr(e)
+        r = r + str(e)
     return r
+
 
 def l(s):
     """Split a string to ord's of chars."""
-    return map(lambda x: ord(x), s)
+    return [six.byte2int([x]) for x in s]
+
 
 class KnownValues(unittest.TestCase):
     knownValues=( # class, args, kwargs, expected_result
@@ -619,7 +621,7 @@ class KnownValues(unittest.TestCase):
         for klass, args, kwargs, decoder, encoded in self.knownValues:
             result = klass(*args, **kwargs)
             result = str(result)
-            result = map(ord, result)
+            result = [ord(x) for x in result]
 
             message = (
                 "Class %s(*%r, **%r) doesn't encode properly: "

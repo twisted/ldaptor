@@ -9,7 +9,7 @@ from ldaptor import config
 
 
 def writeFile(path, content):
-    f = open(path, 'w')
+    f = open(path, 'wb')
     f.write(content)
     f.close()
 
@@ -24,7 +24,7 @@ def reloadFromContent(testCase, content):
     writeFile(config_path, content)
 
     # Reload with empty content to reduce the side effects.
-    testCase.addCleanup(reloadFromContent, testCase, "")
+    testCase.addCleanup(reloadFromContent, testCase, b"")
 
     return config.loadConfig(
         configFiles=[config_path],
@@ -45,7 +45,7 @@ class TestLoadConfig(unittest.TestCase):
         self.dir = self.mktemp()
         os.mkdir(self.dir)
         self.f1 = os.path.join(self.dir, 'one.cfg')
-        writeFile(self.f1, """\
+        writeFile(self.f1, b"""\
 [fooSection]
 fooVar = val
 
@@ -53,7 +53,7 @@ fooVar = val
 barVar = anotherVal
 """)
         self.f2 = os.path.join(self.dir, 'two.cfg')
-        writeFile(self.f2, """\
+        writeFile(self.f2, b"""\
 [fooSection]
 fooVar = val2
 """)
@@ -166,7 +166,7 @@ class TestLDAPConfig(unittest.TestCase):
         """
         It will use the value from to configuration for its return value.
         """
-        reloadFromContent(self, """[authentication]
+        reloadFromContent(self, b"""[authentication]
 identity-search = (something=%(name)s)
 """)
         sut = config.LDAPConfig()

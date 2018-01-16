@@ -16,7 +16,9 @@ env:
   - python: 2.7
   - TOX_ENV=py27-test-twtrunk
   - python: 3.5
-  - TOX_ENV=py34-test-twtrunk
+  - TOX_ENV=py35-ported
+  - python: 3.5
+  - TOX_ENV=py35-test-twtrunk
   - python: 2.7
     TOX_ENV=linters
 
@@ -33,7 +35,6 @@ script:
 
 after_script:
   - codecov
-
 
 notifications:
     email: false

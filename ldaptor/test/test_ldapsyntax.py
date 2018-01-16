@@ -913,33 +913,45 @@ class LDAPSyntaxAddChild(unittest.TestCase):
                                       matchedDN='',
                                       errorMessage=''),
              ])
-        o=ldapsyntax.LDAPEntry(client=client,
-                               dn='ou=things,dc=example,dc=com',
-                               attributes={
-            'objectClass': ['organizationalUnit'],
-            'ou': ['things'],
-            })
-        d=o.addChild(
+        sut = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='ou=things,dc=example,dc=com',
+            attributes={
+                'objectClass': ['organizationalUnit'],
+                'ou': ['things'],
+                },
+            )
+        d = sut.addChild(
             rdn='givenName=Firstname+surname=Lastname',
-            attributes={'objectClass': ['person', 'otherStuff'],
-                        'givenName': ['Firstname'],
-                        'surname': ['Lastname'],
-                        })
-        def cb(dummy):
-            client.assertSent(pureldap.LDAPAddRequest(
-                entry='givenName=Firstname+surname=Lastname,ou=things,dc=example,dc=com',
-                attributes=[ (pureldap.LDAPAttributeDescription('objectClass'),
-                              pureber.BERSet([pureldap.LDAPAttributeValue('person'),
-                                              pureldap.LDAPAttributeValue('otherStuff'),
-                                              ])),
-                             (pureldap.LDAPAttributeDescription('givenName'),
-                              pureber.BERSet([pureldap.LDAPAttributeValue('Firstname')])),
-                             (pureldap.LDAPAttributeDescription('surname'),
-                              pureber.BERSet([pureldap.LDAPAttributeValue('Lastname')])),
-                             ],
-                ))
-        d.addCallback(cb)
-        return d
+            attributes={
+                'objectClass': ['person', 'otherStuff'],
+                'givenName': ['Firstname'],
+                'surname': ['Lastname'],
+                },
+            )
+        self.successResultOf(d)
+
+        client.assertSent(pureldap.LDAPAddRequest(
+            entry='givenName=Firstname+surname=Lastname,ou=things,dc=example,dc=com',
+            attributes=[
+                (
+                    pureldap.LDAPAttributeDescription('objectClass'),
+                    pureber.BERSet([
+                        pureldap.LDAPAttributeValue('person'),
+                        pureldap.LDAPAttributeValue('otherStuff'),
+                        ]),
+                    ),
+                (
+                    pureldap.LDAPAttributeDescription('givenName'),
+                    pureber.BERSet([pureldap.LDAPAttributeValue('Firstname')])),
+                    (
+                        pureldap.LDAPAttributeDescription('surname'),
+                        pureber.BERSet([pureldap.LDAPAttributeValue('Lastname')],
+                            ),
+                        ),
+            ],
+            ))
+
 
 class LDAPSyntaxContainingNamingContext(unittest.TestCase):
     def testNamingContext(self):

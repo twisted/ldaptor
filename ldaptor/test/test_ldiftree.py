@@ -7,6 +7,7 @@ import random
 import errno
 import shutil
 
+import six
 from twisted.trial import unittest
 
 from ldaptor import ldiftree, entry, delta, testutil
@@ -535,13 +536,11 @@ cn: theChild
         self.assertEqual(got, want)
 
     def test_subtree_many(self):
-        d = self.example.subtree()
-        d.addCallback(self._cb_test_subtree_many)
-        return d
+        deferred = self.example.subtree()
 
-    def _cb_test_subtree_many(self, results):
-        got = results
-        want = [
+        result = self.successResultOf(deferred)
+
+        expected = [
             self.example,
             self.oneChild,
             self.theChild,
@@ -550,20 +549,16 @@ cn: theChild
             self.bar,
             self.foo,
             ]
-        got.sort()
-        want.sort()
-        self.assertEqual(got, want)
+        six.assertCountEqual(self, expected, result)
 
     def test_subtree_many_cb(self):
         got = []
-        d = self.example.subtree(callback=got.append)
-        d.addCallback(self._cb_test_subtree_many_cb, got)
-        return d
+        deferred = self.example.subtree(callback=got.append)
 
-    def _cb_test_subtree_many_cb(self, r, got):
-        self.assertEqual(r, None)
+        result = self.successResultOf(deferred)
 
-        want = [
+        self.assertIsNone(result)
+        expected = [
             self.example,
             self.oneChild,
             self.theChild,
@@ -572,9 +567,7 @@ cn: theChild
             self.bar,
             self.foo,
             ]
-        got.sort()
-        want.sort()
-        self.assertEqual(got, want)
+        six.assertCountEqual(self, expected, got)
 
     def test_lookup_fail(self):
         dn = 'cn=thud,ou=metasyntactic,dc=example,dc=com'

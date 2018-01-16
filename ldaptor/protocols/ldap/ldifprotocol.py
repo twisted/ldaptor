@@ -6,7 +6,7 @@ from twisted.internet import protocol
 from ldaptor import entry
 
 class LDIFParseError(Exception):
-    """Error parsing LDIF."""
+    """Error parsing LDIF"""
 
     def __str__(self):
         s = self.__doc__

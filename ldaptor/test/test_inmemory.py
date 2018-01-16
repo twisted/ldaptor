@@ -74,6 +74,7 @@ class TestInMemoryDatabase(unittest.TestCase):
         d = self.oneChild.children()
         def cb1(children1):
             self.assertEqual(len(children1), 1)
+
             children1.pop()
 
             d = self.oneChild.children()

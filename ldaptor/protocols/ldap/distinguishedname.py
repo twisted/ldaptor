@@ -57,14 +57,16 @@ def _splitOnNotEscaped(s, separator):
     r = ['']
     while s:
         first = s[0:1]
-        if first == '\\':
+
+        if first == b'\\':
             r[-1] = r[-1] + s[:2]
             s = s[2:]
         else:
-            if first in separator:
+
+            if first == separator:
                 r.append('')
                 s = s[1:]
-                while s[0:1] == ' ':
+                while s[0:1] == b' ':
                     s = s[1:]
             else:
                 r[-1] = r[-1] + first

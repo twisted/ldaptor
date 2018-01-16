@@ -10,7 +10,6 @@ Features
 
 - Ability to logically compare ldaptor.protocols.pureldap.LDAPFilter_and and ldaptor.protocols.pureldap.LDAPFilter_or objects with ==.
 - Ability to customize ldaptor.protocols.pureldap.LDAPFilter_* object's encoding of values when using asText.
-- Remove Python 3.3 from tox as it is EOL.
 
 Changes
 ^^^^^^^
@@ -24,6 +23,7 @@ Changes
   coverage reports in HTML format.
 - `six` package is now a direct dependency in preparation for the Python 3
   port.
+- Remove Python 3.3 from tox as it is EOL.
 
 Bugfixes
 ^^^^^^^^

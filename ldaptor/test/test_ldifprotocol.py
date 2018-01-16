@@ -5,6 +5,46 @@ Test cases for ldaptor.protocols.ldap.ldif module.
 from twisted.trial import unittest
 from ldaptor.protocols.ldap import ldifprotocol, distinguishedname
 
+
+class FixStringRepresentation(object):
+    """
+    A simple object which has a fix string representation.
+    """
+    def __str__(self):
+        return "Here I am!"
+
+
+class TestLDIFParseError(unittest.TestCase):
+    """
+    Unit tests for LDIFParseError which is hte base for all the other
+    LDIF errors.
+    """
+
+    def testInitNoArgs(self):
+        """
+        It can be initialized without arguments and will have the
+        docstring as the string representation.
+        """
+        sut = ldifprotocol.LDIFParseError()
+
+        result = str(sut)
+
+        self.assertEqual('Error parsing LDIF.', result)
+
+    def testInitWithArgs(self):
+        """
+        When initialized with arguments it will use the docstring as
+        base and include all the arguments.
+        """
+        sut = ldifprotocol.LDIFParseError(
+            1, 'test', True, FixStringRepresentation())
+
+        result = str(sut)
+
+        self.assertEqual(
+            'Error parsing LDIF: 1: test: True: Here I am!.', result)
+
+
 class LDIFDriver(ldifprotocol.LDIF):
     def __init__(self):
         self.listOfCompleted = []
