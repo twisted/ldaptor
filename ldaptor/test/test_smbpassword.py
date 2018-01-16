@@ -7,6 +7,9 @@ from ldaptor.samba import smbpassword
 from ldaptor import config
 
 class TestNTHash(unittest.TestCase):
+    """
+    Unit tests for smbpassword.nthash.
+    """
     knownValues=( # password, expected_result
         (b'', b'31D6CFE0D16AE931B73C59D7E0C089C0'),
         (b'foo', b'AC8E657F83DF82BEEA5D43BDAF7800CC'),
@@ -26,6 +29,9 @@ class TestNTHash(unittest.TestCase):
 
 
 class TestLMHash(unittest.TestCase):
+    """
+    Unit tests for smbpassword.lmhash.
+    """
     knownValues=( # password, expected_result
         (b'', b'AAD3B435B51404EEAAD3B435B51404EE'),
         (b'foo', b'5BFAFBEBFB6A0942AAD3B435B51404EE'),
@@ -39,16 +45,26 @@ class TestLMHash(unittest.TestCase):
         )
 
     def testKnownValues(self):
-        """lmhash(...) gives known results"""
+        """
+        When lanman password are enabled in the configuration, they will
+        return
+        """
         cfg = config.loadConfig()
+        cfg.set('samba', 'use-lmhash', 'yes')
         for password, expected in self.knownValues:
-            cfg.set('samba', 'use-lmhash', 'no')
-            disabled = smbpassword.lmhash(password)
-            self.assertEqual(disabled, 32 * b'X',
-                              "Disabled lmhash must be X's: %r" % disabled)
-
-            cfg.set('samba', 'use-lmhash', 'yes')
 
             result = smbpassword.lmhash(password)
 
             self.assertEqual(expected, result)
+
+    def testLMHashConfiguationDisabled(self):
+        """
+        When the lanman passwords are disabled from the configuration, it will
+        return the disabled password.
+        """
+        cfg = config.loadConfig()
+        cfg.set('samba', 'use-lmhash', 'no')
+
+        result = smbpassword.lmhash(b'any-pass')
+
+        self.assertEqual(32 * b'X', result)
