@@ -287,7 +287,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
     def __lt__(self, other):
         if not isinstance(other, LDIFTreeEntry):
             return NotImplemented
-        return cmp(self.dn, other.dn)
+        return self.dn < other.dn
 
     def __gt__(self, other):
         if not isinstance(other, LDIFTreeEntry):

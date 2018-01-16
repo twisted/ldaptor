@@ -16,8 +16,6 @@
 """
 Test cases for ldaptor.protocols.pureldap module.
 """
-import types
-
 import six
 from twisted.trial import unittest
 
