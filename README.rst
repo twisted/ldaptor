@@ -63,7 +63,8 @@ Linux distributions may also have ready packaged versions of Ldaptor and Twisted
 
     apt-get install python-ldaptor
 
-To run the LDAP server (runs on port 38942)::
+To run the LDAP server (bind port 38942) from a repo checkout with
+the project installed::
 
     twistd -n --pidfile=ldapserver.pid --logfile=ldapserver.log \
         -y test-ldapserver.tac
