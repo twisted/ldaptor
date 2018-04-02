@@ -65,8 +65,8 @@ Linux distributions may also have ready packaged versions of Ldaptor and Twisted
 
 To run the LDAP server (runs on port 38942)::
 
-    twistd -ny --pidfile=ldapserver.pid --logfile=ldapserver.log \
-        test-ldapserver.tac
+    twistd -n --pidfile=ldapserver.pid --logfile=ldapserver.log \
+        -y test-ldapserver.tac
 
 Dependencies:
 
