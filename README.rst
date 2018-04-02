@@ -57,7 +57,7 @@ Ldaptor can be installed using the standard command line method::
 
 or using pip from PyPI::
 
-   pip install ldaptor
+    pip install ldaptor
 
 Linux distributions may also have ready packaged versions of Ldaptor and Twisted. Debian and Ubuntu have quality Ldaptor packages that can be installed e.g., by::
 
