@@ -675,7 +675,7 @@ class LDAPMatchingRuleAssertion(BERSequence):
 
         return r
 
-    def __init__(self, matchingRule=None, type=None, matchValue=None, dnAttributes=None, tag=None):
+    def __init__(self, matchingRule=None, type=None, matchValue=None, dnAttributes=None, tag=None, escaper=escape):
         BERSequence.__init__(self, value=[], tag=tag)
         assert matchValue is not None
         if isinstance(matchingRule, six.string_types):
@@ -696,6 +696,7 @@ class LDAPMatchingRuleAssertion(BERSequence):
         self.dnAttributes = dnAttributes
         if not self.dnAttributes:
             self.dnAttributes = None
+        self.escaper = escaper
 
     def __str__(self):
         return str(BERSequence(
@@ -715,8 +716,11 @@ class LDAPMatchingRuleAssertion(BERSequence):
 
 class LDAPFilter_extensibleMatch(LDAPMatchingRuleAssertion):
     tag = CLASS_CONTEXT | 0x09
-    pass
 
+    def asText(self):
+        return '(' + self.type.value + ':' + \
+               self.matchingRule.value + ':=' + \
+               self.escaper(self.matchValue.value) + ')'
 
 class LDAPBERDecoderContext_Filter(BERDecoderContext):
     Identities = {
