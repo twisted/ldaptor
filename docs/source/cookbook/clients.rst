@@ -37,7 +37,7 @@ Code
         for result in resultList:
             f.write(str(result))
             f.write("\n")
-        log.msg("LDIF formatted results:\n{0}".format(f.getvalue()))
+        log.msg("LDIF formatted results:\n{}".format(f.getvalue()))
 
     def onError(err, reactor):
         if reactor.running:
@@ -98,29 +98,29 @@ Code
     from twisted.internet.endpoints import clientFromString, connectProtocol
     from twisted.internet.task import react
     from twisted.python import log
-    from ldaptor import delta
     from ldaptor.protocols.ldap.ldapclient import LDAPClient
-    from ldaptor.protocols.ldap.ldapsyntax import LDAPEntry
-    from ldaptor.protocols.ldap import ldif
     from ldaptor.protocols import (
         pureber,
         pureldap
     )
     import sys
 
-    @defer.inlineCallbacks
-    def onConnect(client, entry):
-        # Convert simple key-value pairs into the structure we need for the
-        # LDAP Add request.
+    def entry_to_attribs_(entry):
+        """
+        Convert a simple mapping to the data structures required for an
+        entry in the DIT.
+        
+        Returns: (dn, attributes)
+        """
         attribs = {}
         dn = None
-        for attrib, value in entry.items():
-            if attrib == 'dn':
+        for prop, value in entry.items():
+            if prop == 'dn':
                 dn = value
                 continue
-            attribs.setdefault(attrib, set([])).add(value)
+            attribs.setdefault(prop, set([])).add(value)
         if dn is None:
-            raise Exception("Template needs to include `dn`!")
+            raise Exception("Entry needs to include key, `dn`!")
         ldap_attrs = []
         for attrib, values in attribs.items():
             ldap_attrib_type = pureldap.LDAPAttributeDescription(attrib)
@@ -131,14 +131,20 @@ Code
                 l.append(pureldap.LDAPAttributeValue(value))
             ldap_values = pureber.BERSet(l)
             ldap_attrs.append((ldap_attrib_type, ldap_values))
-        # Once we have the DN of the new entry and the attributes, make the
-        # request.
+        return dn, ldap_attrs
+
+    @defer.inlineCallbacks
+    def onConnect(client, entry):
+        dn, attributes = entry_to_attribs_(entry)
         op = pureldap.LDAPAddRequest(
             entry=str(dn),
-            attributes=ldap_attrs)
-        print("LDAP Add request: {}".format(repr(op)))
+            attributes=attributes)
         response = yield client.send(op)
-        print(repr(response))
+        resultCode = response.resultCode
+        if response.resultCode != 0:
+            errorMessage = response.errorMessage
+            log.err(
+                "DIT reported error code {}: {}".format(resultCode, errorMessage))
 
     def onError(err, reactor):
         if reactor.running:
@@ -148,7 +154,7 @@ Code
     def main(reactor):
         log.startLogging(sys.stdout)
         entry = {
-            "dn": "gn=Jane+sn=Doe,ou=people,dc=example,dc=org",
+            "dn": "gn=Jane+sn=Doe,ou=people,dc=example,dc=fr",
             "c": "US",
             "gn": "Jane",
             "l": "Philadelphia",
@@ -169,7 +175,6 @@ Code
 
     react(main)
 
-
 ''''''''''
 Discussion
 ''''''''''
@@ -178,7 +183,7 @@ Once again, the :py:func:`twisted.internet.task.react()` function is used
 to call the `main()` function of the client.  When `main()` is called, we 
 create a client endpoint from a string description and the reactor.
 :py:func:`twisted.internet.endpoints.connectProtocol()` is used to make a
-one-time connection to an LDAP directory listening on the local host, port 8080.
+one-time connection to a LDAP directory listening on the local host, port 8080.
 
 When the deferred returned from that function fires, the connection has
 been established and the client protocol instance is passed to the 
