@@ -117,7 +117,7 @@ class BERBaseTests(unittest.TestCase):
 
     def testInequalityWithNonBER(self):
         """
-        BER objects are equal with non-BER objects.
+        BER objects are not equal with non-BER objects.
         """
         sut = pureber.BERInteger([0])
 

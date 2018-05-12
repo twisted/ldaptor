@@ -63,7 +63,7 @@ def _get(path, dn):
         if not data:
             break
         parser.dataReceived(data)
-    parser.connectionLost(failure.Failure(error.ConnectionDone))
+    parser.connectionLost(failure.Failure(error.ConnectionDone()))
 
     assert parser.done
     entries = parser.seen

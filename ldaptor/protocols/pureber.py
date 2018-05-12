@@ -209,7 +209,7 @@ class BEROctetString(BERBase):
         self.value = value
 
     def __str__(self):
-        if six.PY3 and isinstance(self.value, bytes):
+        if not six.PY2 and isinstance(self.value, bytes):
             value = self.value.decode('ascii')
         else:
             value = str(self.value)

@@ -277,11 +277,14 @@ dc: org
 """)
 
 
-class Tree(RandomizeListdirTestCase):
+class LDIFTreeEntryTests(RandomizeListdirTestCase):
+    """
+    Tests for LDIFTreeEntry.
+    """
     # TODO share the actual tests with inmemory and any other
     # implementations of the same interface
     def setUp(self):
-        super(Tree, self).setUp()
+        super(LDIFTreeEntryTests, self).setUp()
         self.tree = self.mktemp()
         os.mkdir(self.tree)
         com = os.path.join(self.tree, 'dc=com.dir')

@@ -117,7 +117,7 @@ class BaseLDAPEntry(object):
 
     def __eq__(self, other):
         if not isinstance(other, BaseLDAPEntry):
-            return 0
+            return NotImplemented
         if self.dn != other.dn:
             return 0
 
@@ -226,6 +226,9 @@ class BaseLDAPEntry(object):
         return False
 
     def __hash__(self):
+        # FIXME:https://github.com/twisted/ldaptor/issues/101
+        # The hash should take into consideration any attribute used to
+        # decide the equality.
         return hash(self.dn)
 
 
