@@ -16,6 +16,9 @@ except ImportError:
 
 
 def sshaDigest(passphrase, salt=None):
+    """
+    Return the salted SHA for `passphrase` which is passed as bytes.
+    """
     if salt is None:
         salt = ''
         for i in range(8):
@@ -23,7 +26,7 @@ def sshaDigest(passphrase, salt=None):
         salt = salt.encode('ascii')
 
     s = sha1()
-    s.update(passphrase.encode('utf-8'))
+    s.update(passphrase)
     s.update(salt)
     encoded = base64.encodestring(s.digest() + salt).rstrip()
     crypt = b'{SSHA}' + encoded
@@ -255,5 +258,9 @@ class EditableLDAPEntry(BaseLDAPEntry):
         raise NotImplementedError()
 
     def setPassword(self, newPasswd, salt=None):
+        """
+        Update the password for the entry with a new password and salt passed
+        as bytes.
+        """
         crypt = sshaDigest(newPasswd, salt)
         self['userPassword'] = [crypt]

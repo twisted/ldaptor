@@ -66,14 +66,14 @@ class LDAPServerWithUPNBind(unittest.TestCase):
         """
         It can authenticate based on the UPN.
         """
-        self.checkSuccessfulBIND('bob@ad.example.com', 'secret')
+        self.checkSuccessfulBIND('bob@ad.example.com', b'secret')
 
 
     def test_bindSuccessDN(self):
         """
         It can still authenticate based on the normal DN.
         """
-        self.checkSuccessfulBIND('cn=bob,dc=example,dc=com', 'secret')
+        self.checkSuccessfulBIND('cn=bob,dc=example,dc=com', b'secret')
 
 
     def test_bindBadPassword(self):
