@@ -1,11 +1,45 @@
 """
-Test cases for ldaptor.diff
+Test cases for ldaptor.entry
 """
 
 from twisted.trial import unittest
 from ldaptor import delta, entry
 
+class TestBaseLDAPEntry(unittest.TestCase):
+    """
+    Tests for ldaptor.entry.BaseLDAPEntry.
+    """
+
+    def testEqualitySameType(self):
+        """
+        It is equal if it has the same DN (case insensitive)
+        and same attributes and values.
+        """
+        a = entry.BaseLDAPEntry(
+            dn='dc=foo',
+            attributes={
+                'foo': ['bar'],
+            })
+        b = entry.BaseLDAPEntry(
+            dn='Dc=Foo',
+            attributes={
+                'foo': ['bar'],
+            })
+
+        self.assertEqual(a, b)
+
+    def testEqualityDifferentType(self):
+        """
+        It is not equal with objects of different types.
+        """
+        a = entry.BaseLDAPEntry(dn='dc=foo', attributes={})
+        self.assertFalse(a == object())
+
+
 class TestDiffEntry(unittest.TestCase):
+    """
+    Tests for ldaptor.entry.BaseLDAPEntry.diff()
+    """
     def testEqual(self):
         a = entry.BaseLDAPEntry(dn='dc=foo',
                                 attributes={

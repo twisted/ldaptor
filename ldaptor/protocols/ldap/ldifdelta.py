@@ -11,27 +11,35 @@ IN_DELETE = b'IN_DELETE'
 
 class LDIFDeltaMissingChangeTypeError(ldifprotocol.LDIFParseError):
     """LDIF delta entry has no changetype."""
-    pass
+
+class LDIFDeltaUnknownChangeTypeError(ldifprotocol.LDIFParseError):
+    """LDIF delta entry has an unknown changetype."""
+
 
 class LDIFDeltaUnknownModificationError(ldifprotocol.LDIFParseError):
     """LDIF delta modification has unknown mod-spec."""
-    pass
+
+
 
 class LDIFDeltaModificationMissingEndDashError(ldifprotocol.LDIFParseError):
     """LDIF delta modification has no ending dash."""
-    pass
+
+
 
 class LDIFDeltaModificationDifferentAttributeTypeError(ldifprotocol.LDIFParseError):
     """The attribute type for the change is not the as in the mod-spec header line."""
-    pass
+
+
 
 class LDIFDeltaAddMissingAttributesError(ldifprotocol.LDIFParseError):
-    """Add operation needs to have atleast one attribute type and value."""
-    pass
+    """Add operation needs to have at least one attribute type and value."""
+
+
 
 class LDIFDeltaDeleteHasJunkAfterChangeTypeError(ldifprotocol.LDIFParseError):
     """Delete operation takes no attribute types or values."""
-    pass
+
+
 
 class LDIFDelta(ldifprotocol.LDIF):
     def state_WAIT_FOR_DN(self, line):
@@ -43,7 +51,7 @@ class LDIFDelta(ldifprotocol.LDIF):
         assert self.dn is not None, 'self.dn must be set when in entry'
         assert self.data is not None, 'self.data must be set when in entry'
 
-        if line == '':
+        if line == b'':
             raise LDIFDeltaMissingChangeTypeError(self.dn)
 
         key, val = self._parseLine(line)
@@ -60,6 +68,8 @@ class LDIFDelta(ldifprotocol.LDIF):
             self.mode = IN_DELETE
         elif val == b'modrdn' or val == b'moddn':
             raise NotImplementedError()  # TODO
+        else:
+            raise LDIFDeltaUnknownChangeTypeError()
 
     MOD_SPEC_TO_DELTA = {
         b'add': delta.Add,
@@ -68,7 +78,7 @@ class LDIFDelta(ldifprotocol.LDIF):
         }
 
     def state_WAIT_FOR_MOD_SPEC(self, line):
-        if line == '':
+        if line == b'':
             # end of entry
             self.mode = ldifprotocol.WAIT_FOR_DN
             m = delta.ModifyOp(dn=self.dn,

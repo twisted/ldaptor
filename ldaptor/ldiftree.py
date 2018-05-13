@@ -57,7 +57,7 @@ def _get(path, dn):
     entry = os.path.join(path,
                          *['%s.dir' % rdn for rdn in l[:-1]])
     entry = os.path.join(entry, '%s.ldif' % l[-1])
-    f = open(entry)
+    f = open(entry, 'rb')
     while 1:
         data = f.read(8192)
         if not data:
@@ -78,8 +78,8 @@ def _get(path, dn):
 def _putEntry(fileName, entry):
     """fileName is without extension."""
     tmp = fileName + '.' + str(uuid.uuid4()) + '.tmp'
-    f = open(tmp, 'w')
-    f.write(str(entry))
+    f = open(tmp, 'wb')
+    f.write(str(entry).encode('ascii'))
     f.close()
     os.rename(tmp, fileName+'.ldif')
     return True
@@ -139,7 +139,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
         parser = StoreParsedLDIF()
 
         try:
-            f = open(entryPath)
+            f = open(entryPath, 'rb')
         except IOError as e:
             if e.errno == errno.ENOENT:
                 return
@@ -150,7 +150,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
             if not data:
                 break
             parser.dataReceived(data)
-        parser.connectionLost(failure.Failure(error.ConnectionDone))
+        parser.connectionLost(failure.Failure(error.ConnectionDone()))
         assert parser.done
 
         entries = parser.seen
@@ -242,8 +242,8 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
             os.mkdir(self.path)
         fileName = os.path.join(self.path, '%s' % rdn)
         tmp = fileName + '.' + str(uuid.uuid4()) + '.tmp'
-        f = open(tmp, 'w')
-        f.write(str(e))
+        f = open(tmp, 'wb')
+        f.write(str(e).encode('ascii'))
         f.close()
         os.rename(tmp, fileName+'.ldif')
         dirName = os.path.join(self.path, '%s.dir' % rdn)
@@ -300,6 +300,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
         d = defer.maybeDeferred(_putEntry, entryPath, self)
 
         def eb_(err):
+            from twisted.python import log
             log.msg("[ERROR] Could not commit entry: {0}.".format(self.dn))
             return False
 

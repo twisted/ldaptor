@@ -208,7 +208,7 @@ class BaseLDAPEntry(object):
     def _bind(self, password):
         for digest in self.get('userPassword', ()):
             if digest.startswith(b'{SSHA}'):
-                raw = base64.decodestring(digest[len('{SSHA}'):])
+                raw = base64.decodestring(digest[len(b'{SSHA}'):])
                 salt = raw[20:]
                 got = sshaDigest(password, salt)
                 if got == digest:

@@ -91,6 +91,10 @@ class TestLDIFParsing(unittest.TestCase):
         self.failUnlessEqual(proto.listOfCompleted, [])
 
     def testSplitLines(self):
+        """
+        Input can be split on multiple lines as long as the line starts with
+        a space.
+        """
         proto = LDIFDriver()
         for line in (
             "dn: cn=foo,dc=ex",
@@ -110,7 +114,38 @@ class TestLDIFParsing(unittest.TestCase):
 
         self.failUnlessEqual(proto.listOfCompleted, [])
 
+    def testCaseInsensitiveDN(self):
+        """
+        DN is case insensitive.
+        """
+        proto = LDIFDriver()
+        proto.dataReceived(
+b"""version: 1
+dN: cn=foo, dc=example, dc=com
+cn: foo
+
+DN: cn=bar, dc=example, dc=com
+cn: bar
+""")
+
+        self.failUnlessEqual(len(proto.listOfCompleted), 2)
+
+        o = proto.listOfCompleted.pop(0)
+        self.failUnlessEqual(str(o.dn), 'cn=foo,dc=example,dc=com')
+        self.failUnlessEqual(o['CN'], ['foo'])
+
+        o = proto.listOfCompleted.pop(0)
+        self.failUnlessEqual(str(o.dn), 'cn=bar,dc=example,dc=com')
+        self.failUnlessEqual(o['CN'], ['bar'])
+
+        self.failUnlessEqual(proto.listOfCompleted, [])
+
+
     def testCaseInsensitiveAttributeTypes(self):
+        """
+        The attribute description (name/types) is case insensitive, while
+        values are case sensitives.
+        """
         proto = LDIFDriver()
         proto.dataReceived(b"""\
 dn: cn=foo,dc=example,dc=com
@@ -118,7 +153,7 @@ objectClass: a
 obJeCtClass: b
 cn: foo
 avalue: a
-aValUe: b
+aValUe: B
 
 """)
 
@@ -128,7 +163,7 @@ aValUe: b
         self.failUnlessEqual(str(o.dn), 'cn=foo,dc=example,dc=com')
         self.failUnlessEqual(o['objectClass'], ['a', 'b'])
         self.failUnlessEqual(o['CN'], ['foo'])
-        self.failUnlessEqual(o['aValue'], ['a', 'b'])
+        self.failUnlessEqual(o['aValue'], ['a', 'B'])
 
         self.failUnlessEqual(proto.listOfCompleted, [])
 
@@ -221,6 +256,113 @@ bValue: c
 
         self.assertRaises(ldifprotocol.LDIFTruncatedError,
                           proto.connectionLost)
+
+    def testComments(self):
+        """
+        Comments can be placed anywhere.
+        """
+        proto = LDIFDriver()
+        proto.dataReceived(
+b"""# One comment here.
+version: 1
+# After comment.
+dn: cn=foo, dc=example, dc=com
+# Another one comment here.
+cn: foo
+
+# More comments
+dn: cn=bar, dc=example, dc=com
+cn: bar
+""")
+
+        self.failUnlessEqual(len(proto.listOfCompleted), 2)
+
+        o = proto.listOfCompleted.pop(0)
+        self.failUnlessEqual(str(o.dn), 'cn=foo,dc=example,dc=com')
+        self.failUnlessEqual(o['CN'], ['foo'])
+
+        o = proto.listOfCompleted.pop(0)
+        self.failUnlessEqual(str(o.dn), 'cn=bar,dc=example,dc=com')
+        self.failUnlessEqual(o['CN'], ['bar'])
+
+        self.failUnlessEqual(proto.listOfCompleted, [])
+
+
+    def testMoreEmptyLinesBetweenEntries(self):
+        """
+        It accept multiple lines between entries.
+        """
+        proto = LDIFDriver()
+        proto.dataReceived(
+b"""version: 1
+dn: cn=foo, dc=example, dc=com
+cn: foo
+
+
+
+dn: cn=bar, dc=example, dc=com
+cn: bar
+""")
+
+        self.failUnlessEqual(len(proto.listOfCompleted), 2)
+
+        o = proto.listOfCompleted.pop(0)
+        self.failUnlessEqual(str(o.dn), 'cn=foo,dc=example,dc=com')
+        self.failUnlessEqual(o['CN'], ['foo'])
+
+        o = proto.listOfCompleted.pop(0)
+        self.failUnlessEqual(str(o.dn), 'cn=bar,dc=example,dc=com')
+        self.failUnlessEqual(o['CN'], ['bar'])
+
+        self.failUnlessEqual(proto.listOfCompleted, [])
+
+
+    def testStartWithSpace(self):
+        """
+        It fails to parse if a line start with a space but is not a
+        continuation of a previous line.
+        """
+        proto = LDIFDriver()
+        with self.assertRaises(ldifprotocol.LDIFEntryStartsWithSpaceError):
+            proto.dataReceived(
+b"""version: 1
+dn: cn=foo, dc=example, dc=com
+cn: foo
+
+ dn: cn=bar, dc=example, dc=com
+cn: bar
+
+""")
+
+
+    def testEntryStartWithoutDN(self):
+        """
+        It fails to parse the entry does not start with DN.
+        """
+        proto = LDIFDriver()
+        with self.assertRaises(ldifprotocol.LDIFEntryStartsWithNonDNError):
+            proto.dataReceived(
+b"""version: 1
+cn: cn=foo, dc=example, dc=com
+other: foo
+
+""")
+
+
+    def testAttributeValueFromURL(self):
+        """
+        Getting attribute values from URL is not supported.
+        """
+        proto = LDIFDriver()
+        with self.assertRaises(NotImplementedError):
+            proto.dataReceived(
+b"""version: 1
+dn: cn=foo, dc=example, dc=com
+cn:< file:///path/to/data 
+
+""")
+
+
 
 class RFC2849_Examples(unittest.TestCase):
     examples = [

@@ -253,6 +253,9 @@ changetype: add
 """)
 
     def testDelete(self):
+        """"
+        Triggers a DeleteOp when the diff action is `delete`.
+        """
         proto = LDIFDeltaDriver()
         proto.dataReceived(b"""\
 version: 1
@@ -262,4 +265,64 @@ changetype: delete
 """)
         proto.connectionLost()
         self.assertEqual(proto.listOfCompleted,
-                         [delta.DeleteOp(dn='cn=foo,dc=example,dc=com')])
+                         [delta.DeleteOp(dn=b'cn=foo,dc=example,dc=com')])
+
+    def testDeleteMalformat(self):
+        """"
+        Raises an error when delete change has data after the changetype.
+        """
+        proto = LDIFDeltaDriver()
+
+        with self.assertRaises(
+            ldifdelta.LDIFDeltaDeleteHasJunkAfterChangeTypeError
+                ):
+            proto.dataReceived(
+b"""version: 1
+dn: cn=foo,dc=example,dc=com
+changetype: delete
+foo: bar
+
+""")
+
+
+    def testMODRDN(self):
+        """
+        modrdn is not yet supported.
+        """
+        proto = LDIFDeltaDriver()
+
+        with self.assertRaises(NotImplementedError):
+            proto.dataReceived(
+b"""version: 1
+dn: cn=foo,dc=example,dc=com
+changetype: modrdn
+
+""")
+
+    def testMODDN(self):
+        """
+        moddn is not yet supported.
+        """
+        proto = LDIFDeltaDriver()
+
+        with self.assertRaises(NotImplementedError):
+            proto.dataReceived(
+b"""version: 1
+dn: cn=foo,dc=example,dc=com
+changetype: moddn
+
+""")
+
+    def testUnknownChnagetType(self):
+        """
+        Raises an error is the changetype is not supported.
+        """
+        proto = LDIFDeltaDriver()
+
+        with self.assertRaises(ldifdelta.LDIFDeltaUnknownChangeTypeError):
+            proto.dataReceived(
+b"""version: 1
+dn: cn=foo,dc=example,dc=com
+changetype: some-random-type
+
+""")
