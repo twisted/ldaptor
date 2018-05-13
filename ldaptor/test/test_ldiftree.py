@@ -865,3 +865,21 @@ objectClass: top
 
         with self.assertRaises(TypeError):
             self.example > object()
+
+
+    def testCompareGreater(self):
+        """
+        It is compared with other entries based on DN, where child is
+        greater than the parent.
+        """
+        self.assertTrue(self.oneChild > self.example)
+        self.assertFalse(self.example > self.oneChild)
+
+
+    def testCompareLess(self):
+        """
+        It is compared with other entries based on DN, where parent is
+        less than the child.
+        """
+        self.assertTrue(self.example < self.oneChild)
+        self.assertFalse(self.oneChild < self.example)

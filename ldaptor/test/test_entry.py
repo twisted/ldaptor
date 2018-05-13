@@ -3,7 +3,11 @@ Test cases for ldaptor.entry
 """
 
 from twisted.trial import unittest
+
 from ldaptor import delta, entry
+from ldaptor.protocols.ldap.ldaperrors import LDAPInvalidCredentials
+
+
 
 class TestBaseLDAPEntry(unittest.TestCase):
     """
@@ -34,6 +38,74 @@ class TestBaseLDAPEntry(unittest.TestCase):
         """
         a = entry.BaseLDAPEntry(dn='dc=foo', attributes={})
         self.assertFalse(a == object())
+
+
+    def testBindPlainText(self):
+        """
+        It will bind when the password for the entry is stored in plain text,
+        and will return a deferred which has itself as callback.
+        """
+        sut = entry.BaseLDAPEntry(
+            dn='dc=foo',
+            attributes={
+                'userPassword': [b'some-plain-text'],
+            })
+
+        deferred = sut.bind(b'some-plain-text')
+        result = self.successResultOf(deferred)
+
+        self.assertIs(sut, result)
+
+
+    def testBindSeededSHA(self):
+        """
+        It can bind with password stored in seeded SHA.
+        """
+        sut = entry.BaseLDAPEntry(
+            dn='dc=foo',
+            attributes={
+                'userPassword': [b'{SSHA}yVLLj62rFf3kDAbzwEU0zYAVvbWrze8='],
+            })
+
+        deferred = sut.bind(b'secret')
+        result = self.successResultOf(deferred)
+
+        self.assertIs(sut, result)
+
+
+    def testBindPlainTextError(self):
+        """
+        Return a LDAPInvalidCredentials failure when password don't match.
+        """
+        sut = entry.BaseLDAPEntry(
+            dn='dc=foo',
+            attributes={
+                'userPassword': [b'some-plain-text'],
+            })
+
+        deferred = sut.bind(b'other-password')
+        failure = self.failureResultOf(deferred)
+
+        self.assertTrue(failure.check(LDAPInvalidCredentials))
+
+
+
+    def testBindSHAError(self):
+        """
+        Return a LDAPInvalidCredentials failure when encoded password don't
+        match.
+        """
+        sut = entry.BaseLDAPEntry(
+            dn='dc=foo',
+            attributes={
+                'userPassword': [b'{SSHA}anythinghere'],
+            })
+
+        deferred = sut.bind(b'other-password')
+        failure = self.failureResultOf(deferred)
+
+        self.assertTrue(failure.check(LDAPInvalidCredentials))
+
 
 
 class TestDiffEntry(unittest.TestCase):

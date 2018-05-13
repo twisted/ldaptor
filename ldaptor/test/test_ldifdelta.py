@@ -210,17 +210,41 @@ foo: bar
 """)
 
     def testNoChangeType(self):
+        """
+        Raises an error is the changetype is not present.
+        """
         proto = LDIFDeltaDriver()
-        self.assertRaises(ldifdelta.LDIFDeltaMissingChangeTypeError,
-                          proto.dataReceived,
-                          b"""\
-version: 1
+        error = self.assertRaises(
+            ldifdelta.LDIFDeltaMissingChangeTypeError,
+            proto.dataReceived,
+            b"""version: 1
 dn: cn=foo,dc=example,dc=com
 add: foo
 foo: bar
 -
 
 """)
+        self.assertEqual(
+            ('cn=foo,dc=example,dc=com', 'add', 'foo'), error.args)
+
+
+    def testNoChangetTypeEmpty(self):
+        """
+        Raises an error is the changetype is not present even if no
+        other command are specified for the DN.
+        """
+        proto = LDIFDeltaDriver()
+
+        error = self.assertRaises(
+            ldifdelta.LDIFDeltaMissingChangeTypeError,
+            proto.dataReceived,
+            b"""version: 1
+dn: cn=foo,dc=example,dc=com
+
+""")
+
+        self.assertEqual(('cn=foo,dc=example,dc=com',), error.args)
+
 
     def testAdd(self):
         proto = LDIFDeltaDriver()
@@ -252,6 +276,7 @@ changetype: add
 
 """)
 
+
     def testDelete(self):
         """"
         Triggers a DeleteOp when the diff action is `delete`.
@@ -266,6 +291,7 @@ changetype: delete
         proto.connectionLost()
         self.assertEqual(proto.listOfCompleted,
                          [delta.DeleteOp(dn=b'cn=foo,dc=example,dc=com')])
+
 
     def testDeleteMalformat(self):
         """"
@@ -299,6 +325,7 @@ changetype: modrdn
 
 """)
 
+
     def testMODDN(self):
         """
         moddn is not yet supported.
@@ -313,6 +340,7 @@ changetype: moddn
 
 """)
 
+
     def testUnknownChnagetType(self):
         """
         Raises an error is the changetype is not supported.
@@ -326,3 +354,4 @@ dn: cn=foo,dc=example,dc=com
 changetype: some-random-type
 
 """)
+
