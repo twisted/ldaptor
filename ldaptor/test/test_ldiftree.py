@@ -861,7 +861,7 @@ objectClass: top
         It can't be compared with other types.
         """
         with self.assertRaises(TypeError):
-            self.example < 'dc=com'
+            self.example < object()
 
         with self.assertRaises(TypeError):
-            self.example > 'dc=com'
+            self.example > object()

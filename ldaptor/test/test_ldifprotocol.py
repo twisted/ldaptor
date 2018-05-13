@@ -126,6 +126,7 @@ cn: foo
 
 DN: cn=bar, dc=example, dc=com
 cn: bar
+
 """)
 
         self.failUnlessEqual(len(proto.listOfCompleted), 2)
@@ -273,6 +274,7 @@ cn: foo
 # More comments
 dn: cn=bar, dc=example, dc=com
 cn: bar
+
 """)
 
         self.failUnlessEqual(len(proto.listOfCompleted), 2)
@@ -302,6 +304,7 @@ cn: foo
 
 dn: cn=bar, dc=example, dc=com
 cn: bar
+
 """)
 
         self.failUnlessEqual(len(proto.listOfCompleted), 2)
