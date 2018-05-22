@@ -28,11 +28,11 @@ class LDAPServerWithUPNBind(unittest.TestCase):
             dn='dc=example,dc=com',
             attributes={'dc': 'example'})
         self.user = self.root.addChild(
-            rdn='cn=bob',
+            rdn=b'cn=bob',
             attributes={
                 'objectClass': ['a', 'b'],
                 # Hash is for "secret".
-                'userPassword': ['{SSHA}yVLLj62rFf3kDAbzwEU0zYAVvbWrze8='],
+                'userPassword': [b'{SSHA}yVLLj62rFf3kDAbzwEU0zYAVvbWrze8='],
                 'userPrincipalName': ['bob@ad.example.com'],
             })
 
@@ -66,14 +66,14 @@ class LDAPServerWithUPNBind(unittest.TestCase):
         """
         It can authenticate based on the UPN.
         """
-        self.checkSuccessfulBIND('bob@ad.example.com', 'secret')
+        self.checkSuccessfulBIND('bob@ad.example.com', b'secret')
 
 
     def test_bindSuccessDN(self):
         """
         It can still authenticate based on the normal DN.
         """
-        self.checkSuccessfulBIND('cn=bob,dc=example,dc=com', 'secret')
+        self.checkSuccessfulBIND('cn=bob,dc=example,dc=com', b'secret')
 
 
     def test_bindBadPassword(self):

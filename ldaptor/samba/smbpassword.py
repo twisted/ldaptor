@@ -1,3 +1,4 @@
+import codecs
 import warnings
 
 import string
@@ -7,37 +8,41 @@ except AttributeError:
     # On Python3 we get it from bytes.
     maketrans = bytes.maketrans
 
+import six
+
 from ldaptor import md4, config
 
 lower = b'abcdefghijklmnopqrstuvwxyz'
 upper = lower.upper()
 toupper= maketrans(lower, upper)
 
-def nthash(password=''):
+
+def nthash(password=b''):
     """Generates nt md4 password hash for a given password."""
 
     password = password[:128]
-    password = ''.join([c + '\000' for c in password])
-    return md4.new(password).hexdigest().translate(toupper);
+    password = b''.join([
+        six.int2byte(c) + b'\000' for c in six.iterbytes(password)])
+    return md4.new(password).hexdigest().translate(toupper).encode('ascii')
 
 
-def lmhash_locked(password=''):
+def lmhash_locked(password=b''):
     """
     Generates a lanman password hash that matches no password.
 
     Note that the author thinks LanMan hashes should be banished from
     the face of the earth.
     """
-    return 32 * 'X'
+    return 32 * b'X'
 
 
-def _no_lmhash(password=''):
+def _no_lmhash(password=b''):
     if config.useLMhash():
         warnings.warn("Cannot import Crypto.Cipher.DES, lmhash passwords disabled.")
     return lmhash_locked()
 
 
-def _have_lmhash(password=''):
+def _have_lmhash(password=b''):
     """
     Generates lanman password hash for a given password.
 
@@ -48,11 +53,10 @@ def _have_lmhash(password=''):
     if not config.useLMhash():
         return lmhash_locked()
 
-    password = (password + 14 * '\0')[:14]
+    password = (password + 14 * b'\0')[:14]
     password = password.upper()
 
     return _deshash(password[:7]) + _deshash(password[7:])
-
 
 try:
     from Crypto.Cipher import DES
@@ -68,7 +72,7 @@ def _deshash(p):
     # Insert parity bits. I'm not going to bother myself with smart
     # implementations.
     bits = []
-    for byte in [ord(c) for c in p]:
+    for byte in [six.byte2int([c]) for c in p]:
         bits.extend([bool(byte & 128),
                      bool(byte & 64),
                      bool(byte & 32),
@@ -96,8 +100,8 @@ def _deshash(p):
              _pack(bits[35:42]),
              _pack(bits[42:49]),
              _pack(bits[49:]))
-    bytes = ''.join([chr(x) for x in bytes])
-    cipher = DES.new(bytes, DES.MODE_ECB)
+
+    data = b''.join([six.int2byte(x) for x in bytes])
+    cipher = DES.new(data, DES.MODE_ECB)
     raw = cipher.encrypt(LM_MAGIC)
-    l = ['%02X' % ord(x) for x in raw]
-    return ''.join(l)
+    return  codecs.encode(raw, 'hex').upper()

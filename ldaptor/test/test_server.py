@@ -132,7 +132,7 @@ class LDAPServerTest(unittest.TestCase):
                 pureldap.LDAPMessage(
                     pureldap.LDAPBindRequest(
                         dn='cn=thingie,ou=stuff,dc=example,dc=com',
-                        auth='secret'),
+                        auth=b'secret'),
                     id=4)))
         self.assertEqual(
             self.server.transport.value(),
@@ -149,7 +149,7 @@ class LDAPServerTest(unittest.TestCase):
                 pureldap.LDAPMessage(
                     pureldap.LDAPBindRequest(
                         dn='cn=thingie,ou=stuff,dc=example,dc=com',
-                        auth='invalid'),
+                        auth=b'invalid'),
                     id=734)))
         self.assertEqual(
             self.server.transport.value(),
@@ -165,7 +165,7 @@ class LDAPServerTest(unittest.TestCase):
                 pureldap.LDAPMessage(
                     pureldap.LDAPBindRequest(
                         dn='cn=non-existing,dc=example,dc=com',
-                        auth='invalid'),
+                        auth=b'invalid'),
                     id=78)))
         self.assertEqual(
             self.server.transport.value(),
@@ -229,7 +229,7 @@ class LDAPServerTest(unittest.TestCase):
                     pureldap.LDAPBindRequest(
                         version=4,
                         dn='cn=non-existing,dc=example,dc=com',
-                        auth='invalid'),
+                        auth=b'invalid'),
                     id=11)))
         self.assertEqual(
             self.server.transport.value(),
@@ -731,7 +731,7 @@ class LDAPServerTest(unittest.TestCase):
             str(pureldap.LDAPMessage(
                 pureldap.LDAPBindRequest(
                     dn='cn=thingie,ou=stuff,dc=example,dc=com',
-                    auth='secret'),
+                    auth=b'secret'),
                 id=4)))
         self.assertEqual(
             self.server.transport.value(),
@@ -804,7 +804,7 @@ class LDAPServerTest(unittest.TestCase):
         self.thingie['userPassword'] = ['{SSHA}yVLLj62rFf3kDAbzwEU0zYAVvbWrze8=']  # "secret"
         self.server.dataReceived(str(pureldap.LDAPMessage(
             pureldap.LDAPBindRequest(dn='cn=thingie,ou=stuff,dc=example,dc=com',
-                                     auth='secret'),
+                                     auth=b'secret'),
             controls=[('42.42.42.42', False, None)],
             id=4)))
         self.assertEqual(

@@ -1,6 +1,7 @@
 """
 Test cases for ldaptor.attributeset
 """
+from functools import total_ordering
 
 from twisted.trial import unittest
 from ldaptor import attributeset
@@ -112,6 +113,7 @@ class TestLDAPAttributeSet(unittest.TestCase):
         self.assertEqual(b, {'b', 'c', 'd', m1})
 
     def testDeepCopy(self):
+        @total_ordering
         class Magic:
             def __eq__(self, other):
                 return isinstance(other, self.__class__)
@@ -122,8 +124,6 @@ class TestLDAPAttributeSet(unittest.TestCase):
             def __lt__(self, other):
                 return False
 
-            def __gt__(self, other):
-                return True
 
         m1 = Magic()
         a = attributeset.LDAPAttributeSet('k', ['a', m1])

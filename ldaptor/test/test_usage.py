@@ -56,7 +56,7 @@ class TestOptions_service_location(TestCase):
 
         self.assertEqual(
             "Invalid relative distinguished name 'example.com'.",
-            exception.message)
+            exception.args[0])
 
     def test_parseOptions_no_server(self):
         """
@@ -72,7 +72,7 @@ class TestOptions_service_location(TestCase):
             )
 
         self.assertEqual(
-            'service-location must specify host', exception.message)
+            'service-location must specify host', exception.args[0])
 
     def test_parseOptions_multiple(self):
         """

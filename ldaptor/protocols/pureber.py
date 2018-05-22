@@ -29,7 +29,7 @@
 # (4) If a value of a type is its default value, it MUST be absent.
 #     Only some BOOLEAN and INTEGER types have default values in
 #     this protocol definition.
-from six.moves import UserList
+import six
 
 # xxxxxxxx
 # |/|\.../
@@ -131,7 +131,6 @@ class BERBase(object):
     def __eq__(self, other):
         if not isinstance(other, BERBase):
             return NotImplemented
-
         return str(self) == str(other)
 
     def __ne__(self, other):
@@ -210,10 +209,16 @@ class BEROctetString(BERBase):
         self.value = value
 
     def __str__(self):
-        value = str(self.value)
-        return chr(self.identification()) \
-               + int2berlen(len(value)) \
-               + value
+        if not six.PY2 and isinstance(self.value, bytes):
+            value = self.value.decode('ascii')
+        else:
+            value = str(self.value)
+        result = (
+            chr(self.identification()) +
+            int2berlen(len(value)) +
+            value
+            )
+        return result
 
     def __repr__(self):
         if self.tag == self.__class__.tag:
@@ -285,7 +290,7 @@ class BEREnumerated(BERInteger):
     tag = 0x0a
 
 
-class BERSequence(BERStructured, UserList):
+class BERSequence(BERStructured, six.moves.UserList):
     # TODO __getslice__ calls __init__ with no args.
     tag = 0x10
 
@@ -298,7 +303,7 @@ class BERSequence(BERStructured, UserList):
     def __init__(self, value=None, tag=None):
         BERStructured.__init__(self, tag)
         assert value is not None
-        UserList.__init__(self, value)
+        six.moves.UserList.__init__(self, value)
 
     def __str__(self):
         r = ''.join(map(str, self.data))
