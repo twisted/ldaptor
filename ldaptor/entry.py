@@ -16,16 +16,20 @@ except ImportError:
 
 
 def sshaDigest(passphrase, salt=None):
+    """
+    Return the salted SHA for `passphrase` which is passed as bytes.
+    """
     if salt is None:
         salt = ''
         for i in range(8):
-            salt += chr(random.randint(0, 255))
+            salt += chr(random.randint(0, 127))
+        salt = salt.encode('ascii')
 
     s = sha1()
     s.update(passphrase)
     s.update(salt)
     encoded = base64.encodestring(s.digest() + salt).rstrip()
-    crypt = '{SSHA}' + encoded
+    crypt = b'{SSHA}' + encoded
     return crypt
 
 
@@ -116,7 +120,7 @@ class BaseLDAPEntry(object):
 
     def __eq__(self, other):
         if not isinstance(other, BaseLDAPEntry):
-            return 0
+            return NotImplemented
         if self.dn != other.dn:
             return 0
 
@@ -206,8 +210,8 @@ class BaseLDAPEntry(object):
 
     def _bind(self, password):
         for digest in self.get('userPassword', ()):
-            if digest.startswith('{SSHA}'):
-                raw = base64.decodestring(digest[len('{SSHA}'):])
+            if digest.startswith(b'{SSHA}'):
+                raw = base64.decodestring(digest[len(b'{SSHA}'):])
                 salt = raw[20:]
                 got = sshaDigest(password, salt)
                 if got == digest:
@@ -225,6 +229,9 @@ class BaseLDAPEntry(object):
         return False
 
     def __hash__(self):
+        # FIXME:https://github.com/twisted/ldaptor/issues/101
+        # The hash should take into consideration any attribute used to
+        # decide the equality.
         return hash(self.dn)
 
 
@@ -251,5 +258,9 @@ class EditableLDAPEntry(BaseLDAPEntry):
         raise NotImplementedError()
 
     def setPassword(self, newPasswd, salt=None):
+        """
+        Update the password for the entry with a new password and salt passed
+        as bytes.
+        """
         crypt = sshaDigest(newPasswd, salt)
         self['userPassword'] = [crypt]

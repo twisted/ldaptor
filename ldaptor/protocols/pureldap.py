@@ -71,6 +71,10 @@ class LDAPAttributeValue(BEROctetString):
 
 
 class LDAPMessage(BERSequence):
+    """
+    To encode this object in order to be sent over the network use the str()
+    method.
+    """
     id = None
     value = None
 
@@ -108,6 +112,9 @@ class LDAPMessage(BERSequence):
         self.controls = controls
 
     def __str__(self):
+        """
+        This is the wire/encoded representation.
+        """
         l = [BERInteger(self.id), self.value]
         if self.controls is not None:
             l.append(LDAPControls([LDAPControl(*a) for a in self.controls]))

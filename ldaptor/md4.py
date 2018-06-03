@@ -268,7 +268,7 @@ if _has_native_md4():
     # overwrite md4 class w/ hashlib wrapper
     def md4(content=None):
         "wrapper for hashlib.new('md4')"
-        return hashlib.new('md4', content or b(''))
+        return hashlib.new('md4', content or b'')
 
 # =============================================================================
 # Include to match existing md4.new() code:

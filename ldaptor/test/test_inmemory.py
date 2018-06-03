@@ -265,17 +265,17 @@ class TestInMemoryDatabase(unittest.TestCase):
         return d
 
     def test_setPassword(self):
-        self.foo.setPassword('s3krit', salt=b'\xf2\x4a')
-        self.failUnless('userPassword' in self.foo)
-        self.assertEqual(self.foo['userPassword'],
-                          ['{SSHA}0n/Iw1NhUOKyaI9gm9v5YsO3ZInySg=='])
+        self.foo.setPassword(b's3krit', salt=b'\xf2\x4a')
+        self.assertEqual(
+            self.foo['userPassword'],
+            [b'{SSHA}0n/Iw1NhUOKyaI9gm9v5YsO3ZInySg=='])
 
     def test_setPassword_noSalt(self):
-        self.foo.setPassword('s3krit')
+        self.foo.setPassword(b's3krit')
         self.failUnless('userPassword' in self.foo)
-        d = self.foo.bind('s3krit')
+        d = self.foo.bind(b's3krit')
         d.addCallback(self.assertIdentical, self.foo)
-        d.addCallback(lambda _: self.foo.bind('s4krit'))
+        d.addCallback(lambda _: self.foo.bind(b's4krit'))
         def eb(fail):
             fail.trap(ldaperrors.LDAPInvalidCredentials)
         d.addCallbacks(testutil.mustRaise, eb)
