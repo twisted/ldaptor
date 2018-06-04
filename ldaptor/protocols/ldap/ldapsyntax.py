@@ -638,7 +638,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
                       complete=complete)
         callback(o)
 
-    def _cbSearchMsg(self, msg, d, callback, complete, sizeLimitIsNonFatal):
+    def _cbSearchMsg(self, msg, controls, d, callback, complete, sizeLimitIsNonFatal):
         if isinstance(msg, pureldap.LDAPSearchResultDone):
             assert msg.referral is None  # TODO
             e = ldaperrors.get(msg.resultCode, msg.errorMessage)
@@ -654,7 +654,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 
             # search ended successfully
             assert msg.matchedDN == ''
-            d.callback(None)
+            d.callback(controls)
             return True
         elif isinstance(msg, pureldap.LDAPSearchResultEntry):
             self._cbSearchEntry(callback, msg.objectName, msg.attributes,
@@ -675,7 +675,9 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
                sizeLimitIsNonFatal=False,
                timeLimit=0,
                typesOnly=0,
-               callback=None):
+               callback=None,
+               controls=None,
+               return_controls=False):
         self._checkState()
         d = defer.Deferred()
         if filterObject is None and filterText is None:
@@ -711,15 +713,22 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
                 typesOnly=typesOnly,
                 filter=filterObject,
                 attributes=attributes)
-            dsend = self.client.send_multiResponse(
-                op, self._cbSearchMsg,
-                d, cb, complete=not attributes,
+            dsend = self.client.send_multiResponse_ex(
+                op,
+                controls, 
+                self._cbSearchMsg,
+                d, 
+                cb, 
+                complete=not attributes,
                 sizeLimitIsNonFatal=sizeLimitIsNonFatal)
         except ldapclient.LDAPClientConnectionLostException:
             d.errback(Failure())
         else:
             if callback is None:
-                d.addCallback(lambda dummy: results)
+                if return_controls:
+                    d.addCallback(lambda ctls: (results, ctls))
+                else:
+                    d.addCallback(lambda dummy: results)
 
             def rerouteerr(e):
                 d.errback(e)

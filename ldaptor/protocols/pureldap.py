@@ -124,6 +124,7 @@ class LDAPMessage(BERSequence):
         l = []
         l.append('id=%r' % self.id)
         l.append('value=%r' % self.value)
+        l.append('controls=%r' % self.controls)
         if self.tag != self.__class__.tag:
             l.append('tag=%d' % self.tag)
         return self.__class__.__name__ + '(' + ', '.join(l) + ')'
