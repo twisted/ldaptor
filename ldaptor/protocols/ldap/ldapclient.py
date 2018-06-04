@@ -154,9 +154,6 @@ class LDAPClient(protocol.Protocol):
         @rtype: Deferred LDAPProtocolResponse
         """
         msg = self._send(op, controls=controls)
-        #print("[DEBUG] msg: {}".format(repr(msg)))
-        #with open("/home/waldbiec/temp/ldaptor-binary-controls.bin", "wb") as fout:
-        #    fout.write(str(msg.controls))
         assert op.needs_answer
         d = defer.Deferred()
         self.onwire[msg.id] = (d, True, handler, args, kwargs)
