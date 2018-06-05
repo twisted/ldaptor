@@ -35,6 +35,7 @@ class LDAPStartTLSBusyError(ldaperrors.LDAPOperationsError):
     def __str__(self):
         return 'Cannot STARTTLS while operations on wire: %r' % self.onwire
 
+
 class LDAPStartTLSInvalidResponseName(ldaperrors.LDAPException):
     def __init__(self, responseName):
         self.responseName = responseName
@@ -42,6 +43,7 @@ class LDAPStartTLSInvalidResponseName(ldaperrors.LDAPException):
 
     def __str__(self):
         return 'Invalid responseName in STARTTLS response: %r' % (self.responseName, )
+
 
 class LDAPClient(protocol.Protocol):
     """An LDAP client"""
@@ -54,8 +56,8 @@ class LDAPClient(protocol.Protocol):
 
     berdecoder = pureldap.LDAPBERDecoderContext_TopLevel(
         inherit=pureldap.LDAPBERDecoderContext_LDAPMessage(
-        fallback=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext()),
-        inherit=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext())))
+            fallback=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext()),
+            inherit=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext())))
 
     def dataReceived(self, recd):
         self.buffer += recd
@@ -117,7 +119,7 @@ class LDAPClient(protocol.Protocol):
         Send an LDAP operation to the server, expecting one or more
         responses.
 
-        If `handler` is provided, it will receive a LDAP response as 
+        If `handler` is provided, it will receive a LDAP response as
         its first argument. The Deferred returned by this function will
         never fire.
 
@@ -219,7 +221,6 @@ class LDAPClient(protocol.Protocol):
                     if handler(msg.value, *args, **kwargs):
                         del self.onwire[msg.id]
 
-    ##Bind
     def bind(self, dn='', auth=''):
         """
         @depreciated: Use e.bind(auth).
@@ -241,7 +242,6 @@ class LDAPClient(protocol.Protocol):
             raise ldaperrors.get(msg.resultCode, msg.errorMessage)
         return (msg.matchedDN, msg.serverSaslCreds)
 
-    ##Unbind
     def unbind(self):
         if not self.connected:
             raise Exception("Not connected (TODO)")  # TODO make this a real object

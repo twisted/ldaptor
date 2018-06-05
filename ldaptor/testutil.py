@@ -57,9 +57,9 @@ class LDAPClientTestDriver:
 
     def send(self, op):
         self.sent.append(op)
-        l = self._response()
-        assert len(l) == 1, "got %d responses for a .send()" % len(l)
-        r = l[0]
+        resps = self._response()
+        assert len(resps) == 1, "got %d responses for a .send()" % len(resps)
+        r = resps[0]
         if isinstance(r, failure.Failure):
             return defer.fail(r)
         else:
@@ -96,11 +96,11 @@ class LDAPClientTestDriver:
 
     def send_multiResponse_ex(self, op, controls, handler, *args, **kwargs):
         return self.send_multiResponse_(
-            op, 
-            controls, 
+            op,
+            controls,
             True,
-            handler, 
-            *args, 
+            handler,
+            *args,
             **kwargs)
 
     def send_noResponse(self, op):

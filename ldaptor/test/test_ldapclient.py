@@ -12,16 +12,22 @@ from ldaptor.protocols import (
 )
 from ldaptor import testutil
 
+
 class SillyMessage(object):
     needs_answer = True
+
     def __init__(self, value):
         self.value = value
+
     def __str__(self):
         return self.value
 
+
 class SillyError(Exception):
+
     def __str__(self):
         'Exception for test purposes.'
+
 
 class ConnectionLost(unittest.TestCase):
     def test_simple(self):
@@ -33,10 +39,11 @@ class ConnectionLost(unittest.TestCase):
 
         def eb(fail):
             fail.trap(SillyError)
+
         d1.addCallbacks(testutil.mustRaise, eb)
         d2.addCallbacks(testutil.mustRaise, eb)
-        
         return defer.DeferredList([d1, d2], fireOnOneErrback=True)
+
 
 class SendMultiResponseAndControls(unittest.TestCase):
 
@@ -56,11 +63,10 @@ class SendMultiResponseAndControls(unittest.TestCase):
             pureber.BEROctetString(cookie),
         ])
         controls = [('1.2.840.113556.1.4.319', None, str(control_value))]
-        d = client.send_multiResponse_ex(op, controls)
+        client.send_multiResponse_ex(op, controls)
         expected_value = pureldap.LDAPMessage(op, controls)
         expected_value.id -= 1
         expected_bytestring = str(expected_value)
         self.assertEqual(
             transport.value(),
-            expected_bytestring) 
-
+            expected_bytestring)
