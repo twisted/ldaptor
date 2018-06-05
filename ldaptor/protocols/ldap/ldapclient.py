@@ -117,6 +117,13 @@ class LDAPClient(protocol.Protocol):
         Send an LDAP operation to the server, expecting one or more
         responses.
 
+        If `handler` is provided, it will receive a LDAP response as 
+        its first argument. The Deferred returned by this function will
+        never fire.
+
+        If `handler` is not provided, the Deferred returned by this
+        function will fire with the final LDAP response.
+
         @param op: the operation to send
         @type op: LDAPProtocolRequest
         @param handler: a callable that will be called for each
@@ -139,6 +146,14 @@ class LDAPClient(protocol.Protocol):
         """
         Send an LDAP operation to the server, expecting one or more
         responses.
+
+        If `handler` is provided, it will receive a LDAP response *and*
+        response controls as its first 2 arguments. The Deferred returned
+        by this function will never fire.
+
+        If `handler` is not provided, the Deferred returned by this
+        function will fire with a tuple of the final LDAP response
+        and any associated response controls.
 
         @param op: the operation to send
         @type op: LDAPProtocolRequest
@@ -188,7 +203,10 @@ class LDAPClient(protocol.Protocol):
             if handler is None:
                 assert args is None
                 assert kwargs is None
-                d.callback(msg.value)
+                if return_controls:
+                    d.callback((msg.value, msg.controls))
+                else:
+                    d.callback(msg.value)
                 del self.onwire[msg.id]
             else:
                 assert args is not None
