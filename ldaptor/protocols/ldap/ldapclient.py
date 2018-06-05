@@ -203,8 +203,8 @@ class LDAPClient(protocol.Protocol):
             d, return_controls, handler, args, kwargs = self.onwire[msg.id]
 
             if handler is None:
-                assert args is None
-                assert kwargs is None
+                assert (args is None) or (args == ())
+                assert (kwargs is None) or (kwargs == {})
                 if return_controls:
                     d.callback((msg.value, msg.controls))
                 else:
