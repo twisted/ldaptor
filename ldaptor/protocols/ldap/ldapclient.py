@@ -133,8 +133,8 @@ class LDAPClient(protocol.Protocol):
         final response.
         @param args: positional arguments to pass to handler
         @param kwargs: keyword arguments to pass to handler
-        @return: the result from the last handler as a deferred that
-        completes when the last response has been received
+        @return: the result from the first handler as a deferred that
+        completes when the first response has been received
         @rtype: Deferred LDAPProtocolResponse
         """
         msg = self._send(op)
@@ -154,7 +154,7 @@ class LDAPClient(protocol.Protocol):
         by this function will never fire.
 
         If `handler` is not provided, the Deferred returned by this
-        function will fire with a tuple of the final LDAP response
+        function will fire with a tuple of the first LDAP response
         and any associated response controls.
 
         @param op: the operation to send

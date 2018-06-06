@@ -92,6 +92,31 @@ class SendTests(unittest.TestCase):
             response.value,
             self.successResultOf(d))
 
+    def test_send_multiResponse_with_handler(self):
+        client, transport = self.create_test_client()
+        op = self.create_test_search_req()
+        results = []
+
+        def collect_result_(result):
+            results.append(result)
+            return True
+
+        client.send_multiResponse(op, collect_result_)
+        expected_value = pureldap.LDAPMessage(op)
+        expected_value.id -= 1
+        expected_bytestring = str(expected_value)
+        self.assertEqual(
+            transport.value(),
+            expected_bytestring)
+        response = pureldap.LDAPMessage(
+            pureldap.LDAPSearchResultDone(0),
+            id=expected_value.id)
+        resp_bytestring = str(response)
+        client.dataReceived(resp_bytestring)
+        self.assertEqual(
+            response.value,
+            results[0])
+
     def test_send_multiResponse_ex(self):
         client, transport = self.create_test_client()
         op = self.create_test_search_req()
