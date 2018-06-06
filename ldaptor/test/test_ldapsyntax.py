@@ -4,7 +4,7 @@ Test cases for ldaptor.protocols.ldap.ldapsyntax module.
 
 from twisted.trial import unittest
 from ldaptor import config, testutil, delta
-from ldaptor.protocols.ldap import ldapsyntax, ldaperrors
+from ldaptor.protocols.ldap import ldapclient, ldapsyntax, ldaperrors
 from ldaptor.protocols import pureldap, pureber
 from twisted.internet import defer
 from twisted.internet import error
@@ -499,6 +499,10 @@ class LDAPSyntaxSearch(unittest.TestCase):
     timeout = 3
 
     def _test_search(self, return_controls=False):
+        """
+        Create a test search.
+        Return Deferred with no handler.
+        """
         client=LDAPClientTestDriver([
             pureldap.LDAPSearchResultEntry(
                 objectName='cn=foo,dc=example,dc=com',
@@ -580,8 +584,64 @@ class LDAPSyntaxSearch(unittest.TestCase):
         """Test searches."""
         return self._test_search()
 
+    def test_search_not_connected(self):
+        client = ldapclient.LDAPClient()
+        o = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=com',
+            attributes={
+                'objectClass': ['organizationalUnit'],
+            }
+        )
+        d = o.search(
+            filterText='(foo=a)',
+            attributes=['foo', 'bar'])
+
+        def cb_(thing):
+            self.assertEqual(
+                ldapclient.LDAPClientConnectionLostException,
+                type(thing.value))
+
+        d.addErrback(cb_)
+        return d
+        
+
     def test_search_controls_returned(self):
         return self._test_search(return_controls=True)
+
+    def test_search_size_limit_exceeded(self):
+        client=LDAPClientTestDriver([
+            pureldap.LDAPSearchResultEntry(
+                objectName='cn=foo,dc=example,dc=com',
+                attributes=(
+                    ('foo', ['a']),
+                    ('bar', ['b', 'c']),
+                ),
+            ),
+            pureldap.LDAPSearchResultDone(
+                resultCode=ldaperrors.LDAPSizeLimitExceeded.resultCode,
+                matchedDN='',
+                errorMessage='Size limit exceeded.')
+            ])
+        o = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=com',
+            attributes={
+                'objectClass': ['organizationalUnit'],
+            }
+        )
+        d = o.search(
+            filterText='(foo=a)',
+            attributes=['foo', 'bar'],
+            sizeLimit=1,
+            return_controls=False)
+
+        def cb_(thing):
+            self.failUnlessEqual(len(thing), 1)
+
+        d.addCallback(cb_)
+        d.addErrback(cb_)
+        return d
 
     def testSearch_defaultAttributes(self):
         """Search without explicit list of attributes returns all attributes."""

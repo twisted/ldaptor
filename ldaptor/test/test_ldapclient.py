@@ -84,6 +84,28 @@ class SendTests(unittest.TestCase):
             client.bind,
             "cn=foo,ou=baz,dc=example,dc=net")
 
+    def test_bind_failure(self):
+        clock = Clock()
+        ldapclient.reactor = clock
+        client, transport = self.create_test_client()
+        d = client.bind()
+        clock.advance(1)
+        error = ldaperrors.LDAPInvalidCredentials()
+        op = pureldap.LDAPBindResponse(error.resultCode)
+        response = pureldap.LDAPMessage(op)
+        response.id -= 1
+        resp_bytestring = str(response)
+        client.dataReceived(resp_bytestring)
+
+        def cb_(thing):
+            expected = ldaperrors.LDAPInvalidCredentials
+            self.assertEqual(
+                expected,
+                type(thing.value))
+
+        d.addErrback(cb_)
+        return d
+
     def test_unbind_not_connected(self):
         client = ldapclient.LDAPClient()
         self.assertRaises(
