@@ -497,70 +497,91 @@ class LDAPSyntaxAttributesModificationOnWire(unittest.TestCase):
 
 class LDAPSyntaxSearch(unittest.TestCase):
     timeout = 3
-    def testSearch(self):
-        """Test searches."""
 
+    def _test_search(self, return_controls=False):
         client=LDAPClientTestDriver([
             pureldap.LDAPSearchResultEntry(
-            objectName='cn=foo,dc=example,dc=com',
-            attributes=(('foo', ['a']),
-                        ('bar', ['b', 'c']),
-                        ),
+                objectName='cn=foo,dc=example,dc=com',
+                attributes=(
+                    ('foo', ['a']),
+                    ('bar', ['b', 'c']),
+                ),
             ),
             pureldap.LDAPSearchResultEntry(
-            objectName='cn=bar,dc=example,dc=com',
-            attributes=(('foo', ['a']),
-                        ('bar', ['d', 'e']),
-                        ),
+                objectName='cn=bar,dc=example,dc=com',
+                attributes=(
+                    ('foo', ['a']),
+                    ('bar', ['d', 'e']),
+                ),
             ),
             pureldap.LDAPSearchResultDone(
-            resultCode=0,
-            matchedDN='',
-            errorMessage='')
+                resultCode=0,
+                matchedDN='',
+                errorMessage='')
             ])
+        o = ldapsyntax.LDAPEntry(
+            client=client,
+            dn='dc=example,dc=com',
+            attributes={
+                'objectClass': ['organizationalUnit'],
+            }
+        )
+        d = o.search(
+            filterText='(foo=a)',
+            attributes=['foo', 'bar'],
+            return_controls=return_controls)
 
-        o=ldapsyntax.LDAPEntry(client=client,
-                               dn='dc=example,dc=com',
-                               attributes={
-            'objectClass': ['organizationalUnit'],
-            })
-
-        d=o.search(filterText='(foo=a)',
-                   attributes=['foo', 'bar'])
         def cb(val):
-            client.assertSent(pureldap.LDAPSearchRequest(
-                baseObject='dc=example,dc=com',
-                scope=pureldap.LDAP_SCOPE_wholeSubtree,
-                derefAliases=pureldap.LDAP_DEREF_neverDerefAliases,
-                sizeLimit=0,
-                timeLimit=0,
-                typesOnly=0,
-                filter=pureldap.LDAPFilter_equalityMatch(
-                attributeDesc=pureldap.LDAPAttributeDescription(value='foo'),
-                assertionValue=pureldap.LDAPAssertionValue(value='a')),
-                attributes=['foo', 'bar']))
+            if return_controls:
+                val = val[0]
+            client.assertSent(
+                pureldap.LDAPSearchRequest(
+                    baseObject='dc=example,dc=com',
+                    scope=pureldap.LDAP_SCOPE_wholeSubtree,
+                    derefAliases=pureldap.LDAP_DEREF_neverDerefAliases,
+                    sizeLimit=0,
+                    timeLimit=0,
+                    typesOnly=0,
+                    filter=pureldap.LDAPFilter_equalityMatch(
+                        attributeDesc=pureldap.LDAPAttributeDescription(value='foo'),
+                        assertionValue=pureldap.LDAPAssertionValue(value='a')
+                    ),
+                    attributes=['foo', 'bar']
+                )
+            )
             self.failUnlessEqual(len(val), 2)
+            self.failUnlessEqual(
+                val[0],
+                ldapsyntax.LDAPEntry(
+                    client=client,
+                    dn='cn=foo,dc=example,dc=com',
+                    attributes={
+                        'foo': ['a'],
+                        'bar': ['b', 'c'],
+                    }
+                )
+            )
+            self.failUnlessEqual(
+                val[1],
+                ldapsyntax.LDAPEntry(
+                    client=client,
+                    dn='cn=bar,dc=example,dc=com',
+                    attributes={
+                        'foo': ['a'],
+                        'bar': ['d', 'e'],
+                    }
+                )
+            )
 
-            self.failUnlessEqual(val[0],
-                                 ldapsyntax.LDAPEntry(
-                client=client,
-                dn='cn=foo,dc=example,dc=com',
-                attributes={
-                'foo': ['a'],
-                'bar': ['b', 'c'],
-                }))
-
-            self.failUnlessEqual(val[1],
-                                 ldapsyntax.LDAPEntry(
-                client=client,
-                dn='cn=bar,dc=example,dc=com',
-                attributes={
-                'foo': ['a'],
-                'bar': ['d', 'e'],
-                }))
         d.addCallback(cb)
         return d
 
+    def testSearch(self):
+        """Test searches."""
+        return self._test_search()
+
+    def test_search_controls_returned(self):
+        return self._test_search(return_controls=True)
 
     def testSearch_defaultAttributes(self):
         """Search without explicit list of attributes returns all attributes."""
