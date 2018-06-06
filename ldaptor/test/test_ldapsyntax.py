@@ -569,7 +569,6 @@ class LDAPSyntaxSearch(unittest.TestCase):
 
         def cb(val):
             if return_controls:
-                resp_controls = val[1]
                 val = val[0]
             client.assertSent(
                 pureldap.LDAPSearchRequest(
