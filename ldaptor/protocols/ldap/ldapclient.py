@@ -93,10 +93,6 @@ class LDAPClient(protocol.Protocol):
         assert msg.id not in self.onwire
         return msg
 
-    def _cbSend(self, msg, d):
-        d.callback(msg)
-        return True
-
     def send(self, op, controls=None):
         """
         Send an LDAP operation to the server.

@@ -1,11 +1,15 @@
 """
 Test cases for ldaptor.protocols.ldap.ldapsyntax module.
 """
-
+from __future__ import print_function
 from twisted.trial import unittest
 from twisted.test import proto_helpers
 from twisted.internet import defer
-from ldaptor.protocols.ldap import ldapclient
+from twisted.internet.task import Clock
+from ldaptor.protocols.ldap import (
+    ldapclient,
+    ldaperrors
+)
 from ldaptor.protocols import (
     pureber,
     pureldap,
@@ -73,6 +77,56 @@ class SendTests(unittest.TestCase):
         controls = [('1.2.840.113556.1.4.319', None, str(control_value))]
         return controls
 
+    def test_bind_not_connected(self):
+        client = ldapclient.LDAPClient()
+        self.assertRaises(
+            ldapclient.LDAPClientConnectionLostException,
+            client.bind,
+            "cn=foo,ou=baz,dc=example,dc=net")
+
+    def test_unbind_not_connected(self):
+        client = ldapclient.LDAPClient()
+        self.assertRaises(
+            Exception,
+            client.unbind)
+
+    def test_TLS_failure(self):
+        clock = Clock()
+        ldapclient.reactor = clock
+        client, transport = self.create_test_client()
+        d = client.startTLS()
+        clock.advance(1)
+        error = ldaperrors.LDAPOperationsError()
+        op = pureldap.LDAPStartTLSResponse(error.resultCode)
+        response = pureldap.LDAPMessage(op)
+        response.id -= 1
+        resp_bytestring = str(response)
+        client.dataReceived(resp_bytestring)
+
+        def cb_(thing):
+            expected = ldaperrors.LDAPOperationsError
+            self.assertEqual(
+                expected,
+                type(thing.value))
+
+        d.addErrback(cb_)
+        return d
+
+    def test_unsolicited(self):
+        client, transport = self.create_test_client()
+        response = pureldap.LDAPMessage(
+            pureldap.LDAPSearchResultDone(0),
+            id=0)
+        resp_bytestring = str(response)
+        client.dataReceived(resp_bytestring)
+
+    def test_send_not_connected(self):
+        client = ldapclient.LDAPClient()
+        op = self.create_test_search_req()
+        self.assertRaises(
+            ldapclient.LDAPClientConnectionLostException,
+            client.send_multiResponse, op, None)
+
     def test_send_multiResponse(self):
         client, transport = self.create_test_client()
         op = self.create_test_search_req()
@@ -94,6 +148,7 @@ class SendTests(unittest.TestCase):
 
     def test_send_multiResponse_with_handler(self):
         client, transport = self.create_test_client()
+        client.debug = True
         op = self.create_test_search_req()
         results = []
 
@@ -143,3 +198,19 @@ class SendTests(unittest.TestCase):
         client, transport = self.create_test_client()
         op = pureldap.LDAPAbandonRequest(id=1)
         client.send_noResponse(op)
+
+
+class RepresentationTests(unittest.TestCase):
+    """
+    Tests that center on correct representations of objects.
+    """
+    
+    def test_startTLSBusyError_rep(self):
+        error = ldapclient.LDAPStartTLSBusyError("xyzzy") 
+        expected_value = "Cannot STARTTLS while operations on wire: 'xyzzy'"
+        self.assertEqual(expected_value, str(error))
+
+    def test_StartTLSInvalidResponseName_rep(self):
+        error = ldapclient.LDAPStartTLSInvalidResponseName("xyzzy")
+        expected_value = "Invalid responseName in STARTTLS response: 'xyzzy'"
+        self.assertEqual(expected_value, str(error))
