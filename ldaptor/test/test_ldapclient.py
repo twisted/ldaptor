@@ -130,6 +130,9 @@ class SendTests(unittest.TestCase):
         d.addCallback(cb_)
         return d
 
+    def test_unbind(self):
+        client, transport = self.create_test_client()
+        client.unbind()
 
     def test_unbind_not_connected(self):
         client = ldapclient.LDAPClient()
@@ -201,15 +204,22 @@ class SendTests(unittest.TestCase):
 
         def collect_result_(result):
             results.append(result)
-            return True
+            if isinstance(result, pureldap.LDAPSearchResultDone):
+                return True
+            return False
 
         client.send_multiResponse(op, collect_result_)
         expected_value = pureldap.LDAPMessage(op)
-        expected_value.id -= 1
+        expected_value.id = 1
         expected_bytestring = str(expected_value)
         self.assertEqual(
             transport.value(),
             expected_bytestring)
+        response = pureldap.LDAPMessage(
+            pureldap.LDAPSearchResultEntry("cn=foo,ou=baz,dc=example,dc=net", {}),
+            id=expected_value.id)
+        resp_bytestring = str(response)
+        client.dataReceived(resp_bytestring)
         response = pureldap.LDAPMessage(
             pureldap.LDAPSearchResultDone(0),
             id=expected_value.id)
@@ -217,7 +227,7 @@ class SendTests(unittest.TestCase):
         client.dataReceived(resp_bytestring)
         self.assertEqual(
             response.value,
-            results[0])
+            results[1])
 
     def test_send_multiResponse_ex(self):
         client, transport = self.create_test_client()
