@@ -62,6 +62,9 @@ class SendTests(unittest.TestCase):
         return client, transport
 
     def create_test_search_req(self):
+        """
+        Create a test LDAP search request.
+        """
         basedn = "ou=people,dc=example,dc=org"
         scope = pureldap.LDAP_SCOPE_wholeSubtree
         op = pureldap.LDAPSearchRequest(
