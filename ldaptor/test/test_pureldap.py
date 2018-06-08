@@ -1038,3 +1038,26 @@ class TestFilterSetEquality(unittest.TestCase):
         ])
 
         self.assertEqual(filter1, filter2)
+
+
+class Representations(unittest.TestCase):
+
+    def test_message_repr(self):
+        page_size = 10
+        cookie = "xyzzy"
+        control_value = pureber.BERSequence([
+            pureber.BERInteger(page_size),
+            pureber.BEROctetString(cookie),
+        ])
+        controls = [('1.2.840.113556.1.4.319', None, control_value)]
+        search_request = pureldap.LDAPSearchRequest(
+            "cn=foo,ou=baz,dc=example,dc=org")
+        ldap_msg = pureldap.LDAPMessage(
+            id=1,
+            value=search_request,
+            controls=controls,
+            tag=1)
+        expected_value = "LDAPMessage(id=1, value=LDAPSearchRequest(baseObject='cn=foo,ou=baz,dc=example,dc=org', scope=2, derefAliases=0, sizeLimit=0, timeLimit=0, typesOnly=0, filter=LDAPFilter_present(value='objectClass'), attributes=[]), controls=[('1.2.840.113556.1.4.319', None, BERSequence(value=[BERInteger(value=10), BEROctetString(value='xyzzy')]))], tag=1)"
+        self.assertEqual(
+            expected_value,
+            repr(ldap_msg))

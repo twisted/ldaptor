@@ -57,24 +57,28 @@ class LDAPClientTestDriver:
 
     def send(self, op):
         self.sent.append(op)
-        l = self._response()
-        assert len(l) == 1, "got %d responses for a .send()" % len(l)
-        r = l[0]
+        resps = self._response()
+        assert len(resps) == 1, "got %d responses for a .send()" % len(resps)
+        r = resps[0]
         if isinstance(r, failure.Failure):
             return defer.fail(r)
         else:
             return defer.succeed(r)
 
-    def send_multiResponse(self, op, handler, *args, **kwargs):
+    def send_multiResponse_(self, op, controls, return_controls, handler, *args, **kwargs):
         d = defer.Deferred()
         self.sent.append(op)
         responses = self._response()
+        response_controls = None
         while responses:
             r = responses.pop(0)
             if isinstance(r, failure.Failure):
                 d.errback(r)
                 break
-            ret = handler(r, *args, **kwargs)
+            if return_controls:
+                ret = handler(r, response_controls, *args, **kwargs)
+            else:
+                ret = handler(r, *args, **kwargs)
             if responses:
                 msg = (
                     "got %d responses still to give, "
@@ -86,6 +90,18 @@ class LDAPClientTestDriver:
                     "still wants more (got %r)." % ret)
                 assert ret, msg
         return d
+
+    def send_multiResponse(self, op, handler, *args, **kwargs):
+        return self.send_multiResponse_(op, None, False, handler, *args, **kwargs)
+
+    def send_multiResponse_ex(self, op, controls, handler, *args, **kwargs):
+        return self.send_multiResponse_(
+            op,
+            controls,
+            True,
+            handler,
+            *args,
+            **kwargs)
 
     def send_noResponse(self, op):
         if len(self.responses) == 0:
