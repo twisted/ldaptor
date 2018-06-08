@@ -210,7 +210,7 @@ class SendTests(unittest.TestCase):
 
         client.send_multiResponse(op, collect_result_)
         expected_value = pureldap.LDAPMessage(op)
-        expected_value.id = 1
+        expected_value.id -= 1
         expected_bytestring = str(expected_value)
         self.assertEqual(
             transport.value(),
