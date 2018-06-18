@@ -247,3 +247,14 @@ class ProxyBase(unittest.TestCase):
         self.assertEqual(
             server.transport.value(),
             str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=52), id=4)))
+
+    def test_health_check_closes_connection_to_proxied_server(self):
+        """
+        When the client disconnects immediately and before the connection to the proxied server has
+        been established, the proxy terminates the connection to the proxied server.
+        """
+        server = self.createServer()
+        server.connectionLost(error.ConnectionDone)
+        server.reactor.advance(1)
+        self.assertIsNone(server.client)
+        self.assertFalse(server.clientTestDriver.connected)

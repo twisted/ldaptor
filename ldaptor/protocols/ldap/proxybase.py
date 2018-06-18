@@ -62,7 +62,12 @@ class ProxyBase(ldapserver.BaseLDAPServer):
             return d
         else:
             self.client = proto
-            self._processBacklog()
+            if not self.connected and not self.queuedRequests:
+                # Client has disconnected in the meantime without sending any requests
+                self.client.transport.loseConnection()
+                self.client = None
+            else:
+                self._processBacklog()
 
     def _establishedTLS(self, proto):
         """
