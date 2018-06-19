@@ -252,9 +252,18 @@ class ProxyBase(unittest.TestCase):
         """
         When the client disconnects immediately and before the connection to the proxied server has
         been established, the proxy terminates the connection to the proxied server.
+        Messages sent by the client are discarded.
         """
+        request = pureldap.LDAPBindRequest()
+        message = pureldap.LDAPMessage(request, id=4)
         server = self.createServer()
+        # Send a message, message is queued
+        server.dataReceived(str(message))
+        self.assertEqual(len(server.queuedRequests), 1)
+        self.assertEqual(server.queuedRequests[0][0], request)
+        # Lose connection, message is discarded
         server.connectionLost(error.ConnectionDone)
         server.reactor.advance(1)
         self.assertIsNone(server.client)
         self.assertFalse(server.clientTestDriver.connected)
+        self.assertEqual(server.queuedRequests, [])

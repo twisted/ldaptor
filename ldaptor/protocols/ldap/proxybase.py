@@ -62,10 +62,11 @@ class ProxyBase(ldapserver.BaseLDAPServer):
             return d
         else:
             self.client = proto
-            if not self.connected and not self.queuedRequests:
-                # Client has disconnected in the meantime without sending any requests
+            if not self.connected:
+                # Client no longer connected, proxy shouldn't be either
                 self.client.transport.loseConnection()
                 self.client = None
+                self.queuedRequests = []
             else:
                 self._processBacklog()
 
