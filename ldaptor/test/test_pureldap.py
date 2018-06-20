@@ -1069,10 +1069,13 @@ class TestRepresentations(unittest.TestCase):
     """
 
     def test_search_result_repr(self):
-        resp = pureldap.LDAPSearchResultEntry(
-            objectName='uid=mohamed,ou=people,dc=example,dc=fr',
-            attributes=[
-                ('uid', ['mohamed'])
-            ]
-        )
-        representation = repr(resp)
+        tags = [pureldap.LDAPSearchResultEntry.tag, "foobaz"]
+        for tag in tags:
+            resp = pureldap.LDAPSearchResultEntry(
+                objectName='uid=mohamed,ou=people,dc=example,dc=fr',
+                attributes=[
+                    ('uid', ['mohamed'])
+                ],
+                tag=tag
+            )
+            repr(resp)
