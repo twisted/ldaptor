@@ -1061,3 +1061,18 @@ class Representations(unittest.TestCase):
         self.assertEqual(
             expected_value,
             repr(ldap_msg))
+
+
+class TestRepresentations(unittest.TestCase):
+    """
+    Test representations of common LDAP opbjects.
+    """
+
+    def test_search_result_repr(self):
+        resp = pureldap.LDAPSearchResultEntry(
+            objectName='uid=mohamed,ou=people,dc=example,dc=fr',
+            attributes=[
+                ('uid', ['mohamed'])
+            ]
+        )
+        representation = repr(resp)

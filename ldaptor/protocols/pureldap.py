@@ -883,22 +883,16 @@ class LDAPSearchResultEntry(LDAPProtocolResponse, BERSequence):
 
     def __repr__(self):
         if self.tag==self.__class__.tag:
-            return self.__class__.__name__\
-                   +"(objectName=%s, attributes=%s"\
-                   %(repr(str(self.objectName)),
-                     repr(map(lambda a, l:
-                              (str(a),
-                               map(lambda i, l=l: str(i), l)),
-                              self.attributes)))
+            return self.__class__.__name__ + "(objectName={}, attributes={}".format(
+                repr(str(self.objectName)),
+                repr([(a, [str(v) for v in l]) for (a, l) in self.attributes])
+            )
         else:
-            return self.__class__.__name__\
-                   +"(objectName=%s, attributes=%s, tag=%d"\
-                   %(repr(str(self.objectName)),
-                     repr(map(lambda a,l:
-                              (str(a),
-                               map(lambda i, l=l: str(i), l)),
-                              self.attributes)),
-                     self.tag)
+            return self.__class__.__name__ + "(objectName={}, attributes={}, tag={}".format(
+                repr(str(self.objectName)),
+                repr([(a, [str(v) for v in l]) for (a, l) in self.attributes]),
+                self.tag
+            )
 
 
 class LDAPSearchResultDone(LDAPResult):
