@@ -79,7 +79,7 @@ Following Along with the Examples
 
 If you are following along with the interactive examples, you will need an LDAP 
 directory server to which the example client can connect.  A script that 
-creates such a client is available in the section :ref:`quickstart-server-label`.
+creates such a server is available in the section :ref:`quickstart-server-label`.
 Copy the script to a file `quickstart_server.py` and run it in another terminal::
 
     $ python quickstart_server.py 10389

@@ -239,9 +239,9 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         objectClasses.sort()
         a.append(('objectClass', objectClasses))
 
-        l = list(self.items())
-        l.sort()
-        for key, values in l:
+        lst = list(self.items())
+        lst.sort()
+        for key, values in lst:
             if key != 'objectClass':
                 a.append((key, values))
         return ldif.asLDIF(self.dn, a)
@@ -252,9 +252,9 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         if self.dn != other.dn:
             return False
 
-        my=self.keys()
+        my = self.keys()
         my.sort()
-        its=other.keys()
+        its = other.keys()
         its.sort()
         if my != its:
             return False
@@ -412,15 +412,16 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         ldapAttrs = []
         for attrType, values in attributes:
             ldapAttrType = pureldap.LDAPAttributeDescription(attrType)
-            l = []
+            lst = []
             for value in values:
                 if (isinstance(value, six.text_type)):
                     value = value.encode('utf-8')
-                l.append(pureldap.LDAPAttributeValue(value))
-            ldapValues = pureber.BERSet(l)
+                lst.append(pureldap.LDAPAttributeValue(value))
+            ldapValues = pureber.BERSet(lst)
             ldapAttrs.append((ldapAttrType, ldapValues))
-        op=pureldap.LDAPAddRequest(entry=str(dn),
-                                   attributes=ldapAttrs)
+        op = pureldap.LDAPAddRequest(
+            entry=str(dn),
+            attributes=ldapAttrs)
         d = self.client.send(op)
         d.addCallback(self._cbAddDone, dn)
         return d
@@ -519,12 +520,12 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 
     def _cbSetPassword(self, dl, names):
         assert len(dl) == len(names)
-        l = []
+        lst = []
         for name, (ok, x) in zip(names, dl):
             if not ok:
-                l.append((name, x))
-        if l:
-            raise PasswordSetAggregateError(l)
+                lst.append((name, x))
+        if lst:
+            raise PasswordSetAggregateError(lst)
         return self
 
     def _cbSetPassword_one(self, result):
@@ -638,7 +639,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
                       complete=complete)
         callback(o)
 
-    def _cbSearchMsg(self, msg, d, callback, complete, sizeLimitIsNonFatal):
+    def _cbSearchMsg(self, msg, controls, d, callback, complete, sizeLimitIsNonFatal):
         if isinstance(msg, pureldap.LDAPSearchResultDone):
             assert msg.referral is None  # TODO
             e = ldaperrors.get(msg.resultCode, msg.errorMessage)
@@ -648,13 +649,13 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
                 except ldaperrors.LDAPSizeLimitExceeded:
                     if sizeLimitIsNonFatal:
                         pass
-                except:
+                except Exception:
                     d.errback(Failure())
                     return True
 
             # search ended successfully
             assert msg.matchedDN == ''
-            d.callback(None)
+            d.callback(controls)
             return True
         elif isinstance(msg, pureldap.LDAPSearchResultEntry):
             self._cbSearchEntry(callback, msg.objectName, msg.attributes,
@@ -675,7 +676,9 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
                sizeLimitIsNonFatal=False,
                timeLimit=0,
                typesOnly=0,
-               callback=None):
+               callback=None,
+               controls=None,
+               return_controls=False):
         self._checkState()
         d = defer.Deferred()
         if filterObject is None and filterText is None:
@@ -711,15 +714,22 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
                 typesOnly=typesOnly,
                 filter=filterObject,
                 attributes=attributes)
-            dsend = self.client.send_multiResponse(
-                op, self._cbSearchMsg,
-                d, cb, complete=not attributes,
+            dsend = self.client.send_multiResponse_ex(
+                op,
+                controls,
+                self._cbSearchMsg,
+                d,
+                cb,
+                complete=not attributes,
                 sizeLimitIsNonFatal=sizeLimitIsNonFatal)
         except ldapclient.LDAPClientConnectionLostException:
             d.errback(Failure())
         else:
             if callback is None:
-                d.addCallback(lambda dummy: results)
+                if return_controls:
+                    d.addCallback(lambda ctls: (results, ctls))
+                else:
+                    d.addCallback(lambda dummy: results)
 
             def rerouteerr(e):
                 d.errback(e)

@@ -5,6 +5,7 @@ Test cases for ldaptor.protocols.ldap.distinguishedname module.
 from twisted.trial import unittest
 from ldaptor.protocols.ldap import distinguishedname as dn
 
+
 class TestCaseWithKnownValues(unittest.TestCase):
     knownValues = ()
 
@@ -125,7 +126,12 @@ class LDAPDistinguishedName_Escaping(TestCaseWithKnownValues):
                           +r'tment\,dc\=example\,dc\=com,dc=ex'
                           +r'ample,dc=com')
 
-class LDAPDistinguishedName_RFC2253_Examples(TestCaseWithKnownValues):
+
+class LDAPDistinguishedName_RFC2253_ExamplesBytes(TestCaseWithKnownValues):
+    """
+    It can be initialized from text/Unicode input as long as they contain
+    ASCII only characters.
+    """
     knownValues = (
 
         ('CN=Steve Kille,O=Isode Limited,C=GB',
@@ -154,13 +160,25 @@ class LDAPDistinguishedName_RFC2253_Examples(TestCaseWithKnownValues):
          [[('1.3.6.1.4.1.1466.0', '#04024869')],
           [('O', 'Test')],
           [('C', 'GB')]]),
-
-        (u'SN=Lu\u010di\u0107'.encode('utf-8'),
-         [[('SN', u'Lu\u010di\u0107'.encode('utf-8'))]])
-
         )
 
+
+class LDAPDistinguishedName_UTF8_Init(TestCaseWithKnownValues):
+    """
+    It can be initialized from an UTF-8 encoded data and it will
+    keep the representation as UTF-8.
+    """
+    knownValues = (
+        (u'SN=Lu\u010di\u0107'.encode('utf-8'),
+         [[(b'SN', u'Lu\u010di\u0107'.encode('utf-8'))]]),
+        )
+
+
+
 class LDAPDistinguishedName_InitialSpaces(TestCaseWithKnownValues):
+    """
+    The spaces which are not escapes are stripped.
+    """
     knownValues = (
 
         ('cn=foo, ou=bar,  dc=quux, \ attributeThatStartsWithSpace=Value',

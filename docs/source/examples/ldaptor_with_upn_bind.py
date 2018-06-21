@@ -12,7 +12,7 @@ cn: bobby
 gn: Bob
 sn: Roberts
 mail: bob@example.org
-homeDirectory: e:\Users\bob
+homeDirectory: e:\\Users\\bob
 userPassword: pass
 userPrincipalName: bob@ad.example.org
 """
@@ -77,7 +77,7 @@ class LDAPServerWithUPNBind(LDAPServer):
             Called when the requested BIND DN was found.
             """
             if entry is None:
-                raise ldaperrors.LDAPInvalidCredentials
+                raise ldaperrors.LDAPInvalidCredentials()
 
             d = entry.bind(auth)
 

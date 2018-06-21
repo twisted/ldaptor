@@ -5,6 +5,46 @@ Test cases for ldaptor.protocols.ldap.ldif module.
 from twisted.trial import unittest
 from ldaptor.protocols.ldap import ldifprotocol, distinguishedname
 
+
+class FixStringRepresentation(object):
+    """
+    A simple object which has a fix string representation.
+    """
+    def __str__(self):
+        return "Here I am!"
+
+
+class TestLDIFParseError(unittest.TestCase):
+    """
+    Unit tests for LDIFParseError which is hte base for all the other
+    LDIF errors.
+    """
+
+    def testInitNoArgs(self):
+        """
+        It can be initialized without arguments and will have the
+        docstring as the string representation.
+        """
+        sut = ldifprotocol.LDIFParseError()
+
+        result = str(sut)
+
+        self.assertEqual('Error parsing LDIF.', result)
+
+    def testInitWithArgs(self):
+        """
+        When initialized with arguments it will use the docstring as
+        base and include all the arguments.
+        """
+        sut = ldifprotocol.LDIFParseError(
+            1, 'test', True, FixStringRepresentation())
+
+        result = str(sut)
+
+        self.assertEqual(
+            'Error parsing LDIF: 1: test: True: Here I am!.', result)
+
+
 class LDIFDriver(ldifprotocol.LDIF):
     def __init__(self):
         self.listOfCompleted = []
@@ -32,7 +72,7 @@ class TestLDIFParsing(unittest.TestCase):
             "",
 
             ):
-            proto.lineReceived(line)
+            proto.lineReceived(line.encode('ascii'))
 
         self.failUnlessEqual(len(proto.listOfCompleted), 2)
 
@@ -51,18 +91,20 @@ class TestLDIFParsing(unittest.TestCase):
         self.failUnlessEqual(proto.listOfCompleted, [])
 
     def testSplitLines(self):
+        """
+        Input can be split on multiple lines as long as the line starts with
+        a space.
+        """
         proto = LDIFDriver()
         for line in (
-
             "dn: cn=foo,dc=ex",
             " ample,dc=com",
             "objectClass: a",
             "ob",
             " jectClass: b",
             "",
-
             ):
-            proto.lineReceived(line)
+            proto.lineReceived(line.encode('ascii'))
 
         self.failUnlessEqual(len(proto.listOfCompleted), 1)
 
@@ -72,15 +114,47 @@ class TestLDIFParsing(unittest.TestCase):
 
         self.failUnlessEqual(proto.listOfCompleted, [])
 
-    def testCaseInsensitiveAttributeTypes(self):
+    def testCaseInsensitiveDN(self):
+        """
+        DN is case insensitive.
+        """
         proto = LDIFDriver()
-        proto.dataReceived("""\
+        proto.dataReceived(
+b"""version: 1
+dN: cn=foo, dc=example, dc=com
+cn: foo
+
+DN: cn=bar, dc=example, dc=com
+cn: bar
+
+""")
+
+        self.failUnlessEqual(len(proto.listOfCompleted), 2)
+
+        o = proto.listOfCompleted.pop(0)
+        self.failUnlessEqual(str(o.dn), 'cn=foo,dc=example,dc=com')
+        self.failUnlessEqual(o['CN'], ['foo'])
+
+        o = proto.listOfCompleted.pop(0)
+        self.failUnlessEqual(str(o.dn), 'cn=bar,dc=example,dc=com')
+        self.failUnlessEqual(o['CN'], ['bar'])
+
+        self.failUnlessEqual(proto.listOfCompleted, [])
+
+
+    def testCaseInsensitiveAttributeTypes(self):
+        """
+        The attribute description (name/types) is case insensitive, while
+        values are case sensitives.
+        """
+        proto = LDIFDriver()
+        proto.dataReceived(b"""\
 dn: cn=foo,dc=example,dc=com
 objectClass: a
 obJeCtClass: b
 cn: foo
 avalue: a
-aValUe: b
+aValUe: B
 
 """)
 
@@ -90,13 +164,13 @@ aValUe: b
         self.failUnlessEqual(str(o.dn), 'cn=foo,dc=example,dc=com')
         self.failUnlessEqual(o['objectClass'], ['a', 'b'])
         self.failUnlessEqual(o['CN'], ['foo'])
-        self.failUnlessEqual(o['aValue'], ['a', 'b'])
+        self.failUnlessEqual(o['aValue'], ['a', 'B'])
 
         self.failUnlessEqual(proto.listOfCompleted, [])
 
     def testVersion1(self):
         proto = LDIFDriver()
-        proto.dataReceived("""\
+        proto.dataReceived(b"""\
 version: 1
 dn: cn=foo,dc=example,dc=com
 objectClass: a
@@ -119,7 +193,7 @@ bValue: c
         proto = LDIFDriver()
         self.assertRaises(ldifprotocol.LDIFVersionNotANumberError,
                           proto.dataReceived,
-                          """\
+                          b"""\
 version: junk
 dn: cn=foo,dc=example,dc=com
 objectClass: a
@@ -134,7 +208,7 @@ bValue: c
         proto = LDIFDriver()
         self.assertRaises(ldifprotocol.LDIFUnsupportedVersionError,
                           proto.dataReceived,
-                          """\
+                          b"""\
 version: 2
 dn: cn=foo,dc=example,dc=com
 objectClass: a
@@ -147,7 +221,7 @@ bValue: c
 
     def testNoSpaces(self):
         proto = LDIFDriver()
-        proto.dataReceived("""\
+        proto.dataReceived(b"""\
 dn:cn=foo,dc=example,dc=com
 objectClass:a
 obJeCtClass:b
@@ -169,7 +243,7 @@ aValUe:b
 
     def testTruncatedFailure(self):
         proto = LDIFDriver()
-        proto.dataReceived("""\
+        proto.dataReceived(b"""\
 version: 1
 dn: cn=foo,dc=example,dc=com
 objectClass: a
@@ -184,10 +258,119 @@ bValue: c
         self.assertRaises(ldifprotocol.LDIFTruncatedError,
                           proto.connectionLost)
 
+    def testComments(self):
+        """
+        Comments can be placed anywhere.
+        """
+        proto = LDIFDriver()
+        proto.dataReceived(
+b"""# One comment here.
+version: 1
+# After comment.
+dn: cn=foo, dc=example, dc=com
+# Another one comment here.
+cn: foo
+
+# More comments
+dn: cn=bar, dc=example, dc=com
+cn: bar
+
+""")
+
+        self.failUnlessEqual(len(proto.listOfCompleted), 2)
+
+        o = proto.listOfCompleted.pop(0)
+        self.failUnlessEqual(str(o.dn), 'cn=foo,dc=example,dc=com')
+        self.failUnlessEqual(o['CN'], ['foo'])
+
+        o = proto.listOfCompleted.pop(0)
+        self.failUnlessEqual(str(o.dn), 'cn=bar,dc=example,dc=com')
+        self.failUnlessEqual(o['CN'], ['bar'])
+
+        self.failUnlessEqual(proto.listOfCompleted, [])
+
+
+    def testMoreEmptyLinesBetweenEntries(self):
+        """
+        It accept multiple lines between entries.
+        """
+        proto = LDIFDriver()
+        proto.dataReceived(
+b"""version: 1
+dn: cn=foo, dc=example, dc=com
+cn: foo
+
+
+
+dn: cn=bar, dc=example, dc=com
+cn: bar
+
+""")
+
+        self.failUnlessEqual(len(proto.listOfCompleted), 2)
+
+        o = proto.listOfCompleted.pop(0)
+        self.failUnlessEqual(str(o.dn), 'cn=foo,dc=example,dc=com')
+        self.failUnlessEqual(o['CN'], ['foo'])
+
+        o = proto.listOfCompleted.pop(0)
+        self.failUnlessEqual(str(o.dn), 'cn=bar,dc=example,dc=com')
+        self.failUnlessEqual(o['CN'], ['bar'])
+
+        self.failUnlessEqual(proto.listOfCompleted, [])
+
+
+    def testStartWithSpace(self):
+        """
+        It fails to parse if a line start with a space but is not a
+        continuation of a previous line.
+        """
+        proto = LDIFDriver()
+        with self.assertRaises(ldifprotocol.LDIFEntryStartsWithSpaceError):
+            proto.dataReceived(
+b"""version: 1
+dn: cn=foo, dc=example, dc=com
+cn: foo
+
+ dn: cn=bar, dc=example, dc=com
+cn: bar
+
+""")
+
+
+    def testEntryStartWithoutDN(self):
+        """
+        It fails to parse the entry does not start with DN.
+        """
+        proto = LDIFDriver()
+        with self.assertRaises(ldifprotocol.LDIFEntryStartsWithNonDNError):
+            proto.dataReceived(
+b"""version: 1
+cn: cn=foo, dc=example, dc=com
+other: foo
+
+""")
+
+
+    def testAttributeValueFromURL(self):
+        """
+        Getting attribute values from URL is not supported.
+        """
+        proto = LDIFDriver()
+        with self.assertRaises(NotImplementedError):
+            proto.dataReceived(
+b"""version: 1
+dn: cn=foo, dc=example, dc=com
+cn:< file:///path/to/data 
+
+""")
+
+
+
 class RFC2849_Examples(unittest.TestCase):
     examples = [
-        ( """Example 1: An simple LDAP file with two entries""",
-          """\
+        ( b"""Example 1: An simple LDAP file with two entries""",
+          b"""\
 version: 1
 dn: cn=Barbara Jensen, ou=Product Development, dc=airius, dc=com
 objectclass: top
@@ -229,8 +412,8 @@ telephonenumber: +1 408 555 1212
                  }),
             ]),
 
-        ( """Example 2: A file containing an entry with a folded attribute value""",
-          """\
+        ( b"""Example 2: A file containing an entry with a folded attribute value""",
+          b"""\
 version: 1
 dn:cn=Barbara Jensen, ou=Product Development, dc=airius, dc=com
 objectclass:top
@@ -258,8 +441,8 @@ title:Product Manager, Rod and Reel Division
                 }),
             ]),
 
-        ( """Example 3: A file containing a base-64-encoded value""",
-          """\
+        ( b"""Example 3: A file containing a base-64-encoded value""",
+          b"""\
 version: 1
 dn: cn=Gern Jensen, ou=Product Testing, dc=airius, dc=com
 objectclass: top
