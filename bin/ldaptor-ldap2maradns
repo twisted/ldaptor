@@ -167,7 +167,7 @@ def main(cfg, filter_text):
 
     try:
         baseDN = cfg.getBaseDN()
-    except config.MissingBaseDNError, e:
+    except config.MissingBaseDNError as e:
         print("%s: %s." % (sys.argv[0], e), file=sys.stderr)
         sys.exit(1)
 
@@ -197,7 +197,7 @@ if __name__ == "__main__":
     try:
         opts = MyOptions()
         opts.parseOptions()
-    except usage.UsageError, ue:
+    except usage.UsageError as ue:
         sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
         sys.exit(1)
 

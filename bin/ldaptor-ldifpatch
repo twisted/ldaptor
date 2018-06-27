@@ -49,7 +49,7 @@ if __name__ == "__main__":
     try:
         config = MyOptions()
         config.parseOptions()
-    except usage.UsageError, ue:
+    except usage.UsageError as ue:
         sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
         sys.exit(1)
 

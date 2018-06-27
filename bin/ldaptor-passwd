@@ -104,7 +104,7 @@ if __name__ == "__main__":
     try:
         config = MyOptions()
         config.parseOptions()
-    except usage.UsageError, ue:
+    except usage.UsageError as ue:
         print('%s:'%sys.argv[0], ue, file=sys.stderr)
         sys.exit(1)
 

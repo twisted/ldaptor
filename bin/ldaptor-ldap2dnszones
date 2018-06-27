@@ -227,7 +227,7 @@ def main(cfg, domain, forward, reverse, filter_text):
 
     try:
         baseDN = cfg.getBaseDN()
-    except config.MissingBaseDNError, e:
+    except config.MissingBaseDNError as e:
         print("%s: %s." % (sys.argv[0], e), file=sys.stderr)
         sys.exit(1)
 
@@ -275,12 +275,12 @@ class MyOptions(usage.Options, usage.Options_service_location, usage.Options_bas
 
         try:
             address = dns.aton(addressString)
-        except socket.error, e:
+        except socket.error as e:
             raise usage.UsageError('--reverse= address is invalid: %s' % e)
 
         try:
             netmask = dns.aton(netmaskString)
-        except socket.error, e:
+        except socket.error as e:
             raise usage.UsageError('--reverse= netmask is invalid: %s' % e)
 
         self.opts.setdefault('reverse', []).append({
@@ -299,7 +299,7 @@ if __name__ == "__main__":
     try:
         opts = MyOptions()
         opts.parseOptions()
-    except usage.UsageError, ue:
+    except usage.UsageError as ue:
         sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
         sys.exit(1)
 
