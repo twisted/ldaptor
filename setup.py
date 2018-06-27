@@ -40,7 +40,7 @@ if __name__ == '__main__':
               'Twisted',
               'pyOpenSSL',
               'pyparsing',
-              'six',
+              'six >= 1.7',
               'zope.interface',
           ],
           classifiers=[
