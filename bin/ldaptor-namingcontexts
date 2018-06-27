@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from __future__ import print_function
 import sys
 from ldaptor.protocols.ldap import ldapclient, ldapsyntax
 from ldaptor.protocols import pureber, pureldap
@@ -14,7 +15,7 @@ class Search(ldapclient.LDAPClient):
 
     def _printResults(self, result, host):
         for context in result['namingContexts']:
-            print '%s\t%s' % (host, context)
+            print('%s\t%s' % (host, context))
 
     def _handle_bind_success(self, x):
         matchedDN, serverSaslCreds = x
@@ -40,7 +41,7 @@ class SearchFactory(protocol.ClientFactory):
 exitStatus = 0
 
 def errback(data):
-    print "ERROR:", data.getErrorMessage()
+    print("ERROR:", data.getErrorMessage())
     global exitStatus
     exitStatus=1
 
@@ -59,7 +60,7 @@ def main(servers):
 
 if __name__ == "__main__":
     if not sys.argv[1:]:
-        print >>sys.stderr, '%s: usage:' % sys.argv[0]
-        print >>sys.stderr, '  %s HOST..' % sys.argv[0]
+        print('%s: usage:' % sys.argv[0], file=sys.stderr)
+        print('  %s HOST..' % sys.argv[0], file=sys.stderr)
     else:
         main(sys.argv[1:])

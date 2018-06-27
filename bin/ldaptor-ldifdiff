@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from __future__ import print_function
 import sys
 from ldaptor.protocols.ldap import ldif
 from ldaptor import usage, inmemory
@@ -8,7 +9,7 @@ from twisted.internet import protocol, reactor, defer
 exitStatus=0
 
 def error(fail):
-    print >>sys.stderr, 'fail:', fail.getErrorMessage()
+    print('fail:', fail.getErrorMessage(), file=sys.stderr)
     global exitStatus
     exitStatus=1
 

@@ -15,6 +15,7 @@
 #shared-network "foo" {
 #}
 
+from __future__ import print_function
 from ldaptor.protocols.ldap import ldapclient, ldapconnector, ldapsyntax
 from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage, ldapfilter, config
@@ -75,7 +76,7 @@ class HostIPAddress:
                 yield '\tfilename "%s";' % self.host.bootFile
             yield '}'
 
-        print '\n'.join([prefix+line for line in output()])
+        print('\n'.join([prefix+line for line in output()]))
 
     def __repr__(self):
         return (self.__class__.__name__
@@ -92,9 +93,9 @@ class Group:
 
     def addHost(self, host):
         if host.group is not None:
-            print >>sys.stderr, (
+            print((
                 'Host %s is in two groups: %r and %r'
-                % (host.dn, host.group, self))
+                % (host.dn, host.group, self)), file=sys.stderr)
         else:
             host.group = self
             self.hosts.add(host)
@@ -107,17 +108,17 @@ class Group:
         addrs.difference_update(addresses)
 
         if addresses:
-            print prefix+'# '+str(self.dn)
-            print prefix+'group {'
+            print(prefix+'# '+str(self.dn))
+            print(prefix+'group {')
 
             if self.bootFile is not None:
                 # TODO quote bootFile
-                print prefix+'\tfilename "%s";' % self.bootFile
+                print(prefix+'\tfilename "%s";' % self.bootFile)
 
             for addr in addresses:
                 addr.printDHCP(domain, prefix=prefix+'\t')
 
-            print prefix+'}'
+            print(prefix+'}')
 
 class Host:
     group = None
@@ -186,7 +187,7 @@ class Net:
             r.append('\toption domain-name-servers %s;' % (', '.join(self.domainNameServers)))
         r.append('}')
 
-        print '\n'.join([prefix+line for line in r])
+        print('\n'.join([prefix+line for line in r]))
 
         addrs = sets.Set()
         for addr in self.hosts:
@@ -221,11 +222,11 @@ class SharedNet:
         self.nets.append(net)
 
     def printDHCP(self, domain):
-        print 'shared-network "%s" {' % self.name
+        print('shared-network "%s" {' % self.name)
         for net in self.nets:
             net.printDHCP(domain, prefix='\t')
-        print '}'
-        print
+        print('}')
+        print()
 
 def _cbGetGroups(entries, hosts):
     dnToHost = {}
@@ -403,7 +404,7 @@ def search(client, baseDN, filter, dnsDomain):
 exitStatus=0
 
 def error(fail):
-    print >>sys.stderr, 'fail:', fail.getErrorMessage()
+    print('fail:', fail.getErrorMessage(), file=sys.stderr)
     global exitStatus
     exitStatus=1
 
@@ -411,7 +412,7 @@ def main(cfg, filter_text, dnsDomain):
     try:
         baseDN = cfg.getBaseDN()
     except config.MissingBaseDNError, e:
-        print >>sys.stderr, "%s: %s." % (sys.argv[0], e)
+        print("%s: %s." % (sys.argv[0], e), file=sys.stderr)
         sys.exit(1)
 
     from twisted.python import log

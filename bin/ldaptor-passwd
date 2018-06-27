@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from __future__ import print_function
 import sys, getpass
 from ldaptor.protocols.ldap import ldapclient, distinguishedname, ldapconnector, ldapsyntax
 from ldaptor.protocols import pureber, pureldap
@@ -20,7 +21,7 @@ class PasswdClient(ldapclient.LDAPClient):
                        self._handle_bind_fail)
 
     def _report_ldap_error(self, fail):
-        print >>sys.stderr, "fail:", fail.getErrorMessage()
+        print("fail:", fail.getErrorMessage(), file=sys.stderr)
         global exitStatus
         exitStatus=1
         return fail
@@ -53,7 +54,7 @@ class PasswdClient(ldapclient.LDAPClient):
 
     def _report_new_password(self, dummy, dn, password):
         if self.factory.generatePasswords:
-            print dn, password
+            print(dn, password)
 
     def _got_password(self, password, dn):
         assert len(password)==1
@@ -67,7 +68,7 @@ class PasswdClient(ldapclient.LDAPClient):
 
     def _report_pwgen_error(self, fail):
         fail.trap(PwgenException)
-        print >>sys.stderr, 'pwgen:', fail.getErrorMessage()
+        print('pwgen:', fail.getErrorMessage(), file=sys.stderr)
         return fail
 
 class PasswdClientFactory(protocol.ClientFactory):
@@ -104,7 +105,7 @@ if __name__ == "__main__":
         config = MyOptions()
         config.parseOptions()
     except usage.UsageError, ue:
-        print >>sys.stderr, '%s:'%sys.argv[0], ue
+        print('%s:'%sys.argv[0], ue, file=sys.stderr)
         sys.exit(1)
 
     bindPassword=None
