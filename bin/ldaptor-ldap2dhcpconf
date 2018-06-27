@@ -22,15 +22,11 @@ from ldaptor import usage, ldapfilter, config
 from twisted.internet import reactor
 from socket import inet_aton, inet_ntoa
 import sets
+import struct
 
 
 def my_aton_octets(ip):
-    s=inet_aton(ip)
-    octets=map(None, s)
-    n=0L
-    for o in octets:
-        n=n<<8
-        n+=ord(o)
+    n, = struct.unpack('!I', inet_aton(ip))
     return n
 
 def my_aton_numbits(num):
@@ -50,12 +46,7 @@ def my_aton(ip):
         return my_aton_numbits(i)
 
 def my_ntoa(n):
-    s=(
-        chr((n>>24)&0xFF)
-        + chr((n>>16)&0xFF)
-        + chr((n>>8)&0xFF)
-        + chr(n&0xFF)
-       )
+    s=struct.pack('!I', n)
     ip=inet_ntoa(s)
     return ip
 
