@@ -161,7 +161,7 @@ def getHosts(nets, e, domain, forward, reverse, filter):
     def _cbGotHost(e):
         host = Host(str(e.dn),
                     str(only(e, 'cn')),
-                    map(str, e['ipHostNumber']))
+                    list(str(i) for i in e['ipHostNumber']))
         for hostIP in host.ipAddresses:
             parent=None
             for net in nets:
@@ -237,7 +237,7 @@ def main(cfg, domain, forward, reverse, filter_text):
         filt = None
 
     forwardTmp = '%s.%d.tmp' % (forward, os.getpid())
-    forwardFile = file(forwardTmp, 'w')
+    forwardFile = open(forwardTmp, 'w')
 
     print('$ORIGIN\t%s.' % domain, file=forwardFile)
     print(file=forwardFile)

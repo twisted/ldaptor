@@ -10,8 +10,8 @@ def _cbSearch(obj):
     a={}
     for attr, vals in obj.items():
         attr=str(attr)
-        assert not a.has_key(attr)
-        a[attr]=map(str, vals)
+        assert attr not in a
+        a[attr]=list(str(val) for val in vals)
 
     print(':'.join((
         a['uid'][0],

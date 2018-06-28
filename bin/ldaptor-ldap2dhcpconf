@@ -21,7 +21,6 @@ from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage, ldapfilter, config
 from twisted.internet import reactor
 from socket import inet_aton, inet_ntoa
-import sets
 import struct
 
 
@@ -80,7 +79,7 @@ class Group:
     def __init__(self, dn, bootFile=None):
         self.dn = dn
         self.bootFile = bootFile
-        self.hosts = sets.Set()
+        self.hosts = set()
 
     def addHost(self, host):
         if host.group is not None:
@@ -92,9 +91,9 @@ class Group:
             self.hosts.add(host)
 
     def printDHCP(self, domain, addrs, prefix=''):
-        addresses = sets.Set([addr
-                              for host in self.hosts
-                              for addr in host.ipAddresses])
+        addresses = set(addr
+                        for host in self.hosts
+                        for addr in host.ipAddresses)
         addresses.intersection_update(addrs)
         addrs.difference_update(addresses)
 
@@ -180,9 +179,7 @@ class Net:
 
         print('\n'.join([prefix+line for line in r]))
 
-        addrs = sets.Set()
-        for addr in self.hosts:
-            addrs.add(addr)
+        addrs = set(self.hosts)
 
         for addr in self.hosts:
             g = addr.host.group
@@ -271,9 +268,9 @@ def haveGroups(hosts, nets, sharedNets, dnsDomain):
     for host in hosts:
         for hostIP in host.ipAddresses:
             parent=None
-            for net in nets + reduce(lambda x,y: x+y,
-                                          [x.nets for x in sharedNets.values()],
-                                          []):
+            for net in nets + list(net_
+                                   for x in sharedNets.values()
+                                   for net_ in x.nets):
                 if net.isInNet(hostIP.ipAddress):
                     parent=net
                     break
@@ -310,8 +307,8 @@ def _cbGetHosts(entries):
         cn = only(e, 'cn')
         hosts.append(Host(str(e.dn),
                           str(cn),
-                          map(str, e['ipHostNumber']),
-                          map(str, e.get('macAddress', ())),
+                          list(str(i) for i in e['ipHostNumber']),
+                          tuple(str(i) for i in e.get('macAddress', ())),
                           bootFile=only(e, 'bootFile', default=None),
                           ))
     return hosts
@@ -354,9 +351,9 @@ def _cbGetNets(entries):
                   winsServers=e.get('winsServer', ()),
                   domainNameServers=e.get('domainNameServer', ()),
                   )
-        if e.has_key('sharedNetworkName'):
+        if 'sharedNetworkName' in e:
             name = only(e, 'sharedNetworkName')
-            if not sharedNetworks.has_key(name):
+            if name not in sharedNetworks:
                 sharedNetworks[name]=SharedNet(name)
             sharedNetworks[name].addNet(net)
         else:
