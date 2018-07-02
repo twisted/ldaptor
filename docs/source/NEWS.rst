@@ -27,6 +27,7 @@ Changes
 - `six` package is now a direct dependency in preparation for the Python 3
   port.
 - Remove Python 3.3 from tox as it is EOL.
+- Add API documentation for ``LDAPAttributeSet``
 
 Bugfixes
 ^^^^^^^^

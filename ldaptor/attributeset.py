@@ -3,6 +3,20 @@ from copy import deepcopy
 
 class LDAPAttributeSet(set):
     def __init__(self, key, *a, **kw):
+        """
+        Represents all the values for an attribute in an LDAP entry. An entry
+        might have "cn" or "objectClass" or "uid" attributes, and this class
+        represents each of those.
+
+        You can find the name of the LDAP entry attribute (eg. "uid") with the
+        ``.key`` member variable.
+
+        You can find the values of the LDAP attribute by casting this to a
+        ``list``.
+        @param key: the key of the attribute, eg "uid".
+        @type key: str
+        @param args: set of values for this attribute, eg. "jsmith"
+        """
         self.key = key
         super(LDAPAttributeSet, self).__init__(*a, **kw)
 
