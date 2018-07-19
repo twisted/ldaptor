@@ -266,7 +266,8 @@ class LDAPClient(protocol.Protocol):
         are not happening at the same time.
 
         @todo: server hostname check, see rfc2830 section 3.6.
-
+        @return: a deferred that will complete when the TLS handshake is
+        complete.
         """
         if ctx is None:
             ctx = ssl.ClientContextFactory()
