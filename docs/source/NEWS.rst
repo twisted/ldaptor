@@ -28,7 +28,7 @@ Bugfixes
 ^^^^^^^^
 
 - DN matching is now case insensitive.
-
+- asText() implemented for LDAPFilter_extensibleMatch
 
 Release 16.0 (2016-06-07)
 -------------------------
