@@ -7,6 +7,7 @@ import random
 import errno
 import shutil
 
+import six
 from twisted.trial import unittest
 
 from ldaptor import ldiftree, entry, delta, testutil
@@ -15,7 +16,7 @@ from ldaptor.protocols.ldap import ldaperrors, ldifprotocol
 
 
 def writeFile(path, content):
-    f = open(path, 'w')
+    f = open(path, 'wb')
     f.write(content)
     f.close()
 
@@ -53,14 +54,14 @@ class Dir2LDIF(RandomizeListdirTestCase):
         example = os.path.join(com, 'dc=example.dir')
         os.mkdir(example)
         writeFile(os.path.join(example, 'cn=foo.ldif'),
-                  """\
+                  b"""\
 dn: cn=foo,dc=example,dc=com
 cn: foo
 objectClass: top
 
 """)
         writeFile(os.path.join(example, 'cn=bad-two-entries.ldif'),
-                  """\
+                  b"""\
 dn: cn=bad-two-entries,dc=example,dc=com
 cn: bad-two-entries
 objectClass: top
@@ -71,17 +72,17 @@ objectClass: top
 
 """)
         writeFile(os.path.join(example, 'cn=bad-missing-end.ldif'),
-                  """\
+                  b"""\
 dn: cn=bad-missing-end,dc=example,dc=com
 cn: bad-missing-end
 objectClass: top
 """)
-        writeFile(os.path.join(example, 'cn=bad-empty.ldif'), '')
-        writeFile(os.path.join(example, 'cn=bad-only-newline.ldif'), '\n')
+        writeFile(os.path.join(example, 'cn=bad-empty.ldif'), b'')
+        writeFile(os.path.join(example, 'cn=bad-only-newline.ldif'), b'\n')
         sales = os.path.join(example, 'ou=Sales.dir')
         os.mkdir(sales)
         writeFile(os.path.join(sales, 'cn=sales-thingie.ldif'),
-                  """\
+                  b"""\
 dn: cn=sales-thingie,ou=Sales,dc=example,dc=com
 cn: sales-thingie
 objectClass: top
@@ -161,14 +162,14 @@ class LDIF2Dir(RandomizeListdirTestCase):
         example = os.path.join(com, 'dc=example.dir')
         os.mkdir(example)
         writeFile(os.path.join(example, 'cn=pre-existing.ldif'),
-                  """\
+                  b"""\
 dn: cn=pre-existing,dc=example,dc=com
 cn: pre-existing
 objectClass: top
 
 """)
         writeFile(os.path.join(example, 'ou=OrgUnit.ldif'),
-                  """\
+                  b"""\
 dn: ou=OrgUnit,dc=example,dc=com
 ou: OrgUnit
 objectClass: organizationalUnit
@@ -188,7 +189,7 @@ objectClass: organizationalUnit
     def _cb_testSimpleWrite(self, entry):
         path = os.path.join(self.tree, 'dc=com.dir', 'dc=example.dir', 'cn=foo.ldif')
         self.failUnless(os.path.isfile(path))
-        self.failUnlessEqual(open(path).read(),
+        self.failUnlessEqual(open(path, 'rb').read(),
                              """\
 dn: cn=foo,dc=example,dc=com
 objectClass: top
@@ -210,7 +211,7 @@ cn: foo
         path = os.path.join(self.tree, 'dc=com.dir', 'dc=example.dir',
                             'ou=OrgUnit.dir', 'cn=create-me.ldif')
         self.failUnless(os.path.isfile(path))
-        self.failUnlessEqual(open(path).read(),
+        self.failUnlessEqual(open(path, 'rb').read(),
                              """\
 dn: cn=create-me,ou=OrgUnit,dc=example,dc=com
 objectClass: top
@@ -234,7 +235,7 @@ cn: create-me
     def _cb_testDirExists(self, entry, dirpath):
         path = os.path.join(dirpath, 'cn=create-me.ldif')
         self.failUnless(os.path.isfile(path))
-        self.failUnlessEqual(open(path).read(),
+        self.failUnlessEqual(open(path, 'rb').read(),
                              """\
 dn: cn=create-me,ou=OrgUnit,dc=example,dc=com
 objectClass: top
@@ -267,7 +268,7 @@ cn: create-me
     def _cb_testAddTopLevel(self, entry):
         path = os.path.join(self.tree, 'dc=org.ldif')
         self.failUnless(os.path.isfile(path))
-        self.failUnlessEqual(open(path).read(),
+        self.failUnlessEqual(open(path, 'rb').read(),
                              """\
 dn: dc=org
 objectClass: dcObject
@@ -276,11 +277,14 @@ dc: org
 """)
 
 
-class Tree(RandomizeListdirTestCase):
+class LDIFTreeEntryTests(RandomizeListdirTestCase):
+    """
+    Tests for LDIFTreeEntry.
+    """
     # TODO share the actual tests with inmemory and any other
     # implementations of the same interface
     def setUp(self):
-        super(Tree, self).setUp()
+        super(LDIFTreeEntryTests, self).setUp()
         self.tree = self.mktemp()
         os.mkdir(self.tree)
         com = os.path.join(self.tree, 'dc=com.dir')
@@ -290,7 +294,7 @@ class Tree(RandomizeListdirTestCase):
         meta = os.path.join(example, 'ou=metasyntactic.dir')
         os.mkdir(meta)
         writeFile(os.path.join(example, 'ou=metasyntactic.ldif'),
-                  """\
+                  b"""\
 dn: ou=metasyntactic,dc=example,dc=com
 objectClass: a
 objectClass: b
@@ -299,7 +303,7 @@ ou: metasyntactic
 """)
         foo = os.path.join(meta, 'cn=foo.dir')
         writeFile(os.path.join(meta, 'cn=foo.ldif'),
-                  """\
+                  b"""\
 dn: cn=foo,ou=metasyntactic,dc=example,dc=com
 objectClass: a
 objectClass: b
@@ -308,7 +312,7 @@ cn: foo
 """)
         bar = os.path.join(meta, 'cn=bar.dir')
         writeFile(os.path.join(meta, 'cn=bar.ldif'),
-                  """\
+                  b"""\
 dn: cn=bar,ou=metasyntactic,dc=example,dc=com
 objectClass: a
 objectClass: b
@@ -317,7 +321,7 @@ cn: bar
 """)
         empty = os.path.join(example, 'ou=empty.dir')
         writeFile(os.path.join(example, 'ou=empty.ldif'),
-                  """\
+                  b"""\
 dn: ou=empty,dc=example,dc=com
 objectClass: a
 objectClass: b
@@ -327,7 +331,7 @@ ou: empty
         oneChild = os.path.join(example, 'ou=oneChild.dir')
         os.mkdir(oneChild)
         writeFile(os.path.join(example, 'ou=oneChild.ldif'),
-                  """\
+                  b"""\
 dn: ou=oneChild,dc=example,dc=com
 objectClass: a
 objectClass: b
@@ -336,7 +340,7 @@ ou: oneChild
 """)
         theChild = os.path.join(oneChild, 'cn=theChild.dir')
         writeFile(os.path.join(oneChild, 'cn=theChild.ldif'),
-                  """\
+                  b"""\
 dn: cn=theChild,ou=oneChild,dc=example,dc=com
 objectClass: a
 objectClass: b
@@ -535,13 +539,11 @@ cn: theChild
         self.assertEqual(got, want)
 
     def test_subtree_many(self):
-        d = self.example.subtree()
-        d.addCallback(self._cb_test_subtree_many)
-        return d
+        deferred = self.example.subtree()
 
-    def _cb_test_subtree_many(self, results):
-        got = results
-        want = [
+        result = self.successResultOf(deferred)
+
+        expected = [
             self.example,
             self.oneChild,
             self.theChild,
@@ -550,20 +552,16 @@ cn: theChild
             self.bar,
             self.foo,
             ]
-        got.sort()
-        want.sort()
-        self.assertEqual(got, want)
+        six.assertCountEqual(self, expected, result)
 
     def test_subtree_many_cb(self):
         got = []
-        d = self.example.subtree(callback=got.append)
-        d.addCallback(self._cb_test_subtree_many_cb, got)
-        return d
+        deferred = self.example.subtree(callback=got.append)
 
-    def _cb_test_subtree_many_cb(self, r, got):
-        self.assertEqual(r, None)
+        result = self.successResultOf(deferred)
 
-        want = [
+        self.assertIsNone(result)
+        expected = [
             self.example,
             self.oneChild,
             self.theChild,
@@ -572,9 +570,7 @@ cn: theChild
             self.bar,
             self.foo,
             ]
-        got.sort()
-        want.sort()
-        self.assertEqual(got, want)
+        six.assertCountEqual(self, expected, got)
 
     def test_lookup_fail(self):
         dn = 'cn=thud,ou=metasyntactic,dc=example,dc=com'
@@ -605,7 +601,7 @@ cn: theChild
     def test_lookup_fail_multipleError(self):
         writeFile(os.path.join(self.example.path,
                                'cn=bad-two-entries.ldif'),
-                  """\
+                  b"""\
 dn: cn=bad-two-entries,dc=example,dc=com
 cn: bad-two-entries
 objectClass: top
@@ -623,7 +619,7 @@ objectClass: top
     def test_lookup_fail_emptyError(self):
         writeFile(os.path.join(self.example.path,
                                'cn=bad-empty.ldif'),
-                  "")
+                  b"")
         self.assertRaises(
             ldiftree.LDIFTreeEntryContainsNoEntries,
             self.example.lookup,
@@ -688,7 +684,7 @@ objectClass: top
         return d
 
     def test_setPassword(self):
-        self.foo.setPassword('s3krit', salt='\xf2\x4a')
+        self.foo.setPassword('s3krit', salt=b'\xf2\x4a')
         self.failUnless('userPassword' in self.foo)
         self.assertEqual(self.foo['userPassword'],
                           ['{SSHA}0n/Iw1NhUOKyaI9gm9v5YsO3ZInySg=='])
@@ -858,3 +854,32 @@ objectClass: top
                                        }),
             ]))
         return d
+
+
+    def testCompareOtherTypes(self):
+        """
+        It can't be compared with other types.
+        """
+        with self.assertRaises(TypeError):
+            self.example < object()
+
+        with self.assertRaises(TypeError):
+            self.example > object()
+
+
+    def testCompareGreater(self):
+        """
+        It is compared with other entries based on DN, where child is
+        greater than the parent.
+        """
+        self.assertTrue(self.oneChild > self.example)
+        self.assertFalse(self.example > self.oneChild)
+
+
+    def testCompareLess(self):
+        """
+        It is compared with other entries based on DN, where parent is
+        less than the child.
+        """
+        self.assertTrue(self.example < self.oneChild)
+        self.assertFalse(self.oneChild < self.example)

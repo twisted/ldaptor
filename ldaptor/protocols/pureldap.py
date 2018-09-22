@@ -71,6 +71,10 @@ class LDAPAttributeValue(BEROctetString):
 
 
 class LDAPMessage(BERSequence):
+    """
+    To encode this object in order to be sent over the network use the str()
+    method.
+    """
     id = None
     value = None
 
@@ -108,6 +112,9 @@ class LDAPMessage(BERSequence):
         self.controls = controls
 
     def __str__(self):
+        """
+        This is the wire/encoded representation.
+        """
         l = [BERInteger(self.id), self.value]
         if self.controls is not None:
             l.append(LDAPControls([LDAPControl(*a) for a in self.controls]))
@@ -117,6 +124,7 @@ class LDAPMessage(BERSequence):
         l = []
         l.append('id=%r' % self.id)
         l.append('value=%r' % self.value)
+        l.append('controls=%r' % self.controls)
         if self.tag != self.__class__.tag:
             l.append('tag=%d' % self.tag)
         return self.__class__.__name__ + '(' + ', '.join(l) + ')'
@@ -879,22 +887,16 @@ class LDAPSearchResultEntry(LDAPProtocolResponse, BERSequence):
 
     def __repr__(self):
         if self.tag==self.__class__.tag:
-            return self.__class__.__name__\
-                   +"(objectName=%s, attributes=%s"\
-                   %(repr(str(self.objectName)),
-                     repr(map(lambda a, l:
-                              (str(a),
-                               map(lambda i, l=l: str(i), l)),
-                              self.attributes)))
+            return self.__class__.__name__ + "(objectName={}, attributes={}".format(
+                repr(str(self.objectName)),
+                repr([(a, [str(v) for v in l]) for (a, l) in self.attributes])
+            )
         else:
-            return self.__class__.__name__\
-                   +"(objectName=%s, attributes=%s, tag=%d"\
-                   %(repr(str(self.objectName)),
-                     repr(map(lambda a,l:
-                              (str(a),
-                               map(lambda i, l=l: str(i), l)),
-                              self.attributes)),
-                     self.tag)
+            return self.__class__.__name__ + "(objectName={}, attributes={}, tag={}".format(
+                repr(str(self.objectName)),
+                repr([(a, [str(v) for v in l]) for (a, l) in self.attributes]),
+                self.tag
+            )
 
 
 class LDAPSearchResultDone(LDAPResult):

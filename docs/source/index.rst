@@ -52,6 +52,8 @@ Meta
    status
    AUTHORS
 
+   glossary
+
 Indices and tables
 ==================
 

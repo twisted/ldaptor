@@ -3,10 +3,13 @@ Test cases for ldaptor.protocols.ldap.proxybase module.
 """
 from functools import partial
 import itertools
+
+from six import next
 from twisted.internet import error, defer
 from twisted.internet.task import Clock
 from twisted.trial import unittest
 from twisted.test import proto_helpers
+
 from ldaptor.protocols.ldap import proxybase, ldaperrors
 from ldaptor.protocols import pureldap
 from ldaptor import testutil
@@ -46,7 +49,7 @@ class ResponseInterceptingProxy(proxybase.ProxyBase):
             response.attributes.append((key, [value]))
         d = defer.Deferred()
         d.addCallback(self._afterDelay)
-        self.reactor.callLater(self.delays.next(), d.callback, response)
+        self.reactor.callLater(next(self.delays), d.callback, response)
         return d
 
     def _afterDelay(self, response):
@@ -223,7 +226,7 @@ class ProxyBase(unittest.TestCase):
             clock=clock)
         self.assertEqual(connector, server.clientConnector)
         server.reactor.advance(1)
-        self.assertEqual(server.transport.value(), "")
+        self.assertEqual(server.transport.value(), b"")
 
     def test_cannot_connect_to_proxied_server_pending_requests(self):
         """
@@ -238,8 +241,29 @@ class ProxyBase(unittest.TestCase):
             clientConnector=connector, 
             clock=clock)
         self.assertEqual(connector, server.clientConnector)
-        server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(), id=4)))
+        server.dataReceived(
+            str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(), id=4)))
         server.reactor.advance(2)
         self.assertEqual(
             server.transport.value(),
             str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=52), id=4)))
+
+    def test_health_check_closes_connection_to_proxied_server(self):
+        """
+        When the client disconnects immediately and before the connection to the proxied server has
+        been established, the proxy terminates the connection to the proxied server.
+        Messages sent by the client are discarded.
+        """
+        request = pureldap.LDAPBindRequest()
+        message = pureldap.LDAPMessage(request, id=4)
+        server = self.createServer()
+        # Send a message, message is queued
+        server.dataReceived(str(message))
+        self.assertEqual(len(server.queuedRequests), 1)
+        self.assertEqual(server.queuedRequests[0][0], request)
+        # Lose connection, message is discarded
+        server.connectionLost(error.ConnectionDone)
+        server.reactor.advance(1)
+        self.assertIsNone(server.client)
+        self.assertFalse(server.clientTestDriver.connected)
+        self.assertEqual(server.queuedRequests, [])
