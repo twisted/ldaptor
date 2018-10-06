@@ -57,43 +57,47 @@ class RFC2254Examples(unittest.TestCase):
 
     def test_extensible_1(self):
         text = '(cn:1.2.3.4.5:=Fred Flintstone)'
-        self.assertEqual(ldapfilter.parseFilter(text),
-                          pureldap.LDAPFilter_extensibleMatch(
+        filt = pureldap.LDAPFilter_extensibleMatch(
             type='cn',
             dnAttributes=False,
             matchingRule='1.2.3.4.5',
             matchValue='Fred Flintstone',
-            ))
+            )
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
     def test_extensible_2(self):
         text = '(sn:dn:2.4.6.8.10:=Barney Rubble)'
-        self.assertEqual(ldapfilter.parseFilter(text),
-                          pureldap.LDAPFilter_extensibleMatch(
+        filt = pureldap.LDAPFilter_extensibleMatch(
             type='sn',
             dnAttributes=True,
             matchingRule='2.4.6.8.10',
             matchValue='Barney Rubble',
-            ))
+            )
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
     def test_extensible_3(self):
         text = '(o:dn:=Ace Industry)'
-        self.assertEqual(ldapfilter.parseFilter(text),
-                          pureldap.LDAPFilter_extensibleMatch(
+        filt = pureldap.LDAPFilter_extensibleMatch(
             type='o',
             dnAttributes=True,
             matchingRule=None,
             matchValue='Ace Industry',
-            ))
+            )
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
     def test_extensible_4(self):
         text = '(:dn:2.4.6.8.10:=Dino)'
-        self.assertEqual(ldapfilter.parseFilter(text),
-                          pureldap.LDAPFilter_extensibleMatch(
+        filt = pureldap.LDAPFilter_extensibleMatch(
             type=None,
             dnAttributes=True,
             matchingRule='2.4.6.8.10',
             matchValue='Dino',
-            ))
+            )
+        self.assertEqual(ldapfilter.parseFilter(text), filt)
+        self.assertEqual(filt.asText(), text)
 
     def test_escape_parens(self):
         text = r'(o=Parens R Us \28for all your parenthetical needs\29)'

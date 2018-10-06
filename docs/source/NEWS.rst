@@ -34,7 +34,7 @@ Bugfixes
 
 - DN matching is now case insensitive.
 - Proxies now terminate the connection to the proxied server in case a client immediately closes the connection.
-
+- asText() implemented for LDAPFilter_extensibleMatch
 
 Release 16.0 (2016-06-07)
 -------------------------
