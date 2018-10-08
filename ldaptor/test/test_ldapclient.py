@@ -16,6 +16,8 @@ from ldaptor.protocols import (
 )
 from ldaptor import testutil
 
+import six
+
 
 class SillyMessage(object):
     needs_answer = True
@@ -24,6 +26,13 @@ class SillyMessage(object):
         self.value = value
 
     def __str__(self):
+        if not six.PY2:
+            raise NotImplementedError()
+        return self.__bytes__()
+
+    def __bytes__(self):
+        if isinstance(self.value, six.text_type):
+            return self.value.encode('utf-8')
         return self.value
 
 
@@ -77,7 +86,7 @@ class SendTests(unittest.TestCase):
             pureber.BERInteger(page_size),
             pureber.BEROctetString(cookie),
         ])
-        controls = [('1.2.840.113556.1.4.319', None, str(control_value))]
+        controls = [(b'1.2.840.113556.1.4.319', None, bytes(control_value))]
         return controls
 
     def test_bind_not_connected(self):
@@ -97,7 +106,7 @@ class SendTests(unittest.TestCase):
         op = pureldap.LDAPBindResponse(error.resultCode)
         response = pureldap.LDAPMessage(op)
         response.id -= 1
-        resp_bytestring = str(response)
+        resp_bytestring = bytes(response)
         client.dataReceived(resp_bytestring)
 
         def cb_(thing):
@@ -113,7 +122,7 @@ class SendTests(unittest.TestCase):
         clock = Clock()
         ldapclient.reactor = clock
         client, transport = self.create_test_client()
-        creds = ('cn=foo,ou=baz,dc=example,dc=net', 'secret')
+        creds = (b'cn=foo,ou=baz,dc=example,dc=net', b'secret')
         d = client.bind(*creds)
         clock.advance(1)
         op = pureldap.LDAPBindResponse(
@@ -121,7 +130,7 @@ class SendTests(unittest.TestCase):
             matchedDN=creds[0])
         response = pureldap.LDAPMessage(op)
         response.id -= 1
-        resp_bytestring = str(response)
+        resp_bytestring = bytes(response)
         client.dataReceived(resp_bytestring)
 
         def cb_(thing):
@@ -150,7 +159,7 @@ class SendTests(unittest.TestCase):
         op = pureldap.LDAPStartTLSResponse(error.resultCode)
         response = pureldap.LDAPMessage(op)
         response.id -= 1
-        resp_bytestring = str(response)
+        resp_bytestring = bytes(response)
         client.dataReceived(resp_bytestring)
 
         def cb_(thing):
@@ -167,7 +176,7 @@ class SendTests(unittest.TestCase):
         response = pureldap.LDAPMessage(
             pureldap.LDAPSearchResultDone(0),
             id=0)
-        resp_bytestring = str(response)
+        resp_bytestring = bytes(response)
         client.dataReceived(resp_bytestring)
 
     def test_send_not_connected(self):
@@ -183,14 +192,14 @@ class SendTests(unittest.TestCase):
         d = client.send_multiResponse(op, None)
         expected_value = pureldap.LDAPMessage(op)
         expected_value.id -= 1
-        expected_bytestring = str(expected_value)
+        expected_bytestring = bytes(expected_value)
         self.assertEqual(
             transport.value(),
             expected_bytestring)
         response = pureldap.LDAPMessage(
             pureldap.LDAPSearchResultDone(0),
             id=expected_value.id)
-        resp_bytestring = str(response)
+        resp_bytestring = bytes(response)
         client.dataReceived(resp_bytestring)
         self.assertEqual(
             response.value,
@@ -211,19 +220,19 @@ class SendTests(unittest.TestCase):
         client.send_multiResponse(op, collect_result_)
         expected_value = pureldap.LDAPMessage(op)
         expected_value.id -= 1
-        expected_bytestring = str(expected_value)
+        expected_bytestring = bytes(expected_value)
         self.assertEqual(
             transport.value(),
             expected_bytestring)
         response = pureldap.LDAPMessage(
             pureldap.LDAPSearchResultEntry("cn=foo,ou=baz,dc=example,dc=net", {}),
             id=expected_value.id)
-        resp_bytestring = str(response)
+        resp_bytestring = bytes(response)
         client.dataReceived(resp_bytestring)
         response = pureldap.LDAPMessage(
             pureldap.LDAPSearchResultDone(0),
             id=expected_value.id)
-        resp_bytestring = str(response)
+        resp_bytestring = bytes(response)
         client.dataReceived(resp_bytestring)
         self.assertEqual(
             response.value,
@@ -236,7 +245,7 @@ class SendTests(unittest.TestCase):
         d = client.send_multiResponse_ex(op, controls)
         expected_value = pureldap.LDAPMessage(op, controls)
         expected_value.id -= 1
-        expected_bytestring = str(expected_value)
+        expected_bytestring = bytes(expected_value)
         self.assertEqual(
             transport.value(),
             expected_bytestring)
@@ -245,7 +254,7 @@ class SendTests(unittest.TestCase):
             pureldap.LDAPSearchResultDone(0),
             id=expected_value.id,
             controls=resp_controls)
-        resp_bytestring = str(response)
+        resp_bytestring = bytes(response)
         client.dataReceived(resp_bytestring)
         self.assertEqual(
             (response.value, response.controls),

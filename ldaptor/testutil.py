@@ -127,13 +127,13 @@ class LDAPClientTestDriver:
             shouldBeSent,
             self.sent)
         assert self.sent == shouldBeSent, msg
-        sentStr = ''.join([str(x) for x in self.sent])
-        shouldBeSentStr = ''.join([str(x) for x in shouldBeSent])
-        msg = '%s expected to send data %r but sent %r' % (
+        sentBytes = b''.join([bytes(x) for x in self.sent])
+        shouldBeSentBytes = b''.join([bytes(x) for x in shouldBeSent])
+        msg = '%s expected to send data %s but sent %s' % (
             self.__class__.__name__,
-            shouldBeSentStr,
-            sentStr)
-        assert sentStr == shouldBeSentStr, msg
+            shouldBeSentBytes,
+            sentBytes)
+        assert sentBytes == shouldBeSentBytes, msg
 
     def connectionMade(self):
         """TCP connection has opened"""

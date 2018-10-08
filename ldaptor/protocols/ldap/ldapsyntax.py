@@ -278,7 +278,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         return hash(str(self))
 
     def bind(self, password):
-        r = pureldap.LDAPBindRequest(dn=str(self.dn), auth=password)
+        r = pureldap.LDAPBindRequest(dn=bytes(self.dn), auth=password)
         d = self.client.send(r)
         d.addCallback(self._handle_bind_msg)
         return d
@@ -333,7 +333,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             return defer.succeed(self)
 
         op = pureldap.LDAPModifyRequest(
-            object=str(self.dn),
+            object=bytes(self.dn),
             modification=[x.asLDAP() for x in self._journal])
         d = defer.maybeDeferred(self.client.send, op)
         d.addCallback(self._commit_success)
@@ -356,10 +356,10 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         newrdn = newDN.split()[0]
         newSuperior = distinguishedname.DistinguishedName(listOfRDNs=newDN.split()[1:])
         newDN = distinguishedname.DistinguishedName((newrdn,) + newSuperior.split())
-        op = pureldap.LDAPModifyDNRequest(entry=str(self.dn),
-                                          newrdn=str(newrdn),
+        op = pureldap.LDAPModifyDNRequest(entry=bytes(self.dn),
+                                          newrdn=bytes(newrdn),
                                           deleteoldrdn=1,
-                                          newSuperior=str(newSuperior))
+                                          newSuperior=bytes(newSuperior))
         d = self.client.send(op)
         d.addCallback(self._cbMoveDone, newDN)
         return d
@@ -379,7 +379,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
     def delete(self):
         self._checkState()
 
-        op = pureldap.LDAPDelRequest(entry=str(self.dn))
+        op = pureldap.LDAPDelRequest(entry=bytes(self.dn))
         d = self.client.send(op)
         d.addCallback(self._cbDeleteDone)
         self._state = 'deleted'
@@ -420,7 +420,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             ldapValues = pureber.BERSet(lst)
             ldapAttrs.append((ldapAttrType, ldapValues))
         op = pureldap.LDAPAddRequest(
-            entry=str(dn),
+            entry=bytes(dn),
             attributes=ldapAttrs)
         d = self.client.send(op)
         d.addCallback(self._cbAddDone, dn)
@@ -449,7 +449,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 
         self._checkState()
 
-        op = pureldap.LDAPPasswordModifyRequest(userIdentity=str(self.dn), newPasswd=newPasswd)
+        op = pureldap.LDAPPasswordModifyRequest(userIdentity=bytes(self.dn), newPasswd=newPasswd)
         d = self.client.send(op)
         d.addCallback(self._cbSetPassword_ExtendedOperation)
         return d
@@ -706,7 +706,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             cb = callback
         try:
             op = pureldap.LDAPSearchRequest(
-                baseObject=str(self.dn),
+                baseObject=bytes(self.dn),
                 scope=scope,
                 derefAliases=derefAliases,
                 sizeLimit=sizeLimit,
@@ -758,7 +758,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         attributes = ', '.join(a)
         return '%s(dn=%s, attributes={%s})' % (
             self.__class__.__name__,
-            repr(str(self.dn)),
+            repr(bytes(self.dn)),
             attributes)
 
 

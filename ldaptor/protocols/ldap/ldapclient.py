@@ -51,7 +51,7 @@ class LDAPClient(protocol.Protocol):
 
     def __init__(self):
         self.onwire = {}
-        self.buffer = ''
+        self.buffer = b''
         self.connected = None
 
     berdecoder = pureldap.LDAPBERDecoderContext_TopLevel(
@@ -107,7 +107,7 @@ class LDAPClient(protocol.Protocol):
         assert op.needs_answer
         d = defer.Deferred()
         self.onwire[msg.id] = (d, False, None, None, None)
-        self.transport.write(str(msg))
+        self.transport.write(bytes(msg))
         return d
 
     def send_multiResponse(self, op, handler, *args, **kwargs):
@@ -137,7 +137,7 @@ class LDAPClient(protocol.Protocol):
         assert op.needs_answer
         d = defer.Deferred()
         self.onwire[msg.id] = (d, False, handler, args, kwargs)
-        self.transport.write(str(msg))
+        self.transport.write(bytes(msg))
         return d
 
     def send_multiResponse_ex(self, op, controls=None, handler=None, *args, **kwargs):
@@ -170,7 +170,7 @@ class LDAPClient(protocol.Protocol):
         assert op.needs_answer
         d = defer.Deferred()
         self.onwire[msg.id] = (d, True, handler, args, kwargs)
-        self.transport.write(str(msg))
+        self.transport.write(bytes(msg))
         return d
 
     def send_noResponse(self, op, controls=None):
@@ -183,7 +183,7 @@ class LDAPClient(protocol.Protocol):
         """
         msg = self._send(op, controls=controls)
         assert not op.needs_answer
-        self.transport.write(str(msg))
+        self.transport.write(bytes(msg))
 
     def unsolicitedNotification(self, msg):
         log.msg("Got unsolicited notification: %s" % repr(msg))

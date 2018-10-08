@@ -11,14 +11,21 @@ escapedChars_leading = r' #'
 escapedChars_trailing = r' #'
 
 
+def _to_bytes(s):
+    if isinstance(s, six.text_type):
+        return s.encode('utf-8')
+    return s
+
+
+def _to_unicode(s):
+    if isinstance(s, six.binary_type):
+        return s.decode('utf-8')
+    return s
+
+
 def escape(s):
     r = ''
     r_trailer = ''
-
-    have_bytes = False
-    if isinstance(s, bytes):
-        s = s.decode('utf-8')
-        have_bytes = True
 
     if s and s[0] in escapedChars_leading:
         r = '\\' + s[0]
@@ -36,71 +43,50 @@ def escape(s):
         else:
             r = r + c
 
-    result = r + r_trailer
-    if have_bytes:
-        return result.encode('utf-8')
-    else:
-        return result
+    return r + r_trailer
 
 
 def unescape(s):
-    r = ''
-
-    have_bytes = False
-    if isinstance(s, bytes):
-        s = s.decode('utf-8')
-        have_bytes = True
+    r = bytearray()
 
     while s:
-        if s[0] == '\\':
-            if s[1] in '0123456789abcdef':
-                r = r + chr(int(s[1:3], 16))
+        if s[0:1] == b'\\':
+            if s[1] in b'0123456789abcdef':
+                r.append(int(s[1:3], 16))
                 s = s[3:]
             else:
-                r = r + s[1]
+                r.append(s[1])
                 s = s[2:]
         else:
-            r = r + s[0]
+            r.append(s[0])
             s = s[1:]
 
-    if have_bytes:
-        return r.encode('utf-8')
-    else:
-        return r
+    return bytes(r)
 
 
 def _splitOnNotEscaped(s, separator):
     if not s:
         return []
 
-    have_bytes = False
-    if isinstance(s, bytes):
-        s = s.decode('utf-8')
-        have_bytes  = True
-
-
-    r = ['']
+    r = [b'']
     while s:
         first = s[0:1]
 
-        if first == '\\':
+        if first == b'\\':
             r[-1] = r[-1] + s[:2]
             s = s[2:]
         else:
 
             if first == separator:
-                r.append('')
+                r.append(b'')
                 s = s[1:]
-                while s[0:1] == ' ':
+                while s[0:1] == b' ':
                     s = s[1:]
             else:
                 r[-1] = r[-1] + first
                 s = s[1:]
 
-    if have_bytes:
-        return [x.encode('utf-8') for x in r]
-    else:
-        return r
+    return r
 
 
 class InvalidRelativeDistinguishedName(Exception):
@@ -124,23 +110,27 @@ class LDAPAttributeTypeAndValue:
         if stringValue is None:
             assert attributeType is not None
             assert value is not None
-            self.attributeType = attributeType
-            self.value = value
+            self.attributeType = _to_unicode(attributeType)
+            self.value = _to_unicode(value)
         else:
             assert attributeType is None
             assert value is None
 
-            if isinstance(stringValue, bytes):
-                equal_char = b'='
-            else:
-                equal_char = '='
+            stringValue = _to_unicode(stringValue)
 
-            if equal_char not in stringValue:
+            if '=' not in stringValue:
+                if six.PY2:
+                    stringValue = _to_bytes(stringValue)
                 raise InvalidRelativeDistinguishedName(stringValue)
-            self.attributeType, self.value = stringValue.split(equal_char, 1)
+            self.attributeType, self.value = stringValue.split('=', 1)
 
     def __str__(self):
-        return '='.join((escape(self.attributeType), escape(self.value)))
+        if not six.PY2:
+            return self.__bytes__().decode('utf-8')
+        return self.__bytes__()
+
+    def __bytes__(self):
+        return '='.join((escape(self.attributeType), escape(self.value))).encode('utf-8')
 
     def __repr__(self):
         return (self.__class__.__name__
@@ -192,25 +182,30 @@ class RelativeDistinguishedName:
             assert attributeTypesAndValues is None
             if isinstance(magic, RelativeDistinguishedName):
                 attributeTypesAndValues = magic.split()
-            elif isinstance(magic, six.string_types):
-                stringValue = magic
+            elif isinstance(magic, (six.binary_type, six.text_type)):
+                stringValue = _to_bytes(magic)
             else:
                 attributeTypesAndValues = magic
 
         if stringValue is None:
             assert attributeTypesAndValues is not None
-            assert not isinstance(attributeTypesAndValues, six.string_types)
+            assert not isinstance(attributeTypesAndValues, (six.binary_type, six.text_type))
             self.attributeTypesAndValues = tuple(attributeTypesAndValues)
         else:
             assert attributeTypesAndValues is None
             self.attributeTypesAndValues = tuple([LDAPAttributeTypeAndValue(stringValue=unescape(x))
-                                                  for x in _splitOnNotEscaped(stringValue, '+')])
+                                                  for x in _splitOnNotEscaped(_to_bytes(stringValue), b'+')])
 
     def split(self):
         return self.attributeTypesAndValues
 
     def __str__(self):
-        return '+'.join([str(x) for x in self.attributeTypesAndValues])
+        if not six.PY2:
+            return self.__bytes__().decode('utf-8')
+        return self.__bytes__()
+
+    def __bytes__(self):
+        return b'+'.join([bytes(x) for x in self.attributeTypesAndValues])
 
     def __repr__(self):
         return (self.__class__.__name__
@@ -266,8 +261,8 @@ class DistinguishedName:
                 # This might need to be expended if we want to support
                 # different encodings.
                 stringValue = magic
-            elif isinstance(magic, six.string_types):
-                stringValue = magic
+            elif isinstance(magic, six.text_type):
+                stringValue = _to_bytes(magic)
             else:
                 listOfRDNs = magic
 
@@ -279,7 +274,7 @@ class DistinguishedName:
         else:
             assert listOfRDNs is None
             self.listOfRDNs = tuple([RelativeDistinguishedName(stringValue=x)
-                                     for x in _splitOnNotEscaped(stringValue, ',')])
+                                     for x in _splitOnNotEscaped(_to_bytes(stringValue), b',')])
 
     def split(self):
         return self.listOfRDNs
@@ -288,7 +283,12 @@ class DistinguishedName:
         return DistinguishedName(listOfRDNs=self.listOfRDNs[1:])
 
     def __str__(self):
-        return ','.join([str(x) for x in self.listOfRDNs])
+        if not six.PY2:
+            return self.__bytes__().decode('utf-8')
+        return self.__bytes__()
+
+    def __bytes__(self):
+        return b','.join([bytes(x) for x in self.listOfRDNs])
 
     def __repr__(self):
         return (self.__class__.__name__
@@ -297,11 +297,13 @@ class DistinguishedName:
                 + ')')
 
     def __hash__(self):
-        return hash(str(self))
+        return hash(bytes(self))
 
     def __eq__(self, other):
-        if isinstance(other, six.string_types):
-            return str(self) == other
+        if isinstance(other, six.binary_type):
+            return bytes(self) == other
+        if isinstance(other, six.text_type):
+            return bytes(self).decode('utf-8') == other
         if not isinstance(other, DistinguishedName):
             return NotImplemented
         return self.split() == other.split()
@@ -319,7 +321,6 @@ class DistinguishedName:
         # The comparison is naive and broken.
         # See https://github.com/twisted/ldaptor/issues/94
         return self.split() < other.split()
-
 
     def getDomainName(self):
         domainParts = []
