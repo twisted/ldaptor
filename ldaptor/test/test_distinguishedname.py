@@ -23,12 +23,12 @@ class TestCaseWithKnownValues(unittest.TestCase):
 
             self.assertEqual(fromString, fromList)
 
-            fromStringToString = str(fromString)
-            fromListToString = str(fromList)
+            fromStringToBytes = bytes(fromString)
+            fromListToBytes = bytes(fromList)
 
-            assert fromStringToString == fromListToString
+            assert fromStringToBytes == fromListToBytes
 
-            canon = fromStringToString
+            canon = fromStringToBytes
             # DNs equal their string representation. Note this does
             # not mean they equal all the possible string
             # representations -- just the canonical one.
@@ -120,11 +120,11 @@ class LDAPDistinguishedName_Escaping(TestCaseWithKnownValues):
             dn.RelativeDistinguishedName('dc=example'),
             dn.RelativeDistinguishedName('dc=com'),
             ])
-        got = str(got)
+        got = bytes(got)
         self.assertEqual(got,
-                          r'cn=test+owner=uid\=foo\,ou\=depar'
-                          +r'tment\,dc\=example\,dc\=com,dc=ex'
-                          +r'ample,dc=com')
+                          b'cn=test+owner=uid\=foo\,ou\=depar'
+                          +b'tment\,dc\=example\,dc\=com,dc=ex'
+                          +b'ample,dc=com')
 
 
 class LDAPDistinguishedName_RFC2253_ExamplesBytes(TestCaseWithKnownValues):
@@ -315,29 +315,29 @@ class LDAPDistinguishedName_Malformed(unittest.TestCase):
 
 class LDAPDistinguishedName_Prettify(unittest.TestCase):
     def testPrettifySpaces(self):
-        """str(DistinguishedName(...)) prettifies the DN by removing extra whitespace."""
+        """bytes(DistinguishedName(...)) prettifies the DN by removing extra whitespace."""
         d=dn.DistinguishedName('cn=foo, o=bar,  c=us')
-        assert str(d) == 'cn=foo,o=bar,c=us'
+        assert bytes(d) == b'cn=foo,o=bar,c=us'
 
 class DistinguishedName_Init(unittest.TestCase):
     def testString(self):
         d=dn.DistinguishedName('dc=example,dc=com')
-        self.assertEqual(str(d), 'dc=example,dc=com')
+        self.assertEqual(bytes(d), b'dc=example,dc=com')
 
     def testDN(self):
         proto=dn.DistinguishedName('dc=example,dc=com')
         d=dn.DistinguishedName(proto)
-        self.assertEqual(str(d), 'dc=example,dc=com')
+        self.assertEqual(bytes(d), b'dc=example,dc=com')
 
 class RelativeDistinguishedName_Init(unittest.TestCase):
     def testString(self):
         rdn=dn.RelativeDistinguishedName('dc=example')
-        self.assertEqual(str(rdn), 'dc=example')
+        self.assertEqual(bytes(rdn), b'dc=example')
 
     def testRDN(self):
         proto=dn.RelativeDistinguishedName('dc=example')
         rdn=dn.RelativeDistinguishedName(proto)
-        self.assertEqual(str(rdn), 'dc=example')
+        self.assertEqual(bytes(rdn), b'dc=example')
 
 class DistinguishedName_Comparison(unittest.TestCase):
     """
