@@ -8,11 +8,19 @@ from zope.interface import implementer
 from ldaptor import interfaces, attributeset, delta
 from ldaptor.protocols.ldap import distinguishedname, ldif, ldaperrors
 
+import six
+
 
 try:
     from hashlib import sha1
 except ImportError:
     from sha import sha as sha1
+
+
+def _to_bytes(s):
+    if isinstance(s, six.text_type):
+        return s.encode('utf-8')
+    return s
 
 
 def sshaDigest(passphrase, salt=None):
@@ -209,9 +217,12 @@ class BaseLDAPEntry(object):
         return defer.maybeDeferred(self._bind, password)
 
     def _bind(self, password):
+        password = _to_bytes(password)
         for digest in self.get('userPassword', ()):
+            digest = _to_bytes(digest)
             if digest.startswith(b'{SSHA}'):
-                raw = base64.decodestring(digest[len(b'{SSHA}'):])
+                hashed = digest[len(b'{SSHA}'):]
+                raw = base64.decodestring(hashed)
                 salt = raw[20:]
                 got = sshaDigest(password, salt)
                 if got == digest:
