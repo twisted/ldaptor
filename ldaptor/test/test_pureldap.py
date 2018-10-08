@@ -23,17 +23,21 @@ from ldaptor.protocols import pureldap, pureber
 
 
 def s(*l):
-    """Join all members of list to a string. Integer members are chr()ed"""
-    r=''
+    """Join all members of list to a byte string. Integer members are chr()ed"""
+    r = b''
     for e in l:
         if isinstance(e, int):
-            e = chr(e)
-        r = r + str(e)
+            e = six.int2byte(e)
+        if not six.PY2 and isinstance(e, str):
+            e = e.encode('ascii')
+        r = r + bytes(e)
     return r
 
 
 def l(s):
-    """Split a string to ord's of chars."""
+    """Split a byte string to ord's of chars."""
+    if not six.PY2 and isinstance(s, str):
+        s = s.encode('ascii')
     return [six.byte2int([x]) for x in s]
 
 
@@ -308,7 +312,7 @@ class KnownValues(unittest.TestCase):
          # id
          + [0x02, 0x01, 42]
          # value
-         + l(str(pureldap.LDAPBindRequest()))
+         + l(bytes(pureldap.LDAPBindRequest()))
          ),
 
         (pureldap.LDAPControl,
@@ -360,8 +364,8 @@ class KnownValues(unittest.TestCase):
           'value': pureldap.LDAPBindRequest(),
           'controls': [ ('1.2.3.4', None, None),
                         ('2.3.4.5', False),
-                        ('3.4.5.6', True, '\x00\x01\x02\xFF'),
-                        ('4.5.6.7', None, '\x00\x01\x02\xFF'),
+                        ('3.4.5.6', True, b'\x00\x01\x02\xFF'),
+                        ('4.5.6.7', None, b'\x00\x01\x02\xFF'),
                         ],
           },
          pureldap.LDAPBERDecoderContext_TopLevel(
@@ -372,18 +376,18 @@ class KnownValues(unittest.TestCase):
          # id
          + [0x02, 0x01, 42]
          # value
-         + l(str(pureldap.LDAPBindRequest()))
+         + l(bytes(pureldap.LDAPBindRequest()))
          # controls
-         + l(str(pureldap.LDAPControls(value=[
+         + l(bytes(pureldap.LDAPControls(value=[
         pureldap.LDAPControl(controlType='1.2.3.4'),
         pureldap.LDAPControl(controlType='2.3.4.5',
                              criticality=False),
         pureldap.LDAPControl(controlType='3.4.5.6',
                              criticality=True,
-                             controlValue='\x00\x01\x02\xFF'),
+                             controlValue=b'\x00\x01\x02\xFF'),
         pureldap.LDAPControl(controlType='4.5.6.7',
                              criticality=None,
-                             controlValue='\x00\x01\x02\xFF'),
+                             controlValue=b'\x00\x01\x02\xFF'),
         ]))),
          ),
 
@@ -610,16 +614,15 @@ class KnownValues(unittest.TestCase):
          pureldap.LDAPBERDecoderContext(
                 fallback=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext()),
                 inherit=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext())),
-         [ord(x) for x in str(pureldap.LDAPBindRequest(auth=('PLAIN', 'test'), sasl=True))]
+         l(bytes(pureldap.LDAPBindRequest(auth=('PLAIN', 'test'), sasl=True)))
          )
         )
 
     def testToLDAP(self):
-        """str(LDAPClass(...)) should give known result with known input"""
+        """bytes(LDAPClass(...)) should give known result with known input"""
         for klass, args, kwargs, decoder, encoded in self.knownValues:
             result = klass(*args, **kwargs)
-            result = str(result)
-            result = [ord(x) for x in result]
+            result = l(bytes(result))
 
             message = (
                 "Class %s(*%r, **%r) doesn't encode properly: "
@@ -634,12 +637,12 @@ class KnownValues(unittest.TestCase):
                 decoder = pureldap.LDAPBERDecoderContext(
                     fallback=pureber.BERDecoderContext())
             m=s(*encoded)
-            result, bytes = pureber.berDecodeObject(decoder, m)
-            self.assertEqual(bytes, len(m))
+            result, length = pureber.berDecodeObject(decoder, m)
+            self.assertEqual(length, len(m))
 
             shouldBe = klass(*args, **kwargs)
             #TODO shouldn't use str below
-            assert str(result)==str(shouldBe), \
+            assert bytes(result) == bytes(shouldBe), \
                    "Class %s(*%s, **%s) doesn't decode properly: " \
                    "%s != %s" % (klass.__name__,
                                  repr(args), repr(kwargs),
@@ -703,7 +706,7 @@ class Substrings(unittest.TestCase):
             berdecoder=decoder)
         # The confusion that used to occur here was because
         # filt.substrings was left as a BERSequence, which under the
-        # current str()-to-wire-protocol system had len() > 1 even
+        # current bytes()-to-wire-protocol system had len() > 1 even
         # when empty, and that tripped e.g. entry.match()
         self.assertEqual(len(filt.substrings), 1)
 
