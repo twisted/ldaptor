@@ -31,7 +31,7 @@ class BaseLDAPServer(protocol.Protocol):
     debug = False
 
     def __init__(self):
-        self.buffer = ''
+        self.buffer = b''
         self.connected = None
 
     berdecoder = pureldap.LDAPBERDecoderContext_TopLevel(
@@ -68,7 +68,7 @@ class BaseLDAPServer(protocol.Protocol):
         msg = pureldap.LDAPMessage(op, id=id)
         if self.debug:
             log.msg('S->C %s' % repr(msg), debug=True)
-        self.transport.write(str(msg))
+        self.transport.write(bytes(msg))
 
     def unsolicitedNotification(self, msg):
         log.msg("Got unsolicited notification: %s" % repr(msg))
