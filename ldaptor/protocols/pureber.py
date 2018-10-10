@@ -74,7 +74,7 @@ def berDecodeLength(m, offset=0):
     Return a tuple of (length, lengthLength).
     m must be atleast one byte long.
     """
-    l = ber2int(m[offset + 0])
+    l = ber2int(m[offset + 0:offset + 1])
     ll = 1
     if l & 0x80:
         ll = 1 + (l & 0x7F)
@@ -107,11 +107,11 @@ def int2ber(i, signed=True):
 
 def ber2int(e, signed=True):
     need(e, 1)
-    v = 0 + ord(e[0])
+    v = 0 + ord(e[0:1])
     if v & 0x80 and signed:
         v = v - 256
     for i in range(1, len(e)):
-        v = (v << 8) | ord(e[i])
+        v = (v << 8) | ord(e[i:i + 1])
     return v
 
 
@@ -370,7 +370,7 @@ def berDecodeObject(context, m):
     """
     while m:
         need(m, 2)
-        i = ber2int(m[0], signed=0) & (CLASS_MASK | TAG_MASK)
+        i = ber2int(m[0:1], signed=0) & (CLASS_MASK | TAG_MASK)
 
         length, lenlen = berDecodeLength(m, offset=1)
         need(m, 1 + lenlen + length)
