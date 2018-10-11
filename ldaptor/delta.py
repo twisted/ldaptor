@@ -32,12 +32,12 @@ class Modification(attributeset.LDAPAttributeSet):
                 value = tmplist[x]
                 newlist.append(value) 
         
-        return str(pureber.BERSequence([
+        return pureber.BERSequence([
             pureber.BEREnumerated(self._LDAP_OP),
             pureber.BERSequence([ pureldap.LDAPAttributeDescription(self.key),
                                   pureber.BERSet(map(pureldap.LDAPString, newlist)),
                                   ]),
-            ]))
+            ]).toWire()
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):

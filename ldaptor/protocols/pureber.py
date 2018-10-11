@@ -31,6 +31,8 @@
 #     this protocol definition.
 import six
 
+from ldaptor.encoder import to_bytes
+
 # xxxxxxxx
 # |/|\.../
 # | | |
@@ -92,16 +94,16 @@ def int2berlen(i):
         l = len(e)
         assert l > 0
         assert l <= 127
-        return chr(0x80 | l) + e
+        return six.int2byte(0x80 | l) + e
 
 
 def int2ber(i, signed=True):
-    encoded = ''
+    encoded = b''
     while ((signed and (i > 127 or i < -128))
            or (not signed and (i > 255))):
-        encoded = chr(i % 256) + encoded
+        encoded = six.int2byte(i % 256) + encoded
         i = i >> 8
-    encoded = chr(i % 256) + encoded
+    encoded = six.int2byte(i % 256) + encoded
     return encoded
 
 
@@ -126,21 +128,24 @@ class BERBase(object):
             self.tag = tag
 
     def __len__(self):
-        return len(str(self))
+        return len(self.toWire())
 
     def __eq__(self, other):
         if not isinstance(other, BERBase):
             return NotImplemented
-        return str(self) == str(other)
+        return self.toWire() == other.toWire()
 
     def __ne__(self, other):
         if not isinstance(other, BERBase):
             return NotImplemented
 
-        return str(self) != str(other)
+        return self.toWire() != other.toWire()
 
     def __hash__(self):
-        return hash(str(self))
+        return hash(self.toWire())
+
+    def toWire(self):
+        return b''
 
 
 class BERStructured(BERBase):
@@ -179,9 +184,9 @@ class BERInteger(BERBase):
         assert value is not None
         self.value = value
 
-    def __str__(self):
+    def toWire(self):
         encoded = int2ber(self.value)
-        return chr(self.identification()) \
+        return six.int2byte(self.identification()) \
                + int2berlen(len(encoded)) \
                + encoded
 
@@ -208,13 +213,10 @@ class BEROctetString(BERBase):
         assert value is not None
         self.value = value
 
-    def __str__(self):
-        if not six.PY2 and isinstance(self.value, bytes):
-            value = self.value.decode('ascii')
-        else:
-            value = str(self.value)
+    def toWire(self):
+        value = to_bytes(self.value)
         result = (
-            chr(self.identification()) +
+            six.int2byte(self.identification()) +
             int2berlen(len(value)) +
             value
             )
@@ -242,8 +244,8 @@ class BERNull(BERBase):
     def __init__(self, tag=None):
         BERBase.__init__(self, tag)
 
-    def __str__(self):
-        return chr(self.identification()) + chr(0)
+    def toWire(self):
+        return six.int2byte(self.identification()) + six.int2byte(0)
 
     def __repr__(self):
         if self.tag == self.__class__.tag:
@@ -272,11 +274,11 @@ class BERBoolean(BERBase):
             value = 0xFF
         self.value = value
 
-    def __str__(self):
+    def toWire(self):
         assert self.value == 0 or self.value == 0xFF
-        return chr(self.identification()) \
+        return six.int2byte(self.identification()) \
                + int2berlen(1) \
-               + chr(self.value)
+               + six.int2byte(self.value)
 
     def __repr__(self):
         if self.tag == self.__class__.tag:
@@ -305,9 +307,9 @@ class BERSequence(BERStructured, six.moves.UserList):
         assert value is not None
         six.moves.UserList.__init__(self, value)
 
-    def __str__(self):
-        r = ''.join(map(str, self.data))
-        return chr(self.identification()) + int2berlen(len(r)) + r
+    def toWire(self):
+        r = b''.join(to_bytes(x) for x in self.data)
+        return six.int2byte(self.identification()) + int2berlen(len(r)) + r
 
     def __repr__(self):
         if self.tag == self.__class__.tag:
@@ -365,7 +367,7 @@ class BERDecoderContext:
                +">"
 
 def berDecodeObject(context, m):
-    """berDecodeObject(context, string) -> (berobject, bytesUsed)
+    """berDecodeObject(context, bytes) -> (berobject, bytesUsed)
     berobject may be None.
     """
     while m:
