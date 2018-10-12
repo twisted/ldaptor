@@ -23,17 +23,17 @@ from ldaptor.protocols import pureldap, pureber
 
 
 def s(*l):
-    """Join all members of list to a string. Integer members are chr()ed"""
-    r=''
+    """Join all members of list to a byte string. Integer members are chr()ed"""
+    r = b''
     for e in l:
         if isinstance(e, int):
-            e = chr(e)
-        r = r + str(e)
+            e = six.int2byte(e)
+        r = r + e
     return r
 
 
 def l(s):
-    """Split a string to ord's of chars."""
+    """Split a byte string to ord's of chars."""
     return [six.byte2int([x]) for x in s]
 
 
@@ -58,15 +58,15 @@ class KnownValues(unittest.TestCase):
            },
          None,
          [0x66, 50]
-         + ([0x04, 0x1a] + l("cn=foo, dc=example, dc=com")
+         + ([0x04, 0x1a] + l(b"cn=foo, dc=example, dc=com")
             + [0x30, 20]
             + ([0x30, 18]
                + ([0x0a, 0x01, 0x00]
                   + [0x30, 13]
-                  + ([0x04, len("bar")] + l("bar")
+                  + ([0x04, len(b"bar")] + l(b"bar")
                      + [0x31, 0x06]
-                     + ([0x04, len("a")] + l("a")
-                        + [0x04, len("b")] + l("b"))))))
+                     + ([0x04, len(b"a")] + l(b"a")
+                        + [0x04, len(b"b")] + l(b"b"))))))
             ),
 
         (pureldap.LDAPModifyRequest,
@@ -84,12 +84,12 @@ class KnownValues(unittest.TestCase):
            },
          None,
          [0x66, 0x2c]
-         + ([0x04, 0x1a] + l("cn=foo, dc=example, dc=com")
+         + ([0x04, 0x1a] + l(b"cn=foo, dc=example, dc=com")
             + [0x30, 0x0e]
             + ([0x30, 0x0c]
                + ([0x0a, 0x01, 0x01]
                   + [0x30, 0x07]
-                  + ([0x04, 0x03] + l("bar")
+                  + ([0x04, 0x03] + l(b"bar")
                      + [0x31, 0x00]))))
         ),
 
@@ -100,8 +100,8 @@ class KnownValues(unittest.TestCase):
          pureldap.LDAPBERDecoderContext_Filter(fallback=pureber.BERDecoderContext()),
          [0xa2, 0x05]
          + [0x87]
-         + [len("foo")]
-         + l("foo")),
+         + [len(b"foo")]
+         + l(b"foo")),
 
         (pureldap.LDAPFilter_or,
          [],
@@ -116,11 +116,11 @@ class KnownValues(unittest.TestCase):
          pureldap.LDAPBERDecoderContext_Filter(fallback=pureber.BERDecoderContext()),
          [0xa1, 23]
          + [0xa3, 9]
-         + [0x04] + [len("cn")] + l("cn")
-         + [0x04] + [len("foo")] + l("foo")
+         + [0x04] + [len(b"cn")] + l(b"cn")
+         + [0x04] + [len(b"foo")] + l(b"foo")
          + [0xa3, 10]
-         + [0x04] + [len("uid")] + l("uid")
-         + [0x04] + [len("foo")] + l("foo"),
+         + [0x04] + [len(b"uid")] + l(b"uid")
+         + [0x04] + [len(b"foo")] + l(b"foo"),
          ),
 
         (pureldap.LDAPFilter_and,
@@ -136,11 +136,11 @@ class KnownValues(unittest.TestCase):
          pureldap.LDAPBERDecoderContext_Filter(fallback=pureber.BERDecoderContext()),
          [0xa0, 23]
          + [0xa3, 9]
-         + [0x04] + [len("cn")] + l("cn")
-         + [0x04] + [len("foo")] + l("foo")
+         + [0x04] + [len(b"cn")] + l(b"cn")
+         + [0x04] + [len(b"foo")] + l(b"foo")
          + [0xa3, 10]
-         + [0x04] + [len("uid")] + l("uid")
-         + [0x04] + [len("foo")] + l("foo"),
+         + [0x04] + [len(b"uid")] + l(b"uid")
+         + [0x04] + [len(b"foo")] + l(b"foo"),
          ),
 
         (pureldap.LDAPModifyDNRequest,
@@ -152,11 +152,11 @@ class KnownValues(unittest.TestCase):
          None,
          [0x6c, 0x26]
          + [0x04]
-         + [len("cn=foo,dc=example,dc=com")]
-         + l("cn=foo,dc=example,dc=com")
+         + [len(b"cn=foo,dc=example,dc=com")]
+         + l(b"cn=foo,dc=example,dc=com")
          + [0x04]
-         + [len("uid=bar")]
-         + l("uid=bar")
+         + [len(b"uid=bar")]
+         + l(b"uid=bar")
          + [0x01, 0x01, 0x00]),
 
         (pureldap.LDAPModifyDNRequest,
@@ -169,15 +169,15 @@ class KnownValues(unittest.TestCase):
          None,
          [0x6c, 69]
          + [0x04]
-         + [len("cn=aoue,dc=example,dc=com")]
-         + l("cn=aoue,dc=example,dc=com")
+         + [len(b"cn=aoue,dc=example,dc=com")]
+         + l(b"cn=aoue,dc=example,dc=com")
          + [0x04]
-         + [len("uid=aoue")]
-         + l("uid=aoue")
+         + [len(b"uid=aoue")]
+         + l(b"uid=aoue")
          + [0x01, 0x01, 0x00]
          + [0x80]
-         + [len("ou=People,dc=example,dc=com")]
-         + l("ou=People,dc=example,dc=com")),
+         + [len(b"ou=People,dc=example,dc=com")]
+         + l(b"ou=People,dc=example,dc=com")),
 
         (pureldap.LDAPSearchRequest,
          [],
@@ -186,8 +186,8 @@ class KnownValues(unittest.TestCase):
          None,
          [0x63, 57]
          + [0x04]
-         + [len('dc=yoja,dc=example,dc=com')]
-         + l('dc=yoja,dc=example,dc=com')
+         + [len(b'dc=yoja,dc=example,dc=com')]
+         + l(b'dc=yoja,dc=example,dc=com')
          # scope
          + [0x0a, 1, 2]
          # derefAliases
@@ -199,7 +199,7 @@ class KnownValues(unittest.TestCase):
          # typesOnly
          + [0x01, 1, 0]
          # filter
-         + [135, 11] + l('objectClass')
+         + [135, 11] + l(b'objectClass')
          # attributes
          + [48, 0]
          ),
@@ -221,12 +221,12 @@ class KnownValues(unittest.TestCase):
          + [0x0a, 0x01, 0x00]
          # matchedDN
          + [0x04]
-         + [len('')]
-         + l('')
+         + [len(b'')]
+         + l(b'')
          # errorMessage
          + [0x04]
-         + [len('')]
-         + l('')
+         + [len(b'')]
+         + l(b'')
          # referral, TODO
          + []
         ),
@@ -242,12 +242,12 @@ class KnownValues(unittest.TestCase):
          + [0x0a, 0x01, 0x00]
          # matchedDN
          + [0x04]
-         + [len('dc=foo,dc=example,dc=com')]
-         + l('dc=foo,dc=example,dc=com')
+         + [len(b'dc=foo,dc=example,dc=com')]
+         + l(b'dc=foo,dc=example,dc=com')
          # errorMessage
          + [0x04]
-         + [len('')]
-         + l('')
+         + [len(b'')]
+         + l(b'')
          # referral, TODO
          + []
         ),
@@ -264,12 +264,12 @@ class KnownValues(unittest.TestCase):
          + [0x0a, 0x01, 0x00]
          # matchedDN
          + [0x04]
-         + [len('dc=foo,dc=example,dc=com')]
-         + l('dc=foo,dc=example,dc=com')
+         + [len(b'dc=foo,dc=example,dc=com')]
+         + l(b'dc=foo,dc=example,dc=com')
          # errorMessage
          + [0x04]
-         + [len('the foobar was fubar')]
-         + l('the foobar was fubar',)
+         + [len(b'the foobar was fubar')]
+         + l(b'the foobar was fubar',)
          # referral, TODO
          + []
         ),
@@ -285,12 +285,12 @@ class KnownValues(unittest.TestCase):
          + [0x0a, 0x01, 0x00]
          # matchedDN
          + [0x04]
-         + [len('')]
-         + l('')
+         + [len(b'')]
+         + l(b'')
          # errorMessage
          + [0x04]
-         + [len('the foobar was fubar')]
-         + l('the foobar was fubar',)
+         + [len(b'the foobar was fubar')]
+         + l(b'the foobar was fubar',)
          # referral, TODO
          + []
         ),
@@ -308,7 +308,7 @@ class KnownValues(unittest.TestCase):
          # id
          + [0x02, 0x01, 42]
          # value
-         + l(str(pureldap.LDAPBindRequest()))
+         + l(pureldap.LDAPBindRequest().toWire())
          ),
 
         (pureldap.LDAPControl,
@@ -319,7 +319,7 @@ class KnownValues(unittest.TestCase):
          [0x30, 9]
          # controlType
          + [0x04, 7]
-         + l("1.2.3.4")
+         + l(b"1.2.3.4")
          ),
 
         (pureldap.LDAPControl,
@@ -331,7 +331,7 @@ class KnownValues(unittest.TestCase):
          [0x30, 12]
          # controlType
          + [0x04, 7]
-         + l("1.2.3.4")
+         + l(b"1.2.3.4")
          # criticality
          + [0x01, 1, 0xFF]
          ),
@@ -346,12 +346,12 @@ class KnownValues(unittest.TestCase):
          [0x30, 19]
          # controlType
          + [0x04, 7]
-         + l("1.2.3.4")
+         + l(b"1.2.3.4")
          # criticality
          + [0x01, 1, 0xFF]
          # controlValue
-         + [0x04, len("silly")]
-         + l("silly")
+         + [0x04, len(b"silly")]
+         + l(b"silly")
          ),
 
         (pureldap.LDAPMessage,
@@ -360,8 +360,8 @@ class KnownValues(unittest.TestCase):
           'value': pureldap.LDAPBindRequest(),
           'controls': [ ('1.2.3.4', None, None),
                         ('2.3.4.5', False),
-                        ('3.4.5.6', True, '\x00\x01\x02\xFF'),
-                        ('4.5.6.7', None, '\x00\x01\x02\xFF'),
+                        ('3.4.5.6', True, b'\x00\x01\x02\xFF'),
+                        ('4.5.6.7', None, b'\x00\x01\x02\xFF'),
                         ],
           },
          pureldap.LDAPBERDecoderContext_TopLevel(
@@ -372,19 +372,19 @@ class KnownValues(unittest.TestCase):
          # id
          + [0x02, 0x01, 42]
          # value
-         + l(str(pureldap.LDAPBindRequest()))
+         + l(pureldap.LDAPBindRequest().toWire())
          # controls
-         + l(str(pureldap.LDAPControls(value=[
+         + l(pureldap.LDAPControls(value=[
         pureldap.LDAPControl(controlType='1.2.3.4'),
         pureldap.LDAPControl(controlType='2.3.4.5',
                              criticality=False),
         pureldap.LDAPControl(controlType='3.4.5.6',
                              criticality=True,
-                             controlValue='\x00\x01\x02\xFF'),
+                             controlValue=b'\x00\x01\x02\xFF'),
         pureldap.LDAPControl(controlType='4.5.6.7',
                              criticality=None,
-                             controlValue='\x00\x01\x02\xFF'),
-        ]))),
+                             controlValue=b'\x00\x01\x02\xFF'),
+        ]).toWire()),
          ),
 
         (pureldap.LDAPFilter_equalityMatch,
@@ -397,8 +397,8 @@ class KnownValues(unittest.TestCase):
         inherit=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext())),
 
          [0xa3, 9]
-         + ([0x04, 2] + l('cn')
-            + [0x04, 3] + l('foo'))
+         + ([0x04, 2] + l(b'cn')
+            + [0x04, 3] + l(b'foo'))
          ),
 
         (pureldap.LDAPFilter_or,
@@ -417,18 +417,18 @@ class KnownValues(unittest.TestCase):
 
          [0xA1, 52]
          + ([0xa3, 9]
-            + ([0x04, 2] + l('cn')
-               + [0x04, 3] + l('foo'))
+            + ([0x04, 2] + l(b'cn')
+               + [0x04, 3] + l(b'foo'))
             + [0xa3, 10]
-            + ([0x04, 3] + l('uid')
-               + [0x04, 3] + l('foo'))
+            + ([0x04, 3] + l(b'uid')
+               + [0x04, 3] + l(b'foo'))
             + [0xa3, 11]
-               + ([0x04, 4] + l('mail')
-                  + [0x04, 3] + l('foo'))
+               + ([0x04, 4] + l(b'mail')
+                  + [0x04, 3] + l(b'foo'))
             + [0xa4, 14]
-            + ([0x04, 4] + l('mail')
+            + ([0x04, 4] + l(b'mail')
                + [0x30, 6]
-               + ([0x80, 4] + l('foo@'))))
+               + ([0x80, 4] + l(b'foo@'))))
          ),
 
         (pureldap.LDAPSearchRequest,
@@ -455,7 +455,7 @@ class KnownValues(unittest.TestCase):
         inherit=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext())),
 
          [0x63, 92]
-         + ([0x04, 17] + l('dc=example,dc=com')
+         + ([0x04, 17] + l(b'dc=example,dc=com')
             + [0x0a, 1, 0x02]
             + [0x0a, 1, 0x00]
             + [0x02, 1, 0x01]
@@ -463,18 +463,18 @@ class KnownValues(unittest.TestCase):
             + [0x01, 1, 0x00]
             + [0xA1, 52]
             + ([0xa3, 9]
-               + ([0x04, 2] + l('cn')
-                  + [0x04, 3] + l('foo'))
+               + ([0x04, 2] + l(b'cn')
+                  + [0x04, 3] + l(b'foo'))
                + [0xa3, 10]
-               + ([0x04, 3] + l('uid')
-                  + [0x04, 3] + l('foo'))
+               + ([0x04, 3] + l(b'uid')
+                  + [0x04, 3] + l(b'foo'))
                + [0xa3, 11]
-               + ([0x04, 4] + l('mail')
-                  + [0x04, 3] + l('foo'))
+               + ([0x04, 4] + l(b'mail')
+                  + [0x04, 3] + l(b'foo'))
                + [0xa4, 14]
-               + ([0x04, 4] + l('mail')
+               + ([0x04, 4] + l(b'mail')
                   + [0x30, 6]
-                  + ([0x80, 4] + l('foo@'))))
+                  + ([0x80, 4] + l(b'foo@'))))
             + [0x30, 2]
             + ([0x04, 0])
             )
@@ -512,7 +512,7 @@ class KnownValues(unittest.TestCase):
          + [0x02, 1, 1]
          # value
          + [0x63, 92]
-         + ([0x04, 17] + l('dc=example,dc=com')
+         + ([0x04, 17] + l(b'dc=example,dc=com')
             + [0x0a, 1, 0x02]
             + [0x0a, 1, 0x00]
             + [0x02, 1, 0x01]
@@ -520,18 +520,18 @@ class KnownValues(unittest.TestCase):
             + [0x01, 1, 0x00]
             + [0xA1, 52]
             + ([0xa3, 9]
-               + ([0x04, 2] + l('cn')
-                  + [0x04, 3] + l('foo'))
+               + ([0x04, 2] + l(b'cn')
+                  + [0x04, 3] + l(b'foo'))
                + [0xa3, 10]
-               + ([0x04, 3] + l('uid')
-                  + [0x04, 3] + l('foo'))
+               + ([0x04, 3] + l(b'uid')
+                  + [0x04, 3] + l(b'foo'))
                + [0xa3, 11]
-               + ([0x04, 4] + l('mail')
-                  + [0x04, 3] + l('foo'))
+               + ([0x04, 4] + l(b'mail')
+                  + [0x04, 3] + l(b'foo'))
                + [0xa4, 14]
-               + ([0x04, 4] + l('mail')
+               + ([0x04, 4] + l(b'mail')
                   + [0x30, 6]
-                  + ([0x80, 4] + l('foo@'))))
+                  + ([0x80, 4] + l(b'foo@'))))
             + [0x30, 2]
             + ([0x04, 0])
             )
@@ -545,11 +545,11 @@ class KnownValues(unittest.TestCase):
          None,
          [0x40|0x20|23, 1+1+8+1+1+3]
          + ([0x80|0]
-            + [len('42.42.42')]
-            + l('42.42.42'))
+            + [len(b'42.42.42')]
+            + l(b'42.42.42'))
          + ([0x80|1]
-            + [len('foo')]
-            + l('foo'))
+            + [len(b'foo')]
+            + l(b'foo'))
          ),
 
         (pureldap.LDAPExtendedRequest,
@@ -560,8 +560,8 @@ class KnownValues(unittest.TestCase):
          None,
          [0x40|0x20|23, 1+1+8]
          + ([0x80|0]
-            + [len('42.42.42')]
-            + l('42.42.42'))
+            + [len(b'42.42.42')]
+            + l(b'42.42.42'))
          ),
 
         (pureldap.LDAPExtendedResponse,
@@ -575,8 +575,8 @@ class KnownValues(unittest.TestCase):
          None,
          [0x40|0x20|24, 3+2+3+2+3,
           0x0a, 1, 49,
-          0x04, len('foo')] + l('foo') + [
-          0x04, len('bar')] + l('bar'),
+          0x04, len(b'foo')] + l(b'foo') + [
+          0x04, len(b'bar')] + l(b'bar'),
          ),
 
         (pureldap.LDAPExtendedResponse,
@@ -590,10 +590,10 @@ class KnownValues(unittest.TestCase):
          None,
          [0x40|0x20|24, 3+2+3+2+3+2+len('1.2.3.4.5.6.7.8.9')+2+3,
           0x0a, 1, 49,
-          0x04, len('foo')] + l('foo') + [
-          0x04, len('bar')] + l('bar') + [
-          0x8a, len('1.2.3.4.5.6.7.8.9')] + l('1.2.3.4.5.6.7.8.9') + [
-          0x8b, len('baz')] + l('baz'),
+          0x04, len(b'foo')] + l(b'foo') + [
+          0x04, len(b'bar')] + l(b'bar') + [
+          0x8a, len(b'1.2.3.4.5.6.7.8.9')] + l(b'1.2.3.4.5.6.7.8.9') + [
+          0x8b, len(b'baz')] + l(b'baz'),
          ),
 
         (pureldap.LDAPAbandonRequest,
@@ -610,16 +610,16 @@ class KnownValues(unittest.TestCase):
          pureldap.LDAPBERDecoderContext(
                 fallback=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext()),
                 inherit=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext())),
-         [ord(x) for x in str(pureldap.LDAPBindRequest(auth=('PLAIN', 'test'), sasl=True))]
+         l(pureldap.LDAPBindRequest(auth=('PLAIN', 'test'), sasl=True).toWire())
          )
         )
 
     def testToLDAP(self):
-        """str(LDAPClass(...)) should give known result with known input"""
+        """LDAPClass(...).toWire() should give known result with known input"""
         for klass, args, kwargs, decoder, encoded in self.knownValues:
             result = klass(*args, **kwargs)
-            result = str(result)
-            result = [ord(x) for x in result]
+            result = result.toWire()
+            result = l(result)
 
             message = (
                 "Class %s(*%r, **%r) doesn't encode properly: "
@@ -638,8 +638,7 @@ class KnownValues(unittest.TestCase):
             self.assertEqual(bytes, len(m))
 
             shouldBe = klass(*args, **kwargs)
-            #TODO shouldn't use str below
-            assert str(result)==str(shouldBe), \
+            assert result.toWire() == shouldBe.toWire(), \
                    "Class %s(*%s, **%s) doesn't decode properly: " \
                    "%s != %s" % (klass.__name__,
                                  repr(args), repr(kwargs),
@@ -697,9 +696,9 @@ class Substrings(unittest.TestCase):
             fallback=pureber.BERDecoderContext())
         filt = pureldap.LDAPFilter_substrings.fromBER(
             tag=pureldap.LDAPFilter_substrings.tag,
-            content=s(0x04, 4, 'mail',
+            content=s(0x04, 4, b'mail',
                       0x30, 6,
-                      0x80, 4, 'foo@'),
+                      0x80, 4, b'foo@'),
             berdecoder=decoder)
         # The confusion that used to occur here was because
         # filt.substrings was left as a BERSequence, which under the

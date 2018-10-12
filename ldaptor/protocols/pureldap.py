@@ -28,6 +28,7 @@ from ldaptor.protocols.pureber import (
 
     berDecodeMultiple, berDecodeObject, int2berlen,
     )
+from ldaptor.encoder import to_bytes
 
 next_ldap_message_id = 1
 
@@ -72,7 +73,7 @@ class LDAPAttributeValue(BEROctetString):
 
 class LDAPMessage(BERSequence):
     """
-    To encode this object in order to be sent over the network use the str()
+    To encode this object in order to be sent over the network use the toWire()
     method.
     """
     id = None
@@ -111,14 +112,14 @@ class LDAPMessage(BERSequence):
         self.value = value
         self.controls = controls
 
-    def __str__(self):
+    def toWire(self):
         """
         This is the wire/encoded representation.
         """
         l = [BERInteger(self.id), self.value]
         if self.controls is not None:
             l.append(LDAPControls([LDAPControl(*a) for a in self.controls]))
-        return str(BERSequence(l))
+        return BERSequence(l).toWire()
 
     def __repr__(self):
         l = []
@@ -134,9 +135,8 @@ class LDAPProtocolOp:
     def __init__(self):
         pass
 
-    def __str__(self):
+    def toWire(self):
         raise NotImplementedError()
-
 
 
 class LDAPProtocolRequest(LDAPProtocolOp):
@@ -199,17 +199,17 @@ class LDAPBindRequest(LDAPProtocolRequest, BERSequence):
             assert (not sasl)
         self.sasl = sasl
 
-    def __str__(self):
+    def toWire(self):
         if not self.sasl:
             auth_ber = BEROctetString(self.auth, tag=CLASS_CONTEXT | 0)
         else:
             auth_ber = BERSequence([BEROctetString(self.auth[0]), BEROctetString(self.auth[1])],
                                    tag=CLASS_CONTEXT | 3)
-        return str(BERSequence([
+        return BERSequence([
             BERInteger(self.version),
             BEROctetString(self.dn),
             auth_ber,
-            ], tag=self.tag))
+            ], tag=self.tag).toWire()
 
     def __repr__(self):
         l = []
@@ -237,9 +237,6 @@ class LDAPSearchResultReference(LDAPProtocolResponse):
     def fromBER(cls, tag, content, berdecoder=None):
         r = cls()
         return r
-
-    def __str__(self):
-        return object.__str__(self)
 
     def __repr__(self):
         return object.__repr__(self)
@@ -279,14 +276,14 @@ class LDAPResult(LDAPProtocolResponse, BERSequence):
         self.referral = referral
         self.serverSaslCreds = serverSaslCreds
 
-    def __str__(self):
+    def toWire(self):
         assert self.referral is None  # TODO
-        return str(BERSequence([
+        return BERSequence([
             BEREnumerated(self.resultCode),
             BEROctetString(self.matchedDN),
             BEROctetString(self.errorMessage),
             #TODO referral [3] Referral OPTIONAL
-            ], tag=self.tag))
+            ], tag=self.tag).toWire()
 
     def __repr__(self):
         l = []
@@ -355,9 +352,6 @@ class LDAPBindResponse(LDAPResult):
         LDAPResult.__init__(self, resultCode=resultCode, matchedDN=matchedDN, errorMessage=errorMessage,
                             referral=referral, serverSaslCreds=serverSaslCreds, tag=None)
 
-    def __str__(self):
-        return LDAPResult.__str__(self)
-
     def __repr__(self):
         return LDAPResult.__repr__(self)
 
@@ -370,8 +364,8 @@ class LDAPUnbindRequest(LDAPProtocolRequest, BERNull):
         LDAPProtocolRequest.__init__(self)
         BERNull.__init__(self, *args, **kwargs)
 
-    def __str__(self):
-        return BERNull.__str__(self)
+    def toWire(self):
+        return BERNull.toWire(self)
 
 
 class LDAPAttributeDescription(BEROctetString):
@@ -396,10 +390,10 @@ class LDAPAttributeValueAssertion(BERSequence):
         self.assertionValue = assertionValue
         self.escaper = escaper
 
-    def __str__(self):
-        return str(BERSequence([self.attributeDesc,
-                                self.assertionValue],
-                               tag=self.tag))
+    def toWire(self):
+        return BERSequence([self.attributeDesc,
+                            self.assertionValue],
+                           tag=self.tag).toWire()
 
     def __repr__(self):
         if self.tag == self.__class__.tag:
@@ -428,7 +422,7 @@ class LDAPFilterSet(BERSet):
         elif len(self) != len(rhs):
             return False
 
-        return sorted(self, key=str) == sorted(rhs, key=str)
+        return sorted(self, key=lambda x: x.toWire()) == sorted(rhs, key=lambda x: x.toWire())
 
 class LDAPFilter_and(LDAPFilterSet):
     tag = CLASS_CONTEXT | 0x00
@@ -471,9 +465,9 @@ class LDAPFilter_not(LDAPFilter):
                    + "(value=%s, tag=%d)" \
                      % (repr(self.value), self.tag)
 
-    def __str__(self):
-        r = str(self.value)
-        return chr(self.identification()) + int2berlen(len(r)) + r
+    def toWire(self):
+        value = to_bytes(self.value)
+        return six.int2byte(self.identification()) + int2berlen(len(value)) + value
 
     def asText(self):
         return '(!' + self.value.asText() + ')'
@@ -533,10 +527,10 @@ class LDAPFilter_substrings(BERSequence):
         self.type = type
         self.substrings = substrings
 
-    def __str__(self):
-        return str(BERSequence([
+    def toWire(self):
+        return BERSequence([
             LDAPString(self.type),
-            BERSequence(self.substrings)], tag=self.tag))
+            BERSequence(self.substrings)], tag=self.tag).toWire()
 
     def __repr__(self):
         if self.tag==self.__class__.tag:
@@ -706,10 +700,10 @@ class LDAPMatchingRuleAssertion(BERSequence):
             self.dnAttributes = None
         self.escaper = escaper
 
-    def __str__(self):
-        return str(BERSequence(
+    def toWire(self):
+        return BERSequence(
             filter(lambda x: x is not None,
-                   [self.matchingRule, self.type, self.matchValue, self.dnAttributes]), tag=self.tag))
+                   [self.matchingRule, self.type, self.matchValue, self.dnAttributes]), tag=self.tag).toWire()
 
     def __repr__(self):
         l=[]
@@ -820,8 +814,8 @@ class LDAPSearchRequest(LDAPProtocolRequest, BERSequence):
         if attributes is not None:
             self.attributes = attributes
 
-    def __str__(self):
-        return str(BERSequence([
+    def toWire(self):
+        return BERSequence([
             BEROctetString(self.baseObject),
             BEREnumerated(self.scope),
             BEREnumerated(self.derefAliases),
@@ -830,7 +824,7 @@ class LDAPSearchRequest(LDAPProtocolRequest, BERSequence):
             BERBoolean(self.typesOnly),
             self.filter,
             BERSequenceOf(map(BEROctetString, self.attributes)),
-            ], tag=self.tag))
+            ], tag=self.tag).toWire()
 
     def __repr__(self):
         if self.tag == self.__class__.tag:
@@ -878,8 +872,8 @@ class LDAPSearchResultEntry(LDAPProtocolResponse, BERSequence):
         self.objectName = objectName
         self.attributes = attributes
 
-    def __str__(self):
-        return str(BERSequence([
+    def toWire(self):
+        return BERSequence([
             BEROctetString(self.objectName),
             BERSequence([
                 BERSequence([
@@ -887,7 +881,7 @@ class LDAPSearchResultEntry(LDAPProtocolResponse, BERSequence):
                     BERSet(list(map(BEROctetString, attr_li[1])))])
                 for attr_li in self.attributes
                 ]),
-        ], tag=self.tag))
+        ], tag=self.tag).toWire()
 
     def __repr__(self):
         if self.tag==self.__class__.tag:
@@ -955,13 +949,13 @@ class LDAPControl(BERSequence):
         self.criticality = criticality
         self.controlValue = controlValue
 
-    def __str__(self):
+    def toWire(self):
         self.data = [LDAPOID(self.controlType)]
         if self.criticality is not None:
             self.data.append(BERBoolean(self.criticality))
         if self.controlValue is not None:
             self.data.append(BEROctetString(self.controlValue))
-        return BERSequence.__str__(self)
+        return BERSequence.toWire(self)
 
 
 class LDAPBERDecoderContext_LDAPControls(BERDecoderContext):
@@ -1039,11 +1033,11 @@ class LDAPModifyRequest(LDAPProtocolRequest, BERSequence):
         self.object = object
         self.modification = modification
 
-    def __str__(self):
+    def toWire(self):
         l = [LDAPString(self.object)]
         if self.modification is not None:
             l.append(BERSequence(self.modification))
-        return str(BERSequence(l, tag=self.tag))
+        return BERSequence(l, tag=self.tag).toWire()
 
     def __repr__(self):
         if self.tag==self.__class__.tag:
@@ -1095,11 +1089,11 @@ class LDAPAddRequest(LDAPProtocolRequest, BERSequence):
         self.entry = entry
         self.attributes = attributes
 
-    def __str__(self):
-        return str(BERSequence([
+    def toWire(self):
+        return BERSequence([
             LDAPString(self.entry),
             BERSequence(map(BERSequence, self.attributes)),
-            ], tag=self.tag))
+            ], tag=self.tag).toWire()
 
     def __repr__(self):
         if self.tag==self.__class__.tag:
@@ -1129,8 +1123,8 @@ class LDAPDelRequest(LDAPProtocolRequest, LDAPString):
         LDAPProtocolRequest.__init__(self)
         LDAPString.__init__(self, value=entry, tag=tag)
 
-    def __str__(self):
-        return LDAPString.__str__(self)
+    def toWire(self):
+        return LDAPString.toWire(self)
 
     def __repr__(self):
         if self.tag == self.__class__.tag:
@@ -1172,12 +1166,12 @@ class LDAPModifyDNRequest(LDAPProtocolRequest, BERSequence):
 
         kw = {}
         try:
-            kw['newSuperior'] = str(l[3].value)
+            kw['newSuperior'] = to_bytes(l[3].value)
         except IndexError:
             pass
 
-        r = klass(entry=str(l[0].value),
-                  newrdn=str(l[1].value),
+        r = klass(entry=to_bytes(l[0].value),
+                  newrdn=to_bytes(l[1].value),
                   deleteoldrdn=l[2].value,
                   tag=tag,
                   **kw)
@@ -1205,7 +1199,7 @@ class LDAPModifyDNRequest(LDAPProtocolRequest, BERSequence):
         self.deleteoldrdn = deleteoldrdn
         self.newSuperior = newSuperior
 
-    def __str__(self):
+    def toWire(self):
         l = [
             LDAPString(self.entry),
             LDAPString(self.newrdn),
@@ -1213,7 +1207,7 @@ class LDAPModifyDNRequest(LDAPProtocolRequest, BERSequence):
             ]
         if self.newSuperior is not None:
             l.append(LDAPString(self.newSuperior, tag=CLASS_CONTEXT | 0))
-        return str(BERSequence(l, tag=self.tag))
+        return BERSequence(l, tag=self.tag).toWire()
 
     def __repr__(self):
         l = [
@@ -1268,9 +1262,9 @@ class LDAPCompareRequest(LDAPProtocolRequest, BERSequence):
         self.entry = entry
         self.ava = ava
 
-    def __str__(self):
+    def toWire(self):
         l = [LDAPString(self.entry), self.ava]
-        return str(BERSequence(l, tag=self.tag))
+        return BERSequence(l, tag=self.tag).toWire()
 
     def __repr__(self):
         l = ["entry={}".format(self.entry), "ava={}".format(repr(self.ava))]
@@ -1296,8 +1290,8 @@ class LDAPAbandonRequest(LDAPProtocolRequest, LDAPInteger):
         LDAPProtocolRequest.__init__(self)
         LDAPInteger.__init__(self, value=id, tag=tag)
 
-    def __str__(self):
-        return LDAPInteger.__str__(self)
+    def toWire(self):
+        return LDAPInteger.toWire(self)
 
     def __repr__(self):
         if self.tag==self.__class__.tag:
@@ -1356,17 +1350,18 @@ class LDAPExtendedRequest(LDAPProtocolRequest, BERSequence):
         LDAPProtocolRequest.__init__(self)
         BERSequence.__init__(self, [], tag=tag)
         assert requestName is not None
-        assert isinstance(requestName, six.string_types)
+        assert isinstance(requestName, (six.binary_type, six.text_type))
         assert requestValue is None or isinstance(
-            requestValue, six.string_types)
+            requestValue, (six.binary_type, six.text_type))
         self.requestName = requestName
         self.requestValue = requestValue
 
-    def __str__(self):
+    def toWire(self):
         l = [LDAPOID(self.requestName, tag=CLASS_CONTEXT | 0)]
         if self.requestValue is not None:
-            l.append(BEROctetString(str(self.requestValue), tag=CLASS_CONTEXT | 1))
-        return str(BERSequence(l, tag=self.tag))
+            value = to_bytes(self.requestValue)
+            l.append(BEROctetString(value, tag=CLASS_CONTEXT | 1))
+        return BERSequence(l, tag=self.tag).toWire()
 
 
 class LDAPPasswordModifyRequest_userIdentity(BEROctetString):
@@ -1416,7 +1411,7 @@ class LDAPPasswordModifyRequest(LDAPExtendedRequest):
         LDAPExtendedRequest.__init__(
             self,
             requestName=self.oid,
-            requestValue=str(BERSequence(l)),
+            requestValue=BERSequence(l).toWire(),
             tag=tag)
 
     def __repr__(self):
@@ -1483,7 +1478,7 @@ class LDAPExtendedResponse(LDAPResult):
         self.responseName = responseName
         self.response = response
 
-    def __str__(self):
+    def toWire(self):
         assert self.referral is None  # TODO
         l = [BEREnumerated(self.resultCode),
              BEROctetString(self.matchedDN),
@@ -1494,7 +1489,7 @@ class LDAPExtendedResponse(LDAPResult):
             l.append(LDAPOID(self.responseName, tag=CLASS_CONTEXT | 0x0a))
         if self.response is not None:
             l.append(BEROctetString(self.response, tag=CLASS_CONTEXT | 0x0b))
-        return str(BERSequence(l, tag=self.tag))
+        return BERSequence(l, tag=self.tag).toWire()
 
 
 class LDAPStartTLSRequest(LDAPExtendedRequest):
