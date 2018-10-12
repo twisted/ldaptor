@@ -121,10 +121,6 @@ class LDAPMessage(BERSequence):
             l.append(LDAPControls([LDAPControl(*a) for a in self.controls]))
         return BERSequence(l).toWire()
 
-    def __str__(self):
-        # TODO: Left for compatibility, need to be removed when all higher level classes will use toWire method
-        return self.toWire()
-
     def __repr__(self):
         l = []
         l.append('id=%r' % self.id)

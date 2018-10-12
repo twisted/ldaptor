@@ -29,6 +29,8 @@
 # (4) If a value of a type is its default value, it MUST be absent.
 #     Only some BOOLEAN and INTEGER types have default values in
 #     this protocol definition.
+import warnings
+
 import six
 
 from ldaptor.encoder import to_bytes
@@ -146,6 +148,15 @@ class BERBase(object):
 
     def toWire(self):
         return b''
+
+    def __str__(self):
+        warnings.simplefilter('always', DeprecationWarning)
+        warnings.warn('{0}.__str__ method is deprecated and will not be used '
+                      'for getting bytes representation in the future '
+                      'releases, use {0}.toWire instead'.format(self.__class__.__name__),
+                      category=DeprecationWarning)
+        warnings.simplefilter('default', DeprecationWarning)
+        return self.toWire()
 
 
 class BERStructured(BERBase):
