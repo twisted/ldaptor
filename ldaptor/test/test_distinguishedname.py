@@ -23,13 +23,13 @@ class TestCaseWithKnownValues(unittest.TestCase):
 
             self.assertEqual(fromString, fromList)
 
-            fromStringToString = str(fromString)
-            fromListToString = str(fromList)
+            fromStringToWire = fromString.toWire()
+            fromListToWire = fromList.toWire()
 
-            assert fromStringToString == fromListToString
+            assert fromStringToWire == fromListToWire
 
-            canon = fromStringToString
-            # DNs equal their string representation. Note this does
+            canon = fromStringToWire
+            # DNs equal their byte string representation. Note this does
             # not mean they equal all the possible string
             # representations -- just the canonical one.
             self.assertEqual(fromString, canon)
@@ -120,11 +120,11 @@ class LDAPDistinguishedName_Escaping(TestCaseWithKnownValues):
             dn.RelativeDistinguishedName('dc=example'),
             dn.RelativeDistinguishedName('dc=com'),
             ])
-        got = str(got)
+        got = got.toWire()
         self.assertEqual(got,
-                          r'cn=test+owner=uid\=foo\,ou\=depar'
-                          +r'tment\,dc\=example\,dc\=com,dc=ex'
-                          +r'ample,dc=com')
+                          b'cn=test+owner=uid\=foo\,ou\=depar'
+                          +b'tment\,dc\=example\,dc\=com,dc=ex'
+                          +b'ample,dc=com')
 
 
 class LDAPDistinguishedName_RFC2253_ExamplesBytes(TestCaseWithKnownValues):
@@ -315,29 +315,38 @@ class LDAPDistinguishedName_Malformed(unittest.TestCase):
 
 class LDAPDistinguishedName_Prettify(unittest.TestCase):
     def testPrettifySpaces(self):
-        """str(DistinguishedName(...)) prettifies the DN by removing extra whitespace."""
+        """DistinguishedName(...).toWire() prettifies the DN by removing extra whitespace."""
         d=dn.DistinguishedName('cn=foo, o=bar,  c=us')
-        assert str(d) == 'cn=foo,o=bar,c=us'
+        assert d.toWire() == b'cn=foo,o=bar,c=us'
 
 class DistinguishedName_Init(unittest.TestCase):
-    def testString(self):
+    def testToWire(self):
         d=dn.DistinguishedName('dc=example,dc=com')
-        self.assertEqual(str(d), 'dc=example,dc=com')
+        self.assertEqual(d.toWire(), b'dc=example,dc=com')
 
     def testDN(self):
         proto=dn.DistinguishedName('dc=example,dc=com')
         d=dn.DistinguishedName(proto)
-        self.assertEqual(str(d), 'dc=example,dc=com')
+        self.assertEqual(d.toWire(), b'dc=example,dc=com')
+
+    def testEqualToByteString(self):
+        d = dn.DistinguishedName('dc=example,dc=com')
+        assert d == b'dc=example,dc=com'
+
+    def testEqualToString(self):
+        d = dn.DistinguishedName('dc=example,dc=com')
+        assert d == u'dc=example,dc=com'
+
 
 class RelativeDistinguishedName_Init(unittest.TestCase):
-    def testString(self):
+    def testToWire(self):
         rdn=dn.RelativeDistinguishedName('dc=example')
-        self.assertEqual(str(rdn), 'dc=example')
+        self.assertEqual(rdn.toWire(), b'dc=example')
 
     def testRDN(self):
         proto=dn.RelativeDistinguishedName('dc=example')
         rdn=dn.RelativeDistinguishedName(proto)
-        self.assertEqual(str(rdn), 'dc=example')
+        self.assertEqual(rdn.toWire(), b'dc=example')
 
 class DistinguishedName_Comparison(unittest.TestCase):
     """

@@ -55,7 +55,7 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
     def addChild(self, rdn, attributes):
         """TODO ugly API. Returns the created entry."""
         rdn = distinguishedname.RelativeDistinguishedName(rdn)
-        rdn_str = str(rdn)
+        rdn_str = rdn.toWire()
         if rdn_str in self._children:
             raise ldaperrors.LDAPEntryAlreadyExists(self._children[rdn_str].dn)
         dn = distinguishedname.DistinguishedName(

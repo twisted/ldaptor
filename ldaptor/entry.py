@@ -116,7 +116,7 @@ class BaseLDAPEntry(object):
                 vs = list(values)
                 vs.sort()
                 a.append((key, vs))
-        return ldif.asLDIF(self.dn, a)
+        return ldif.asLDIF(self.dn.toWire().decode('utf-8'), a)
 
     def __eq__(self, other):
         if not isinstance(other, BaseLDAPEntry):

@@ -129,7 +129,7 @@ class ModifyOp(Operation):
 
     def asLDIF(self):
         r = []
-        r.append(ldif.attributeAsLDIF('dn', str(self.dn)))
+        r.append(ldif.attributeAsLDIF('dn', self.dn.toWire().decode('utf-8')))
         r.append(ldif.attributeAsLDIF('changetype', 'modify'))
         for m in self.modifications:
             r.append(m.asLDIF())
@@ -138,7 +138,7 @@ class ModifyOp(Operation):
 
     def asLDAP(self):
         return pureldap.LDAPModifyRequest(
-            object=str(self.dn),
+            object=self.dn,
             modification=[x.asLDAP() for x in self.modifications])
 
     @classmethod
@@ -181,7 +181,7 @@ class ModifyOp(Operation):
     def __repr__(self):
         return (self.__class__.__name__
                 + '('
-                + 'dn=%r' % str(self.dn)
+                + 'dn=%r' % self.dn
                 + ', '
                 + 'modifications=%r' % self.modifications
                 + ')')

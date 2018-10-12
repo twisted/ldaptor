@@ -2,58 +2,46 @@ from functools import total_ordering
 
 import six
 
+from ldaptor.encoder import to_unicode, WireStrAlias
+
 # See rfc2253
 # Note that RFC 2253 sections 2.4 and 3 disagree whether "=" needs to
 # be quoted. Let's trust the syntax, slapd refuses to accept unescaped
 # "=" in RDN values.
-escapedChars = r',+"\<>;='
-escapedChars_leading = r' #'
-escapedChars_trailing = r' #'
+escapedChars = u',+"\<>;='
+escapedChars_leading = u' #'
+escapedChars_trailing = u' #'
 
 
 def escape(s):
-    r = ''
-    r_trailer = ''
-
-    have_bytes = False
-    if isinstance(s, bytes):
-        s = s.decode('utf-8')
-        have_bytes = True
+    r = u''
+    r_trailer = u''
 
     if s and s[0] in escapedChars_leading:
-        r = '\\' + s[0]
+        r = u'\\' + s[0]
         s = s[1:]
 
     if s and s[-1] in escapedChars_trailing:
-        r_trailer = '\\' + s[-1]
+        r_trailer = u'\\' + s[-1]
         s = s[:-1]
 
     for c in s:
         if c in escapedChars:
-            r = r + '\\' + c
+            r = r + u'\\' + c
         elif ord(c) <= 31:
-            r = r + '\\%02X' % ord(c)
+            r = r + u'\\%02X' % ord(c)
         else:
             r = r + c
 
-    result = r + r_trailer
-    if have_bytes:
-        return result.encode('utf-8')
-    else:
-        return result
+    return r + r_trailer
 
 
 def unescape(s):
-    r = ''
-
-    have_bytes = False
-    if isinstance(s, bytes):
-        s = s.decode('utf-8')
-        have_bytes = True
+    r = u''
 
     while s:
-        if s[0] == '\\':
-            if s[1] in '0123456789abcdef':
+        if s[0] == u'\\':
+            if s[1] in u'0123456789abcdef':
                 r = r + chr(int(s[1:3], 16))
                 s = s[3:]
             else:
@@ -63,44 +51,32 @@ def unescape(s):
             r = r + s[0]
             s = s[1:]
 
-    if have_bytes:
-        return r.encode('utf-8')
-    else:
-        return r
+    return r
 
 
 def _splitOnNotEscaped(s, separator):
     if not s:
         return []
 
-    have_bytes = False
-    if isinstance(s, bytes):
-        s = s.decode('utf-8')
-        have_bytes  = True
-
-
-    r = ['']
+    r = [u'']
     while s:
         first = s[0:1]
 
-        if first == '\\':
+        if first == u'\\':
             r[-1] = r[-1] + s[:2]
             s = s[2:]
         else:
 
             if first == separator:
-                r.append('')
+                r.append(u'')
                 s = s[1:]
-                while s[0:1] == ' ':
+                while s[0:1] == u' ':
                     s = s[1:]
             else:
                 r[-1] = r[-1] + first
                 s = s[1:]
 
-    if have_bytes:
-        return [x.encode('utf-8') for x in r]
-    else:
-        return r
+    return r
 
 
 class InvalidRelativeDistinguishedName(Exception):
@@ -108,14 +84,14 @@ class InvalidRelativeDistinguishedName(Exception):
 
     def __init__(self, rdn):
         Exception.__init__(self)
-        self.rdn = rdn
+        self.rdn = rdn.encode('utf-8') if six.PY2 else rdn
 
     def __str__(self):
         return "Invalid relative distinguished name %s." \
                % repr(self.rdn)
 
 
-class LDAPAttributeTypeAndValue:
+class LDAPAttributeTypeAndValue(WireStrAlias):
     # TODO I should be used everywhere
     attributeType = None
     value = None
@@ -124,23 +100,20 @@ class LDAPAttributeTypeAndValue:
         if stringValue is None:
             assert attributeType is not None
             assert value is not None
-            self.attributeType = attributeType
-            self.value = value
+            self.attributeType = to_unicode(attributeType)
+            self.value = to_unicode(value)
         else:
             assert attributeType is None
             assert value is None
 
-            if isinstance(stringValue, bytes):
-                equal_char = b'='
-            else:
-                equal_char = '='
+            stringValue = to_unicode(stringValue)
 
-            if equal_char not in stringValue:
+            if u'=' not in stringValue:
                 raise InvalidRelativeDistinguishedName(stringValue)
-            self.attributeType, self.value = stringValue.split(equal_char, 1)
+            self.attributeType, self.value = stringValue.split(u'=', 1)
 
-    def __str__(self):
-        return '='.join((escape(self.attributeType), escape(self.value)))
+    def toWire(self):
+        return '='.join((escape(self.attributeType), escape(self.value))).encode('utf-8')
 
     def __repr__(self):
         return (self.__class__.__name__
@@ -181,7 +154,7 @@ class LDAPAttributeTypeAndValue:
         return not self < other
 
 
-class RelativeDistinguishedName:
+class RelativeDistinguishedName(WireStrAlias):
     """LDAP Relative Distinguished Name."""
 
     attributeTypesAndValues = None
@@ -192,25 +165,25 @@ class RelativeDistinguishedName:
             assert attributeTypesAndValues is None
             if isinstance(magic, RelativeDistinguishedName):
                 attributeTypesAndValues = magic.split()
-            elif isinstance(magic, six.string_types):
+            elif isinstance(magic, (six.binary_type, six.text_type)):
                 stringValue = magic
             else:
                 attributeTypesAndValues = magic
 
         if stringValue is None:
             assert attributeTypesAndValues is not None
-            assert not isinstance(attributeTypesAndValues, six.string_types)
+            assert not isinstance(attributeTypesAndValues, (six.binary_type, six.text_type))
             self.attributeTypesAndValues = tuple(attributeTypesAndValues)
         else:
             assert attributeTypesAndValues is None
             self.attributeTypesAndValues = tuple([LDAPAttributeTypeAndValue(stringValue=unescape(x))
-                                                  for x in _splitOnNotEscaped(stringValue, '+')])
+                                                  for x in _splitOnNotEscaped(to_unicode(stringValue), u'+')])
 
     def split(self):
         return self.attributeTypesAndValues
 
-    def __str__(self):
-        return '+'.join([str(x) for x in self.attributeTypesAndValues])
+    def toWire(self):
+        return b'+'.join([x.toWire() for x in self.attributeTypesAndValues])
 
     def __repr__(self):
         return (self.__class__.__name__
@@ -249,7 +222,7 @@ class RelativeDistinguishedName:
 
 
 @total_ordering
-class DistinguishedName:
+class DistinguishedName(WireStrAlias):
     """LDAP Distinguished Name."""
     listOfRDNs = None
 
@@ -262,11 +235,9 @@ class DistinguishedName:
             assert listOfRDNs is None
             if isinstance(magic, DistinguishedName):
                 listOfRDNs = magic.split()
-            elif isinstance(magic, six.binary_type):
+            elif isinstance(magic, (six.binary_type, six.text_type)):
                 # This might need to be expended if we want to support
                 # different encodings.
-                stringValue = magic
-            elif isinstance(magic, six.string_types):
                 stringValue = magic
             else:
                 listOfRDNs = magic
@@ -279,7 +250,7 @@ class DistinguishedName:
         else:
             assert listOfRDNs is None
             self.listOfRDNs = tuple([RelativeDistinguishedName(stringValue=x)
-                                     for x in _splitOnNotEscaped(stringValue, ',')])
+                                     for x in _splitOnNotEscaped(to_unicode(stringValue), u',')])
 
     def split(self):
         return self.listOfRDNs
@@ -287,8 +258,8 @@ class DistinguishedName:
     def up(self):
         return DistinguishedName(listOfRDNs=self.listOfRDNs[1:])
 
-    def __str__(self):
-        return ','.join([str(x) for x in self.listOfRDNs])
+    def toWire(self):
+        return b','.join([x.toWire() for x in self.listOfRDNs])
 
     def __repr__(self):
         return (self.__class__.__name__
@@ -297,11 +268,13 @@ class DistinguishedName:
                 + ')')
 
     def __hash__(self):
-        return hash(str(self))
+        return hash(self.toWire())
 
     def __eq__(self, other):
-        if isinstance(other, six.string_types):
-            return str(self) == other
+        if isinstance(other, six.binary_type):
+            return self.toWire() == other
+        if isinstance(other, six.text_type):
+            return self.toWire().decode('utf-8') == other
         if not isinstance(other, DistinguishedName):
             return NotImplemented
         return self.split() == other.split()
@@ -329,11 +302,11 @@ class DistinguishedName:
             if rdn.count() != 1:
                 break
             attributeTypeAndValue = rdn.split()[0]
-            if attributeTypeAndValue.attributeType.upper() != 'DC':
+            if attributeTypeAndValue.attributeType.upper() != u'DC':
                 break
             domainParts.insert(0, attributeTypeAndValue.value)
         if domainParts:
-            return '.'.join(domainParts)
+            return u'.'.join(domainParts)
         else:
             return None
 
