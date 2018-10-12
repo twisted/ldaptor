@@ -26,9 +26,8 @@ def s(*l):
     """Join all members of list to a byte string. Integer members are converted to bytes"""
     r = b''
     for e in l:
-        if isinstance(e, int):
-            e = six.int2byte(e)
-        r = r + bytes(e)
+        e = six.int2byte(e)
+        r = r + e
     return r
 
 
