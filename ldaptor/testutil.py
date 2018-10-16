@@ -5,6 +5,7 @@ from twisted.python import failure
 from twisted.trial import unittest
 from twisted.test import proto_helpers
 from ldaptor import config
+from ldaptor.encoder import to_bytes
 
 
 def mustRaise(dummy):
@@ -127,8 +128,8 @@ class LDAPClientTestDriver:
             shouldBeSent,
             self.sent)
         assert self.sent == shouldBeSent, msg
-        sentStr = ''.join([str(x) for x in self.sent])
-        shouldBeSentStr = ''.join([str(x) for x in shouldBeSent])
+        sentStr = b''.join([to_bytes(x) for x in self.sent])
+        shouldBeSentStr = b''.join([to_bytes(x) for x in shouldBeSent])
         msg = '%s expected to send data %r but sent %r' % (
             self.__class__.__name__,
             shouldBeSentStr,
