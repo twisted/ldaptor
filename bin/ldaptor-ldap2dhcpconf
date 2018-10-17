@@ -15,21 +15,17 @@
 #shared-network "foo" {
 #}
 
+from __future__ import print_function
 from ldaptor.protocols.ldap import ldapclient, ldapconnector, ldapsyntax
 from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage, ldapfilter, config
 from twisted.internet import reactor
 from socket import inet_aton, inet_ntoa
-import sets
+import struct
 
 
 def my_aton_octets(ip):
-    s=inet_aton(ip)
-    octets=map(None, s)
-    n=0L
-    for o in octets:
-        n=n<<8
-        n+=ord(o)
+    n, = struct.unpack('!I', inet_aton(ip))
     return n
 
 def my_aton_numbits(num):
@@ -49,12 +45,7 @@ def my_aton(ip):
         return my_aton_numbits(i)
 
 def my_ntoa(n):
-    s=(
-        chr((n>>24)&0xFF)
-        + chr((n>>16)&0xFF)
-        + chr((n>>8)&0xFF)
-        + chr(n&0xFF)
-       )
+    s=struct.pack('!I', n)
     ip=inet_ntoa(s)
     return ip
 
@@ -75,7 +66,7 @@ class HostIPAddress:
                 yield '\tfilename "%s";' % self.host.bootFile
             yield '}'
 
-        print '\n'.join([prefix+line for line in output()])
+        print('\n'.join([prefix+line for line in output()]))
 
     def __repr__(self):
         return (self.__class__.__name__
@@ -88,36 +79,36 @@ class Group:
     def __init__(self, dn, bootFile=None):
         self.dn = dn
         self.bootFile = bootFile
-        self.hosts = sets.Set()
+        self.hosts = set()
 
     def addHost(self, host):
         if host.group is not None:
-            print >>sys.stderr, (
+            print((
                 'Host %s is in two groups: %r and %r'
-                % (host.dn, host.group, self))
+                % (host.dn, host.group, self)), file=sys.stderr)
         else:
             host.group = self
             self.hosts.add(host)
 
     def printDHCP(self, domain, addrs, prefix=''):
-        addresses = sets.Set([addr
-                              for host in self.hosts
-                              for addr in host.ipAddresses])
+        addresses = set(addr
+                        for host in self.hosts
+                        for addr in host.ipAddresses)
         addresses.intersection_update(addrs)
         addrs.difference_update(addresses)
 
         if addresses:
-            print prefix+'# '+str(self.dn)
-            print prefix+'group {'
+            print(prefix+'# '+str(self.dn))
+            print(prefix+'group {')
 
             if self.bootFile is not None:
                 # TODO quote bootFile
-                print prefix+'\tfilename "%s";' % self.bootFile
+                print(prefix+'\tfilename "%s";' % self.bootFile)
 
             for addr in addresses:
                 addr.printDHCP(domain, prefix=prefix+'\t')
 
-            print prefix+'}'
+            print(prefix+'}')
 
 class Host:
     group = None
@@ -186,11 +177,9 @@ class Net:
             r.append('\toption domain-name-servers %s;' % (', '.join(self.domainNameServers)))
         r.append('}')
 
-        print '\n'.join([prefix+line for line in r])
+        print('\n'.join([prefix+line for line in r]))
 
-        addrs = sets.Set()
-        for addr in self.hosts:
-            addrs.add(addr)
+        addrs = set(self.hosts)
 
         for addr in self.hosts:
             g = addr.host.group
@@ -221,11 +210,11 @@ class SharedNet:
         self.nets.append(net)
 
     def printDHCP(self, domain):
-        print 'shared-network "%s" {' % self.name
+        print('shared-network "%s" {' % self.name)
         for net in self.nets:
             net.printDHCP(domain, prefix='\t')
-        print '}'
-        print
+        print('}')
+        print()
 
 def _cbGetGroups(entries, hosts):
     dnToHost = {}
@@ -279,9 +268,9 @@ def haveGroups(hosts, nets, sharedNets, dnsDomain):
     for host in hosts:
         for hostIP in host.ipAddresses:
             parent=None
-            for net in nets + reduce(lambda x,y: x+y,
-                                          [x.nets for x in sharedNets.values()],
-                                          []):
+            for net in nets + list(net_
+                                   for x in sharedNets.values()
+                                   for net_ in x.nets):
                 if net.isInNet(hostIP.ipAddress):
                     parent=net
                     break
@@ -318,8 +307,8 @@ def _cbGetHosts(entries):
         cn = only(e, 'cn')
         hosts.append(Host(str(e.dn),
                           str(cn),
-                          map(str, e['ipHostNumber']),
-                          map(str, e.get('macAddress', ())),
+                          list(str(i) for i in e['ipHostNumber']),
+                          tuple(str(i) for i in e.get('macAddress', ())),
                           bootFile=only(e, 'bootFile', default=None),
                           ))
     return hosts
@@ -362,9 +351,9 @@ def _cbGetNets(entries):
                   winsServers=e.get('winsServer', ()),
                   domainNameServers=e.get('domainNameServer', ()),
                   )
-        if e.has_key('sharedNetworkName'):
+        if 'sharedNetworkName' in e:
             name = only(e, 'sharedNetworkName')
-            if not sharedNetworks.has_key(name):
+            if name not in sharedNetworks:
                 sharedNetworks[name]=SharedNet(name)
             sharedNetworks[name].addNet(net)
         else:
@@ -403,15 +392,15 @@ def search(client, baseDN, filter, dnsDomain):
 exitStatus=0
 
 def error(fail):
-    print >>sys.stderr, 'fail:', fail.getErrorMessage()
+    print('fail:', fail.getErrorMessage(), file=sys.stderr)
     global exitStatus
     exitStatus=1
 
 def main(cfg, filter_text, dnsDomain):
     try:
         baseDN = cfg.getBaseDN()
-    except config.MissingBaseDNError, e:
-        print >>sys.stderr, "%s: %s." % (sys.argv[0], e)
+    except config.MissingBaseDNError as e:
+        print("%s: %s." % (sys.argv[0], e), file=sys.stderr)
         sys.exit(1)
 
     from twisted.python import log
@@ -451,7 +440,7 @@ if __name__ == "__main__":
     try:
         opts = MyOptions()
         opts.parseOptions()
-    except usage.UsageError, ue:
+    except usage.UsageError as ue:
         sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
         sys.exit(1)
 
