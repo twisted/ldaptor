@@ -884,15 +884,16 @@ class LDAPSyntaxLDIF(unittest.TestCase):
             'aValue': ['a', 'b'],
             'bValue': ['c'],
             })
-        self.failUnlessEqual(str(o),
-                             '\n'.join((
-            "dn: cn=foo,dc=example,dc=com",
-            "objectClass: a",
-            "objectClass: b",
-            "aValue: a",
-            "aValue: b",
-            "bValue: c",
-            "\n")))
+        self.failUnlessEqual(o.toWire(),
+                             b'''dn: cn=foo,dc=example,dc=com
+objectClass: a
+objectClass: b
+aValue: a
+aValue: b
+bValue: c
+
+''')
+
 
 class LDAPSyntaxDelete(unittest.TestCase):
     def testDeleteInvalidates(self):

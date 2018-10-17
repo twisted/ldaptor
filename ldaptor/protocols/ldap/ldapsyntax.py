@@ -275,7 +275,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         return True
 
     def __hash__(self):
-        return hash(str(self))
+        return hash(self.toWire())
 
     def bind(self, password):
         r = pureldap.LDAPBindRequest(dn=self.dn, auth=password)
