@@ -330,12 +330,18 @@ class DistinguishedName_Init(unittest.TestCase):
         self.assertEqual(d.toWire(), b'dc=example,dc=com')
 
     def testEqualToByteString(self):
+        """
+        DistinguishedName should be equal to its bytes representation
+        """
         d = dn.DistinguishedName('dc=example,dc=com')
-        assert d == b'dc=example,dc=com'
+        self.assertEqual(d, b'dc=example,dc=com')
 
     def testEqualToString(self):
+        """
+        DistinguishedName should be equal to its unicode representation
+        """
         d = dn.DistinguishedName('dc=example,dc=com')
-        assert d == u'dc=example,dc=com'
+        self.assertEqual(d, u'dc=example,dc=com')
 
 
 class RelativeDistinguishedName_Init(unittest.TestCase):
