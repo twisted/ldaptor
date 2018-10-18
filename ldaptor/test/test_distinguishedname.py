@@ -331,14 +331,14 @@ class DistinguishedName_Init(unittest.TestCase):
 
     def testEqualToByteString(self):
         """
-        DistinguishedName should be equal to its bytes representation
+        DistinguishedName is equal to its bytes representation
         """
         d = dn.DistinguishedName('dc=example,dc=com')
         self.assertEqual(d, b'dc=example,dc=com')
 
     def testEqualToString(self):
         """
-        DistinguishedName should be equal to its unicode representation
+        DistinguishedName is equal to its unicode representation
         """
         d = dn.DistinguishedName('dc=example,dc=com')
         self.assertEqual(d, u'dc=example,dc=com')

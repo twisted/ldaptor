@@ -80,7 +80,11 @@ def _splitOnNotEscaped(s, separator):
 
 
 class InvalidRelativeDistinguishedName(Exception):
-    """Invalid relative distinguished name."""
+    """
+    Invalid relative distinguished name.
+    It is assumed that passed RDN is of str type:
+    bytes for PY2 and unicode for PY3.
+    """
 
     def __init__(self, rdn):
         Exception.__init__(self)

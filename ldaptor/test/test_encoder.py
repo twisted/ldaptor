@@ -11,7 +11,7 @@ from ldaptor.encoder import to_bytes, WireStrAlias
 
 class WireableObject(object):
     """
-    Dummy object with bytes representation
+    Object with bytes representation as a constant toWire value
     """
 
     def toWire(self):
@@ -22,7 +22,7 @@ class EncoderTests(unittest.TestCase):
 
     def test_wireable_object(self):
         """
-        to_bytes function should use object`s toWire method
+        to_bytes function use object`s toWire method
         to get its bytes representation if it has one
         """
         obj = WireableObject()
@@ -30,7 +30,7 @@ class EncoderTests(unittest.TestCase):
 
     def test_unicode_object(self):
         """
-        unicode string should be encoded to utf-8 if passed
+        unicode string is encoded to utf-8 if passed
         to to_bytes function
         """
         obj = six.u('unicode')
@@ -38,7 +38,7 @@ class EncoderTests(unittest.TestCase):
 
     def test_bytes_object(self):
         """
-        byte string should be returned without changes
+        byte string is returned without changes
         if passed to to_bytes function
         """
         obj = b'bytes'
