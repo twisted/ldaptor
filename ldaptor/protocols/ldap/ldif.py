@@ -16,7 +16,7 @@ import base64
 
 import six
 
-from ldaptor.encoder import to_bytes
+from ldaptor._encoder import to_bytes
 
 
 def base64_encode(s):

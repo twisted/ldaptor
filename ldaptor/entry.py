@@ -6,7 +6,7 @@ from twisted.python.util import InsensitiveDict
 from zope.interface import implementer
 
 from ldaptor import interfaces, attributeset, delta
-from ldaptor.encoder import WireStrAlias
+from ldaptor._encoder import WireStrAlias
 from ldaptor.protocols.ldap import distinguishedname, ldif, ldaperrors
 
 

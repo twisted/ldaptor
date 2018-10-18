@@ -32,7 +32,7 @@
 
 import six
 
-from ldaptor.encoder import to_bytes, WireStrAlias
+from ldaptor._encoder import to_bytes, WireStrAlias
 
 # xxxxxxxx
 # |/|\.../

@@ -2,7 +2,7 @@ from functools import total_ordering
 
 import six
 
-from ldaptor.encoder import to_unicode, WireStrAlias
+from ldaptor._encoder import to_unicode, WireStrAlias
 
 # See rfc2253
 # Note that RFC 2253 sections 2.4 and 3 disagree whether "=" needs to

@@ -5,7 +5,7 @@ from twisted.python import failure
 from twisted.trial import unittest
 from twisted.test import proto_helpers
 from ldaptor import config
-from ldaptor.encoder import to_bytes
+from ldaptor._encoder import to_bytes
 
 
 def mustRaise(dummy):
