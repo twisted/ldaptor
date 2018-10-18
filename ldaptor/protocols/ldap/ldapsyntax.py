@@ -232,7 +232,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         self._checkState()
         return super(LDAPEntryWithClient, self).items()
 
-    def __str__(self):
+    def toWire(self):
         a = []
 
         objectClasses = list(self.get('objectClass', []))
@@ -244,7 +244,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         for key, values in lst:
             if key != 'objectClass':
                 a.append((key, values))
-        return ldif.asLDIF(self.dn.toWire().decode('utf-8'), a)
+        return ldif.asLDIF(self.dn, a)
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
