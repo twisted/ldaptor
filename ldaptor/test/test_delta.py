@@ -146,6 +146,21 @@ replace: thud
 -
 """)
 
+    def testAddBase64(self):
+        """
+        LDIF attribute representation is base64 encoded
+        if attribute value contains nonprintable characters
+        or starts with reserved characters
+        """
+        m = delta.Add('attr', [':value1', 'value\n\r2'])
+        self.assertEqual(m.asLDIF(),
+                         b"""\
+add: attr
+attr:: OnZhbHVlMQ==
+attr:: dmFsdWUKDTI=
+-
+""")
+
 
 class OperationTestCase(unittest.TestCase):
     """
