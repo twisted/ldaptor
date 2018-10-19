@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from __future__ import print_function
 import sys
 from ldaptor.protocols.ldap.distinguishedname import DistinguishedName
 from twisted.internet.defer import DeferredList
@@ -10,12 +11,12 @@ def printAnswer(answers, dn):
     for rrlist in answers:
         for rr in rrlist:
             if isinstance(rr.payload, dns.Record_SRV):
-                print '%s\tpri=%d weight=%d %s:%d' % (dn,
+                print('%s\tpri=%d weight=%d %s:%d' % (dn,
                                                   rr.payload.priority,
                                                   rr.payload.weight,
                                                   rr.payload.target,
                                                   rr.payload.port,
-                                                  )
+                                                  ))
             else:
                 # suppress additional records
                 pass
@@ -24,7 +25,7 @@ def printAnswer(answers, dn):
 exitStatus = 0
 
 def errback(data):
-    print "ERROR:", data.getErrorMessage()
+    print("ERROR:", data.getErrorMessage())
     global exitStatus
     exitStatus=1
 
@@ -47,7 +48,7 @@ def main(dns):
 
 if __name__ == "__main__":
     if not sys.argv[1:]:
-        print >>sys.stderr, '%s: usage:' % sys.argv[0]
-        print >>sys.stderr, '  %s DN..' % sys.argv[0]
+        print('%s: usage:' % sys.argv[0], file=sys.stderr)
+        print('  %s DN..' % sys.argv[0], file=sys.stderr)
     else:
         main(sys.argv[1:])

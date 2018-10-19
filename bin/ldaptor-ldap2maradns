@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from __future__ import print_function
 from ldaptor.protocols.ldap import distinguishedname, ldapconnector, ldapsyntax, ldapclient
 from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage, ldapfilter, config, dns
@@ -7,13 +8,13 @@ import sys
 from twisted.internet import protocol, defer, reactor
 
 def printIPAddress(name, ip):
-    print 'A'+name+'.%|86400|'+ip
+    print('A'+name+'.%|86400|'+ip)
 
 def printPTR(name, ip):
     octets = ip.split('.')
     octets.reverse()
     octets.append('in-addr.arpa.')
-    print 'P'+('.'.join(octets))+'|86400|'+name+'.%'
+    print('P'+('.'.join(octets))+'|86400|'+name+'.%')
 
 class HostIPAddress:
     def __init__(self, host, ipAddress):
@@ -21,7 +22,7 @@ class HostIPAddress:
         self.ipAddress=ipAddress
 
     def printZone(self, domain):
-        print '#  '+self.host.dn
+        print('#  '+self.host.dn)
         printIPAddress(self.host.name+'.'+domain, self.ipAddress)
         printPTR(self.host.name+'.'+domain, self.ipAddress)
 
@@ -62,7 +63,7 @@ class Net:
         return 0
 
     def printZone(self):
-        print '#'+self.dn
+        print('#'+self.dn)
         printIPAddress(self.name, self.address)
         printPTR(self.name, self.address)
         ip = dns.aton(self.address)
@@ -87,7 +88,7 @@ class Net:
 exitStatus=0
 
 def error(fail):
-    print >>sys.stderr, 'fail:', str(fail) #.getErrorMessage()
+    print('fail:', str(fail), file=sys.stderr) #.getErrorMessage()
     global exitStatus
     exitStatus=1
 
@@ -132,7 +133,7 @@ def getHosts(nets, e, filter):
     def _cbGotHost(e):
         host = Host(str(e.dn),
                     str(only(e, 'cn')),
-                    map(str, e['ipHostNumber']))
+                    list(str(i) for i in e['ipHostNumber']))
         for hostIP in host.ipAddresses:
             parent=None
             for net in nets:
@@ -166,8 +167,8 @@ def main(cfg, filter_text):
 
     try:
         baseDN = cfg.getBaseDN()
-    except config.MissingBaseDNError, e:
-        print >>sys.stderr, "%s: %s." % (sys.argv[0], e)
+    except config.MissingBaseDNError as e:
+        print("%s: %s." % (sys.argv[0], e), file=sys.stderr)
         sys.exit(1)
 
     if filter_text is not None:
@@ -196,7 +197,7 @@ if __name__ == "__main__":
     try:
         opts = MyOptions()
         opts.parseOptions()
-    except usage.UsageError, ue:
+    except usage.UsageError as ue:
         sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
         sys.exit(1)
 

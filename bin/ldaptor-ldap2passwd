@@ -1,4 +1,5 @@
 #!/usr/bin/python
+from __future__ import print_function
 import sys
 from ldaptor.protocols.ldap import ldapclient, ldif, distinguishedname, ldapconnector, ldapsyntax
 from ldaptor.protocols import pureber, pureldap
@@ -9,10 +10,10 @@ def _cbSearch(obj):
     a={}
     for attr, vals in obj.items():
         attr=str(attr)
-        assert not a.has_key(attr)
-        a[attr]=map(str, vals)
+        assert attr not in a
+        a[attr]=list(str(val) for val in vals)
 
-    print ':'.join((
+    print(':'.join((
         a['uid'][0],
         'x',
         a['uidNumber'][0],
@@ -20,7 +21,7 @@ def _cbSearch(obj):
         a.get('gecos', a.get('cn', ['']))[0],
         a['homeDirectory'][0],
         a.get('loginShell', [''])[0],
-        ))
+        )))
 
 def search(client, baseDN, filt):
     e=ldapsyntax.LDAPEntry(client=client, dn=baseDN)
@@ -39,15 +40,15 @@ def search(client, baseDN, filt):
 exitStatus=0
 
 def error(fail):
-    print >>sys.stderr, 'fail:', fail.getErrorMessage()
+    print('fail:', fail.getErrorMessage(), file=sys.stderr)
     global exitStatus
     exitStatus=1
 
 def main(cfg, filter_text):
     try:
         baseDN = cfg.getBaseDN()
-    except config.MissingBaseDNError, e:
-        print >>sys.stderr, "%s: %s." % (sys.argv[0], e)
+    except config.MissingBaseDNError as e:
+        print("%s: %s." % (sys.argv[0], e), file=sys.stderr)
         sys.exit(1)
 
     filt = ldapfilter.parseFilter('(objectClass=posixAccount)')
@@ -77,7 +78,7 @@ if __name__ == "__main__":
     try:
         opts = MyOptions()
         opts.parseOptions()
-    except usage.usage.UsageError, ue:
+    except usage.usage.UsageError as ue:
         sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
         sys.exit(1)
 

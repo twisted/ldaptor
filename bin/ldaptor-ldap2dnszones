@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from __future__ import print_function
 from ldaptor.protocols.ldap import distinguishedname, ldapconnector, ldapsyntax, ldapclient
 from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage, ldapfilter, config, dns
@@ -106,7 +107,7 @@ class Net:
 exitStatus=0
 
 def error(fail):
-    print >>sys.stderr, 'fail:', str(fail) #.getErrorMessage()
+    print('fail:', str(fail), file=sys.stderr) #.getErrorMessage()
     global exitStatus
     exitStatus=1
 
@@ -137,7 +138,7 @@ def getNets(e, domain, forward, reverse, filter):
                       str(only(e, 'cn')),
                       str(only(e, 'ipNetworkNumber')),
                       str(only(e, 'ipNetmaskNumber')))
-            print >>forward, net.getForward()
+            print(net.getForward(), file=forward)
 
             for data in reverse:
                 ip = dns.aton(net.address)
@@ -145,7 +146,7 @@ def getNets(e, domain, forward, reverse, filter):
                     if 'file' not in data:
                         data['tempname'] = '%s.%d.tmp' % (data['filename'], os.getpid())
                         data['file'] = open(data['tempname'], 'w')
-                    print >>data['file'], net.getReverse(domain)
+                    print(net.getReverse(domain), file=data['file'])
                     net.reverseZone = data
             r.append(net)
         return r
@@ -160,7 +161,7 @@ def getHosts(nets, e, domain, forward, reverse, filter):
     def _cbGotHost(e):
         host = Host(str(e.dn),
                     str(only(e, 'cn')),
-                    map(str, e['ipHostNumber']))
+                    list(str(i) for i in e['ipHostNumber']))
         for hostIP in host.ipAddresses:
             parent=None
             for net in nets:
@@ -169,13 +170,13 @@ def getHosts(nets, e, domain, forward, reverse, filter):
                     break
 
             if parent:
-                print >>forward, hostIP.getForward(parent.name)
+                print(hostIP.getForward(parent.name), file=forward)
                 if parent.reverseZone:
-                    print >>parent.reverseZone['file'], hostIP.getReverse(parent.name
+                    print(hostIP.getReverse(parent.name
                                                                           + '.'
-                                                                          + domain)
+                                                                          + domain), file=parent.reverseZone['file'])
                 else:
-                    print >>sys.stderr, "Not writing PTR for %s." % hostIP
+                    print("Not writing PTR for %s." % hostIP, file=sys.stderr)
             else:
                 sys.stderr.write("IP address %s is in no net, discarding.\n" % hostIP)
     d = e.search(filterObject=filt,
@@ -226,8 +227,8 @@ def main(cfg, domain, forward, reverse, filter_text):
 
     try:
         baseDN = cfg.getBaseDN()
-    except config.MissingBaseDNError, e:
-        print >>sys.stderr, "%s: %s." % (sys.argv[0], e)
+    except config.MissingBaseDNError as e:
+        print("%s: %s." % (sys.argv[0], e), file=sys.stderr)
         sys.exit(1)
 
     if filter_text is not None:
@@ -236,10 +237,10 @@ def main(cfg, domain, forward, reverse, filter_text):
         filt = None
 
     forwardTmp = '%s.%d.tmp' % (forward, os.getpid())
-    forwardFile = file(forwardTmp, 'w')
+    forwardFile = open(forwardTmp, 'w')
 
-    print >>forwardFile, '$ORIGIN\t%s.' % domain
-    print >>forwardFile
+    print('$ORIGIN\t%s.' % domain, file=forwardFile)
+    print(file=forwardFile)
 
     c=ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
     d = c.connectAnonymously(
@@ -274,12 +275,12 @@ class MyOptions(usage.Options, usage.Options_service_location, usage.Options_bas
 
         try:
             address = dns.aton(addressString)
-        except socket.error, e:
+        except socket.error as e:
             raise usage.UsageError('--reverse= address is invalid: %s' % e)
 
         try:
             netmask = dns.aton(netmaskString)
-        except socket.error, e:
+        except socket.error as e:
             raise usage.UsageError('--reverse= netmask is invalid: %s' % e)
 
         self.opts.setdefault('reverse', []).append({
@@ -298,7 +299,7 @@ if __name__ == "__main__":
     try:
         opts = MyOptions()
         opts.parseOptions()
-    except usage.UsageError, ue:
+    except usage.UsageError as ue:
         sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
         sys.exit(1)
 

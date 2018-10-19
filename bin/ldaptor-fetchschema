@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from __future__ import print_function
 import sys
 from ldaptor.protocols.ldap import ldapclient, ldapconnector, fetchschema
 from ldaptor import usage, config
@@ -10,27 +11,27 @@ def _printResults(x):
 
     something = False
     for at in attributeTypes:
-        print 'attributetype', at
+        print('attributetype', at)
         something = True
 
     if something:
-        print
+        print()
 
     for oc in objectClasses:
-        print 'objectclass', oc
+        print('objectclass', oc)
 
 exitStatus=0
 
 def error(fail):
-    print >>sys.stderr, 'fail:', fail.getErrorMessage()
+    print('fail:', fail.getErrorMessage(), file=sys.stderr)
     global exitStatus
     exitStatus=1
 
 def main(cfg):
     try:
         baseDN = cfg.getBaseDN()
-    except config.MissingBaseDNError, e:
-        print >>sys.stderr, "%s: %s." % (sys.argv[0], e)
+    except config.MissingBaseDNError as e:
+        print("%s: %s." % (sys.argv[0], e), file=sys.stderr)
         sys.exit(1)
 
     c = ldapconnector.LDAPClientCreator(reactor,
@@ -58,7 +59,7 @@ if __name__ == "__main__":
     try:
         opts = MyOptions()
         opts.parseOptions()
-    except usage.UsageError, ue:
+    except usage.UsageError as ue:
         sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
         sys.exit(1)
 
