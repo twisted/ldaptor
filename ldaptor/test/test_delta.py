@@ -103,7 +103,7 @@ class TestModificationOpLDIF(unittest.TestCase):
     def testAdd(self):
         m=delta.Add('foo', ['bar', 'baz'])
         self.assertEqual(m.asLDIF(),
-                          """\
+                         b"""\
 add: foo
 foo: bar
 foo: baz
@@ -113,7 +113,7 @@ foo: baz
     def testDelete(self):
         m=delta.Delete('foo', ['bar', 'baz'])
         self.assertEqual(m.asLDIF(),
-                          """\
+                         b"""\
 delete: foo
 foo: bar
 foo: baz
@@ -123,7 +123,7 @@ foo: baz
     def testDeleteAll(self):
         m=delta.Delete('foo')
         self.assertEqual(m.asLDIF(),
-                          """\
+                         b"""\
 delete: foo
 -
 """)
@@ -131,7 +131,7 @@ delete: foo
     def testReplace(self):
         m=delta.Replace('foo', ['bar', 'baz'])
         self.assertEqual(m.asLDIF(),
-                          """\
+                         b"""\
 replace: foo
 foo: bar
 foo: baz
@@ -141,8 +141,23 @@ foo: baz
     def testReplaceAll(self):
         m=delta.Replace('thud')
         self.assertEqual(m.asLDIF(),
-                          """\
+                         b"""\
 replace: thud
+-
+""")
+
+    def testAddBase64(self):
+        """
+        LDIF attribute representation is base64 encoded
+        if attribute value contains nonprintable characters
+        or starts with reserved characters
+        """
+        m = delta.Add('attr', [':value1', 'value\n\r2'])
+        self.assertEqual(m.asLDIF(),
+                         b"""\
+add: attr
+attr:: OnZhbHVlMQ==
+attr:: dmFsdWUKDTI=
 -
 """)
 
@@ -177,7 +192,7 @@ class TestAddOpLDIF(OperationTestCase):
 
         result = sut.asLDIF()
 
-        self.assertEqual("""dn: dc=example,dc=com
+        self.assertEqual(b"""dn: dc=example,dc=com
 changetype: add
 foo: bar
 foo: baz
@@ -295,7 +310,7 @@ class TestDeleteOpLDIF(OperationTestCase):
         sut = delta.DeleteOp('dc=example,dc=com')
 
         result = sut.asLDIF()
-        self.assertEqual("""dn: dc=example,dc=com
+        self.assertEqual(b"""dn: dc=example,dc=com
 changetype: delete
 
 """,
@@ -400,7 +415,7 @@ class TestModifyOp(OperationTestCase):
 
         result = sut.asLDIF()
 
-        self.assertEqual("""dn: cn=Paula Jensen,ou=Dev Ops,dc=airius,dc=com
+        self.assertEqual(b"""dn: cn=Paula Jensen,ou=Dev Ops,dc=airius,dc=com
 changetype: modify
 add: postaladdress
 postaladdress: 123 Anystreet $ Sunnyvale, CA $ 94086

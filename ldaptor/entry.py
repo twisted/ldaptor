@@ -6,6 +6,7 @@ from twisted.python.util import InsensitiveDict
 from zope.interface import implementer
 
 from ldaptor import interfaces, attributeset, delta
+from ldaptor._encoder import WireStrAlias
 from ldaptor.protocols.ldap import distinguishedname, ldif, ldaperrors
 
 
@@ -34,7 +35,7 @@ def sshaDigest(passphrase, salt=None):
 
 
 @implementer(interfaces.ILDAPEntry)
-class BaseLDAPEntry(object):
+class BaseLDAPEntry(WireStrAlias):
     dn = None
 
     def __init__(self, dn, attributes={}):
@@ -102,7 +103,7 @@ class BaseLDAPEntry(object):
 
         return a
 
-    def __str__(self):
+    def toWire(self):
         a = []
 
         objectClasses = list(self.get('objectClass', []))

@@ -26,7 +26,7 @@ class LDAPEntryTests(unittest.TestCase):
             'aValue': ['a'],
             'bValue': ['b'],
             })
-        self.failUnlessEqual(str(o.dn), 'cn=foo,dc=example,dc=com')
+        self.failUnlessEqual(o.dn.toWire(), b'cn=foo,dc=example,dc=com')
         self.failUnlessEqual(o['objectClass'], ['a', 'b'])
         self.failUnlessEqual(o['aValue'], ['a'])
         self.failUnlessEqual(o['bValue'], ['b'])
@@ -884,15 +884,16 @@ class LDAPSyntaxLDIF(unittest.TestCase):
             'aValue': ['a', 'b'],
             'bValue': ['c'],
             })
-        self.failUnlessEqual(str(o),
-                             '\n'.join((
-            "dn: cn=foo,dc=example,dc=com",
-            "objectClass: a",
-            "objectClass: b",
-            "aValue: a",
-            "aValue: b",
-            "bValue: c",
-            "\n")))
+        self.failUnlessEqual(o.toWire(),
+                             b'''dn: cn=foo,dc=example,dc=com
+objectClass: a
+objectClass: b
+aValue: a
+aValue: b
+bValue: c
+
+''')
+
 
 class LDAPSyntaxDelete(unittest.TestCase):
     def testDeleteInvalidates(self):
@@ -1060,7 +1061,7 @@ class LDAPSyntaxContainingNamingContext(unittest.TestCase):
         def cb(p):
             assert isinstance(p, ldapsyntax.LDAPEntry)
             assert p.client == o.client
-            assert str(p.dn) == 'dc=example,dc=com'
+            assert p.dn.toWire() == b'dc=example,dc=com'
 
             client.assertSent(pureldap.LDAPSearchRequest(
                 baseObject='',

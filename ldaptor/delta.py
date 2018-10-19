@@ -60,8 +60,8 @@ class Add(Modification):
         r.append(ldif.attributeAsLDIF('add', self.key))
         for v in values:
             r.append(ldif.attributeAsLDIF(self.key, v))
-        r.append('-\n')
-        return ''.join(r)
+        r.append(b'-\n')
+        return b''.join(r)
 
 class Delete(Modification):
     _LDAP_OP = 1
@@ -80,8 +80,8 @@ class Delete(Modification):
         r.append(ldif.attributeAsLDIF('delete', self.key))
         for v in values:
             r.append(ldif.attributeAsLDIF(self.key, v))
-        r.append('-\n')
-        return ''.join(r)
+        r.append(b'-\n')
+        return b''.join(r)
 
 class Replace(Modification):
     _LDAP_OP = 2
@@ -102,8 +102,8 @@ class Replace(Modification):
         r.append(ldif.attributeAsLDIF('replace', self.key))
         for v in values:
             r.append(ldif.attributeAsLDIF(self.key, v))
-        r.append('-\n')
-        return ''.join(r)
+        r.append(b'-\n')
+        return b''.join(r)
 
 
 class Operation(object):
@@ -129,16 +129,16 @@ class ModifyOp(Operation):
 
     def asLDIF(self):
         r = []
-        r.append(ldif.attributeAsLDIF('dn', str(self.dn)))
+        r.append(ldif.attributeAsLDIF('dn', self.dn))
         r.append(ldif.attributeAsLDIF('changetype', 'modify'))
         for m in self.modifications:
             r.append(m.asLDIF())
-        r.append("\n")
-        return ''.join(r)
+        r.append(b"\n")
+        return b''.join(r)
 
     def asLDAP(self):
         return pureldap.LDAPModifyRequest(
-            object=str(self.dn),
+            object=self.dn,
             modification=[x.asLDAP() for x in self.modifications])
 
     @classmethod
@@ -181,7 +181,7 @@ class ModifyOp(Operation):
     def __repr__(self):
         return (self.__class__.__name__
                 + '('
-                + 'dn=%r' % str(self.dn)
+                + 'dn=%r' % self.dn
                 + ', '
                 + 'modifications=%r' % self.modifications
                 + ')')
@@ -209,10 +209,10 @@ class AddOp(Operation):
         self.entry = entry
 
     def asLDIF(self):
-        l = str(self.entry).splitlines()
-        assert l[0].startswith('dn:')
-        l[1:1] = [ldif.attributeAsLDIF('changetype', 'add').rstrip('\n')]
-        return ''.join([x+'\n' for x in l])
+        l = self.entry.toWire().splitlines()
+        assert l[0].startswith(b'dn:')
+        l[1:1] = [ldif.attributeAsLDIF('changetype', 'add').rstrip(b'\n')]
+        return b''.join([x + b'\n' for x in l])
 
     def patch(self, root):
         d = root.lookup(self.entry.dn.up())
@@ -249,10 +249,10 @@ class DeleteOp(Operation):
 
     def asLDIF(self):
         r = []
-        r.append(ldif.attributeAsLDIF('dn', str(self.dn)))
+        r.append(ldif.attributeAsLDIF('dn', self.dn))
         r.append(ldif.attributeAsLDIF('changetype', 'delete'))
-        r.append("\n")
-        return ''.join(r)
+        r.append(b"\n")
+        return b''.join(r)
 
     def patch(self, root):
         d = root.lookup(self.dn)

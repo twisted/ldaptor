@@ -28,7 +28,7 @@ from ldaptor.protocols.pureber import (
 
     berDecodeMultiple, berDecodeObject, int2berlen,
     )
-from ldaptor.encoder import to_bytes
+from ldaptor._encoder import to_bytes
 
 next_ldap_message_id = 1
 
