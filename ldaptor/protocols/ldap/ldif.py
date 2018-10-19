@@ -60,12 +60,12 @@ def asLDIF(dn, attributes):
     return s
 
 
-def header():
+def _header():
     return b'version: 1\n\n'
 
 
 def manyAsLDIF(objects):
-    s = [header()]
+    s = [_header()]
     for dn, attributes in objects:
         s.append(asLDIF(dn, attributes))
     return b''.join(s)
