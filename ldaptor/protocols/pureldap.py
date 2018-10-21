@@ -722,7 +722,7 @@ class LDAPFilter_extensibleMatch(LDAPMatchingRuleAssertion):
     def asText(self):
         return '(' + \
                (self.type.value if self.type else '') + \
-               (':dn' if self.dnAttributes.value else '') + \
+               (':dn' if self.dnAttributes and self.dnAttributes.value else '') + \
                ((':' + self.matchingRule.value) if self.matchingRule else '') + \
                ':=' + \
                self.escaper(self.matchValue.value) + \
