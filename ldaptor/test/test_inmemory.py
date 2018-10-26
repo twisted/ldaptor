@@ -473,8 +473,8 @@ cn: foo
         def eb(fail):
             fail.trap(ldaperrors.LDAPNoSuchObject)
             self.failUnlessEqual(
-                str(fail.value),
-                'noSuchObject: ou=nonexisting,dc=example,dc=com')
+                fail.value.toWire(),
+                b'noSuchObject: ou=nonexisting,dc=example,dc=com')
         d.addCallbacks(testutil.mustRaise, eb)
         return d
 
