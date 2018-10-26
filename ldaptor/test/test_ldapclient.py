@@ -15,16 +15,17 @@ from ldaptor.protocols import (
     pureldap,
 )
 from ldaptor import testutil
+from ldaptor._encoder import WireStrAlias, to_bytes
 
 
-class SillyMessage(object):
+class SillyMessage(WireStrAlias):
     needs_answer = True
 
     def __init__(self, value):
         self.value = value
 
-    def __str__(self):
-        return self.value
+    def toWire(self):
+        return to_bytes(self.value)
 
 
 class SillyError(Exception):
@@ -77,7 +78,7 @@ class SendTests(unittest.TestCase):
             pureber.BERInteger(page_size),
             pureber.BEROctetString(cookie),
         ])
-        controls = [('1.2.840.113556.1.4.319', None, str(control_value))]
+        controls = [(b'1.2.840.113556.1.4.319', None, control_value.toWire())]
         return controls
 
     def test_bind_not_connected(self):
@@ -97,7 +98,7 @@ class SendTests(unittest.TestCase):
         op = pureldap.LDAPBindResponse(error.resultCode)
         response = pureldap.LDAPMessage(op)
         response.id -= 1
-        resp_bytestring = str(response)
+        resp_bytestring = response.toWire()
         client.dataReceived(resp_bytestring)
 
         def cb_(thing):
@@ -113,7 +114,7 @@ class SendTests(unittest.TestCase):
         clock = Clock()
         ldapclient.reactor = clock
         client, transport = self.create_test_client()
-        creds = ('cn=foo,ou=baz,dc=example,dc=net', 'secret')
+        creds = (b'cn=foo,ou=baz,dc=example,dc=net', b'secret')
         d = client.bind(*creds)
         clock.advance(1)
         op = pureldap.LDAPBindResponse(
@@ -121,7 +122,7 @@ class SendTests(unittest.TestCase):
             matchedDN=creds[0])
         response = pureldap.LDAPMessage(op)
         response.id -= 1
-        resp_bytestring = str(response)
+        resp_bytestring = response.toWire()
         client.dataReceived(resp_bytestring)
 
         def cb_(thing):
@@ -150,7 +151,7 @@ class SendTests(unittest.TestCase):
         op = pureldap.LDAPStartTLSResponse(error.resultCode)
         response = pureldap.LDAPMessage(op)
         response.id -= 1
-        resp_bytestring = str(response)
+        resp_bytestring = response.toWire()
         client.dataReceived(resp_bytestring)
 
         def cb_(thing):
@@ -167,7 +168,7 @@ class SendTests(unittest.TestCase):
         response = pureldap.LDAPMessage(
             pureldap.LDAPSearchResultDone(0),
             id=0)
-        resp_bytestring = str(response)
+        resp_bytestring = response.toWire()
         client.dataReceived(resp_bytestring)
 
     def test_send_not_connected(self):
@@ -183,14 +184,14 @@ class SendTests(unittest.TestCase):
         d = client.send_multiResponse(op, None)
         expected_value = pureldap.LDAPMessage(op)
         expected_value.id -= 1
-        expected_bytestring = str(expected_value)
+        expected_bytestring = expected_value.toWire()
         self.assertEqual(
             transport.value(),
             expected_bytestring)
         response = pureldap.LDAPMessage(
             pureldap.LDAPSearchResultDone(0),
             id=expected_value.id)
-        resp_bytestring = str(response)
+        resp_bytestring = response.toWire()
         client.dataReceived(resp_bytestring)
         self.assertEqual(
             response.value,
@@ -211,19 +212,19 @@ class SendTests(unittest.TestCase):
         client.send_multiResponse(op, collect_result_)
         expected_value = pureldap.LDAPMessage(op)
         expected_value.id -= 1
-        expected_bytestring = str(expected_value)
+        expected_bytestring = expected_value.toWire()
         self.assertEqual(
             transport.value(),
             expected_bytestring)
         response = pureldap.LDAPMessage(
             pureldap.LDAPSearchResultEntry("cn=foo,ou=baz,dc=example,dc=net", {}),
             id=expected_value.id)
-        resp_bytestring = str(response)
+        resp_bytestring = response.toWire()
         client.dataReceived(resp_bytestring)
         response = pureldap.LDAPMessage(
             pureldap.LDAPSearchResultDone(0),
             id=expected_value.id)
-        resp_bytestring = str(response)
+        resp_bytestring = response.toWire()
         client.dataReceived(resp_bytestring)
         self.assertEqual(
             response.value,
@@ -236,7 +237,7 @@ class SendTests(unittest.TestCase):
         d = client.send_multiResponse_ex(op, controls)
         expected_value = pureldap.LDAPMessage(op, controls)
         expected_value.id -= 1
-        expected_bytestring = str(expected_value)
+        expected_bytestring = expected_value.toWire()
         self.assertEqual(
             transport.value(),
             expected_bytestring)
@@ -245,7 +246,7 @@ class SendTests(unittest.TestCase):
             pureldap.LDAPSearchResultDone(0),
             id=expected_value.id,
             controls=resp_controls)
-        resp_bytestring = str(response)
+        resp_bytestring = response.toWire()
         client.dataReceived(resp_bytestring)
         self.assertEqual(
             (response.value, response.controls),
@@ -261,13 +262,17 @@ class RepresentationTests(unittest.TestCase):
     """
     Tests that center on correct representations of objects.
     """
+
+    def test_clientConnectionLost_rep(self):
+        error = ldapclient.LDAPClientConnectionLostException()
+        self.assertEqual(b'Connection lost', error.toWire())
     
     def test_startTLSBusyError_rep(self):
         error = ldapclient.LDAPStartTLSBusyError("xyzzy") 
-        expected_value = "Cannot STARTTLS while operations on wire: 'xyzzy'"
-        self.assertEqual(expected_value, str(error))
+        expected_value = b"Cannot STARTTLS while operations on wire: 'xyzzy'"
+        self.assertEqual(expected_value, error.toWire())
 
     def test_StartTLSInvalidResponseName_rep(self):
         error = ldapclient.LDAPStartTLSInvalidResponseName("xyzzy")
-        expected_value = "Invalid responseName in STARTTLS response: 'xyzzy'"
-        self.assertEqual(expected_value, str(error))
+        expected_value = b"Invalid responseName in STARTTLS response: 'xyzzy'"
+        self.assertEqual(expected_value, error.toWire())

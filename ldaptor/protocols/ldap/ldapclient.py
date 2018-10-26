@@ -23,8 +23,8 @@ from twisted.internet import protocol, defer, ssl, reactor
 
 
 class LDAPClientConnectionLostException(ldaperrors.LDAPException):
-    def __str__(self):
-        return 'Connection lost'
+    def toWire(self):
+        return b'Connection lost'
 
 
 class LDAPStartTLSBusyError(ldaperrors.LDAPOperationsError):
@@ -32,8 +32,8 @@ class LDAPStartTLSBusyError(ldaperrors.LDAPOperationsError):
         self.onwire = onwire
         ldaperrors.LDAPOperationsError.__init__(self, message=message)
 
-    def __str__(self):
-        return 'Cannot STARTTLS while operations on wire: %r' % self.onwire
+    def toWire(self):
+        return b'Cannot STARTTLS while operations on wire: %r' % self.onwire
 
 
 class LDAPStartTLSInvalidResponseName(ldaperrors.LDAPException):
@@ -41,8 +41,8 @@ class LDAPStartTLSInvalidResponseName(ldaperrors.LDAPException):
         self.responseName = responseName
         ldaperrors.LDAPException.__init__(self)
 
-    def __str__(self):
-        return 'Invalid responseName in STARTTLS response: %r' % (self.responseName, )
+    def toWire(self):
+        return b'Invalid responseName in STARTTLS response: %r' % (self.responseName, )
 
 
 class LDAPClient(protocol.Protocol):
@@ -51,7 +51,7 @@ class LDAPClient(protocol.Protocol):
 
     def __init__(self):
         self.onwire = {}
-        self.buffer = ''
+        self.buffer = b''
         self.connected = None
 
     berdecoder = pureldap.LDAPBERDecoderContext_TopLevel(
@@ -107,7 +107,7 @@ class LDAPClient(protocol.Protocol):
         assert op.needs_answer
         d = defer.Deferred()
         self.onwire[msg.id] = (d, False, None, None, None)
-        self.transport.write(str(msg))
+        self.transport.write(msg.toWire())
         return d
 
     def send_multiResponse(self, op, handler, *args, **kwargs):
@@ -137,7 +137,7 @@ class LDAPClient(protocol.Protocol):
         assert op.needs_answer
         d = defer.Deferred()
         self.onwire[msg.id] = (d, False, handler, args, kwargs)
-        self.transport.write(str(msg))
+        self.transport.write(msg.toWire())
         return d
 
     def send_multiResponse_ex(self, op, controls=None, handler=None, *args, **kwargs):
@@ -170,7 +170,7 @@ class LDAPClient(protocol.Protocol):
         assert op.needs_answer
         d = defer.Deferred()
         self.onwire[msg.id] = (d, True, handler, args, kwargs)
-        self.transport.write(str(msg))
+        self.transport.write(msg.toWire())
         return d
 
     def send_noResponse(self, op, controls=None):
@@ -183,7 +183,7 @@ class LDAPClient(protocol.Protocol):
         """
         msg = self._send(op, controls=controls)
         assert not op.needs_answer
-        self.transport.write(str(msg))
+        self.transport.write(msg.toWire())
 
     def unsolicitedNotification(self, msg):
         log.msg("Got unsolicited notification: %s" % repr(msg))
