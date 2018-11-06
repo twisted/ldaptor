@@ -858,7 +858,7 @@ class LDAPSearchResultEntry(LDAPProtocolResponse, BERSequence):
         objectName = l[0].value
         attributes = []
         for attr, li in l[1].data:
-            attributes.append((attr.value, map(lambda x: x.value, li)))
+            attributes.append((attr.value, [x.value for x in li]))
         r = klass(objectName=objectName,
                   attributes=attributes,
                   tag=tag)
@@ -878,7 +878,7 @@ class LDAPSearchResultEntry(LDAPProtocolResponse, BERSequence):
             BERSequence([
                 BERSequence([
                     BEROctetString(attr_li[0]),
-                    BERSet(list(map(BEROctetString, attr_li[1])))])
+                    BERSet([BEROctetString(x) for x in attr_li[1]])])
                 for attr_li in self.attributes
                 ]),
         ], tag=self.tag).toWire()
