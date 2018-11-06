@@ -1,12 +1,14 @@
 import base64
 import random
 
+import six
+
 from twisted.internet import defer
 from twisted.python.util import InsensitiveDict
 from zope.interface import implementer
 
 from ldaptor import interfaces, attributeset, delta
-from ldaptor._encoder import WireStrAlias
+from ldaptor._encoder import WireStrAlias, to_bytes, to_unicode, get_strings
 from ldaptor.protocols.ldap import distinguishedname, ldif, ldaperrors
 
 
@@ -37,6 +39,9 @@ def sshaDigest(passphrase, salt=None):
 @implementer(interfaces.ILDAPEntry)
 class BaseLDAPEntry(WireStrAlias):
     dn = None
+    _object_class_keys = set(get_strings('objectClass'))
+    _object_class_lower_keys = set(get_strings('objectclass'))
+    _user_password_keys = set(get_strings('userPassword'))
 
     def __init__(self, dn, attributes={}):
         """
@@ -64,39 +69,51 @@ class BaseLDAPEntry(WireStrAlias):
         return attributeset.LDAPAttributeSet(key, values)
 
     def __getitem__(self, key):
-        return self._attributes[key]
+        for k in get_strings(key):
+            if k in self._attributes:
+                return self._attributes[k]
+        raise KeyError(key)
 
     def get(self, key, default=None):
-        return self._attributes.get(key, default)
+        for k in get_strings(key):
+            if k in self._attributes:
+                return self._attributes[k]
+        return default
 
     def has_key(self, key):
-        return key in self._attributes
+        for k in get_strings(key):
+            if k in self._attributes:
+                return True
+        return False
 
     def __contains__(self, key):
         return self.has_key(key)
 
     def keys(self):
         a = []
-        if self.get('objectClass'):
-            a.append('objectClass')
+        for key in self._object_class_keys:
+            if key in self._attributes:
+                a.append(key)
         l = list(self._attributes.keys())
-        l.sort()
+        l.sort(key=to_bytes)
         for key in l:
-            if key.lower() != 'objectclass':
+            if key.lower() not in self._object_class_lower_keys:
                 a.append(key)
         return a
 
     def items(self):
         a = []
-        objectClasses = list(self.get('objectClass', []))
-        objectClasses.sort()
-        if objectClasses:
-            a.append(('objectClass', objectClasses))
+
+        for key in self._object_class_keys:
+            objectClasses = list(self._attributes.get(key, []))
+            objectClasses.sort(key=to_bytes)
+            if objectClasses:
+                a.append((key, objectClasses))
 
         l = list(self._attributes.items())
-        l.sort()
+        l.sort(key=lambda x: to_bytes(x[0]))
         for key, values in l:
-            if key.lower() != 'objectclass':
+            if key.lower() not in self._object_class_lower_keys:
                 vs = list(values)
                 vs.sort()
                 a.append((key, vs))
@@ -106,14 +123,16 @@ class BaseLDAPEntry(WireStrAlias):
     def toWire(self):
         a = []
 
-        objectClasses = list(self.get('objectClass', []))
-        objectClasses.sort()
-        a.append(('objectClass', objectClasses))
+        for key in self._object_class_keys:
+            objectClasses = list(self._attributes.get(key, []))
+            objectClasses.sort(key=to_bytes)
+            a.append((key, objectClasses))
 
+        # TODO: Perhaps it needs optimization because of double sorting
         l = list(self.items())
-        l.sort()
+        l.sort(key=lambda x: to_bytes(x[0]))
         for key, values in l:
-            if key.lower() != 'objectclass':
+            if key.lower() not in self._object_class_lower_keys:
                 vs = list(values)
                 vs.sort()
                 a.append((key, vs))
@@ -125,10 +144,11 @@ class BaseLDAPEntry(WireStrAlias):
         if self.dn != other.dn:
             return 0
 
+        # TODO: Perhaps it needs optimization because of double sorting
         my = self.keys()
-        my.sort()
+        my.sort(key=to_bytes)
         its = other.keys()
-        its.sort()
+        its.sort(key=to_bytes)
         if my != its:
             return 0
         for key in my:
@@ -151,15 +171,17 @@ class BaseLDAPEntry(WireStrAlias):
         x = {}
         for key in self.keys():
             x[key] = self[key]
+        # TODO: Perhaps it needs optimization because of double sorting
         keys = self.keys()
-        keys.sort()
+        keys.sort(key=to_bytes)
         a = []
         for key in keys:
             a.append('%s: %s' % (repr(key), repr(list(self[key]))))
         attributes = ', '.join(a)
+        dn = self.dn.toWire() if six.PY2 else to_unicode(self.dn.toWire())
         return '%s(%s, {%s})' % (
             self.__class__.__name__,
-            repr(str(self.dn)),
+            repr(dn),
             attributes)
 
     def diff(self, other):
@@ -181,27 +203,27 @@ class BaseLDAPEntry(WireStrAlias):
         otherKeys = set(other.keys())
 
         addedKeys = list(otherKeys - myKeys)
-        addedKeys.sort()  # for reproducability only
+        addedKeys.sort(key=to_bytes)  # for reproducability only
         for added in addedKeys:
             r.append(delta.Add(added, other[added]))
 
         deletedKeys = list(myKeys - otherKeys)
-        deletedKeys.sort()  # for reproducability only
+        deletedKeys.sort(key=to_bytes)  # for reproducability only
         for deleted in deletedKeys:
             r.append(delta.Delete(deleted, self[deleted]))
 
         sharedKeys = list(myKeys & otherKeys)
-        sharedKeys.sort()  # for reproducability only
+        sharedKeys.sort(key=to_bytes)  # for reproducability only
         for shared in sharedKeys:
 
             addedValues = list(other[shared] - self[shared])
             if addedValues:
-                addedValues.sort()  # for reproducability only
+                addedValues.sort(key=to_bytes)  # for reproducability only
                 r.append(delta.Add(shared, addedValues))
 
             deletedValues = list(self[shared] - other[shared])
             if deletedValues:
-                deletedValues.sort()  # for reproducability only
+                deletedValues.sort(key=to_bytes)  # for reproducability only
                 r.append(delta.Delete(shared, deletedValues))
 
         return delta.ModifyOp(dn=self.dn, modifications=r)
@@ -210,17 +232,20 @@ class BaseLDAPEntry(WireStrAlias):
         return defer.maybeDeferred(self._bind, password)
 
     def _bind(self, password):
-        for digest in self.get('userPassword', ()):
-            if digest.startswith(b'{SSHA}'):
-                raw = base64.decodestring(digest[len(b'{SSHA}'):])
-                salt = raw[20:]
-                got = sshaDigest(password, salt)
-                if got == digest:
-                    return self
-            else:
-                # Plaintext
-                if digest == password:
-                    return self
+        password = to_bytes(password)
+        for key in self._user_password_keys:
+            for digest in self.get(key, ()):
+                digest = to_bytes(digest)
+                if digest.startswith(b'{SSHA}'):
+                    raw = base64.decodestring(digest[len(b'{SSHA}'):])
+                    salt = raw[20:]
+                    got = sshaDigest(password, salt)
+                    if got == digest:
+                        return self
+                else:
+                    # Plaintext
+                    if digest == password:
+                        return self
         raise ldaperrors.LDAPInvalidCredentials()
 
     def hasMember(self, dn):
@@ -264,4 +289,8 @@ class EditableLDAPEntry(BaseLDAPEntry):
         as bytes.
         """
         crypt = sshaDigest(newPasswd, salt)
-        self['userPassword'] = [crypt]
+        for key in self._user_password_keys:
+            if key in self:
+                self[key] = [crypt]
+        else:
+            self[b'userPassword'] = [crypt]

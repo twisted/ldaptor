@@ -106,6 +106,19 @@ class TestBaseLDAPEntry(unittest.TestCase):
 
         self.assertTrue(failure.check(LDAPInvalidCredentials))
 
+    def testRepr(self):
+        """
+        Getting string representation of an entry
+        """
+        sut = entry.BaseLDAPEntry(
+            dn='dc=foo',
+            attributes={
+                'foo': ['bar'],
+                'bar': ['foo'],
+            }
+        )
+        self.assertEqual(repr(sut), "BaseLDAPEntry('dc=foo', {'bar': ['foo'], 'foo': ['bar']})")
+
 
 
 class TestDiffEntry(unittest.TestCase):

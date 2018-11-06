@@ -1,5 +1,6 @@
 from twisted.internet import defer
 from ldaptor import delta, ldapfilter
+from ldaptor._encoder import get_strings
 from ldaptor.protocols import pureldap
 from ldaptor.protocols.ldap import ldapsyntax, ldaperrors
 
@@ -146,13 +147,15 @@ class SubtreeFromChildrenMixin(object):
 class MatchMixin(object):
     def match(self, filter):
         if isinstance(filter, pureldap.LDAPFilter_present):
-            return filter.value in self
+            for value in get_strings(filter.value):
+                if value in self:
+                    return True
+            return False
         elif isinstance(filter, pureldap.LDAPFilter_equalityMatch):
             # TODO case insensitivity depends on different attribute syntaxes
-            if (filter.assertionValue.value.lower() in
-                [val.lower()
-                 for val in self.get(filter.attributeDesc.value, [])]):
-                return True
+            for value in get_strings(filter.assertionValue.value.lower()):
+                if value in [val.lower() for val in self.get(filter.attributeDesc.value, [])]:
+                    return True
             return False
         elif isinstance(filter, pureldap.LDAPFilter_substrings):
             if filter.type not in self:
