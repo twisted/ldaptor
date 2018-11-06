@@ -1390,7 +1390,7 @@ class LDAPBERDecoderContext_LDAPPasswordModifyRequest(BERDecoderContext):
 
 
 class LDAPPasswordModifyRequest(LDAPExtendedRequest):
-    oid = '1.3.6.1.4.1.4203.1.11.1'
+    oid = b'1.3.6.1.4.1.4203.1.11.1'
 
     def __init__(self, requestName=None,
                  userIdentity=None, oldPasswd=None, newPasswd=None,
