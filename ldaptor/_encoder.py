@@ -34,6 +34,19 @@ def to_unicode(value):
     return value
 
 
+def get_strings(value):
+    """
+    Getting tuple of available string values
+    (byte string and unicode string) for
+    given value
+    """
+    if isinstance(value, six.text_type):
+        return value, value.encode('utf-8')
+    if isinstance(value, six.binary_type):
+        return value, value.decode('utf-8')
+    return value,
+
+
 class WireStrAlias(object):
     """
     A helper base or mixin class which adds __str__ method
