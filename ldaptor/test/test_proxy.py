@@ -15,10 +15,12 @@ class Proxy(unittest.TestCase):
     def test_bind(self):
         server = self.createServer([ pureldap.LDAPBindResponse(resultCode=0),
                                      ])
-        server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(), id=4)))
+        server.dataReceived(pureldap.LDAPMessage(pureldap.LDAPBindRequest(), id=4).toWire())
         reactor.iterate() #TODO
-        self.assertEqual(server.transport.value(),
-                          str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=0), id=4)))
+        self.assertEqual(
+            server.transport.value(),
+            pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=0), id=4).toWire()
+        )
 
     def test_search(self):
         server = self.createServer([ pureldap.LDAPBindResponse(resultCode=0),
@@ -28,48 +30,67 @@ class Proxy(unittest.TestCase):
                                      pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode),
                                      ],
                                    )
-        server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(), id=2)))
-        server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPSearchRequest(), id=3)))
+        server.dataReceived(pureldap.LDAPMessage(pureldap.LDAPBindRequest(), id=2).toWire())
+        server.dataReceived(pureldap.LDAPMessage(pureldap.LDAPSearchRequest(), id=3).toWire())
         reactor.iterate() #TODO
-        self.assertEqual(server.transport.value(),
-                          str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=0), id=2))
-                          +str(pureldap.LDAPMessage(pureldap.LDAPSearchResultEntry('cn=foo,dc=example,dc=com', [('a', ['b'])]), id=3))
-                          +str(pureldap.LDAPMessage(pureldap.LDAPSearchResultEntry('cn=bar,dc=example,dc=com', [('b', ['c'])]), id=3))
-                          +str(pureldap.LDAPMessage(pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode), id=3)))
+        self.assertEqual(
+            server.transport.value(),
+            pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=0), id=2).toWire()
+            + pureldap.LDAPMessage(
+                pureldap.LDAPSearchResultEntry('cn=foo,dc=example,dc=com', [('a', ['b'])]),
+                id=3
+            ).toWire()
+            + pureldap.LDAPMessage(
+                pureldap.LDAPSearchResultEntry('cn=bar,dc=example,dc=com', [('b', ['c'])]),
+                id=3
+            ).toWire()
+            + pureldap.LDAPMessage(
+                pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode),
+                id=3
+            ).toWire()
+        )
 
     def test_unbind_clientUnbinds(self):
         server = self.createServer([ pureldap.LDAPBindResponse(resultCode=0),
                                      ],
                                    [],
                                    )
-        server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(), id=2)))
+        server.dataReceived(pureldap.LDAPMessage(pureldap.LDAPBindRequest(), id=2).toWire())
         reactor.iterate() #TODO
         client = server.client
         client.assertSent(pureldap.LDAPBindRequest())
-        self.assertEqual(server.transport.value(),
-                          str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=0), id=2)))
-        server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPUnbindRequest(), id=3)))
+        self.assertEqual(
+            server.transport.value(),
+            pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=0), id=2).toWire()
+        )
+        server.dataReceived(pureldap.LDAPMessage(pureldap.LDAPUnbindRequest(), id=3).toWire())
         server.connectionLost(error.ConnectionDone)
         reactor.iterate() #TODO
         client.assertSent(pureldap.LDAPBindRequest(),
                           pureldap.LDAPUnbindRequest())
-        self.assertEqual(server.transport.value(),
-                          str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=0), id=2)))
+        self.assertEqual(
+            server.transport.value(),
+            pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=0), id=2).toWire()
+        )
 
     def test_unbind_clientEOF(self):
         server = self.createServer([ pureldap.LDAPBindResponse(resultCode=0),
                                      ],
                                    [],
                                    )
-        server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(), id=2)))
+        server.dataReceived(pureldap.LDAPMessage(pureldap.LDAPBindRequest(), id=2).toWire())
         reactor.iterate() #TODO
         client = server.client
         client.assertSent(pureldap.LDAPBindRequest())
-        self.assertEqual(server.transport.value(),
-                          str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=0), id=2)))
+        self.assertEqual(
+            server.transport.value(),
+            pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=0), id=2).toWire()
+        )
         server.connectionLost(error.ConnectionDone)
         reactor.iterate() #TODO
         client.assertSent(pureldap.LDAPBindRequest(),
                           'fake-unbind-by-LDAPClientTestDriver')
-        self.assertEqual(server.transport.value(),
-                          str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=0), id=2)))
+        self.assertEqual(
+            server.transport.value(),
+            pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=0), id=2).toWire()
+        )
