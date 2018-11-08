@@ -48,10 +48,12 @@ class MergedLDAPServerTest(unittest.TestCase):
                                     [[LDAPBindResponse(resultCode=0)]])
 
         def test_f(server):
-            server.dataReceived(str(LDAPMessage(LDAPBindRequest(), id=4)))
+            server.dataReceived(LDAPMessage(LDAPBindRequest(), id=4).toWire())
 
-            self.assertEqual(server.transport.value(),
-                              str(LDAPMessage(LDAPBindResponse(resultCode=0), id=4)))
+            self.assertEqual(
+                server.transport.value(),
+                LDAPMessage(LDAPBindResponse(resultCode=0), id=4).toWire()
+            )
 
         d.addCallback(test_f)
 
@@ -62,9 +64,11 @@ class MergedLDAPServerTest(unittest.TestCase):
                                     [[LDAPBindResponse(resultCode=0)]])
 
         def test_f(server):
-            server.dataReceived(str(LDAPMessage(LDAPBindRequest(), id=4)))
-            self.assertEqual(server.transport.value(),
-                              str(LDAPMessage(LDAPBindResponse(resultCode=0), id=4))) 
+            server.dataReceived(LDAPMessage(LDAPBindRequest(), id=4).toWire())
+            self.assertEqual(
+                server.transport.value(),
+                LDAPMessage(LDAPBindResponse(resultCode=0), id=4).toWire()
+            )
         d.addCallback(test_f)
         return d
 
@@ -73,9 +77,14 @@ class MergedLDAPServerTest(unittest.TestCase):
                                     [[LDAPBindResponse(resultCode=ldaperrors.LDAPInvalidCredentials.resultCode)]])
 
         def test_f(server):
-            server.dataReceived(str(LDAPMessage(LDAPBindRequest(), id=4)))
-            self.assertEqual(server.transport.value(),
-                              str(LDAPMessage(LDAPBindResponse(resultCode=ldaperrors.LDAPInvalidCredentials.resultCode), id=4)))
+            server.dataReceived(LDAPMessage(LDAPBindRequest(), id=4).toWire())
+            self.assertEqual(
+                server.transport.value(),
+                LDAPMessage(
+                    LDAPBindResponse(resultCode=ldaperrors.LDAPInvalidCredentials.resultCode),
+                    id=4
+                ).toWire()
+            )
 
         d.addCallback(test_f)
         return d
@@ -89,13 +98,29 @@ class MergedLDAPServerTest(unittest.TestCase):
                                      LDAPSearchResultDone(ldaperrors.Success.resultCode)]])
 
         def test_f(server):
-            server.dataReceived(str(LDAPMessage(LDAPSearchRequest(), id=3)))
-            self.assertEqual(server.transport.value(),
-                              str(LDAPMessage(LDAPSearchResultEntry('cn=foo,dc=example,dc=com', [('a', ['b'])]), id=3))
-                              +str(LDAPMessage(LDAPSearchResultEntry('cn=bar2,dc=example,dc=com', [('b', ['c'])]), id=3))
-                              +str(LDAPMessage(LDAPSearchResultEntry('cn=foo,dc=example,dc=com', [('a', ['b'])]), id=3))
-                              +str(LDAPMessage(LDAPSearchResultEntry('cn=bar,dc=example,dc=com', [('b', ['c'])]), id=3))
-                              +str(LDAPMessage(LDAPSearchResultDone(ldaperrors.Success.resultCode), id=3)))
+            server.dataReceived(LDAPMessage(LDAPSearchRequest(), id=3).toWire())
+            self.assertEqual(
+                server.transport.value(),
+                LDAPMessage(
+                    LDAPSearchResultEntry('cn=foo,dc=example,dc=com', [('a', ['b'])]),
+                    id=3
+                ).toWire()
+                + LDAPMessage(
+                    LDAPSearchResultEntry('cn=bar2,dc=example,dc=com', [('b', ['c'])]),
+                    id=3
+                ).toWire()
+                + LDAPMessage(
+                    LDAPSearchResultEntry('cn=foo,dc=example,dc=com', [('a', ['b'])]),
+                    id=3
+                ).toWire()
+                + LDAPMessage(
+                    LDAPSearchResultEntry('cn=bar,dc=example,dc=com', [('b', ['c'])]),
+                    id=3
+                ).toWire()
+                + LDAPMessage(
+                    LDAPSearchResultDone(ldaperrors.Success.resultCode),
+                    id=3
+                ).toWire())
         d.addCallback(test_f)
 
         return d
@@ -109,11 +134,22 @@ class MergedLDAPServerTest(unittest.TestCase):
                                      ]])
 
         def test_f(server):
-            server.dataReceived(str(LDAPMessage(LDAPSearchRequest(), id=3)))
-            self.assertEqual(server.transport.value(),
-                              str(LDAPMessage(LDAPSearchResultEntry('cn=foo,dc=example,dc=com', [('a', ['b'])]), id=3))
-                              +str(LDAPMessage(LDAPSearchResultEntry('cn=bar,dc=example,dc=com', [('b', ['c'])]), id=3))
-                              +str(LDAPMessage(LDAPSearchResultDone(ldaperrors.Success.resultCode), id=3)))
+            server.dataReceived(LDAPMessage(LDAPSearchRequest(), id=3).toWire())
+            self.assertEqual(
+                server.transport.value(),
+                LDAPMessage(
+                    LDAPSearchResultEntry('cn=foo,dc=example,dc=com', [('a', ['b'])]),
+                    id=3
+                ).toWire()
+                + LDAPMessage(
+                    LDAPSearchResultEntry('cn=bar,dc=example,dc=com', [('b', ['c'])]),
+                    id=3
+                ).toWire()
+                + LDAPMessage(
+                    LDAPSearchResultDone(ldaperrors.Success.resultCode),
+                    id=3
+                ).toWire()
+            )
 
         d.addCallback(test_f)
 
@@ -123,11 +159,11 @@ class MergedLDAPServerTest(unittest.TestCase):
         d = self.createMergedServer([[]], [[]])
 
         def test_f(server):
-            server.dataReceived(str(LDAPMessage(LDAPUnbindRequest(), id=3)))
+            server.dataReceived(LDAPMessage(LDAPUnbindRequest(), id=3).toWire())
             server.connectionLost(error.ConnectionDone)
             for c in self.clients:
                 c.assertSent(LDAPUnbindRequest())
-            self.assertEqual(server.transport.value(), "")
+            self.assertEqual(server.transport.value(), b"")
         d.addCallback(test_f)
 
         return d
@@ -143,7 +179,7 @@ class MergedLDAPServerTest(unittest.TestCase):
 
             self.assertEqual(
               [], server.clients, 'A connection should not be done.')
-            self.assertEqual(server.transport.value(), "")
+            self.assertEqual(server.transport.value(), b"")
 
         d.addCallback(test_f)
 
@@ -153,21 +189,37 @@ class MergedLDAPServerTest(unittest.TestCase):
         d = self.createMergedServer([[]], [[]])
 
         def test_f(server):
-            server.dataReceived(str(LDAPMessage(LDAPAddRequest(entry="", attributes=[]), id=3)))
-            server.dataReceived(str(LDAPMessage(LDAPDelRequest(entry=""), id=4)))
-            server.dataReceived(str(LDAPMessage(LDAPModifyRequest(object="", modification=[]), id=5)))
-            server.dataReceived(str(LDAPMessage(LDAPModifyDNRequest(entry="", newrdn="", deleteoldrdn=0), id=6)))
-            server.dataReceived(str(LDAPMessage(LDAPExtendedRequest(requestName=""), id=7)))
+            server.dataReceived(LDAPMessage(LDAPAddRequest(entry="", attributes=[]), id=3).toWire())
+            server.dataReceived(LDAPMessage(LDAPDelRequest(entry=""), id=4).toWire())
+            server.dataReceived(LDAPMessage(LDAPModifyRequest(object="", modification=[]), id=5).toWire())
+            server.dataReceived(LDAPMessage(LDAPModifyDNRequest(entry="", newrdn="", deleteoldrdn=0), id=6).toWire())
+            server.dataReceived(LDAPMessage(LDAPExtendedRequest(requestName=""), id=7).toWire())
             for c in server.clients:
                 c.assertNothingSent()
 
-            self.assertEqual(server.transport.value(),
-                              str(LDAPMessage(LDAPAddResponse(resultCode=ldaperrors.LDAPUnwillingToPerform.resultCode), id=3))
-                              +str(LDAPMessage(LDAPDelResponse(resultCode=ldaperrors.LDAPUnwillingToPerform.resultCode), id=4))
-                              +str(LDAPMessage(LDAPModifyResponse(resultCode=ldaperrors.LDAPUnwillingToPerform.resultCode), id=5))
-                              +str(LDAPMessage(LDAPModifyDNResponse(resultCode=ldaperrors.LDAPUnwillingToPerform.resultCode), id=6))
-                              +str(LDAPMessage(LDAPExtendedResponse(resultCode=ldaperrors.LDAPUnwillingToPerform.resultCode), id=7))
-                              )
+            self.assertEqual(
+                server.transport.value(),
+                LDAPMessage(
+                    LDAPAddResponse(resultCode=ldaperrors.LDAPUnwillingToPerform.resultCode),
+                    id=3
+                ).toWire()
+                + LDAPMessage(
+                    LDAPDelResponse(resultCode=ldaperrors.LDAPUnwillingToPerform.resultCode),
+                    id=4
+                ).toWire()
+                + LDAPMessage(
+                    LDAPModifyResponse(resultCode=ldaperrors.LDAPUnwillingToPerform.resultCode),
+                    id=5
+                ).toWire()
+                + LDAPMessage(
+                    LDAPModifyDNResponse(resultCode=ldaperrors.LDAPUnwillingToPerform.resultCode),
+                    id=6
+                ).toWire()
+                + LDAPMessage(
+                    LDAPExtendedResponse(resultCode=ldaperrors.LDAPUnwillingToPerform.resultCode),
+                    id=7
+                ).toWire()
+            )
         d.addCallback(test_f)
 
         return d
