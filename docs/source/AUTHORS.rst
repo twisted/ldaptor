@@ -17,5 +17,6 @@ Contributors
 - Hynek Schlawack
 - Kenny MacDermid
 - Michael Schlenker
+- Sergey Shubin
 - Stefan Andersson
 - Tommi Virtanen
