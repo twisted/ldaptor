@@ -74,6 +74,45 @@ class TestLDAPAttributeSet(unittest.TestCase):
 
         self.assertEqual({'d'}, result)
 
+    def testAddNewValue(self):
+        """
+        Adding new value
+        """
+        a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
+        a.add('e')
+
+        self.assertEqual(a, {'b', 'c', 'd', 'e'})
+
+    def testAddExistingValue(self):
+        """
+        Adding existing value as a byte or unicode string
+        """
+        a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
+
+        a.add(b'b')
+        self.assertEqual(a, {'b', 'c', 'd'})
+
+        a.add(u'b')
+        self.assertEqual(a, {'b', 'c', 'd'})
+
+    def testRemoveExistingValue(self):
+        """
+        Removing existing value as a byte or unicode string
+        """
+        a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
+        a.remove(b'b')
+        a.remove(u'c')
+
+        self.assertEqual(a, {'d'})
+
+    def testRemoveNonexistingValue(self):
+        """
+        Removing non-existing value
+        """
+        a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
+
+        self.assertRaises(KeyError, a.remove, 'e')
+
     def testUnion(self):
         a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
         b = attributeset.LDAPAttributeSet('k', ['b', 'c', 'e'])

@@ -1,5 +1,7 @@
 from copy import deepcopy
 
+from ldaptor._encoder import get_strings
+
 
 class LDAPAttributeSet(set):
     def __init__(self, key, *a, **kw):
@@ -47,6 +49,29 @@ class LDAPAttributeSet(set):
 
     def __ne__(self, other):
         return not self == other
+
+    def add(self, key):
+        """
+        Adding key to the attributes with checking
+        if it exists as byte or unicode string
+        """
+        for k in get_strings(key):
+            if k in self:
+                return
+
+        set.add(self, key)
+
+    def remove(self, key):
+        """
+        Removing key from the attributes with checking
+        if it exists as byte or unicode string
+        """
+        for k in get_strings(key):
+            if k in self:
+                set.remove(self, k)
+                return
+
+        raise KeyError(key)
 
     def copy(self):
         result = self.__class__(self.key)
