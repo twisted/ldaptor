@@ -22,7 +22,7 @@ Changes
 - ``toWire`` method is used to get bytes representation of ``ldaptor.protocols.pureber``,
   ``ldaptor.protocols.pureldap``, ``ldaptor.protocols.ldap.distinguishedname``,
   ``ldaptor.protocols.ldap.ldaperrors``, ``ldaptor.protocols.ldap.ldapclient``,
-  ``ldaptor.protocols.ldap.ldapserver`` and ``ldaptor.entry`` classes
+  ``ldaptor.protocols.ldap.ldapserver``, ``ldaptor.ldiftree`` and ``ldaptor.entry`` classes
   instead of ``__str__`` which is deprecated now.
 - Code was updated to pass `python3 -m compileall` in preparation for py3 port.
 - Continuous test are executed only against latest related Twisted and latest
