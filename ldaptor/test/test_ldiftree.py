@@ -347,6 +347,9 @@ objectClass: b
 cn: theChild
 
 """)
+        # Invalid file
+        writeFile(os.path.join(oneChild, 'cn=invalidChild.lddd'), b'invalid data')
+        
         self.root = ldiftree.LDIFTreeEntry(self.tree)
         self.example = ldiftree.LDIFTreeEntry(example, 'dc=example,dc=com')
         self.empty = ldiftree.LDIFTreeEntry(empty, 'ou=empty,dc=example,dc=com')
