@@ -7,6 +7,7 @@ changing of location in tree)
 import six
 
 from ldaptor import attributeset
+from ldaptor._encoder import to_bytes, to_unicode
 from ldaptor.protocols import pureldap, pureber
 from ldaptor.protocols.ldap import ldif, distinguishedname
 
@@ -179,9 +180,10 @@ class ModifyOp(Operation):
         return d
 
     def __repr__(self):
+        dn = to_bytes(self.dn)
         return (self.__class__.__name__
                 + '('
-                + 'dn=%r' % self.dn
+                + 'dn=%r' % (dn if six.PY2 else to_unicode(dn))
                 + ', '
                 + 'modifications=%r' % self.modifications
                 + ')')
@@ -262,9 +264,10 @@ class DeleteOp(Operation):
         return d
 
     def __repr__(self):
+        dn = to_bytes(self.dn)
         return (self.__class__.__name__
                 + '('
-                + '%r' % self.dn
+                + '%r' % (dn if six.PY2 else to_unicode(dn))
                 + ')')
 
     def __eq__(self, other):
