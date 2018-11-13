@@ -47,20 +47,20 @@ class LDAPServerWithUPNBind(unittest.TestCase):
         Do a BIND request and check that is succeeds.
         """
         self.server.dataReceived(
-            str(
-                pureldap.LDAPMessage(
-                    pureldap.LDAPBindRequest(
-                        dn=bind_dn,
-                        auth=password),
-                    id=4)))
+            pureldap.LDAPMessage(
+                pureldap.LDAPBindRequest(
+                    dn=bind_dn,
+                    auth=password),
+                id=4).toWire()
+        )
         self.assertEqual(
             self.server.transport.value(),
-            str(
-                pureldap.LDAPMessage(
-                    pureldap.LDAPBindResponse(
-                        resultCode=0,
-                        matchedDN='cn=bob,dc=example,dc=com'),
-                    id=4)))
+            pureldap.LDAPMessage(
+                pureldap.LDAPBindResponse(
+                    resultCode=0,
+                    matchedDN='cn=bob,dc=example,dc=com'),
+                id=4).toWire()
+        )
 
     def test_bindSuccessUPN(self):
         """
@@ -81,16 +81,16 @@ class LDAPServerWithUPNBind(unittest.TestCase):
         When password don't match the BIND fails.
         """
         self.server.dataReceived(
-            str(
-                pureldap.LDAPMessage(
-                    pureldap.LDAPBindRequest(
-                        dn='bob@ad.example.com',
-                        auth='invalid'),
-                    id=734)))
+            pureldap.LDAPMessage(
+                pureldap.LDAPBindRequest(
+                    dn='bob@ad.example.com',
+                    auth='invalid'),
+                id=734).toWire()
+        )
         self.assertEqual(
             self.server.transport.value(),
-            str(
-                pureldap.LDAPMessage(
-                    pureldap.LDAPBindResponse(
-                        resultCode=ldaperrors.LDAPInvalidCredentials.resultCode),
-                    id=734)))
+            pureldap.LDAPMessage(
+                pureldap.LDAPBindResponse(
+                    resultCode=ldaperrors.LDAPInvalidCredentials.resultCode),
+                id=734).toWire()
+        )

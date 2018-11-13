@@ -38,7 +38,7 @@ class LDAPServerWithUPNBind(LDAPServer):
 
         self.checkControls(controls)
 
-        if request.dn == '':
+        if request.dn == b'':
             # anonymous bind
             self.boundUser = None
             return pureldap.LDAPBindResponse(resultCode=0)
@@ -53,7 +53,7 @@ class LDAPServerWithUPNBind(LDAPServer):
             # A single result, so the UPN might exist.
             return results[0].dn
 
-        if '@' in request.dn and ',' not in request.dn:
+        if b'@' in request.dn and b',' not in request.dn:
             # This might be an UPN request.
             filterText = b'(' + self._loginAttribute + b'=' + request.dn + b')'
             d = root.search(filterText=filterText)
@@ -88,7 +88,7 @@ class LDAPServerWithUPNBind(LDAPServer):
                 self.boundUser = entry
                 msg = pureldap.LDAPBindResponse(
                     resultCode=ldaperrors.Success.resultCode,
-                    matchedDN=str(entry.dn))
+                    matchedDN=entry.dn)
                 return msg
             d.addCallback(_cb)
             return d
