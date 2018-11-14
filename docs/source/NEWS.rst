@@ -41,6 +41,7 @@ Bugfixes
 - Proxies now terminate the connection to the proxied server in case a client immediately closes the connection.
 - asText() implemented for LDAPFilter_extensibleMatch
 - Children of ``ldaptor.inmemory.ReadOnlyInMemoryLDAPEntry`` subclass instances are added as the same class instances.
+- Redundant attributes keys sorting was removed from ``ldaptor.entry.BaseLDAPEntry`` methods.
 
 Release 16.0 (2016-06-07)
 -------------------------
