@@ -9,6 +9,11 @@ import six
 from ldaptor import inmemory, delta, testutil
 from ldaptor.protocols.ldap import distinguishedname, ldaperrors
 
+
+class SubclassEntry(inmemory.ReadOnlyInMemoryLDAPEntry):
+    pass
+
+
 class TestInMemoryDatabase(unittest.TestCase):
     def setUp(self):
         self.root = inmemory.ReadOnlyInMemoryLDAPEntry(
@@ -127,6 +132,15 @@ class TestInMemoryDatabase(unittest.TestCase):
             'objectClass': ['a'],
             'cn': 'foo',
             })
+
+    def test_addChild_subclass(self):
+        """
+        Adding child to ReadOnlyInMemoryLDAPEntry subclass instance
+        creates entry of the same class
+        """
+        entry = SubclassEntry(dn='dc=example,dc=com')
+        child = entry.addChild(rdn='ou=empty', attributes={'objectClass': ['a']})
+        self.assertIsInstance(child, SubclassEntry)
 
     def test_parent(self):
         self.assertEqual(self.foo.parent(), self.meta)

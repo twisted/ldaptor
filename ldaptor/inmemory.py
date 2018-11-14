@@ -60,7 +60,7 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
             raise ldaperrors.LDAPEntryAlreadyExists(self._children[rdn_str].dn)
         dn = distinguishedname.DistinguishedName(
             listOfRDNs=(rdn,) + self.dn.split())
-        e = ReadOnlyInMemoryLDAPEntry(dn, attributes)
+        e = self.__class__(dn, attributes)
         e._parent = self
         self._children[rdn_str] = e
         return e
