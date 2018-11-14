@@ -89,6 +89,10 @@ class BaseLDAPEntry(WireStrAlias):
     def __contains__(self, key):
         return self.has_key(key)
 
+    def __iter__(self):
+        for key in self._attributes.iterkeys():
+            yield key
+
     def keys(self):
         a = []
         for key in self._object_class_keys:
@@ -128,10 +132,9 @@ class BaseLDAPEntry(WireStrAlias):
             objectClasses.sort(key=to_bytes)
             a.append((key, objectClasses))
 
-        # TODO: Perhaps it needs optimization because of double sorting
-        l = list(self.items())
-        l.sort(key=lambda x: to_bytes(x[0]))
-        for key, values in l:
+        items_gen = ((key, self[key]) for key in self)
+        items = sorted(items_gen, key=lambda x: to_bytes(x[0]))
+        for key, values in items:
             if key.lower() not in self._object_class_lower_keys:
                 vs = list(values)
                 vs.sort()
@@ -144,11 +147,8 @@ class BaseLDAPEntry(WireStrAlias):
         if self.dn != other.dn:
             return 0
 
-        # TODO: Perhaps it needs optimization because of double sorting
-        my = self.keys()
-        my.sort(key=to_bytes)
-        its = other.keys()
-        its.sort(key=to_bytes)
+        my = sorted((key for key in self), key=to_bytes)
+        its = sorted((key for key in other), key=to_bytes)
         if my != its:
             return 0
         for key in my:
@@ -168,12 +168,7 @@ class BaseLDAPEntry(WireStrAlias):
         return True
 
     def __repr__(self):
-        x = {}
-        for key in self.keys():
-            x[key] = self[key]
-        # TODO: Perhaps it needs optimization because of double sorting
-        keys = self.keys()
-        keys.sort(key=to_bytes)
+        keys = sorted((key for key in self), key=to_bytes)
         a = []
         for key in keys:
             a.append('%s: %s' % (repr(key), repr(list(self[key]))))
@@ -199,8 +194,8 @@ class BaseLDAPEntry(WireStrAlias):
 
         r = []
 
-        myKeys = set(self.keys())
-        otherKeys = set(other.keys())
+        myKeys = set(key for key in self)
+        otherKeys = set(key for key in other)
 
         addedKeys = list(otherKeys - myKeys)
         addedKeys.sort(key=to_bytes)  # for reproducability only
