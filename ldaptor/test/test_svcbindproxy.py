@@ -38,7 +38,12 @@ class ServiceBindingProxy(unittest.TestCase):
             [ pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode) ],
             [ pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode) ],
             ])
-        server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='s3krit'), id=4)))
+        server.dataReceived(
+            pureldap.LDAPMessage(
+                pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='s3krit'),
+                id=4
+            ).toWire()
+        )
         reactor.iterate() #TODO
         client = server.client
 
@@ -83,8 +88,13 @@ class ServiceBindingProxy(unittest.TestCase):
                                                                      +')'),
                                        attributes=('1.1',)),
             )
-        self.assertEqual(server.transport.value(),
-                          str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=ldaperrors.LDAPInvalidCredentials.resultCode), id=4)))
+        self.assertEqual(
+            server.transport.value(),
+            pureldap.LDAPMessage(
+                pureldap.LDAPBindResponse(resultCode=ldaperrors.LDAPInvalidCredentials.resultCode),
+                id=4
+            ).toWire()
+        )
 
     def test_bind_noMatchingServicesFound_fallback_success(self):
         server = self.createServer(
@@ -99,7 +109,12 @@ class ServiceBindingProxy(unittest.TestCase):
             [ pureldap.LDAPSearchResultDone(ldaperrors.Success.resultCode) ],
             [ pureldap.LDAPBindResponse(resultCode=ldaperrors.Success.resultCode) ],
             ])
-        server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='s3krit'), id=4)))
+        server.dataReceived(
+            pureldap.LDAPMessage(
+                pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='s3krit'),
+                id=4
+            ).toWire()
+        )
         reactor.iterate() #TODO
         client = server.client
 
@@ -144,8 +159,13 @@ class ServiceBindingProxy(unittest.TestCase):
                                                                      +')'),
                                        attributes=('1.1',)),
             pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='s3krit'))
-        self.assertEqual(server.transport.value(),
-                          str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=ldaperrors.Success.resultCode), id=4)))
+        self.assertEqual(
+            server.transport.value(),
+            pureldap.LDAPMessage(
+                pureldap.LDAPBindResponse(resultCode=ldaperrors.Success.resultCode),
+                id=4
+            ).toWire()
+        )
 
     def test_bind_noMatchingServicesFound_fallback_badAuth(self):
         server = self.createServer(
@@ -161,7 +181,12 @@ class ServiceBindingProxy(unittest.TestCase):
             [ pureldap.LDAPBindResponse(resultCode=ldaperrors.LDAPInvalidCredentials.resultCode),
               ],
             ])
-        server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='wrong-s3krit'), id=4)))
+        server.dataReceived(
+            pureldap.LDAPMessage(
+                pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='wrong-s3krit'),
+                id=4
+            ).toWire()
+        )
         reactor.iterate() #TODO
         client = server.client
 
@@ -206,8 +231,13 @@ class ServiceBindingProxy(unittest.TestCase):
                                                                      +')'),
                                        attributes=('1.1',)),
             pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='wrong-s3krit'))
-        self.assertEqual(server.transport.value(),
-                          str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=ldaperrors.LDAPInvalidCredentials.resultCode), id=4)))
+        self.assertEqual(
+            server.transport.value(),
+            pureldap.LDAPMessage(
+                pureldap.LDAPBindResponse(resultCode=ldaperrors.LDAPInvalidCredentials.resultCode),
+                id=4
+            ).toWire()
+        )
 
 
     def test_bind_match_success(self):
@@ -226,7 +256,12 @@ class ServiceBindingProxy(unittest.TestCase):
             [ pureldap.LDAPBindResponse(resultCode=ldaperrors.Success.resultCode) ],
             ])
 
-        server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='secret'), id=4)))
+        server.dataReceived(
+            pureldap.LDAPMessage(
+                pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='secret'),
+                id=4
+            ).toWire()
+        )
         reactor.iterate() #TODO
         client = server.client
 
@@ -246,9 +281,16 @@ class ServiceBindingProxy(unittest.TestCase):
                                        attributes=('1.1',)),
             pureldap.LDAPBindRequest(dn=r'cn=svc1+owner=cn\=jack\,dc\=example\,dc\=com,dc=example,dc=com', auth='secret'),
             )
-        self.assertEqual(server.transport.value(),
-                          str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=ldaperrors.Success.resultCode,
-                                                                             matchedDN='cn=jack,dc=example,dc=com'), id=4)))
+        self.assertEqual(
+            server.transport.value(),
+            pureldap.LDAPMessage(
+                pureldap.LDAPBindResponse(
+                    resultCode=ldaperrors.Success.resultCode,
+                    matchedDN='cn=jack,dc=example,dc=com'
+                ),
+                id=4
+            ).toWire()
+        )
 
     def test_bind_match_success_later(self):
         server = self.createServer(
@@ -275,7 +317,12 @@ class ServiceBindingProxy(unittest.TestCase):
             [ pureldap.LDAPBindResponse(resultCode=ldaperrors.Success.resultCode) ],
             ])
 
-        server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='secret'), id=4)))
+        server.dataReceived(
+            pureldap.LDAPMessage(
+                pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='secret'),
+                id=4
+            ).toWire()
+        )
         reactor.iterate() #TODO
         client = server.client
 
@@ -322,9 +369,16 @@ class ServiceBindingProxy(unittest.TestCase):
                                        attributes=('1.1',)),
             pureldap.LDAPBindRequest(dn='cn=svc3+owner=cn\=jack\,dc\=example\,dc\=com,dc=example,dc=com', auth='secret'),
             )
-        self.assertEqual(server.transport.value(),
-                          str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=ldaperrors.Success.resultCode,
-                                                                             matchedDN='cn=jack,dc=example,dc=com'), id=4)))
+        self.assertEqual(
+            server.transport.value(),
+            pureldap.LDAPMessage(
+                pureldap.LDAPBindResponse(
+                    resultCode=ldaperrors.Success.resultCode,
+                    matchedDN='cn=jack,dc=example,dc=com'
+                ),
+                id=4
+            ).toWire()
+        )
 
     def test_bind_match_badAuth(self):
         server = self.createServer(
@@ -352,7 +406,12 @@ class ServiceBindingProxy(unittest.TestCase):
             [ pureldap.LDAPBindResponse(resultCode=ldaperrors.LDAPInvalidCredentials.resultCode) ],
             ])
 
-        server.dataReceived(str(pureldap.LDAPMessage(pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='wrong-s3krit'), id=4)))
+        server.dataReceived(
+            pureldap.LDAPMessage(
+                pureldap.LDAPBindRequest(dn='cn=jack,dc=example,dc=com', auth='wrong-s3krit'),
+                id=4
+            ).toWire()
+        )
         reactor.iterate() #TODO
         client = server.client
 
@@ -400,5 +459,10 @@ class ServiceBindingProxy(unittest.TestCase):
             pureldap.LDAPBindRequest(dn='cn=svc3+owner=cn\=jack\,dc\=example\,dc\=com,dc=example,dc=com', auth='wrong-s3krit'),
             pureldap.LDAPBindRequest(version=3, dn='cn=jack,dc=example,dc=com', auth='wrong-s3krit'),
             )
-        self.assertEqual(server.transport.value(),
-                          str(pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=ldaperrors.LDAPInvalidCredentials.resultCode), id=4)))
+        self.assertEqual(
+            server.transport.value(),
+            pureldap.LDAPMessage(
+                pureldap.LDAPBindResponse(resultCode=ldaperrors.LDAPInvalidCredentials.resultCode),
+                id=4
+            ).toWire()
+        )

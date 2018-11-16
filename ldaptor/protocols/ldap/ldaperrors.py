@@ -14,6 +14,9 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # make pyflakes not complain about undefined names
+
+from ldaptor._encoder import WireStrAlias, to_bytes
+
 reverse = None
 LDAPOther = None
 
@@ -35,13 +38,13 @@ class LDAPResult:
 
 class Success(LDAPResult):
     resultCode = 0
-    name = 'success'
+    name = b'success'
 
     def __init__(self, msg):
         pass
 
 
-class LDAPException(Exception, LDAPResult):
+class LDAPException(WireStrAlias, Exception, LDAPResult):
 
     def _get_message(self):
         return self.__message
@@ -55,14 +58,14 @@ class LDAPException(Exception, LDAPResult):
         Exception.__init__(self)
         self.message = message
 
-    def __str__(self):
+    def toWire(self):
         message = self.message
         if message:
-            return '%s: %s' % (self.name, message)
+            return b'%s: %s' % (self.name, to_bytes(message))
         elif self.name:
             return self.name
         else:
-            return 'Unknown LDAP error %r' % self
+            return b'Unknown LDAP error %r' % self
 
 
 class LDAPUnknownError(LDAPException):
@@ -74,10 +77,10 @@ class LDAPUnknownError(LDAPException):
         self.code = resultCode
         LDAPException.__init__(self, message)
 
-    def __str__(self):
-        codeName = 'unknownError(%d)' % self.code
+    def toWire(self):
+        codeName = b'unknownError(%d)' % self.code
         if self.message:
-            return '%s: %s' % (codeName, self.message)
+            return b'%s: %s' % (codeName, to_bytes(self.message))
         else:
             return codeName
 
@@ -95,7 +98,7 @@ def init(**errors):
                 (LDAPException,),
                 {
                     'resultCode': value,
-                    'name': name,
+                    'name': to_bytes(name),
                     },
                 )
             globals()[classname] = klass

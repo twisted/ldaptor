@@ -31,7 +31,7 @@ class BaseLDAPServer(protocol.Protocol):
     debug = False
 
     def __init__(self):
-        self.buffer = ''
+        self.buffer = b''
         self.connected = None
 
     berdecoder = pureldap.LDAPBERDecoderContext_TopLevel(
@@ -68,7 +68,7 @@ class BaseLDAPServer(protocol.Protocol):
         msg = pureldap.LDAPMessage(op, id=id)
         if self.debug:
             log.msg('S->C %s' % repr(msg), debug=True)
-        self.transport.write(str(msg))
+        self.transport.write(msg.toWire())
 
     def unsolicitedNotification(self, msg):
         log.msg("Got unsolicited notification: %s" % repr(msg))
@@ -78,7 +78,7 @@ class BaseLDAPServer(protocol.Protocol):
             for controlType, criticality, controlValue in controls:
                 if criticality:
                     raise ldaperrors.LDAPUnavailableCriticalExtension(
-                        'Unknown control %s' % controlType)
+                        b'Unknown control %s' % controlType)
 
     def handleUnknown(self, request, controls, callback):
         log.msg('Unknown request: %r' % request)
@@ -148,7 +148,7 @@ class LDAPServer(BaseLDAPServer):
 
         self.checkControls(controls)
 
-        if request.dn == '':
+        if request.dn == b'':
             # anonymous bind
             self.boundUser = None
             return pureldap.LDAPBindResponse(resultCode=0)
@@ -172,7 +172,7 @@ class LDAPServer(BaseLDAPServer):
                     self.boundUser = entry
                     msg = pureldap.LDAPBindResponse(
                         resultCode=ldaperrors.Success.resultCode,
-                        matchedDN=str(entry.dn))
+                        matchedDN=entry.dn.toWire())
                     return msg
                 d.addCallback(_cb)
                 return d
@@ -190,7 +190,7 @@ class LDAPServer(BaseLDAPServer):
         reply(pureldap.LDAPSearchResultEntry(
             objectName='',
             attributes=[('supportedLDAPVersion', ['3']),
-                        ('namingContexts', [str(root.dn)]),
+                        ('namingContexts', [root.dn.toWire()]),
                         ('supportedExtension', [
                             pureldap.LDAPPasswordModifyRequest.oid, ]), ], ))
         return pureldap.LDAPSearchResultDone(
@@ -257,7 +257,7 @@ class LDAPServer(BaseLDAPServer):
                 filtered_attribs = entry.items()
             if len(filtered_attribs) > 0:
                 reply(pureldap.LDAPSearchResultEntry(
-                    objectName=str(entry.dn),
+                    objectName=entry.dn.toWire(),
                     attributes=filtered_attribs,
                     ))
         d = base.search(filterObject=request.filter,
@@ -290,7 +290,7 @@ class LDAPServer(BaseLDAPServer):
     def handle_LDAPSearchRequest(self, request, controls, reply):
         self.checkControls(controls)
 
-        if (request.baseObject == ''
+        if (request.baseObject == b''
                 and request.scope == pureldap.LDAP_SCOPE_baseObject
                 and request.filter == pureldap.LDAPFilter_present('objectClass')):
             return self.getRootDSE(request, reply)
@@ -333,7 +333,7 @@ class LDAPServer(BaseLDAPServer):
             attributes.setdefault(name.value, set())
             attributes[name.value].update([x.value for x in vals])
         dn = distinguishedname.DistinguishedName(request.entry)
-        rdn = str(dn.split()[0])
+        rdn = dn.split()[0].toWire()
         parent = dn.up()
         root = interfaces.IConnectedLDAPEntry(self.factory)
         d = root.lookup(parent)
@@ -430,7 +430,7 @@ class LDAPServer(BaseLDAPServer):
                 return d
 
         raise ldaperrors.LDAPProtocolError(
-            'Unknown extended request: %s' % request.requestName)
+            b'Unknown extended request: %s' % request.requestName)
 
     def extendedRequest_LDAPPasswordModifyRequest(self, data, reply):
         if not isinstance(data, pureber.BERSequence):
@@ -475,8 +475,8 @@ class LDAPServer(BaseLDAPServer):
         if (userIdentity is not None
                 and userIdentity != self.boundUser.dn):
             log.msg('User %(actor)s tried to change password of %(target)s' % {
-                'actor': str(self.boundUser.dn),
-                'target': str(userIdentity),
+                'actor': self.boundUser.dn.toWire(),
+                'target': userIdentity.toWire(),
                 })
             raise ldaperrors.LDAPInsufficientAccessRights()
         if (oldPasswd is not None

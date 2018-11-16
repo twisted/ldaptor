@@ -20,7 +20,9 @@ Changes
 - Using modern classmethod decorator instead of old-style method call.
 - Usage of zope.interfaces was updated in preparation for python3 port.
 - ``toWire`` method is used to get bytes representation of ``ldaptor.protocols.pureber``,
-  ``ldaptor.protocols.pureldap``, ``ldaptor.protocols.distinguishedname`` and ``ldaptor.entry`` classes
+  ``ldaptor.protocols.pureldap``, ``ldaptor.protocols.ldap.distinguishedname``,
+  ``ldaptor.protocols.ldap.ldaperrors``, ``ldaptor.protocols.ldap.ldapclient``,
+  ``ldaptor.protocols.ldap.ldapserver``, ``ldaptor.ldiftree`` and ``ldaptor.entry`` classes
   instead of ``__str__`` which is deprecated now.
 - Code was updated to pass `python3 -m compileall` in preparation for py3 port.
 - Continuous test are executed only against latest related Twisted and latest
@@ -38,6 +40,8 @@ Bugfixes
 - DN matching is now case insensitive.
 - Proxies now terminate the connection to the proxied server in case a client immediately closes the connection.
 - asText() implemented for LDAPFilter_extensibleMatch
+- Children of ``ldaptor.inmemory.ReadOnlyInMemoryLDAPEntry`` subclass instances are added as the same class instances.
+- Redundant attributes keys sorting was removed from ``ldaptor.entry.BaseLDAPEntry`` methods.
 
 Release 16.0 (2016-06-07)
 -------------------------

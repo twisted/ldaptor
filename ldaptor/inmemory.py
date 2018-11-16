@@ -60,7 +60,7 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
             raise ldaperrors.LDAPEntryAlreadyExists(self._children[rdn_str].dn)
         dn = distinguishedname.DistinguishedName(
             listOfRDNs=(rdn,) + self.dn.split())
-        e = ReadOnlyInMemoryLDAPEntry(dn, attributes)
+        e = self.__class__(dn, attributes)
         e._parent = self
         self._children[rdn_str] = e
         return e
@@ -78,7 +78,7 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
     def _deleteChild(self, rdn):
         if not isinstance(rdn, distinguishedname.RelativeDistinguishedName):
             rdn = distinguishedname.RelativeDistinguishedName(stringValue=rdn)
-        rdn_str = str(rdn)
+        rdn_str = rdn.toWire()
         try:
             return self._children.pop(rdn_str)
         except KeyError:
@@ -103,8 +103,8 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
 
     def _move2(self, newParent, newDN):
         if newParent is not None:
-            newParent._children[str(newDN.split()[0])] = self
-            del self._parent._children[str(self.dn.split()[0])]
+            newParent._children[newDN.split()[0].toWire()] = self
+            del self._parent._children[self.dn.split()[0].toWire()]
         # remove old RDN attributes
         for attr in self.dn.split()[0].split():
             self[attr.attributeType].remove(attr.value)
