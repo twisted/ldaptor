@@ -99,6 +99,16 @@ class RFC2254Examples(unittest.TestCase):
         self.assertEqual(ldapfilter.parseFilter(text), filt)
         self.assertEqual(filt.asText(), text)
 
+    def test_extensible_5(self):
+        text = '(cn:1.2.3.4.5:=Fred Flintstone)'
+        filt = pureldap.LDAPFilter_extensibleMatch(
+            type='cn',
+            dnAttributes=None,
+            matchingRule='1.2.3.4.5',
+            matchValue='Fred Flintstone',
+            )
+        self.assertEqual(filt.asText(), text)
+
     def test_escape_parens(self):
         text = r'(o=Parens R Us \28for all your parenthetical needs\29)'
         filt = pureldap.LDAPFilter_equalityMatch(
