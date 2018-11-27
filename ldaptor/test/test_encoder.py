@@ -6,10 +6,10 @@ from twisted.trial import unittest
 
 import six
 
-from ldaptor._encoder import to_bytes, WireStrAlias
+import ldaptor._encoder
 
 
-class WireableObject(object):
+class WireableObject(ldaptor._encoder.WireStrAlias):
     """
     Object with bytes representation as a constant toWire value
     """
@@ -26,7 +26,7 @@ class EncoderTests(unittest.TestCase):
         to get its bytes representation if it has one
         """
         obj = WireableObject()
-        self.assertEqual(to_bytes(obj), b'wire')
+        self.assertEqual(ldaptor._encoder.to_bytes(obj), b'wire')
 
     def test_unicode_object(self):
         """
@@ -34,7 +34,7 @@ class EncoderTests(unittest.TestCase):
         to to_bytes function
         """
         obj = six.u('unicode')
-        self.assertEqual(to_bytes(obj), b'unicode')
+        self.assertEqual(ldaptor._encoder.to_bytes(obj), b'unicode')
 
     def test_bytes_object(self):
         """
@@ -42,7 +42,7 @@ class EncoderTests(unittest.TestCase):
         if passed to to_bytes function
         """
         obj = b'bytes'
-        self.assertEqual(to_bytes(obj), b'bytes')
+        self.assertEqual(ldaptor._encoder.to_bytes(obj), b'bytes')
 
 
 class WireStrAliasTests(unittest.TestCase):
@@ -51,5 +51,15 @@ class WireStrAliasTests(unittest.TestCase):
         """
         WireStrAlias.toWire is an abstract method and raises NotImplementedError
         """
-        obj = WireStrAlias()
+        obj = ldaptor._encoder.WireStrAlias()
         self.assertRaises(NotImplementedError, obj.toWire)
+
+    def test_str_deprecation_warning(self):
+        """
+        WireStrAlias.__str__ generates DeprecationWarning before calling WireStrAlias.toWire method
+        """
+        obj = WireableObject()
+        msg = 'WireableObject.__str__ method is deprecated and will not be used ' \
+            'for getting bytes representation in the future releases, use ' \
+            'WireableObject.toWire instead'
+        self.assertWarns(DeprecationWarning, msg, ldaptor._encoder.__file__, obj.__str__)
