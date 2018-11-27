@@ -7,6 +7,8 @@ from ldaptor.protocols.ldap import fetchschema
 from ldaptor import schema
 from ldaptor.protocols import pureldap
 from ldaptor.testutil import LDAPClientTestDriver
+from ldaptor._encoder import to_bytes
+
 
 class OnWire(unittest.TestCase):
     cn = """( 2.5.4.3 NAME ( 'cn' 'commonName' ) DESC 'RFC2256: common name(s) for which the entity is known by' SUP name )"""
@@ -65,7 +67,7 @@ class OnWire(unittest.TestCase):
                           )
         self.failUnlessEqual(len(val), 2)
 
-        self.failUnlessEqual([str(x) for x in val[0]],
-                             [str(schema.AttributeTypeDescription(self.cn))])
-        self.failUnlessEqual([str(x) for x in val[1]],
-                             [str(schema.ObjectClassDescription(self.dcObject))])
+        self.failUnlessEqual([to_bytes(x) for x in val[0]],
+                             [to_bytes(schema.AttributeTypeDescription(self.cn))])
+        self.failUnlessEqual([to_bytes(x) for x in val[1]],
+                             [to_bytes(schema.ObjectClassDescription(self.dcObject))])
