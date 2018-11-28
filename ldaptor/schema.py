@@ -1,26 +1,31 @@
 import six
 
+from ldaptor._encoder import WireStrAlias, to_bytes
+
+
 def extractWord(text):
     if not text:
-        return None
+        return b'', b''
     l = text.split(None, 1)
     word = l[0]
     try:
         text = l[1]
     except IndexError:
-        text = ''
+        text = b''
     return word, text
+
 
 def peekWord(text):
     if not text:
         return None
     return text.split(None, 1)[0]
 
+
 class ASN1ParserThingie:
     def _to_list(self, text):
         """Split text into $-separated list."""
-        r=[]
-        for x in text.split("$"):
+        r = []
+        for x in text.split(b"$"):
             x = x.strip()
             assert x
             r.append(x)
@@ -28,34 +33,35 @@ class ASN1ParserThingie:
 
     def _strings_to_list(self, text):
         """Split ''-quoted strings into list."""
-        r=[]
+        r = []
         while text:
             text = text.lstrip()
             if not text:
                 break
-            assert text[0]=="'", "Text %s must start with a single quote."%repr(text)
-            text=text[1:]
-            end=text.index("'")
+            assert text[:1] == b"'", "Text %s must start with a single quote." % repr(text)
+            text = text[1:]
+            end = text.index(b"'")
             r.append(text[:end])
-            text=text[end+1:]
+            text = text[end+1:]
         return tuple(r)
 
     def _str_list(self, l):
-        s = ' '.join([self._str(x) for x in l])
+        s = b' '.join([self._str(x) for x in l])
         if len(l) > 1:
-            s = '( %s )' % s
+            s = b'( %s )' % s
         return s
 
     def _list(self, l):
-        s = ' $ '.join([x for x in l])
+        s = b' $ '.join([x for x in l])
         if len(l) > 1:
-            s = '( %s )' % s
+            s = b'( %s )' % s
         return s
 
     def _str(self, s):
-        return "'%s'" % s
+        return b"'%s'" % s
 
-class ObjectClassDescription(ASN1ParserThingie):
+
+class ObjectClassDescription(ASN1ParserThingie, WireStrAlias):
     """
     ASN Syntax::
 
@@ -105,24 +111,23 @@ class ObjectClassDescription(ASN1ParserThingie):
                 whsp ")"
     """
 
-
     def __init__(self, text):
-        self.oid=None
-        self.name=None
-        self.desc=None
-        self.obsolete=0
-        self.sup=[]
-        self.type=None
-        self.must=[]
-        self.may=[]
+        self.oid = None
+        self.name = None
+        self.desc = None
+        self.obsolete = 0
+        self.sup = []
+        self.type = None
+        self.must = []
+        self.may = []
 
         if text is not None:
-            self._parse(text)
+            self._parse(to_bytes(text))
 
     def _parse(self, text):
-        assert text[0]=='(', "Text %s must be in parentheses."%repr(text)
-        assert text[-1]==')', "Text %s must be in parentheses."%repr(text)
-        text=text[1:-1]
+        assert text[:1] == b'(', "Text %s must be in parentheses." % repr(text)
+        assert text[-1:] == b')', "Text %s must be in parentheses." % repr(text)
+        text = text[1:-1]
         text = text.lstrip()
 
         # oid
@@ -130,119 +135,118 @@ class ObjectClassDescription(ASN1ParserThingie):
 
         text = text.lstrip()
 
-        if peekWord(text) == "NAME":
-            text=text[len("NAME "):]
+        if peekWord(text) == b"NAME":
+            text = text[len(b"NAME "):]
             text = text.lstrip()
-            if text[0]=="'":
-                text=text[1:]
-                end=text.index("'")
-                self.name=(text[:end],)
-                text=text[end+1:]
-            elif text[0]=="(":
-                text=text[1:]
+            if text[:1] == b"'":
+                text = text[1:]
+                end = text.index(b"'")
+                self.name = (text[:end],)
+                text = text[end+1:]
+            elif text[:1] == b"(":
+                text = text[1:]
                 text = text.lstrip()
-                end=text.index(")")
-                self.name=self._strings_to_list(text[:end])
-                text=text[end+1:]
+                end = text.index(b")")
+                self.name = self._strings_to_list(text[:end])
+                text = text[end+1:]
             else:
-                raise NotImplementedError("TODO")
-
+                raise AssertionError()
 
         text = text.lstrip()
 
-        if peekWord(text) == "DESC":
-            text=text[len("DESC "):]
+        if peekWord(text) == b"DESC":
+            text = text[len(b"DESC "):]
             text = text.lstrip()
-            assert text[0]=="'"
-            text=text[1:]
-            end=text.index("'")
-            self.desc=text[:end]
-            text=text[end+1:]
+            assert text[:1] == b"'"
+            text = text[1:]
+            end = text.index(b"'")
+            self.desc = text[:end]
+            text = text[end+1:]
 
         text = text.lstrip()
 
-        if peekWord(text) == "OBSOLETE":
-            self.obsolete=1
-            text=text[len("OBSOLETE "):]
+        if peekWord(text) == b"OBSOLETE":
+            self.obsolete = 1
+            text = text[len(b"OBSOLETE "):]
 
         text = text.lstrip()
 
-        if peekWord(text) == "SUP":
-            text=text[len("SUP "):]
+        if peekWord(text) == b"SUP":
+            text = text[len(b"SUP "):]
             text = text.lstrip()
-            if text[0]=="(":
-                text=text[1:]
+            if text[:1] == b"(":
+                text = text[1:]
                 text = text.lstrip()
-                end=text.index(")")
-                self.sup=self._to_list(text[:end])
-                text=text[end+1:]
+                end = text.index(b")")
+                self.sup = self._to_list(text[:end])
+                text = text[end+1:]
             else:
                 s, text = extractWord(text)
-                self.sup=[s]
+                self.sup = [s]
 
         text = text.lstrip()
 
-        if peekWord(text) == "ABSTRACT":
+        if peekWord(text) == b"ABSTRACT":
             assert self.type is None
-            self.type="ABSTRACT"
-            text=text[len("ABSTRACT "):]
+            self.type = b"ABSTRACT"
+            text = text[len(b"ABSTRACT "):]
 
         text = text.lstrip()
 
-        if peekWord(text) == "STRUCTURAL":
+        if peekWord(text) == b"STRUCTURAL":
             assert self.type is None
-            self.type="STRUCTURAL"
-            text=text[len("STRUCTURAL "):]
+            self.type = b"STRUCTURAL"
+            text = text[len(b"STRUCTURAL "):]
 
         text = text.lstrip()
 
-        if peekWord(text) == "AUXILIARY":
+        if peekWord(text) == b"AUXILIARY":
             assert self.type is None
-            self.type="AUXILIARY"
-            text=text[len("AUXILIARY "):]
+            self.type = b"AUXILIARY"
+            text = text[len(b"AUXILIARY "):]
 
         text = text.lstrip()
 
-        if peekWord(text) == "MUST":
-            text=text[len("MUST "):]
+        if peekWord(text) == b"MUST":
+            text = text[len(b"MUST "):]
             text = text.lstrip()
-            if text[0]=="(":
-                text=text[1:]
+            if text[:1] == b"(":
+                text = text[1:]
                 text = text.lstrip()
-                end=text.index(")")
+                end = text.index(b")")
                 self.must.extend(self._to_list(text[:end]))
-                text=text[end+1:]
+                text = text[end+1:]
             else:
                 s, text = extractWord(text)
                 self.must.append(s)
 
         text = text.lstrip()
 
-        if peekWord(text) == "MAY":
-            text=text[len("MAY "):]
+        if peekWord(text) == b"MAY":
+            text = text[len(b"MAY "):]
             text = text.lstrip()
-            if text[0]=="(":
-                text=text[1:]
+            if text[:1] == b"(":
+                text = text[1:]
                 text = text.lstrip()
-                end=text.index(")")
+                end = text.index(b")")
                 self.may.extend(self._to_list(text[:end]))
-                text=text[end+1:]
+                text = text[end+1:]
             else:
                 s, text = extractWord(text)
                 self.may.append(s)
 
         text = text.lstrip()
 
-        assert text=="", "Text was not empty: %s"%repr(text)
+        assert text == b"", "Text was not empty: %s" % repr(text)
 
         if not self.type:
-            self.type="STRUCTURAL"
+            self.type = b"STRUCTURAL"
 
         assert self.oid
         for c in self.oid:
-            assert c in "0123456789."
+            assert c in b"0123456789."
         assert self.name is None or self.name
-        assert self.type in ("ABSTRACT", "STRUCTURAL", "AUXILIARY")
+        assert self.type in (b"ABSTRACT", b"STRUCTURAL", b"AUXILIARY")
 
     def __repr__(self):
         nice = {}
@@ -253,28 +257,26 @@ class ObjectClassDescription(ASN1ParserThingie):
                   +" obsolete=%(obsolete)s sup=%(sup)s type=%(type)s"
                   +" must=%(must)s may=%(may)s>")%nice)
 
-    def __str__(self):
-        r=[]
+    def toWire(self):
+        r = []
         if self.name is not None:
-            r.append('NAME %s' % self._str_list(self.name))
+            r.append(b'NAME %s' % self._str_list(self.name))
         if self.desc is not None:
-            r.append('DESC %s' % self._str(self.desc))
+            r.append(b'DESC %s' % self._str(self.desc))
         if self.obsolete:
-            r.append('OBSOLETE')
+            r.append(b'OBSOLETE')
         if self.sup:
-            r.append('SUP %s' % self._list(self.sup))
-        r.append('%s' % self.type)
+            r.append(b'SUP %s' % self._list(self.sup))
+        r.append(b'%s' % self.type)
         if self.must:
-            r.append('MUST %s' % self._list(self.must))
+            r.append(b'MUST %s' % self._list(self.must))
         if self.may:
-            r.append('MAY %s' % self._list(self.may))
-        return ('( %s ' % self.oid
-                + '\n        '.join(r)
-                + ' )')
+            r.append(b'MAY %s' % self._list(self.may))
+        return b'( %s ' % self.oid + b'\n        '.join(r) + b' )'
 
     def __lt__(self, other):
         if not isinstance(other, ObjectClassDescription):
-            return NotImplemented
+            raise NotImplementedError()
         if self.name is not None and other.name is not None:
             return self.name[0].upper() < other.name[0].upper()
         else:
@@ -282,7 +284,7 @@ class ObjectClassDescription(ASN1ParserThingie):
 
     def __gt__(self, other):
         if not isinstance(other, ObjectClassDescription):
-            return NotImplemented
+            raise NotImplementedError()
         if self.name is not None and other.name is not None:
             return self.name[0].upper() > other.name[0].upper()
         else:
@@ -296,7 +298,7 @@ class ObjectClassDescription(ASN1ParserThingie):
 
     def __eq__(self, other):
         if not isinstance(other, ObjectClassDescription):
-            return NotImplemented
+            raise NotImplementedError()
         return (self.oid == other.oid
                 and self.name == other.name
                 and self.desc == other.desc
@@ -309,7 +311,8 @@ class ObjectClassDescription(ASN1ParserThingie):
     def __ne__(self, other):
         return not (self == other)
 
-class AttributeTypeDescription(ASN1ParserThingie):
+
+class AttributeTypeDescription(ASN1ParserThingie, WireStrAlias):
     """
     ASN Syntax::
 
@@ -341,30 +344,30 @@ class AttributeTypeDescription(ASN1ParserThingie):
     """
 
     def __init__(self, text):
-        self.oid=None
-        self.name=None
-        self.desc=None
-        self.obsolete=0
-        self.sup=None
-        self.equality=None
-        self.ordering=None
-        self.substr=None
-        self.syntax=None
-        self.single_value=None
-        self.collective=None
-        self.no_user_modification=None
-        self.usage=None
+        self.oid = None
+        self.name = None
+        self.desc = None
+        self.obsolete = 0
+        self.sup = None
+        self.equality = None
+        self.ordering = None
+        self.substr = None
+        self.syntax = None
+        self.single_value = None
+        self.collective = None
+        self.no_user_modification = None
+        self.usage = None
 
         # storage for experimental terms ("X-SOMETHING"), so we can
         # output them when stringifying.
-        self.x_attrs=[]
+        self.x_attrs = []
 
         if text is not None:
-            self._parse(text)
+            self._parse(to_bytes(text))
 
     def _parse(self, text):
-        assert text[0]=='(', "Text %s must be in parentheses."%repr(text)
-        assert text[-1]==')', "Text %s must be in parentheses."%repr(text)
+        assert text[:1] == b'(', "Text %s must be in parentheses." % repr(text)
+        assert text[-1:] == b')', "Text %s must be in parentheses." % repr(text)
         text=text[1:-1]
         text = text.lstrip()
 
@@ -373,105 +376,103 @@ class AttributeTypeDescription(ASN1ParserThingie):
 
         text = text.lstrip()
 
-        if peekWord(text) == "NAME":
-            text=text[len("NAME "):]
+        if peekWord(text) == b"NAME":
+            text = text[len(b"NAME "):]
             text = text.lstrip()
-            if text[0]=="'":
-                text=text[1:]
-                end=text.index("'")
-                self.name=(text[:end],)
-                text=text[end+1:]
-            elif text[0]=="(":
-                text=text[1:]
+            if text[:1] == b"'":
+                text = text[1:]
+                end = text.index(b"'")
+                self.name = (text[:end],)
+                text = text[end+1:]
+            elif text[:1] == b"(":
+                text = text[1:]
                 text = text.lstrip()
-                end=text.index(")")
-                self.name=self._strings_to_list(text[:end])
-                text=text[end+1:]
+                end = text.index(b")")
+                self.name = self._strings_to_list(text[:end])
+                text = text[end+1:]
             else:
-                raise NotImplementedError("TODO")
-
+                raise AssertionError()
 
         text = text.lstrip()
 
-        if peekWord(text) == "DESC":
-            text=text[len("DESC "):]
+        if peekWord(text) == b"DESC":
+            text = text[len(b"DESC "):]
             text = text.lstrip()
-            assert text[0]=="'"
-            text=text[1:]
-            end=text.index("'")
-            self.desc=text[:end]
-            text=text[end+1:]
+            assert text[:1] == b"'"
+            text = text[1:]
+            end = text.index(b"'")
+            self.desc = text[:end]
+            text = text[end+1:]
 
         text = text.lstrip()
 
-        if peekWord(text) == "OBSOLETE":
-            self.obsolete=1
-            text=text[len("OBSOLETE "):]
+        if peekWord(text) == b"OBSOLETE":
+            self.obsolete = 1
+            text = text[len(b"OBSOLETE "):]
 
         text = text.lstrip()
 
-        if peekWord(text) == "SUP":
-            text=text[len("SUP "):]
+        if peekWord(text) == b"SUP":
+            text = text[len(b"SUP "):]
             text = text.lstrip()
             self.sup, text = extractWord(text)
 
         text = text.lstrip()
 
-        if peekWord(text) == "EQUALITY":
-            text=text[len("EQUALITY "):]
+        if peekWord(text) == b"EQUALITY":
+            text = text[len(b"EQUALITY "):]
             text = text.lstrip()
             self.equality, text = extractWord(text)
 
         text = text.lstrip()
 
-        if peekWord(text) == "ORDERING":
-            text=text[len("ORDERING "):]
+        if peekWord(text) == b"ORDERING":
+            text = text[len(b"ORDERING "):]
             text = text.lstrip()
             self.ordering, text = extractWord(text)
 
         text = text.lstrip()
 
-        if peekWord(text) == "SUBSTR":
-            text=text[len("SUBSTR "):]
+        if peekWord(text) == b"SUBSTR":
+            text = text[len(b"SUBSTR "):]
             text = text.lstrip()
             self.substr, text = extractWord(text)
 
         text = text.lstrip()
 
-        if peekWord(text) == "SYNTAX":
-            text=text[len("SYNTAX "):]
+        if peekWord(text) == b"SYNTAX":
+            text = text[len(b"SYNTAX "):]
             text = text.lstrip()
             self.syntax, text = extractWord(text)
 
         text = text.lstrip()
 
-        if peekWord(text) == "SINGLE-VALUE":
+        if peekWord(text) == b"SINGLE-VALUE":
             assert self.single_value is None
-            self.single_value=1
-            text=text[len("SINGLE-VALUE "):]
+            self.single_value = 1
+            text = text[len(b"SINGLE-VALUE "):]
 
         text = text.lstrip()
 
-        if peekWord(text) == "COLLECTIVE":
+        if peekWord(text) == b"COLLECTIVE":
             assert self.collective is None
-            self.collective=1
-            text=text[len("COLLECTIVE "):]
+            self.collective = 1
+            text = text[len(b"COLLECTIVE "):]
 
         text = text.lstrip()
 
-        if peekWord(text) == "NO-USER-MODIFICATION":
+        if peekWord(text) == b"NO-USER-MODIFICATION":
             assert self.no_user_modification is None
-            self.no_user_modification=1
-            text=text[len("NO-USER-MODIFICATION "):]
+            self.no_user_modification = 1
+            text = text[len(b"NO-USER-MODIFICATION "):]
 
         text = text.lstrip()
 
-        if peekWord(text) == "USAGE":
+        if peekWord(text) == b"USAGE":
             assert self.usage is None
-            text=text[len("USAGE "):]
+            text = text[len(b"USAGE "):]
             text = text.lstrip()
             self.usage, text = extractWord(text)
-
 
         while True:
             text = text.lstrip()
@@ -480,47 +481,47 @@ class AttributeTypeDescription(ASN1ParserThingie):
             if word is None:
                 break
 
-            if word.startswith('X-'):
-                text=text[len(word+" "):]
+            if word.startswith(b'X-'):
+                text = text[len(word+b" "):]
                 text = text.lstrip()
-                if text[0]=="'":
-                    text=text[1:]
-                    end=text.index("'")
-                    value=text[:end]
-                    text=text[end+1:]
-                elif text[0]=="(":
-                    text=text[1:]
+                if text[:1] == b"'":
+                    text = text[1:]
+                    end = text.index(b"'")
+                    value = text[:end]
+                    text = text[end+1:]
+                elif text[:1] == b"(":
+                    text = text[1:]
                     text = text.lstrip()
-                    end=text.index(")")
-                    value=self._strings_to_list(text[:end])
-                    text=text[end+1:]
+                    end = text.index(b")")
+                    value = self._strings_to_list(text[:end])
+                    text = text[end+1:]
                 else:
-                    raise NotImplementedError("TODO")
+                    raise AssertionError()
 
                 self.x_attrs.append((word, value))
             else:
-                raise RuntimeError('Unhandled attributeType: %r', word)
+                raise AssertionError('Unhandled attributeType: %r', word)
 
-        assert text=="", "Text was not empty: %s"%repr(text)
+        assert text == b"", "Text was not empty: %s" % repr(text)
 
         if self.single_value is None:
-            self.single_value=0
+            self.single_value = 0
 
         if self.collective is None:
-            self.collective=0
+            self.collective = 0
 
         if self.no_user_modification is None:
-            self.no_user_modification=0
+            self.no_user_modification = 0
 
         assert self.oid
         for c in self.oid:
-            assert c in "0123456789."
+            assert c in b"0123456789."
         assert self.name is None or self.name
         assert self.usage is None or self.usage in (
-            "userApplications",
-            "directoryOperation",
-            "distributedOperation",
-            "dSAOperation",
+            b"userApplications",
+            b"directoryOperation",
+            b"distributedOperation",
+            b"dSAOperation",
             )
 
     def __repr__(self):
@@ -537,47 +538,46 @@ class AttributeTypeDescription(ASN1ParserThingie):
                   +" no_user_modification=%(no_user_modification)s"
                   +" usage=%(usage)s>")%nice)
 
-    def __str__(self):
-        r=[]
+    def toWire(self):
+        r = []
         if self.name is not None:
-            r.append('NAME %s' % self._str_list(self.name))
+            r.append(b'NAME %s' % self._str_list(self.name))
         if self.desc is not None:
-            r.append('DESC %s' % self._str(self.desc))
+            r.append(b'DESC %s' % self._str(self.desc))
         if self.obsolete:
-            r.append('OBSOLETE')
+            r.append(b'OBSOLETE')
         if self.sup is not None:
-            r.append('SUP %s' % self.sup)
+            r.append(b'SUP %s' % self.sup)
         if self.equality is not None:
-            r.append('EQUALITY %s' % self.equality)
+            r.append(b'EQUALITY %s' % self.equality)
         if self.ordering is not None:
-            r.append('ORDERING %s' % self.ordering)
+            r.append(b'ORDERING %s' % self.ordering)
         if self.substr is not None:
-            r.append('SUBSTR %s' % self.substr)
+            r.append(b'SUBSTR %s' % self.substr)
         if self.syntax is not None:
-            r.append('SYNTAX %s' % self.syntax)
+            r.append(b'SYNTAX %s' % self.syntax)
         if self.single_value:
-            r.append('SINGLE-VALUE')
+            r.append(b'SINGLE-VALUE')
         if self.collective:
-            r.append('COLLECTIVE')
+            r.append(b'COLLECTIVE')
         if self.no_user_modification:
-            r.append('NO-USER-MODIFICATION')
+            r.append(b'NO-USER-MODIFICATION')
         if self.usage is not None:
-            r.append('USAGE %s' % self.usage)
+            r.append(b'USAGE %s' % self.usage)
         for name, value in self.x_attrs:
-            if isinstance(value, six.string_types):
-                r.append("%s '%s'" % (name, value))
+            if isinstance(value, (six.binary_type, six.text_type)):
+                r.append(b"%s '%s'" % (name, value))
             else:
                 r.append(
-                    '%s ( %s )' % (
+                    b'%s ( %s )' % (
                         name,
-                        ' '.join("'%s'" % s for s in value),
+                        b' '.join(b"'%s'" % s for s in value),
                         ),
                     )
-        return ('( %s ' % self.oid
-                + '\n        '.join(r)
-                + ' )')
+        return b'( %s ' % self.oid + b'\n        '.join(r) + b' )'
 
-class SyntaxDescription(ASN1ParserThingie):
+
+class SyntaxDescription(ASN1ParserThingie, WireStrAlias):
     """
     ASN Syntax::
 
@@ -588,11 +588,18 @@ class SyntaxDescription(ASN1ParserThingie):
     """
 
     def __init__(self, text):
-        self.oid=None
-        self.desc=None
+        self.oid = None
+        self.desc = None
+        self.binary_transfer_required = False
+        self.human_readable = True
 
-        assert text[0]=='('
-        assert text[-1]==')'
+        if text is not None:
+            self._parse(to_bytes(text))
+
+    def _parse(self, text):
+
+        assert text[:1] == b'('
+        assert text[-1:] == b')'
         text=text[1:-1]
         text = text.lstrip()
 
@@ -601,44 +608,48 @@ class SyntaxDescription(ASN1ParserThingie):
 
         text = text.lstrip()
 
-        if peekWord(text) == "DESC":
-            text=text[len("DESC "):]
+        if peekWord(text) == b"DESC":
+            text = text[len(b"DESC "):]
             text = text.lstrip()
-            assert text[0]=="'"
-            text=text[1:]
-            end=text.index("'")
-            self.desc=text[:end]
-            text=text[end+1:]
+            assert text[:1] == b"'"
+            text = text[1:]
+            end = text.index(b"'")
+            self.desc = text[:end]
+            text = text[end+1:]
 
         text = text.lstrip()
 
-        if peekWord(text) == "X-BINARY-TRANSFER-REQUIRED":
-            text=text[len("X-BINARY-TRANSFER-REQUIRED "):]
+        if peekWord(text) == b"X-BINARY-TRANSFER-REQUIRED":
+            self.binary_transfer_required = True
+            text = text[len(b"X-BINARY-TRANSFER-REQUIRED 'TRUE' "):]
             text = text.lstrip()
-            assert text[0]=="'"
-            text=text[1:]
-            end=text.index("'")
-            self.desc=text[:end]
-            text=text[end+1:]
 
         text = text.lstrip()
 
-        if peekWord(text) == "X-NOT-HUMAN-READABLE":
-            text=text[len("X-NOT-HUMAN-READABLE "):]
+        if peekWord(text) == b"X-NOT-HUMAN-READABLE":
+            self.human_readable = False
+            text = text[len(b"X-NOT-HUMAN-READABLE 'TRUE' "):]
             text = text.lstrip()
-            assert text[0]=="'"
-            text=text[1:]
-            end=text.index("'")
-            self.desc=text[:end]
-            text=text[end+1:]
 
         text = text.lstrip()
 
-        assert text=="", "Text was not empty: %s"%repr(text)
+        assert text == b"", "Text was not empty: %s" % repr(text)
 
         assert self.oid
         for c in self.oid:
-            assert c in "0123456789."
+            assert c in b"0123456789."
+
+    def toWire(self):
+        r = [self.oid]
+
+        if self.desc is not None:
+            r.append(b'DESC %s' % self._str(self.desc))
+        if self.binary_transfer_required is True:
+            r.append(b"X-BINARY-TRANSFER-REQUIRED 'TRUE'")
+        if self.human_readable is False:
+            r.append(b"X-NOT-HUMAN-READABLE 'TRUE'")
+
+        return b'( ' + b' '.join(r) + b' )'
 
     def __repr__(self):
         nice = {}
@@ -648,8 +659,7 @@ class SyntaxDescription(ASN1ParserThingie):
                 +(" oid=%(oid)s desc=%(desc)s>")%nice)
 
 
-
-class MatchingRuleDescription(ASN1ParserThingie):
+class MatchingRuleDescription(ASN1ParserThingie, WireStrAlias):
     """
     ASN Syntax::
 
@@ -663,15 +673,20 @@ class MatchingRuleDescription(ASN1ParserThingie):
     """
 
     def __init__(self, text):
-        self.oid=None
-        self.name=None
-        self.desc=None
-        self.obsolete=None
-        self.syntax=None
+        self.oid = None
+        self.name = None
+        self.desc = None
+        self.obsolete = None
+        self.syntax = None
 
-        assert text[0]=='('
-        assert text[-1]==')'
-        text=text[1:-1]
+        if text is not None:
+            self._parse(to_bytes(text))
+
+    def _parse(self, text):
+
+        assert text[:1] == b'('
+        assert text[-1:] == b')'
+        text = text[1:-1]
         text = text.lstrip()
 
         # oid
@@ -679,57 +694,70 @@ class MatchingRuleDescription(ASN1ParserThingie):
 
         text = text.lstrip()
 
-        if peekWord(text) == "NAME":
-            text=text[len("NAME "):]
+        if peekWord(text) == b"NAME":
+            text = text[len(b"NAME "):]
             text = text.lstrip()
-            if text[0]=="'":
-                text=text[1:]
-                end=text.index("'")
-                self.name=(text[:end],)
-                text=text[end+1:]
-            elif text[0]=="(":
-                text=text[1:]
+            if text[:1] == b"'":
+                text = text[1:]
+                end = text.index(b"'")
+                self.name = (text[:end],)
+                text = text[end+1:]
+            elif text[:1] == b"(":
+                text = text[1:]
                 text = text.lstrip()
-                end=text.index(")")
-                self.name=self._strings_to_list(text[:end])
-                text=text[end+1:]
+                end = text.index(b")")
+                self.name = self._strings_to_list(text[:end])
+                text = text[end+1:]
             else:
-                raise NotImplementedError("TODO")
+                raise AssertionError()
 
         text = text.lstrip()
 
-        if peekWord(text) == "DESC":
-            text=text[len("DESC "):]
+        if peekWord(text) == b"DESC":
+            text = text[len(b"DESC "):]
             text = text.lstrip()
-            assert text[0]=="'"
-            text=text[1:]
-            end=text.index("'")
-            self.desc=text[:end]
-            text=text[end+1:]
+            assert text[:1] == b"'"
+            text = text[1:]
+            end = text.index(b"'")
+            self.desc = text[:end]
+            text = text[end+1:]
 
         text = text.lstrip()
 
-        if peekWord(text) == "OBSOLETE":
-            self.obsolete=1
-            text=text[len("OBSOLETE "):]
+        if peekWord(text) == b"OBSOLETE":
+            self.obsolete = 1
+            text = text[len(b"OBSOLETE "):]
 
         text = text.lstrip()
 
-        if peekWord(text) == "SYNTAX":
-            text=text[len("SYNTAX "):]
+        if peekWord(text) == b"SYNTAX":
+            text = text[len(b"SYNTAX "):]
             text = text.lstrip()
             self.syntax, text = extractWord(text)
 
         text = text.lstrip()
 
-        assert text=="", "Text was not empty: %s"%repr(text)
+        assert text == b"", "Text was not empty: %s" % repr(text)
 
         if self.obsolete is None:
-            self.obsolete=0
+            self.obsolete = 0
         assert self.oid
         for c in self.oid:
-            assert c in "0123456789."
+            assert c in b"0123456789."
         assert self.syntax
+
+    def toWire(self):
+        r = [self.oid]
+
+        if self.name is not None:
+            r.append(b'NAME %s' % self._str_list(self.name))
+        if self.desc is not None:
+            r.append(b'DESC %s' % self._str(self.desc))
+        if self.obsolete:
+            r.append(b'OBSOLETE')
+        r.append(b'SYNTAX %s' % self.syntax)
+
+        return b'( ' + b' '.join(r) + b' )'
 
     def __repr__(self):
         nice = {}

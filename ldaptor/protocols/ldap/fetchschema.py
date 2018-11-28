@@ -1,6 +1,7 @@
 from ldaptor.protocols.ldap import ldaperrors, ldapsyntax
 from ldaptor.protocols import pureldap
 from ldaptor import schema
+from ldaptor._encoder import to_bytes
 
 
 def _fetchCb(subschemaSubentry, client):
@@ -19,9 +20,9 @@ def _fetchCb(subschemaSubentry, client):
             attributeTypes = []
             objectClasses = []
             for text in o.get("attributeTypes", []):
-                attributeTypes.append(schema.AttributeTypeDescription(str(text)))
+                attributeTypes.append(schema.AttributeTypeDescription(to_bytes(text)))
             for text in o.get("objectClasses", []):
-                objectClasses.append(schema.ObjectClassDescription(str(text)))
+                objectClasses.append(schema.ObjectClassDescription(to_bytes(text)))
             assert attributeTypes, "LDAP server doesn't give attributeTypes for subschemaSubentry dn=%s" % o.dn
             return (attributeTypes, objectClasses)
         else:
