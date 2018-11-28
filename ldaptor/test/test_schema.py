@@ -60,6 +60,13 @@ OBJECTCLASSES = {
     'multiple_superiors': b"""( 1.3.6.1.4.1.000.1.2 NAME 'multiple_superiors'
     DESC 'Object class with multiple superiors'
     SUP ( sup1 $ sup2 ) STRUCTURAL )""",
+
+    'no_name': b"""( 1.3.6.1.4.1.000.1.3
+    DESC 'Object class with no name'
+    SUP top STRUCTURAL )""",
+
+    'no_description': b"""( 1.3.6.1.4.1.000.1.4 NAME 'no_description'
+    SUP top STRUCTURAL )""",
 }
 
 
@@ -241,6 +248,15 @@ class AttributeType_KnownValues(unittest.TestCase):
                 'name': (b'collective',),
                 'collective': 1,
             }
+        ),
+
+        (
+            b"""( 1.3.6.1.4.1.000.2.3
+            DESC 'Attribute type without name' )""",
+            {
+                'oid': b'1.3.6.1.4.1.000.2.3',
+                'desc': b'Attribute type without name',
+            }
         )
 
     ]
@@ -385,6 +401,24 @@ class ObjectClass_KnownValues(unittest.TestCase):
                 'sup': (b'sup1', b'sup2'),
             }
         ),
+        (
+            OBJECTCLASSES['no_name'],
+            {
+                'oid': b'1.3.6.1.4.1.000.1.3',
+                'desc': b'Object class with no name',
+                'type': b'STRUCTURAL',
+                'sup': [b'top'],
+            }
+        ),
+        (
+            OBJECTCLASSES['no_description'],
+            {
+                'oid': b'1.3.6.1.4.1.000.1.4',
+                'name': (b'no_description',),
+                'type': b'STRUCTURAL',
+                'sup': [b'top'],
+            }
+        ),
 
     ]
 
@@ -422,8 +456,143 @@ class ObjectClass_KnownValues(unittest.TestCase):
             self.assertEqual(got, want)
 
 
+class SyntaxDescription_KnownValues(unittest.TestCase):
+    knownValues = [
+        (
+            b"( 1.3.6.1.4.1.1466.115.121.1.3 DESC 'Attribute Type Description' )",
+            {
+                'oid': b'1.3.6.1.4.1.1466.115.121.1.3',
+                'desc': b'Attribute Type Description',
+                'human_readable': True,
+                'binary_transfer_required': False,
+            }
+        ),
+        (
+            b"( 1.3.6.1.4.1.1466.115.121.1.5 DESC 'Binary' X-NOT-HUMAN-READABLE 'TRUE' )",
+            {
+                'oid': b'1.3.6.1.4.1.1466.115.121.1.5',
+                'desc': b'Binary',
+                'human_readable': False,
+                'binary_transfer_required': False,
+            }
+        ),
+        (
+            b"( 1.3.6.1.4.1.1466.115.121.1.8 DESC 'Certificate' "
+            b"X-BINARY-TRANSFER-REQUIRED 'TRUE' X-NOT-HUMAN-READABLE 'TRUE' )",
+            {
+                'oid': b'1.3.6.1.4.1.1466.115.121.1.8',
+                'desc': b'Certificate',
+                'human_readable': False,
+                'binary_transfer_required': True,
+            }
+        ),
+        (
+            b"( 1.3.6.1.4.1.000.4.1 )",
+            {
+                'oid': b'1.3.6.1.4.1.000.4.1',
+                'desc': None,
+                'human_readable': True,
+                'binary_transfer_required': False,
+            }
+        ),
+    ]
+
+    def testParse(self):
+        for text, expected in self.knownValues:
+            a = schema.SyntaxDescription(text)
+            self.failIfEqual(a.oid, None)
+            for key, want in expected.items():
+                got = getattr(a, key)
+                self.assertEqual(got, want)
+
+    def testStringification(self):
+        for want, values in self.knownValues:
+            a = schema.SyntaxDescription(None)
+            for key, val in values.items():
+                setattr(a, key, val)
+
+            want = b' '.join(want.split())
+            got = b' '.join(to_bytes(a).split())
+            self.assertEqual(got, want)
+
+
+class MatchingRuleDescription_KnownValues(unittest.TestCase):
+    knownValues = [
+        (
+            b"( 2.5.13.16 NAME 'bitStringMatch' SYNTAX 1.3.6.1.4.1.1466.115.121.1.6 )",
+            {
+                'oid': b'2.5.13.16',
+                'name': (b'bitStringMatch',),
+                'desc': None,
+                'obsolete': 0,
+                'syntax': b'1.3.6.1.4.1.1466.115.121.1.6',
+            }
+        ),
+        (
+            b"( 1.3.6.1.4.1.000.3.1 NAME ( 'name1' 'name2' ) SYNTAX 1.3.6.1.4.1.000.4.1 )",
+            {
+                'oid': b'1.3.6.1.4.1.000.3.1',
+                'name': (b'name1', b'name2'),
+                'desc': None,
+                'obsolete': 0,
+                'syntax': b'1.3.6.1.4.1.000.4.1',
+            }
+        ),
+        (
+            b"( 1.3.6.1.4.1.000.3.2 NAME 'with_description' "
+            b"DESC 'Matching rule with description' SYNTAX 1.3.6.1.4.1.000.4.2 )",
+            {
+                'oid': b'1.3.6.1.4.1.000.3.2',
+                'name': (b'with_description',),
+                'desc': b'Matching rule with description',
+                'obsolete': 0,
+                'syntax': b'1.3.6.1.4.1.000.4.2',
+            }
+        ),
+        (
+            b"( 1.3.6.1.4.1.000.3.3 NAME 'obsolete' OBSOLETE SYNTAX 1.3.6.1.4.1.000.4.3 )",
+            {
+                'oid': b'1.3.6.1.4.1.000.3.3',
+                'name': (b'obsolete',),
+                'desc': None,
+                'obsolete': 1,
+                'syntax': b'1.3.6.1.4.1.000.4.3',
+            }
+        ),
+        (
+            b"( 1.3.6.1.4.1.000.3.4 DESC 'Matching rule without name' SYNTAX 1.3.6.1.4.1.000.4.4 )",
+            {
+                'oid': b'1.3.6.1.4.1.000.3.4',
+                'name': None,
+                'desc': b'Matching rule without name',
+                'obsolete': 0,
+                'syntax': b'1.3.6.1.4.1.000.4.4',
+            }
+        ),
+    ]
+
+    def testParse(self):
+        for text, expected in self.knownValues:
+            a = schema.MatchingRuleDescription(text)
+            self.failIfEqual(a.oid, None)
+            for key, want in expected.items():
+                got = getattr(a, key)
+                self.assertEqual(got, want)
+
+    def testStringification(self):
+        for want, values in self.knownValues:
+            a = schema.MatchingRuleDescription(None)
+            for key, val in values.items():
+                setattr(a, key, val)
+
+            want = b' '.join(want.split())
+            got = b' '.join(to_bytes(a).split())
+            self.assertEqual(got, want)
+
+
 class TestComparison(unittest.TestCase):
     ORDER = [
+        'no_name',
         'country',
         'organization',
         'organizationalUnit',
@@ -441,6 +610,12 @@ class TestComparison(unittest.TestCase):
                     self.failUnless(self.data[k1] == self.data[k2])
                 else:
                     self.failIf(self.data[k1] == self.data[k2])
+
+    def test_invalid_eq(self):
+        """Object class object can be compared only to the same class object"""
+        obj = schema.ObjectClassDescription(OBJECTCLASSES['top'])
+        for method in (obj.__eq__, obj.__lt__, obj.__gt__):
+            self.assertRaises(NotImplementedError, method, b'')
 
     def test_ne(self):
         for k1 in self.data:
@@ -481,6 +656,50 @@ class TestDefaultObjectClass(unittest.TestCase):
         a = schema.ObjectClassDescription(self.a)
         b = schema.ObjectClassDescription(self.b)
         self.assertEqual(a, b)
+
+
+class TestInvalidObjectClass(unittest.TestCase):
+    """Invalid object class definitions"""
+
+    def test_invalid_name(self):
+        text = b'( 1.1.1 NAME invalid )'
+        self.assertRaises(AssertionError, schema.ObjectClassDescription, text)
+
+    def test_invalid_multiple_name(self):
+        text = b'( 1.1.1 NAME () )'
+        self.assertRaises(AssertionError, schema.ObjectClassDescription, text)
+
+    def test_empty(self):
+        text = b'()'
+        self.assertRaises(AssertionError, schema.ObjectClassDescription, text)
+
+
+class TestInvalidAttributeType(unittest.TestCase):
+    """Invalid attribute type definitions"""
+
+    def test_invalid_name(self):
+        text = b'( 1.1.1 NAME invalid )'
+        self.assertRaises(AssertionError, schema.AttributeTypeDescription, text)
+
+    def test_invalid_x_attribute(self):
+        text = b'( 1.1.1 X-INVALID invalid )'
+        self.assertRaises(AssertionError, schema.AttributeTypeDescription, text)
+
+    def test_unknown_attribute(self):
+        text = b"( 1.1.1 UNKNOWN 'unknown' )"
+        self.assertRaises(AssertionError, schema.AttributeTypeDescription, text)
+
+
+class TestInvalidMatchingRuleDescription(unittest.TestCase):
+    """Invalid matching rule description definition"""
+
+    def test_invalid_name(self):
+        text = b'( 1.1.1 NAME invalid )'
+        self.assertRaises(AssertionError, schema.MatchingRuleDescription, text)
+
+    def test_no_syntax(self):
+        text = b"( 1.1.1 NAME 'no_syntax' )"
+        self.assertRaises(AssertionError, schema.MatchingRuleDescription, text)
 
 
 """
