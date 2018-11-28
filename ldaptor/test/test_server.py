@@ -17,6 +17,7 @@ from ldaptor.protocols.ldap import ldapserver, ldapclient, ldaperrors, \
     fetchschema
 from ldaptor.protocols import pureldap, pureber
 from ldaptor.test import util, test_schema
+from ldaptor._encoder import to_bytes
 
 
 def wrapCommit(entry, cb, *args, **kwds):
@@ -794,13 +795,13 @@ class TestSchema(unittest.TestCase):
         (attributeTypes, objectClasses) = util.pumpingDeferredResult(d)
 
         self.failUnlessEqual(
-            [str(x) for x in attributeTypes],
-            [str(schema.AttributeTypeDescription(x)) for x in [
+            [to_bytes(x) for x in attributeTypes],
+            [to_bytes(schema.AttributeTypeDescription(x)) for x in [
                 test_schema.AttributeType_KnownValues.knownValues[0][0]]])
 
         self.failUnlessEqual(
-            [str(x) for x in objectClasses],
-            [str(schema.ObjectClassDescription(x)) for x in [
+            [to_bytes(x) for x in objectClasses],
+            [to_bytes(schema.ObjectClassDescription(x)) for x in [
                 test_schema.OBJECTCLASSES['organization'],
                 test_schema.OBJECTCLASSES['organizationalUnit']]])
 

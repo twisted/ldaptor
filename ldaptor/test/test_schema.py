@@ -4,147 +4,246 @@ Test cases for ldaptor.schema module.
 
 from twisted.trial import unittest
 from ldaptor import schema
+from ldaptor._encoder import to_bytes
+
 
 OBJECTCLASSES = {
-    'organization': """( 2.5.6.4 NAME 'organization'
-	DESC 'RFC2256: an organization'
-	SUP top STRUCTURAL
-	MUST o
-	MAY ( userPassword $ searchGuide $ seeAlso $ businessCategory $
-		x121Address $ registeredAddress $ destinationIndicator $
-		preferredDeliveryMethod $ telexNumber $ teletexTerminalIdentifier $
-		telephoneNumber $ internationaliSDNNumber $
-		facsimileTelephoneNumber $ street $ postOfficeBox $ postalCode $
-		postalAddress $ physicalDeliveryOfficeName $ st $ l $ description ) )""",
+    'top': b"""( 2.5.6.0 NAME 'top'
+    DESC 'top of the superclass chain'
+    ABSTRACT
+    MUST objectClass )""",
 
-    'organizationalUnit': """( 2.5.6.5 NAME 'organizationalUnit'
-	DESC 'RFC2256: an organizational unit'
-	SUP top STRUCTURAL
-	MUST ou
-	MAY ( userPassword $ searchGuide $ seeAlso $ businessCategory $
-		x121Address $ registeredAddress $ destinationIndicator $
-		preferredDeliveryMethod $ telexNumber $ teletexTerminalIdentifier $
-		telephoneNumber $ internationaliSDNNumber $
-		facsimileTelephoneNumber $ street $ postOfficeBox $ postalCode $
-		postalAddress $ physicalDeliveryOfficeName $ st $ l $ description ) )""",
+    'organization': b"""( 2.5.6.4 NAME 'organization'
+    DESC 'RFC2256: an organization'
+    SUP top STRUCTURAL
+    MUST o
+    MAY ( userPassword $ searchGuide $ seeAlso $ businessCategory $
+        x121Address $ registeredAddress $ destinationIndicator $
+        preferredDeliveryMethod $ telexNumber $ teletexTerminalIdentifier $
+        telephoneNumber $ internationaliSDNNumber $
+        facsimileTelephoneNumber $ street $ postOfficeBox $ postalCode $
+        postalAddress $ physicalDeliveryOfficeName $ st $ l $ description ) )""",
 
-    'country': """( 2.5.6.2 NAME 'country'
-	DESC 'RFC2256: a country'
-	SUP top STRUCTURAL
-	MUST c
-	MAY ( searchGuide $ description ) )""",
-    }
+    'organizationalUnit': b"""( 2.5.6.5 NAME 'organizationalUnit'
+    DESC 'RFC2256: an organizational unit'
+    SUP top STRUCTURAL
+    MUST ou
+    MAY ( userPassword $ searchGuide $ seeAlso $ businessCategory $
+        x121Address $ registeredAddress $ destinationIndicator $
+        preferredDeliveryMethod $ telexNumber $ teletexTerminalIdentifier $
+        telephoneNumber $ internationaliSDNNumber $
+        facsimileTelephoneNumber $ street $ postOfficeBox $ postalCode $
+        postalAddress $ physicalDeliveryOfficeName $ st $ l $ description ) )""",
+
+    'country': b"""( 2.5.6.2 NAME 'country'
+    DESC 'RFC2256: a country'
+    SUP top STRUCTURAL
+    MUST c
+    MAY ( searchGuide $ description ) )""",
+
+    'dse': b"""( 1.3.6.1.4.1.4203.1.4.1 NAME ( 'OpenLDAProotDSE' 'LDAProotDSE' )
+    DESC 'OpenLDAP Root DSE object'
+    SUP top STRUCTURAL
+    MAY cn )""",
+
+    'person': b"""( 2.5.6.6 NAME 'person'
+    DESC 'RFC2256: a person'
+    SUP top STRUCTURAL
+    MUST ( sn $ cn )
+    MAY ( userPassword $ telephoneNumber $ seeAlso $ description ) )""",
+
+    'obsolete': b"""( 1.3.6.1.4.1.000.1.1 NAME 'obsolete'
+    DESC 'Obsolete object class'
+    OBSOLETE
+    SUP top STRUCTURAL )""",
+
+    'multiple_superiors': b"""( 1.3.6.1.4.1.000.1.2 NAME 'multiple_superiors'
+    DESC 'Object class with multiple superiors'
+    SUP ( sup1 $ sup2 ) STRUCTURAL )""",
+}
+
 
 class AttributeType_KnownValues(unittest.TestCase):
     knownValues = [
 
-        ("""( 2.5.4.4 NAME ( 'sn' 'surname' )
-        DESC 'RFC2256: last (family) name(s) for which the entity is known by'
-        SUP name )""",
-         { 'oid': '2.5.4.4',
-           'name': ('sn', 'surname',),
-           'desc': 'RFC2256: last (family) name(s) for which the entity is known by',
-           'sup': 'name',
-           }),
+        (
+            b"""( 2.5.4.4 NAME ( 'sn' 'surname' )
+            DESC 'RFC2256: last (family) name(s) for which the entity is known by'
+            SUP name )""",
+            {
+                'oid': b'2.5.4.4',
+                'name': (b'sn', b'surname',),
+                'desc': b'RFC2256: last (family) name(s) for which the entity is known by',
+                'sup': b'name',
+            }
+        ),
 
-        ("""( 2.5.4.2 NAME 'knowledgeInformation'
-        DESC 'RFC2256: knowledge information'
-        EQUALITY caseIgnoreMatch
-        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{32768} )""",
-         { 'oid': '2.5.4.2',
-           'name': ('knowledgeInformation',),
-           'desc': 'RFC2256: knowledge information',
-           'equality': 'caseIgnoreMatch',
-           'syntax': '1.3.6.1.4.1.1466.115.121.1.15{32768}',
-        }),
+        (
+            b"""( 2.5.4.2 NAME 'knowledgeInformation'
+            DESC 'RFC2256: knowledge information'
+            EQUALITY caseIgnoreMatch
+            SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{32768} )""",
+            {
+                'oid': b'2.5.4.2',
+                'name': (b'knowledgeInformation',),
+                'desc': b'RFC2256: knowledge information',
+                'equality': b'caseIgnoreMatch',
+                'syntax': b'1.3.6.1.4.1.1466.115.121.1.15{32768}',
+            }
+        ),
 
-        ("""( 2.5.4.5 NAME 'serialNumber'
-        DESC 'RFC2256: serial number of the entity'
-        EQUALITY caseIgnoreMatch
-	SUBSTR caseIgnoreSubstringsMatch
-	SYNTAX 1.3.6.1.4.1.1466.115.121.1.44{64} )""",
-         { 'oid': '2.5.4.5',
-           'name': ('serialNumber',),
-           'desc': 'RFC2256: serial number of the entity',
-           'equality': 'caseIgnoreMatch',
-           'substr': 'caseIgnoreSubstringsMatch',
-           'syntax': '1.3.6.1.4.1.1466.115.121.1.44{64}',
-           }),
+        (
+            b"""( 2.5.4.5 NAME 'serialNumber'
+            DESC 'RFC2256: serial number of the entity'
+            EQUALITY caseIgnoreMatch
+            SUBSTR caseIgnoreSubstringsMatch
+            SYNTAX 1.3.6.1.4.1.1466.115.121.1.44{64} )""",
+            {
+                'oid': b'2.5.4.5',
+                'name': (b'serialNumber',),
+                'desc': b'RFC2256: serial number of the entity',
+                'equality': b'caseIgnoreMatch',
+                'substr': b'caseIgnoreSubstringsMatch',
+                'syntax': b'1.3.6.1.4.1.1466.115.121.1.44{64}',
+            }
+        ),
 
 
-        ("""( 2.5.4.6 NAME ( 'c' 'countryName' )
-	DESC 'RFC2256: ISO-3166 country 2-letter code'
-	SUP name SINGLE-VALUE )""",
-         { 'oid': '2.5.4.6',
-           'name': ('c', 'countryName',),
-           'desc': 'RFC2256: ISO-3166 country 2-letter code',
-           'sup': 'name',
-           'single_value': 1,
-           }),
+        (
+            b"""( 2.5.4.6 NAME ( 'c' 'countryName' )
+            DESC 'RFC2256: ISO-3166 country 2-letter code'
+            SUP name SINGLE-VALUE )""",
+            {
+                'oid': b'2.5.4.6',
+                'name': (b'c', b'countryName',),
+                'desc': b'RFC2256: ISO-3166 country 2-letter code',
+                'sup': b'name',
+                'single_value': 1,
+            }
+        ),
 
-        ("""( 1.2.840.113549.1.9.1
-	NAME ( 'email' 'emailAddress' 'pkcs9email' )
-	DESC 'RFC2459: legacy attribute for email addresses in DNs'
-	EQUALITY caseIgnoreIA5Match
-	SUBSTR caseIgnoreIA5SubstringsMatch
-	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26{128} )""",
-         { 'oid': '1.2.840.113549.1.9.1',
-           'name': ('email', 'emailAddress', 'pkcs9email', ),
-           'desc': 'RFC2459: legacy attribute for email addresses in DNs',
-           'equality': 'caseIgnoreIA5Match',
-           'substr': 'caseIgnoreIA5SubstringsMatch',
-           'syntax': '1.3.6.1.4.1.1466.115.121.1.26{128}',
-           }),
+        (
+            b"""( 1.2.840.113549.1.9.1
+            NAME ( 'email' 'emailAddress' 'pkcs9email' )
+            DESC 'RFC2459: legacy attribute for email addresses in DNs'
+            EQUALITY caseIgnoreIA5Match
+            SUBSTR caseIgnoreIA5SubstringsMatch
+            SYNTAX 1.3.6.1.4.1.1466.115.121.1.26{128} )""",
+            {
+                'oid': b'1.2.840.113549.1.9.1',
+                'name': (b'email', b'emailAddress', b'pkcs9email', ),
+                'desc': b'RFC2459: legacy attribute for email addresses in DNs',
+                'equality': b'caseIgnoreIA5Match',
+                'substr': b'caseIgnoreIA5SubstringsMatch',
+                'syntax': b'1.3.6.1.4.1.1466.115.121.1.26{128}',
+            }
+        ),
 
-        ("""( 1.2.840.113549.1.9.1
-        NAME ( 'email' 'emailAddress' 'pkcs9email' )
-        DESC 'RFC2459: legacy attribute for email addresses in DNs'
-        EQUALITY caseIgnoreIA5Match
-        SUBSTR caseIgnoreIA5SubstringsMatch
-        SYNTAX 1.3.6.1.4.1.1466.115.121.1.26{128}
-        X-ORDERED 'VALUES' )""",
-         { 'oid': '1.2.840.113549.1.9.1',
-           'name': ('email', 'emailAddress', 'pkcs9email', ),
-           'desc': 'RFC2459: legacy attribute for email addresses in DNs',
-           'equality': 'caseIgnoreIA5Match',
-           'substr': 'caseIgnoreIA5SubstringsMatch',
-           'syntax': '1.3.6.1.4.1.1466.115.121.1.26{128}',
-           'x_attrs': [('X-ORDERED', 'VALUES'),],
-           }),
+        (
+            b"""( 1.2.840.113549.1.9.1
+            NAME ( 'email' 'emailAddress' 'pkcs9email' )
+            DESC 'RFC2459: legacy attribute for email addresses in DNs'
+            EQUALITY caseIgnoreIA5Match
+            SUBSTR caseIgnoreIA5SubstringsMatch
+            SYNTAX 1.3.6.1.4.1.1466.115.121.1.26{128}
+            X-ORDERED 'VALUES' )""",
+            {
+                'oid': b'1.2.840.113549.1.9.1',
+                'name': (b'email', b'emailAddress', b'pkcs9email', ),
+                'desc': b'RFC2459: legacy attribute for email addresses in DNs',
+                'equality': b'caseIgnoreIA5Match',
+                'substr': b'caseIgnoreIA5SubstringsMatch',
+                'syntax': b'1.3.6.1.4.1.1466.115.121.1.26{128}',
+                'x_attrs': [(b'X-ORDERED', b'VALUES'),],
+            }
+        ),
 
-        ("""( 1.3.6.1.3.42.1 NAME 'olcDatabase'
-        EQUALITY caseIgnoreMatch
-        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
-        SINGLE-VALUE X-ORDERED 'SIBLINGS' )""",
-         { 'oid': '1.3.6.1.3.42.1',
-           'name': ('olcDatabase',),
-           'equality': 'caseIgnoreMatch',
-           'syntax': '1.3.6.1.4.1.1466.115.121.1.15',
-           'single_value': 1,
-           'x_attrs': [('X-ORDERED', 'SIBLINGS')],
-           }),
+        (
+            b"""( 1.3.6.1.3.42.1 NAME 'olcDatabase'
+            EQUALITY caseIgnoreMatch
+            SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+            SINGLE-VALUE X-ORDERED 'SIBLINGS' )""",
+            {
+                'oid': b'1.3.6.1.3.42.1',
+                'name': (b'olcDatabase',),
+                'equality': b'caseIgnoreMatch',
+                'syntax': b'1.3.6.1.4.1.1466.115.121.1.15',
+                'single_value': 1,
+                'x_attrs': [(b'X-ORDERED', b'SIBLINGS')],
+            }
+        ),
 
-        ("""( 1.3.6.1.3.42.2
-        NAME 'olcSuffix'
-        EQUALITY distinguishedNameMatch
-        SYNTAX 1.3.6.1.4.1.1466.115.121.1.12
-        X-ORDERED 'VALUES' )""",
-         { 'oid': '1.3.6.1.3.42.2',
-           'name': ('olcSuffix',),
-           'equality': 'distinguishedNameMatch',
-           'syntax': '1.3.6.1.4.1.1466.115.121.1.12',
-           'x_attrs': [('X-ORDERED', 'VALUES')],
-           }),
+        (
+            b"""( 1.3.6.1.3.42.2
+            NAME 'olcSuffix'
+            EQUALITY distinguishedNameMatch
+            SYNTAX 1.3.6.1.4.1.1466.115.121.1.12
+            X-ORDERED 'VALUES' )""",
+            {
+                'oid': b'1.3.6.1.3.42.2',
+                'name': (b'olcSuffix',),
+                'equality': b'distinguishedNameMatch',
+                'syntax': b'1.3.6.1.4.1.1466.115.121.1.12',
+                'x_attrs': [(b'X-ORDERED', b'VALUES')],
+            }
+        ),
 
-        ("""( 1.3.6.1.3.42.3
-        NAME 'experimentalWithQdstrings'
-        X-FOO ( 'one' 'two' ) )""",
-         { 'oid': '1.3.6.1.3.42.3',
-           'name': ('experimentalWithQdstrings',),
-           'x_attrs': [('X-FOO', ('one', 'two'))],
-           }),
+        (
+            b"""( 1.3.6.1.3.42.3
+            NAME 'experimentalWithQdstrings'
+            X-FOO ( 'one' 'two' ) )""",
+            {
+                'oid': b'1.3.6.1.3.42.3',
+                'name': (b'experimentalWithQdstrings',),
+                'x_attrs': [(b'X-FOO', (b'one', b'two'))],
+            }
+        ),
 
-        ]
+        (
+            b"""( 2.5.18.2 NAME 'modifyTimestamp'
+            DESC 'RFC4512: time which object was last modified'
+            EQUALITY generalizedTimeMatch
+            ORDERING generalizedTimeOrderingMatch
+            SYNTAX 1.3.6.1.4.1.1466.115.121.1.24
+            SINGLE-VALUE
+            NO-USER-MODIFICATION
+            USAGE directoryOperation )""",
+            {
+                'oid': b'2.5.18.2',
+                'name': (b'modifyTimestamp',),
+                'desc': b'RFC4512: time which object was last modified',
+                'equality': b'generalizedTimeMatch',
+                'ordering': b'generalizedTimeOrderingMatch',
+                'syntax': b'1.3.6.1.4.1.1466.115.121.1.24',
+                'single_value': 1,
+                'no_user_modification': 1,
+                'usage': b'directoryOperation',
+            }
+        ),
+
+        (
+            b"""( 1.3.6.1.4.1.000.2.1
+            NAME 'obsolete'
+            OBSOLETE )""",
+            {
+                'oid': b'1.3.6.1.4.1.000.2.1',
+                'name': (b'obsolete',),
+                'obsolete': 1,
+            }
+        ),
+
+        (
+            b"""( 1.3.6.1.4.1.000.2.2
+            NAME 'collective'
+            COLLECTIVE )""",
+            {
+                'oid': b'1.3.6.1.4.1.000.2.2',
+                'name': (b'collective',),
+                'collective': 1,
+            }
+        )
+
+    ]
 
     def testParse(self):
         defaults = {
@@ -180,49 +279,114 @@ class AttributeType_KnownValues(unittest.TestCase):
             for key, val in values.items():
                 setattr(a, key, val)
 
-            want = ' '.join(want.split(None))
-            got = ' '.join(str(a).split(None))
+            want = b' '.join(want.split(None))
+            got = b' '.join(to_bytes(a).split(None))
             self.assertEqual(got, want)
+
 
 class ObjectClass_KnownValues(unittest.TestCase):
     knownValues = [
 
-        (OBJECTCLASSES['organization'],
-         { 'oid': '2.5.6.4',
-           'name': ('organization',),
-           'desc': 'RFC2256: an organization',
-           'sup': ['top'],
-           'type': 'STRUCTURAL',
-           'must': ['o'],
-           'may': ['userPassword', 'searchGuide', 'seeAlso',
-                   'businessCategory', 'x121Address', 'registeredAddress',
-                   'destinationIndicator', 'preferredDeliveryMethod',
-                   'telexNumber', 'teletexTerminalIdentifier',
-                   'telephoneNumber', 'internationaliSDNNumber',
-                   'facsimileTelephoneNumber', 'street', 'postOfficeBox',
-                   'postalCode', 'postalAddress',
-                   'physicalDeliveryOfficeName', 'st', 'l', 'description'],
-           }),
+        (
+            OBJECTCLASSES['top'],
+            {
+                'oid': b'2.5.6.0',
+                'name': (b'top',),
+                'desc': b'top of the superclass chain',
+                'sup': [],
+                'type': b'ABSTRACT',
+                'must': [b'objectClass'],
+            }
+        ),
+        (
+            OBJECTCLASSES['organization'],
+            {
+                'oid': b'2.5.6.4',
+                'name': (b'organization',),
+                'desc': b'RFC2256: an organization',
+                'sup': [b'top'],
+                'type': b'STRUCTURAL',
+                'must': [b'o'],
+                'may': [
+                    b'userPassword', b'searchGuide', b'seeAlso',
+                    b'businessCategory', b'x121Address', b'registeredAddress',
+                    b'destinationIndicator', b'preferredDeliveryMethod',
+                    b'telexNumber', b'teletexTerminalIdentifier',
+                    b'telephoneNumber', b'internationaliSDNNumber',
+                    b'facsimileTelephoneNumber', b'street', b'postOfficeBox',
+                    b'postalCode', b'postalAddress',
+                    b'physicalDeliveryOfficeName', b'st', b'l', b'description',
+                ],
+           }
+        ),
 
-        (OBJECTCLASSES['organizationalUnit'],
-         { 'oid': '2.5.6.5',
-           'name': ('organizationalUnit',),
-           'desc': 'RFC2256: an organizational unit',
-           'sup': ['top'],
-           'type': 'STRUCTURAL',
-           'must': ['ou'],
-           'may': [ 'userPassword', 'searchGuide', 'seeAlso',
-		'businessCategory', 'x121Address', 'registeredAddress',
-		'destinationIndicator', 'preferredDeliveryMethod',
-		'telexNumber', 'teletexTerminalIdentifier',
-		'telephoneNumber', 'internationaliSDNNumber',
-		'facsimileTelephoneNumber', 'street', 'postOfficeBox',
-		'postalCode', 'postalAddress', 'physicalDeliveryOfficeName',
-		'st', 'l', 'description', ],
-           }),
+        (
+            OBJECTCLASSES['organizationalUnit'],
+            {
+                'oid': b'2.5.6.5',
+                'name': (b'organizationalUnit',),
+                'desc': b'RFC2256: an organizational unit',
+                'sup': [b'top'],
+                'type': b'STRUCTURAL',
+                'must': [b'ou'],
+                'may': [
+                    b'userPassword', b'searchGuide', b'seeAlso',
+                    b'businessCategory', b'x121Address', b'registeredAddress',
+                    b'destinationIndicator', b'preferredDeliveryMethod',
+                    b'telexNumber', b'teletexTerminalIdentifier',
+                    b'telephoneNumber', b'internationaliSDNNumber',
+                    b'facsimileTelephoneNumber', b'street', b'postOfficeBox',
+                    b'postalCode', b'postalAddress', b'physicalDeliveryOfficeName',
+                    b'st', b'l', b'description',
+                ],
+            }
+        ),
+        (
+            OBJECTCLASSES['dse'],
+            {
+                'oid': b'1.3.6.1.4.1.4203.1.4.1',
+                'name': (b'OpenLDAProotDSE', b'LDAProotDSE'),
+                'desc': b'OpenLDAP Root DSE object',
+                'type': b'STRUCTURAL',
+                'sup': [b'top'],
+                'may': [b'cn'],
+            }
+        ),
+        (
+            OBJECTCLASSES['person'],
+            {
+                'oid': b'2.5.6.6',
+                'name': (b'person',),
+                'desc': b'RFC2256: a person',
+                'type': b'STRUCTURAL',
+                'sup': [b'top'],
+                'must': [b'sn', b'cn'],
+                'may': [b'userPassword', b'telephoneNumber', b'seeAlso', b'description'],
+            }
+        ),
+        (
+            OBJECTCLASSES['obsolete'],
+            {
+                'oid': b'1.3.6.1.4.1.000.1.1',
+                'name': (b'obsolete',),
+                'desc': b'Obsolete object class',
+                'obsolete': 1,
+                'type': b'STRUCTURAL',
+                'sup': [b'top'],
+            }
+        ),
+        (
+            OBJECTCLASSES['multiple_superiors'],
+            {
+                'oid': b'1.3.6.1.4.1.000.1.2',
+                'name': (b'multiple_superiors',),
+                'desc': b'Object class with multiple superiors',
+                'type': b'STRUCTURAL',
+                'sup': (b'sup1', b'sup2'),
+            }
+        ),
 
-
-        ]
+    ]
 
     def testParse(self):
         defaults = {
@@ -253,8 +417,8 @@ class ObjectClass_KnownValues(unittest.TestCase):
             for key, val in values.items():
                 setattr(a, key, val)
 
-            want = ' '.join(want.split(None))
-            got = ' '.join(str(a).split(None))
+            want = b' '.join(want.split(None))
+            got = b' '.join(to_bytes(a).split(None))
             self.assertEqual(got, want)
 
 
@@ -302,6 +466,22 @@ class TestComparison(unittest.TestCase):
                 self.failUnless(self.data[higher] >= self.data[base])
                 self.failIf(self.data[base] > self.data[higher])
                 self.failIf(self.data[base] >= self.data[higher])
+
+
+class TestDefaultObjectClass(unittest.TestCase):
+    """Structural object class type is the default one"""
+
+    a = b"""( 1.3.6.1.4.1.003.1.1 NAME 'no_type'
+    DESC 'Object class with no type' )"""
+    b = b"""( 1.3.6.1.4.1.003.1.1 NAME 'no_type'
+    DESC 'Object class with no type'
+    STRUCTURAL )"""
+
+    def test_default(self):
+        a = schema.ObjectClassDescription(self.a)
+        b = schema.ObjectClassDescription(self.b)
+        self.assertEqual(a, b)
+
 
 """
 
