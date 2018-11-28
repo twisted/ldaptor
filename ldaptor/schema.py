@@ -598,8 +598,8 @@ class SyntaxDescription(ASN1ParserThingie, WireStrAlias):
 
     def _parse(self, text):
 
-        assert text[0] == b'('
-        assert text[-1] == b')'
+        assert text[:1] == b'('
+        assert text[-1:] == b')'
         text=text[1:-1]
         text = text.lstrip()
 
@@ -611,7 +611,7 @@ class SyntaxDescription(ASN1ParserThingie, WireStrAlias):
         if peekWord(text) == b"DESC":
             text = text[len(b"DESC "):]
             text = text.lstrip()
-            assert text[0] == b"'"
+            assert text[:1] == b"'"
             text = text[1:]
             end = text.index(b"'")
             self.desc = text[:end]
@@ -684,8 +684,8 @@ class MatchingRuleDescription(ASN1ParserThingie, WireStrAlias):
 
     def _parse(self, text):
 
-        assert text[0] == b'('
-        assert text[-1] == b')'
+        assert text[:1] == b'('
+        assert text[-1:] == b')'
         text = text[1:-1]
         text = text.lstrip()
 
@@ -697,12 +697,12 @@ class MatchingRuleDescription(ASN1ParserThingie, WireStrAlias):
         if peekWord(text) == b"NAME":
             text = text[len(b"NAME "):]
             text = text.lstrip()
-            if text[0] == b"'":
+            if text[:1] == b"'":
                 text = text[1:]
                 end = text.index(b"'")
                 self.name = (text[:end],)
                 text = text[end+1:]
-            elif text[0] == b"(":
+            elif text[:1] == b"(":
                 text = text[1:]
                 text = text.lstrip()
                 end = text.index(b")")
@@ -716,7 +716,7 @@ class MatchingRuleDescription(ASN1ParserThingie, WireStrAlias):
         if peekWord(text) == b"DESC":
             text = text[len(b"DESC "):]
             text = text.lstrip()
-            assert text[0] == b"'"
+            assert text[:1] == b"'"
             text = text[1:]
             end = text.index(b"'")
             self.desc = text[:end]
