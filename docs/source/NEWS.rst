@@ -19,11 +19,7 @@ Changes
 
 - Using modern classmethod decorator instead of old-style method call.
 - Usage of zope.interfaces was updated in preparation for python3 port.
-- ``toWire`` method is used to get bytes representation of ``ldaptor.protocols.pureber``,
-  ``ldaptor.protocols.pureldap``, ``ldaptor.protocols.ldap.distinguishedname``,
-  ``ldaptor.protocols.ldap.ldaperrors``, ``ldaptor.protocols.ldap.ldapclient``,
-  ``ldaptor.protocols.ldap.ldapserver``, ``ldaptor.protocols.ldap.fetchschema``,
-  ``ldaptor.schema``, ``ldaptor.ldiftree`` and ``ldaptor.entry`` classes
+- ``toWire`` method is used to get bytes representation of `ldaptor` classes
   instead of ``__str__`` which is deprecated now.
 - Code was updated to pass `python3 -m compileall` in preparation for py3 port.
 - Continuous test are executed only against latest related Twisted and latest
@@ -34,6 +30,7 @@ Changes
   port.
 - Remove Python 3.3 from tox as it is EOL.
 - Add API documentation for ``LDAPAttributeSet`` and ``startTLS``.
+- Quick start example was made agnostic to the Python version.
 
 Bugfixes
 ^^^^^^^^

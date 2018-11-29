@@ -560,8 +560,8 @@ class LDAPSyntaxSearch(unittest.TestCase):
                     client=client,
                     dn='cn=foo,dc=example,dc=com',
                     attributes={
-                        'foo': ['a'],
-                        'bar': ['b', 'c'],
+                        b'foo': [b'a'],
+                        b'bar': [b'b', b'c'],
                     }
                 )
             )
@@ -571,8 +571,8 @@ class LDAPSyntaxSearch(unittest.TestCase):
                     client=client,
                     dn='cn=bar,dc=example,dc=com',
                     attributes={
-                        'foo': ['a'],
-                        'bar': ['d', 'e'],
+                        b'foo': [b'a'],
+                        b'bar': [b'd', b'e'],
                     }
                 )
             )
@@ -691,8 +691,8 @@ class LDAPSyntaxSearch(unittest.TestCase):
                 client=client,
                 dn='cn=foo,dc=example,dc=com',
                 attributes={
-                'foo': ['a'],
-                'bar': ['b', 'c'],
+                b'foo': [b'a'],
+                b'bar': [b'b', b'c'],
                 }))
             self.failUnless(val[0].complete)
 
@@ -701,8 +701,8 @@ class LDAPSyntaxSearch(unittest.TestCase):
                 client=client,
                 dn='cn=bar,dc=example,dc=com',
                 attributes={
-                'foo': ['a'],
-                'bar': ['d', 'e'],
+                b'foo': [b'a'],
+                b'bar': [b'd', b'e'],
                 }))
             self.failUnless(val[1].complete)
         d.addCallback(cb)
@@ -814,13 +814,13 @@ class LDAPSyntaxSearch(unittest.TestCase):
                 client=client,
                 dn='cn=foo,dc=example,dc=com',
                 attributes={
-                'bar': ['b', 'c'],
+                b'bar': [b'b', b'c'],
                 }),
                 ldapsyntax.LDAPEntry(
                 client=client,
                 dn='cn=bar,dc=example,dc=com',
                 attributes={
-                'bar': ['b', 'c'],
+                b'bar': [b'b', b'c'],
                 })])
         d.addCallback(cb)
         return d
@@ -1530,11 +1530,11 @@ class LDAPSyntaxFetch(unittest.TestCase):
 
             has=o.keys()
             has.sort()
-            want=['foo', 'bar']
+            want=[b'foo', b'bar']
             want.sort()
             self.assertEqual(has, want)
-            self.assertEqual(o['foo'], ['a'])
-            self.assertEqual(o['bar'], ['b', 'c'])
+            self.assertEqual(o['foo'], [b'a'])
+            self.assertEqual(o['bar'], [b'b', b'c'])
         d.addCallback(cb)
         return d
 
@@ -1565,11 +1565,11 @@ class LDAPSyntaxFetch(unittest.TestCase):
 
             has=o.keys()
             has.sort()
-            want=['foo', 'bar']
+            want=[b'foo', b'bar']
             want.sort()
             self.assertEqual(has, want)
-            self.assertEqual(o['foo'], ['a'])
-            self.assertEqual(o['bar'], ['b', 'c'])
+            self.assertEqual(o['foo'], [b'a'])
+            self.assertEqual(o['bar'], [b'b', b'c'])
         d.addCallback(cb)
         return d
 
@@ -1578,8 +1578,8 @@ class LDAPSyntaxFetch(unittest.TestCase):
         client = LDAPClientTestDriver(
             [   pureldap.LDAPSearchResultEntry(objectName='cn=foo,dc=example,dc=com',
                                                attributes=(
-            ('foo', ['a']),
-            ('bar', ['b', 'c']),
+            (b'foo', [b'a']),
+            (b'bar', [b'b', b'c']),
             )),
                 pureldap.LDAPSearchResultDone(resultCode=0,
                                               matchedDN='',
@@ -1588,25 +1588,25 @@ class LDAPSyntaxFetch(unittest.TestCase):
         o=ldapsyntax.LDAPEntry(client=client,
                                dn='cn=foo,dc=example,dc=com',
                                attributes={
-            'foo': ['x'],
-            'quux': ['baz', 'xyzzy']
+            b'foo': [b'x'],
+            b'quux': [b'baz', b'xyzzy']
             })
-        d=o.fetch('foo', 'bar', 'thud')
+        d=o.fetch(b'foo', b'bar', b'thud')
         def cb(dummy):
             client.assertSent(pureldap.LDAPSearchRequest(
                 baseObject='cn=foo,dc=example,dc=com',
                 scope=pureldap.LDAP_SCOPE_baseObject,
-                attributes=('foo', 'bar', 'thud'),
+                attributes=(b'foo', b'bar', b'thud'),
                 ))
 
             has=o.keys()
             has.sort()
-            want=['foo', 'bar', 'quux']
+            want=[b'foo', b'bar', b'quux']
             want.sort()
             self.assertEqual(has, want)
-            self.assertEqual(o['foo'], ['a'])
-            self.assertEqual(o['bar'], ['b', 'c'])
-            self.assertEqual(o['quux'], ['baz', 'xyzzy'])
+            self.assertEqual(o[b'foo'], [b'a'])
+            self.assertEqual(o[b'bar'], [b'b', b'c'])
+            self.assertEqual(o[b'quux'], [b'baz', b'xyzzy'])
         d.addCallback(cb)
         return d
 
