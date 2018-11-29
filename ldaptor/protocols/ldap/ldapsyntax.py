@@ -10,6 +10,7 @@ from ldaptor.protocols.ldap import ldapclient, ldif, distinguishedname, ldaperro
 from ldaptor.protocols import pureldap, pureber
 from ldaptor.samba import smbpassword
 from ldaptor import ldapfilter, interfaces, delta, attributeset, entry
+from ldaptor._encoder import to_bytes
 
 
 class PasswordSetAggregateError(Exception):
@@ -315,13 +316,16 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             self._attributes[k] = self.buildAttributeSet(k, vs)
         self._journal = []
 
+    def _assertMatchedDN(self, dn):
+        assert dn == '' or dn == b''
+
     def _commit_success(self, msg):
         assert isinstance(msg, pureldap.LDAPModifyResponse)
         assert msg.referral is None  # TODO
         if msg.resultCode != ldaperrors.Success.resultCode:
             raise ldaperrors.get(msg.resultCode, msg.errorMessage)
 
-        assert msg.matchedDN == ''
+        self._assertMatchedDN(msg.matchedDN)
 
         self._remoteData = entry.EditableLDAPEntry(self.dn, self)
         self._journal = []
@@ -345,7 +349,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         if msg.resultCode != ldaperrors.Success.resultCode:
             raise ldaperrors.get(msg.resultCode, msg.errorMessage)
 
-        assert msg.matchedDN == ''
+        self._assertMatchedDN(msg.matchedDN)
         self.dn = newDN
         return self
 
@@ -373,7 +377,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         if msg.resultCode != ldaperrors.Success.resultCode:
             raise ldaperrors.get(msg.resultCode, msg.errorMessage)
 
-        assert msg.matchedDN == ''
+        self._assertMatchedDN(msg.matchedDN)
         return self
 
     def delete(self):
@@ -392,7 +396,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         if msg.resultCode != ldaperrors.Success.resultCode:
             raise ldaperrors.get(msg.resultCode, msg.errorMessage)
 
-        assert msg.matchedDN == ''
+        self._assertMatchedDN(msg.matchedDN)
         e = self.__class__(dn=dn, client=self.client)
         return e
 
@@ -432,7 +436,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         if msg.resultCode != ldaperrors.Success.resultCode:
             raise ldaperrors.get(msg.resultCode, msg.errorMessage)
 
-        assert msg.matchedDN == ''
+        self._assertMatchedDN(msg.matchedDN)
         return self
 
     def setPassword_ExtendedOperation(self, newPasswd):
@@ -509,10 +513,10 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             d.addCallback(lambda dummy, self=self, newPasswd=newPasswd:
                           self.setPasswordMaybe_Samba(newPasswd))
         else:
-            objectClasses = [s.upper() for s in self.get('objectClass', ())]
-            if 'sambaAccount'.upper() in objectClasses:
+            objectClasses = [to_bytes(s.upper()) for s in self.get('objectClass', ())]
+            if b'SAMBAACCOUNT' in objectClasses:
                 d = self.setPassword_Samba(newPasswd, style="sambaAccount")
-            elif 'sambaSamAccount'.upper() in objectClasses:
+            elif b'SAMBASAMACCOUNT' in objectClasses:
                 d = self.setPassword_Samba(newPasswd, style="sambaSamAccount")
             else:
                 d = defer.succeed(self)
@@ -632,7 +636,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
     def _cbSearchEntry(self, callback, objectName, attributes, complete):
         attrib = {}
         for key, values in attributes:
-            attrib[str(key)] = [str(x) for x in values]
+            attrib[to_bytes(key)] = [to_bytes(x) for x in values]
         o = LDAPEntry(client=self.client,
                       dn=objectName,
                       attributes=attrib,
@@ -654,7 +658,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
                     return True
 
             # search ended successfully
-            assert msg.matchedDN == ''
+            self._assertMatchedDN(msg.matchedDN)
             d.callback(controls)
             return True
         elif isinstance(msg, pureldap.LDAPSearchResultEntry):
