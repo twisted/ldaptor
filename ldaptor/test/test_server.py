@@ -469,6 +469,29 @@ class LDAPServerTest(unittest.TestCase):
                     pureldap.LDAPSearchResultDone(resultCode=0),
                     id=2).toWire()])
 
+    def test_search_all_attributes(self):
+        self.server.dataReceived(
+            pureldap.LDAPMessage(
+                pureldap.LDAPSearchRequest(
+                    baseObject='cn=thingie,ou=stuff,dc=example,dc=com',
+                    attributes=['*']
+                ),
+                id=2).toWire()
+        )
+        six.assertCountEqual(self,
+             self._makeResultList(self.server.transport.value()),
+             [
+                 pureldap.LDAPMessage(
+                     pureldap.LDAPSearchResultEntry(
+                         objectName='cn=thingie,ou=stuff,dc=example,dc=com',
+                         attributes=[
+                             ('objectClass', ['a', 'b']),
+                             ('cn', ['thingie'])]),
+                     id=2).toWire(),
+                 pureldap.LDAPMessage(
+                     pureldap.LDAPSearchResultDone(resultCode=0),
+                     id=2).toWire()])
+
     def test_rootDSE(self):
         self.server.dataReceived(
             pureldap.LDAPMessage(
