@@ -117,6 +117,21 @@ where `10.20.1.2` is replaced with the IP of your AD server, and ::
         'CN=Users,DC=ad,DC=example,DC=com' \
         --page-size 5
 
+The output should look like::
+
+    Page 1
+    b'CN=Users,DC=ad,DC=example,DC=com'
+    b'CN=Administrator,CN=Users,DC=ad,DC=example,DC=com'
+    b'CN=Guest,CN=Users,DC=ad,DC=example,DC=com'
+    b'CN=SUPPORT_388945a0,CN=Users,DC=ad,DC=example,DC=com'
+    b'CN=HelpServicesGroup,CN=Users,DC=ad,DC=example,DC=com'
+    Page 2
+    b'CN=TelnetClients,CN=Users,DC=ad,DC=example,DC=com'
+    b'CN=krbtgt,CN=Users,DC=ad,DC=example,DC=com'
+    b'CN=Domain Computers,CN=Users,DC=ad,DC=example,DC=com'
+    There were 8 results returned in total.
+
+
 .. literalinclude:: client_paged_search_results.py
    :language: python
    :emphasize-lines: 41, 67-77
