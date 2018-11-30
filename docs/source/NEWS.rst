@@ -30,7 +30,7 @@ Changes
   port.
 - Remove Python 3.3 from tox as it is EOL.
 - Add API documentation for ``LDAPAttributeSet`` and ``startTLS``.
-- Quick start example was made agnostic to the Python version.
+- Quick start and cookbook examples were made agnostic to the Python version.
 
 Bugfixes
 ^^^^^^^^
