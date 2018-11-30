@@ -6,19 +6,24 @@ LDAP Client Quickstart
 .. code-block:: python
 
     from __future__ import print_function
-    from twisted.internet import reactor, defer
+
+    import sys
+
+    from twisted.internet import defer
     from twisted.internet.endpoints import clientFromString, connectProtocol
     from twisted.internet.task import react
     from ldaptor.protocols.ldap.ldapclient import LDAPClient
     from ldaptor.protocols.ldap.ldapsyntax import LDAPEntry
-    import sys
+
 
     @defer.inlineCallbacks
     def onConnect(client):
-        basedn = 'dc=example,dc=org'
-        binddn = 'cn=bob,ou=people,dc=example,dc=org'
-        bindpw = 'secret'
-        query = '(cn=bob)'
+        # The following arguments may be also specified as unicode strings
+        # but it is recommended to use byte strings for ldaptor objects
+        basedn = b'dc=example,dc=org'
+        binddn = b'cn=bob,ou=people,dc=example,dc=org'
+        bindpw = b'secret'
+        query = b'(cn=bob)'
         try:
             yield client.bind(binddn, bindpw)
         except Exception as ex:
@@ -27,10 +32,13 @@ LDAP Client Quickstart
         o = LDAPEntry(client, basedn)
         results = yield o.search(filterText=query)
         for entry in results:
-            print(entry)
+            data = entry.toWire()
+            print(data.decode('utf-8'))
+
 
     def onError(err):
         err.printDetailedTraceback(file=sys.stderr)
+
 
     def main(reactor):
         endpoint_str = "tcp:host=127.0.0.1:port=8080"
@@ -39,6 +47,7 @@ LDAP Client Quickstart
         d.addCallback(onConnect)
         d.addErrback(onError)
         return d
+
 
     react(main)
 
@@ -51,20 +60,23 @@ LDAP Server Quick Start
 
 .. code-block:: python
 
-    from twisted.application import service, internet
+    import sys
+    try:
+        from cStringIO import StringIO as BytesIO
+    except ImportError:
+        from io import BytesIO
+
+    from twisted.application import service
     from twisted.internet.endpoints import serverFromString
     from twisted.internet.protocol import ServerFactory
     from twisted.python.components import registerAdapter
     from twisted.python import log
     from ldaptor.inmemory import fromLDIFFile
     from ldaptor.interfaces import IConnectedLDAPEntry
-    from ldaptor.protocols.ldap import distinguishedname
     from ldaptor.protocols.ldap.ldapserver import LDAPServer
-    import tempfile
-    from cStringIO import StringIO
-    import sys
 
-    LDIF = """\
+
+    LDIF = b"""\
     dn: dc=org
     dc: org
     objectClass: dcObject
@@ -119,13 +131,14 @@ LDAP Server Quick Start
 
         def __init__(self):
             global LDIF
-            self.f = StringIO(LDIF)
+            self.f = BytesIO(LDIF)
             d = fromLDIFFile(self.f)
             d.addCallback(self.ldifRead)
 
         def ldifRead(self, result):
             self.f.close()
             self.db = result
+
 
     class LDAPServerFactory(ServerFactory):
         protocol = LDAPServer
@@ -138,6 +151,7 @@ LDAP Server Quick Start
             proto.debug = self.debug
             proto.factory = self
             return proto
+
 
     if __name__ == '__main__':
         from twisted.internet import reactor
@@ -165,3 +179,4 @@ LDAP Server Quick Start
         e = serverFromString(reactor, serverEndpointStr)
         d = e.listen(factory)
         reactor.run()
+
