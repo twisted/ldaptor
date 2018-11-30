@@ -20,29 +20,37 @@ Code
 
     #! /usr/bin/env python
 
+    import sys
+    try:
+        from cStringIO import StringIO as BytesIO
+    except ImportError:
+        from io import BytesIO
+
     from ldaptor.protocols.ldap.ldapclient import LDAPClient
     from ldaptor.protocols.ldap.ldapsyntax import LDAPEntry
-    from twisted.internet.defer import inlineCallbacks, returnValue
+    from twisted.internet.defer import inlineCallbacks
     from twisted.internet.endpoints import clientFromString, connectProtocol
     from twisted.internet.task import react
     from twisted.python import log
-    from cStringIO import StringIO
-    import sys
+
 
     @inlineCallbacks
     def onConnect(clientProtocol):
         o = LDAPEntry(clientProtocol, "dc=org")
         resultList = yield o.search()
-        f = StringIO()
+        f = BytesIO()
         for result in resultList:
-            f.write(str(result))
-            f.write("\n")
-        log.msg("LDIF formatted results:\n{}".format(f.getvalue()))
+            f.write(result.toWire())
+            f.write(b"\n")
+        data = f.getvalue()
+        log.msg(u"LDIF formatted results:\n{}".format(data.decode("utf-8")))
+
 
     def onError(err, reactor):
         if reactor.running:
             log.err(err)
             reactor.stop()
+
 
     def main(reactor):
         log.startLogging(sys.stdout)
@@ -52,6 +60,7 @@ Code
         d.addCallback(onConnect)
         d.addErrback(onError, reactor)
         return d
+
 
     react(main)
 
@@ -79,6 +88,8 @@ When cast as strings, these entries are formatted as LDIF.
 """"""""""""""""""""""""""""""""""""""""""""""
 Searching with the Paged Search Result Control
 """"""""""""""""""""""""""""""""""""""""""""""
+
+.. todo:: This example should be made Python 3 compatible
 
 Some :term:`DITs` place limits on the number of entries they are willing to
 return as the result of a LDAP SEARCH request.  Microsoft's Active Directory
@@ -259,22 +270,27 @@ Code
     #! /usr/bin/env python
 
     from __future__ import print_function
-    from twisted.internet import reactor, defer
+
+    import sys
+
+    from twisted.internet import defer
     from twisted.internet.endpoints import clientFromString, connectProtocol
     from twisted.internet.task import react
     from twisted.python import log
     from ldaptor.protocols.ldap.ldapclient import LDAPClient
-    from ldaptor.protocols import (
-        pureber,
-        pureldap
-    )
-    import sys
+    from ldaptor.protocols import pureber, pureldap
+
+    try:
+        str_type = unicode
+    except NameError:
+        str_type = str
+
 
     def entry_to_attribs_(entry):
         """
         Convert a simple mapping to the data structures required for an
         entry in the DIT.
-        
+
         Returns: (dn, attributes)
         """
         attribs = {}
@@ -291,12 +307,13 @@ Code
             ldap_attrib_type = pureldap.LDAPAttributeDescription(attrib)
             l = []
             for value in values:
-                if (isinstance(value, unicode)):
+                if (isinstance(value, str_type)):
                     value = value.encode('utf-8')
                 l.append(pureldap.LDAPAttributeValue(value))
             ldap_values = pureber.BERSet(l)
             ldap_attrs.append((ldap_attrib_type, ldap_values))
         return dn, ldap_attrs
+
 
     @defer.inlineCallbacks
     def onConnect(client, entry):
@@ -311,15 +328,17 @@ Code
             log.err(
                 "DIT reported error code {}: {}".format(resultCode, errorMessage))
 
+
     def onError(err, reactor):
         if reactor.running:
             log.err(err)
             reactor.stop()
 
+
     def main(reactor):
         log.startLogging(sys.stdout)
         entry = {
-            "dn": "gn=Jane+sn=Doe,ou=people,dc=example,dc=fr",
+            "dn": "gn=Jane+sn=Doe,ou=people,dc=example,dc=org",
             "c": "US",
             "gn": "Jane",
             "l": "Philadelphia",
@@ -337,6 +356,7 @@ Code
         d.addCallback(onConnect, entry)
         d.addErrback(onError, reactor)
         return d
+
 
     react(main)
 
