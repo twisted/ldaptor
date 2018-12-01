@@ -108,7 +108,7 @@ Code
 
 For `ad.example.com` domain, store the admin password in a file named
 `pass_file` and run the following example,
-where `10.20.1.2` is replaced with the IP of your AD server, and ::
+where `10.20.1.2` is replaced with the IP of your AD server::
 
     python docs/source/cookbook/client_paged_search_results.py \
         tcp:host=10.20.1.2:port=389 \
