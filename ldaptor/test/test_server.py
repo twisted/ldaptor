@@ -116,6 +116,51 @@ class LDAPServerTest(unittest.TestCase):
             value.append(o.toWire())
         return value
 
+    def makeSearch(self, baseObject=None, scope=None, derefAliases=None,
+                    sizeLimit=None, timeLimit=None, typesOnly=None,
+                    filter=None, attributes=None, tag=None):
+        """Shortcut for sending LDAPSearchRequest to the test server"""
+        self.server.dataReceived(
+            pureldap.LDAPMessage(
+                pureldap.LDAPSearchRequest(baseObject=baseObject, scope=scope, derefAliases=derefAliases,
+                                           sizeLimit=sizeLimit, timeLimit=timeLimit, typesOnly=typesOnly,
+                                           filter=filter, attributes=attributes, tag=tag),
+                id=2,
+            ).toWire()
+        )
+
+    def assertSearchResults(self, results=None, resultCode=0):
+        """
+        Shortcut for checking results returned by test server on LDAPSearchRequest.
+        Results must be prepared as a list of dictionaries with 'objectName' and 'attributes' keys
+        """
+        if results is None:
+            results = []
+
+        messages = []
+
+        for result in results:
+            message = pureldap.LDAPMessage(
+                pureldap.LDAPSearchResultEntry(
+                    objectName=result['objectName'],
+                    attributes=result['attributes']
+                ),
+                id=2
+            )
+            messages.append(message)
+
+        messages.append(
+            pureldap.LDAPMessage(
+                pureldap.LDAPSearchResultDone(resultCode=resultCode),
+                id=2
+            )
+        )
+        six.assertCountEqual(
+            self,
+            self._makeResultList(self.server.transport.value()),
+            [msg.toWire() for msg in messages]
+        )
+
     def test_bind(self):
         self.server.dataReceived(
             pureldap.LDAPMessage(pureldap.LDAPBindRequest(), id=4).toWire())
@@ -286,213 +331,184 @@ class LDAPServerTest(unittest.TestCase):
                 id=2).toWire())
 
     def test_search_outOfTree(self):
-        self.server.dataReceived(
-            pureldap.LDAPMessage(
-                pureldap.LDAPSearchRequest(
-                    baseObject='dc=invalid'),
-                id=2).toWire())
-        self.assertEqual(
-            self.server.transport.value(),
-            pureldap.LDAPMessage(
-                pureldap.LDAPSearchResultDone(
-                    resultCode=ldaperrors.LDAPNoSuchObject.resultCode),
-                id=2).toWire())
+        """Attempt to get nonexistent DN results in noSuchObject error response"""
+        self.makeSearch(baseObject='dc=invalid')
+        self.assertSearchResults(resultCode=ldaperrors.LDAPNoSuchObject.resultCode)
 
     def test_search_matchAll_oneResult(self):
-        self.server.dataReceived(
-            pureldap.LDAPMessage(
-                pureldap.LDAPSearchRequest(
-                    baseObject='cn=thingie,ou=stuff,dc=example,dc=com'),
-                id=2).toWire())
-        six.assertCountEqual(self,
-            self._makeResultList(self.server.transport.value()),
-            [
-                pureldap.LDAPMessage(
-                    pureldap.LDAPSearchResultEntry(
-                        objectName='cn=thingie,ou=stuff,dc=example,dc=com',
-                        attributes=[
-                            ('objectClass', ['a', 'b']),
-                            ('cn', ['thingie'])]),
-                    id=2).toWire(),
-                pureldap.LDAPMessage(
-                    pureldap.LDAPSearchResultDone(resultCode=0),
-                    id=2).toWire()])
+        """Searching for a single object with receiving all its attributes"""
+        self.makeSearch(baseObject='cn=thingie,ou=stuff,dc=example,dc=com')
+        self.assertSearchResults([
+            {
+                'objectName': 'cn=thingie,ou=stuff,dc=example,dc=com',
+                'attributes': [
+                    ('objectClass', ['a', 'b']),
+                    ('cn', ['thingie']),
+                ]
+            }
+        ])
 
     def test_search_matchAll_oneResult_filtered(self):
-        self.server.dataReceived(
-            pureldap.LDAPMessage(
-                pureldap.LDAPSearchRequest(
-                    baseObject='cn=thingie,ou=stuff,dc=example,dc=com',
-                    attributes=['cn']),
-                id=2).toWire())
-        six.assertCountEqual(self,
-            self._makeResultList(self.server.transport.value()),
-            [
-                pureldap.LDAPMessage(
-                    pureldap.LDAPSearchResultEntry(
-                        objectName='cn=thingie,ou=stuff,dc=example,dc=com',
-                        attributes=[
-                            ('cn', ['thingie'])]),
-                    id=2).toWire(),
-                pureldap.LDAPMessage(
-                    pureldap.LDAPSearchResultDone(resultCode=0),
-                    id=2).toWire()])
+        """Searching for a single object with receiving a specified set of its attributes"""
+        self.makeSearch(
+            baseObject='cn=thingie,ou=stuff,dc=example,dc=com',
+            attributes=['cn']
+        )
+        self.assertSearchResults([
+            {
+                'objectName': 'cn=thingie,ou=stuff,dc=example,dc=com',
+                'attributes': [
+                    ('cn', ['thingie']),
+                ]
+            }
+        ])
 
     def test_search_matchAll_oneResult_filteredNoAttribsRemaining(self):
-        self.server.dataReceived(
-            pureldap.LDAPMessage(
-                pureldap.LDAPSearchRequest(
-                    baseObject='cn=thingie,ou=stuff,dc=example,dc=com',
-                    attributes=['xyzzy']),
-                id=2).toWire())
-        self.assertEqual(
-            self.server.transport.value(),
-            pureldap.LDAPMessage(
-                pureldap.LDAPSearchResultDone(resultCode=0),
-                id=2).toWire())
+        """
+        Attempt to search an existing object with a set of nonexistent attributes
+        results in an empty successful response
+        """
+        self.makeSearch(
+            baseObject='cn=thingie,ou=stuff,dc=example,dc=com',
+            attributes=['xyzzy']
+        )
+        self.assertSearchResults()
 
     def test_search_matchAll_manyResults(self):
-        self.server.dataReceived(
-            pureldap.LDAPMessage(
-                pureldap.LDAPSearchRequest(
-                    baseObject='ou=stuff,dc=example,dc=com'), id=2).toWire())
-
-        six.assertCountEqual(self,
-            [
-                pureldap.LDAPMessage(
-                    pureldap.LDAPSearchResultEntry(
-                        objectName='ou=stuff,dc=example,dc=com',
-                        attributes=[
-                            ('objectClass', ['a', 'b']),
-                            ('ou', ['stuff'])]),
-                    id=2).toWire(),
-                pureldap.LDAPMessage(
-                    pureldap.LDAPSearchResultEntry(
-                        objectName='cn=another,ou=stuff,dc=example,dc=com',
-                        attributes=[
-                            ('objectClass', ['a', 'b']),
-                            ('cn', ['another'])]),
-                    id=2).toWire(),
-                pureldap.LDAPMessage(
-                    pureldap.LDAPSearchResultEntry(
-                        objectName='cn=thingie,ou=stuff,dc=example,dc=com',
-                        attributes=[
-                            ('objectClass', ['a', 'b']),
-                            ('cn', ['thingie'])]),
-                    id=2).toWire(),
-                pureldap.LDAPMessage(
-                    pureldap.LDAPSearchResultDone(resultCode=0),
-                    id=2).toWire()],
-            self._makeResultList(self.server.transport.value()))
+        """Searching for a tree object with receiving it and all its children (default scope)"""
+        self.makeSearch(baseObject='ou=stuff,dc=example,dc=com')
+        self.assertSearchResults([
+            {
+                'objectName': 'ou=stuff,dc=example,dc=com',
+                'attributes': [
+                    ('objectClass', ['a', 'b']),
+                    ('ou', ['stuff']),
+                ]
+            },
+            {
+                'objectName': 'cn=another,ou=stuff,dc=example,dc=com',
+                'attributes': [
+                    ('objectClass', ['a', 'b']),
+                    ('cn', ['another']),
+                ]
+            },
+            {
+                'objectName': 'cn=thingie,ou=stuff,dc=example,dc=com',
+                'attributes': [
+                    ('objectClass', ['a', 'b']),
+                    ('cn', ['thingie']),
+                ]
+            }
+        ])
 
     def test_search_scope_oneLevel(self):
-        self.server.dataReceived(
-            pureldap.LDAPMessage(
-                pureldap.LDAPSearchRequest(
-                    baseObject='ou=stuff,dc=example,dc=com',
-                    scope=pureldap.LDAP_SCOPE_singleLevel),
-                id=2).toWire())
-        six.assertCountEqual(self,
-            self._makeResultList(self.server.transport.value()),
-            [
-                pureldap.LDAPMessage(
-                    pureldap.LDAPSearchResultEntry(
-                        objectName='cn=thingie,ou=stuff,dc=example,dc=com',
-                        attributes=[
-                            ('objectClass', ['a', 'b']),
-                            ('cn', ['thingie'])]),
-                    id=2).toWire(),
-                pureldap.LDAPMessage(
-                    pureldap.LDAPSearchResultEntry(
-                        objectName='cn=another,ou=stuff,dc=example,dc=com',
-                        attributes=[
-                            ('objectClass', ['a', 'b']),
-                            ('cn', ['another'])]),
-                    id=2).toWire(),
-                pureldap.LDAPMessage(
-                    pureldap.LDAPSearchResultDone(resultCode=0),
-                    id=2).toWire()])
+        """Searching for a tree object with receiving its children but without parent itself"""
+        self.makeSearch(
+            baseObject='ou=stuff,dc=example,dc=com',
+            scope=pureldap.LDAP_SCOPE_singleLevel
+        )
+        self.assertSearchResults([
+            {
+                'objectName': 'cn=thingie,ou=stuff,dc=example,dc=com',
+                'attributes': [
+                    ('objectClass', ['a', 'b']),
+                    ('cn', ['thingie']),
+                ]
+            },
+            {
+                'objectName': 'cn=another,ou=stuff,dc=example,dc=com',
+                'attributes': [
+                    ('objectClass', ['a', 'b']),
+                    ('cn', ['another']),
+                ]
+            }
+        ])
 
     def test_search_scope_wholeSubtree(self):
-        self.server.dataReceived(
-            pureldap.LDAPMessage(
-                pureldap.LDAPSearchRequest(
-                    baseObject='ou=stuff,dc=example,dc=com',
-                    scope=pureldap.LDAP_SCOPE_wholeSubtree),
-                id=2).toWire())
-        six.assertCountEqual(self,
-            self._makeResultList(self.server.transport.value()),
-            [
-                pureldap.LDAPMessage(
-                    pureldap.LDAPSearchResultEntry(
-                        objectName='ou=stuff,dc=example,dc=com',
-                        attributes=[
-                            ('objectClass', ['a', 'b']),
-                            ('ou', ['stuff'])]),
-                    id=2).toWire(),
-                pureldap.LDAPMessage(
-                    pureldap.LDAPSearchResultEntry(
-                        objectName='cn=another,ou=stuff,dc=example,dc=com',
-                        attributes=[
-                            ('objectClass', ['a', 'b']),
-                            ('cn', ['another'])]),
-                    id=2).toWire(),
-                pureldap.LDAPMessage(
-                    pureldap.LDAPSearchResultEntry(
-                        objectName='cn=thingie,ou=stuff,dc=example,dc=com',
-                        attributes=[
-                            ('objectClass', ['a', 'b']),
-                            ('cn', ['thingie'])]),
-                    id=2).toWire(),
-                pureldap.LDAPMessage(
-                    pureldap.LDAPSearchResultDone(resultCode=0),
-                    id=2).toWire()])
+        """
+        Searching for a tree object with receiving it and all its children.
+        This is a default behavior but here it is explicitly specified.
+        """
+        self.makeSearch(
+            baseObject='ou=stuff,dc=example,dc=com',
+            scope=pureldap.LDAP_SCOPE_wholeSubtree
+        )
+        self.assertSearchResults([
+            {
+                'objectName': 'ou=stuff,dc=example,dc=com',
+                'attributes': [
+                    ('objectClass', ['a', 'b']),
+                    ('ou', ['stuff']),
+                ]
+            },
+            {
+                'objectName': 'cn=another,ou=stuff,dc=example,dc=com',
+                'attributes': [
+                    ('objectClass', ['a', 'b']),
+                    ('cn', ['another']),
+                ]
+            },
+            {
+                'objectName': 'cn=thingie,ou=stuff,dc=example,dc=com',
+                'attributes': [
+                    ('objectClass', ['a', 'b']),
+                    ('cn', ['thingie']),
+                ]
+            }
+        ])
 
     def test_search_scope_baseObject(self):
-        self.server.dataReceived(
-            pureldap.LDAPMessage(
-                pureldap.LDAPSearchRequest(
-                    baseObject='ou=stuff,dc=example,dc=com',
-                    scope=pureldap.LDAP_SCOPE_baseObject),
-                id=2).toWire())
-        six.assertCountEqual(self,
-            self._makeResultList(self.server.transport.value()),
-            [
-                pureldap.LDAPMessage(
-                    pureldap.LDAPSearchResultEntry(
-                        objectName='ou=stuff,dc=example,dc=com',
-                        attributes=[
-                            ('objectClass', ['a', 'b']),
-                            ('ou', ['stuff'])]),
-                    id=2).toWire(),
-                pureldap.LDAPMessage(
-                    pureldap.LDAPSearchResultDone(resultCode=0),
-                    id=2).toWire()])
+        """Searching for a tree object with receiving it without its children"""
+        self.makeSearch(
+            baseObject='ou=stuff,dc=example,dc=com',
+            scope=pureldap.LDAP_SCOPE_baseObject
+        )
+        self.assertSearchResults([
+            {
+                'objectName': 'ou=stuff,dc=example,dc=com',
+                'attributes': [
+                    ('objectClass', ['a', 'b']),
+                    ('ou', ['stuff']),
+                ]
+            }
+        ])
+
+    def test_search_all_attributes(self):
+        """
+        Search request with the list of attributes passed as '*'
+        returns objects with all their attributes
+        """
+        self.makeSearch(
+            baseObject='cn=thingie,ou=stuff,dc=example,dc=com',
+            attributes=['*']
+        )
+        self.assertSearchResults([
+            {
+                'objectName': 'cn=thingie,ou=stuff,dc=example,dc=com',
+                'attributes': [
+                     ('objectClass', ['a', 'b']),
+                     ('cn', ['thingie']),
+                ]
+            }
+        ])
 
     def test_rootDSE(self):
-        self.server.dataReceived(
-            pureldap.LDAPMessage(
-                pureldap.LDAPSearchRequest(
-                    baseObject='',
-                    scope=pureldap.LDAP_SCOPE_baseObject,
-                    filter=pureldap.LDAPFilter_present('objectClass')),
-                id=2).toWire())
-        six.assertCountEqual(self,
-            self._makeResultList(self.server.transport.value()),
-            [
-                pureldap.LDAPMessage(
-                    pureldap.LDAPSearchResultEntry(
-                        objectName='',
-                        attributes=[
-                            ('supportedLDAPVersion', ['3']),
-                            ('namingContexts', ['dc=example,dc=com']),
-                            ('supportedExtension',
-                                [pureldap.LDAPPasswordModifyRequest.oid])]),
-                    id=2).toWire(),
-                pureldap.LDAPMessage(
-                    pureldap.LDAPSearchResultDone(
-                        resultCode=ldaperrors.Success.resultCode),
-                    id=2).toWire()])
+        """Searching for a root object"""
+        self.makeSearch(
+            baseObject='',
+            scope=pureldap.LDAP_SCOPE_baseObject,
+            filter=pureldap.LDAPFilter_present('objectClass')
+        )
+        self.assertSearchResults([
+            {
+                'objectName': '',
+                'attributes': [
+                    ('supportedLDAPVersion', ['3']),
+                    ('namingContexts', ['dc=example,dc=com']),
+                    ('supportedExtension', [pureldap.LDAPPasswordModifyRequest.oid]),
+                ]
+            }
+        ])
 
     def test_delete(self):
         self.server.dataReceived(
