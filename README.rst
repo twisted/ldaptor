@@ -41,9 +41,7 @@ Quick Usage Example
         o = ldapsyntax.LDAPEntry(client, basedn)
         results = yield o.search(filterText=query)
         for entry in results:
-            # Received entry attributes are stored as byte strings
-            data = entry.toWire()
-            print(data.decode('utf-8'))
+            print(entry.getText())
 
     if __name__ == '__main__':
         df = example()
