@@ -458,7 +458,7 @@ cn: theChild
         test_children_noAccess_dir_noExec.skip = "Can't test as root"
 
     def test_children_noAccess_file(self):
-        os.chmod(os.path.join(self.meta.path, b'cn=foo.ldif'), 0)
+        os.chmod(os.path.join(self.meta.path, u'cn=foo.ldif'), 0)
         d = self.meta.children()
         def eb(fail):
             fail.trap(IOError)
@@ -603,7 +603,7 @@ cn: theChild
 
     def test_lookup_fail_multipleError(self):
         writeFile(os.path.join(self.example.path,
-                               b'cn=bad-two-entries.ldif'),
+                               u'cn=bad-two-entries.ldif'),
                   b"""\
 dn: cn=bad-two-entries,dc=example,dc=com
 cn: bad-two-entries
@@ -621,7 +621,7 @@ objectClass: top
 
     def test_lookup_fail_emptyError(self):
         writeFile(os.path.join(self.example.path,
-                               b'cn=bad-empty.ldif'),
+                               u'cn=bad-empty.ldif'),
                   b"")
         self.assertRaises(
             ldiftree.LDIFTreeEntryContainsNoEntries,

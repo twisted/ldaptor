@@ -233,9 +233,16 @@ class TestInMemoryDatabase(unittest.TestCase):
         d.addCallbacks(testutil.mustRaise, eb)
         return d
 
-    def test_lookup_deep(self):
+    def test_lookup_deep_dn(self):
+        """Entry lookup with a DN instance returns entry instance with this DN"""
         dn = distinguishedname.DistinguishedName('cn=bar,ou=metasyntactic,dc=example,dc=com')
         d = self.root.lookup(dn)
+        d.addCallback(self.assertEqual, self.bar)
+        return d
+
+    def test_lookup_deep_str(self):
+        """Entry lookup with a DN as a string returns entry instance with this DN"""
+        d = self.root.lookup('cn=bar,ou=metasyntactic,dc=example,dc=com')
         d.addCallback(self.assertEqual, self.bar)
         return d
 
