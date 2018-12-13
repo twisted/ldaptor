@@ -41,7 +41,7 @@ Quick Usage Example
         o = ldapsyntax.LDAPEntry(client, basedn)
         results = yield o.search(filterText=query)
         for entry in results:
-            print(entry.getText())
+            print(entry.getLDIF())
 
     if __name__ == '__main__':
         df = example()

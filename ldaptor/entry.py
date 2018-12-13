@@ -141,7 +141,7 @@ class BaseLDAPEntry(WireStrAlias):
                 a.append((key, vs))
         return ldif.asLDIF(self.dn.getText(), a)
 
-    def getText(self):
+    def getLDIF(self):
         return self.toWire().decode('utf-8')
 
     def __eq__(self, other):

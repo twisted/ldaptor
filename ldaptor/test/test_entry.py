@@ -113,7 +113,7 @@ class TestBaseLDAPEntry(unittest.TestCase):
 
         self.assertTrue(failure.check(LDAPInvalidCredentials))
 
-    def testGetText(self):
+    def testGetLDIF(self):
         """
         Getting human readable representation of an entry
         """
@@ -124,7 +124,7 @@ class TestBaseLDAPEntry(unittest.TestCase):
                 'bar': ['foo'],
             }
         )
-        self.assertEqual(sut.getText(), u'dn: dc=foo\nbar: foo\nfoo: bar\n\n')
+        self.assertEqual(sut.getLDIF(), u'dn: dc=foo\nbar: foo\nfoo: bar\n\n')
 
     def testNonzero(self):
         """Entry is always non-zero"""

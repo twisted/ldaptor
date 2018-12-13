@@ -14,7 +14,7 @@ from twisted.python import log
 def onConnect(clientProtocol):
     o = LDAPEntry(clientProtocol, "dc=fr")
     results = yield o.search()
-    data = u"".join([result.getText() for result in results])
+    data = u"".join([result.getLDIF() for result in results])
     log.msg(u"LDIF formatted results:\n{}".format(data))
 
 

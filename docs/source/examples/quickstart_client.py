@@ -23,7 +23,7 @@ def onConnect(client):
     o = LDAPEntry(client, basedn)
     results = yield o.search(filterText=query)
     for entry in results:
-        print(entry.getText())
+        print(entry.getLDIF())
 
 
 def onError(err):
