@@ -1035,7 +1035,7 @@ class LDAPSyntaxAddChild(unittest.TestCase):
             ))
 
 
-class LDAPSyntaxContainingNamingContext(unittest.TestCase):
+class LDAPSyntaxContainingNamingContext(unittest.SynchronousTestCase):
     def setUp(self):
         attributes = [
             (
@@ -1081,15 +1081,8 @@ class LDAPSyntaxContainingNamingContext(unittest.TestCase):
             dn='cn=foo,dc=foo,dc=com',
             attributes={'objectClass': ['a']}
         )
-        d = o.namingContext()
-
-        def cb(exc):
-            self.assertIsInstance(exc, failure.Failure)
-            self.assertIsInstance(exc.value, ldapsyntax.NoContainingNamingContext)
-
-        d.addCallback(cb)
-        d.addErrback(cb)
-        return d
+        fail = self.failureResultOf(o.namingContext())
+        self.assertIsInstance(fail.value, ldapsyntax.NoContainingNamingContext)
 
 
 class LDAPSyntaxPasswords(unittest.TestCase):

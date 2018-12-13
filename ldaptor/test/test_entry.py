@@ -129,7 +129,7 @@ class TestBaseLDAPEntry(unittest.TestCase):
     def testNonzero(self):
         """Entry is always non-zero"""
         sut = entry.BaseLDAPEntry(dn='')
-        self.assertEqual(bool(sut), True)
+        self.assertTrue(bool(sut))
 
     def testRepr(self):
         """

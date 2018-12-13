@@ -355,7 +355,8 @@ changetype: delete
 
         third = delta.DeleteOp('ou=Team, dc=example,dc=com')
 
-        self.assertEqual(first, second, third)
+        self.assertEqual(first, second)
+        self.assertEqual(first, third)
 
     def testDeleteOpInequalityDifferentEntry(self):
         """
