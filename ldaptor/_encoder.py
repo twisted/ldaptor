@@ -64,3 +64,23 @@ class WireStrAlias(object):
 
     def toWire(self):
         raise NotImplementedError('toWire method is not implemented')
+
+
+class TextStrAlias(object):
+    """
+    A helper base or mixin class which adds __str__ method
+    as an alias of getText method but marks it as deprecated
+    """
+
+    def __str__(self):
+        warnings.simplefilter('always', DeprecationWarning)
+        warnings.warn('{0}.__str__ method is deprecated and will not be used '
+                      'for getting human readable representation in the future '
+                      'releases, use {0}.getText instead'.format(self.__class__.__name__),
+                      category=DeprecationWarning)
+        warnings.simplefilter('default', DeprecationWarning)
+        text = self.getText()
+        return to_bytes(text) if six.PY2 else text
+
+    def getText(self):
+        raise NotImplementedError('getText method is not implemented')

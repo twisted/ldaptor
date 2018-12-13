@@ -88,7 +88,7 @@ class LDAPServerWithUPNBind(LDAPServer):
                 self.boundUser = entry
                 msg = pureldap.LDAPBindResponse(
                     resultCode=ldaperrors.Success.resultCode,
-                    matchedDN=entry.dn)
+                    matchedDN=entry.dn.getText())
                 return msg
             d.addCallback(_cb)
             return d

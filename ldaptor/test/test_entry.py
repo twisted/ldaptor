@@ -39,6 +39,13 @@ class TestBaseLDAPEntry(unittest.TestCase):
         a = entry.BaseLDAPEntry(dn='dc=foo', attributes={})
         self.assertFalse(a == object())
 
+    def testInequalityDifferentDN(self):
+        """
+        Entries are not equal if their DNs are not equal
+        """
+        a = entry.BaseLDAPEntry(dn='dn=foo', attributes={'foo': ['bar']})
+        b = entry.BaseLDAPEntry(dn='dn=bar', attributes={'foo': ['bar']})
+        self.assertNotEqual(a, b)
 
     def testBindPlainText(self):
         """
@@ -105,6 +112,24 @@ class TestBaseLDAPEntry(unittest.TestCase):
         failure = self.failureResultOf(deferred)
 
         self.assertTrue(failure.check(LDAPInvalidCredentials))
+
+    def testGetLDIF(self):
+        """
+        Getting human readable representation of an entry
+        """
+        sut = entry.BaseLDAPEntry(
+            dn='dc=foo',
+            attributes={
+                'foo': ['bar'],
+                'bar': ['foo'],
+            }
+        )
+        self.assertEqual(sut.getLDIF(), u'dn: dc=foo\nbar: foo\nfoo: bar\n\n')
+
+    def testNonzero(self):
+        """Entry is always non-zero"""
+        sut = entry.BaseLDAPEntry(dn='')
+        self.assertTrue(bool(sut))
 
     def testRepr(self):
         """

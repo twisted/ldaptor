@@ -26,7 +26,7 @@ class LDAPEntryTests(unittest.TestCase):
             'aValue': ['a'],
             'bValue': ['b'],
             })
-        self.failUnlessEqual(o.dn.toWire(), b'cn=foo,dc=example,dc=com')
+        self.failUnlessEqual(o.dn.getText(), u'cn=foo,dc=example,dc=com')
         self.failUnlessEqual(o['objectClass'], ['a', 'b'])
         self.failUnlessEqual(o['aValue'], ['a'])
         self.failUnlessEqual(o['bValue'], ['b'])
@@ -1035,35 +1035,37 @@ class LDAPSyntaxAddChild(unittest.TestCase):
             ))
 
 
-class LDAPSyntaxContainingNamingContext(unittest.TestCase):
+class LDAPSyntaxContainingNamingContext(unittest.SynchronousTestCase):
+    def setUp(self):
+        attributes = [
+            (
+                'namingContexts',
+                (
+                    'dc=foo,dc=example',
+                    'dc=example,dc=com',
+                    'dc=bar,dc=example',
+                )
+            )
+        ]
+        self.client = LDAPClientTestDriver([
+            pureldap.LDAPSearchResultEntry(objectName='', attributes=attributes),
+            pureldap.LDAPSearchResultDone(resultCode=0, matchedDN='', errorMessage='')
+        ])
+
     def testNamingContext(self):
         """LDAPEntry.namingContext returns the naming context that contains this object (via a Deferred)."""
-        client=LDAPClientTestDriver(
-            [   pureldap.LDAPSearchResultEntry(
-            objectName='',
-            attributes=[('namingContexts',
-                         ('dc=foo,dc=example',
-                          'dc=example,dc=com',
-                          'dc=bar,dc=example',
-                          ))]),
-
-                pureldap.LDAPSearchResultDone(resultCode=0,
-                                              matchedDN='',
-                                              errorMessage='')
-            ])
-
-        o=ldapsyntax.LDAPEntry(client=client,
-                               dn='cn=foo,ou=bar,dc=example,dc=com',
-                               attributes={
-            'objectClass': ['a'],
-            })
-        d=o.namingContext()
+        o = ldapsyntax.LDAPEntry(
+            client=self.client,
+            dn='cn=foo,ou=bar,dc=example,dc=com',
+            attributes={'objectClass': ['a']}
+        )
+        d = o.namingContext()
         def cb(p):
             assert isinstance(p, ldapsyntax.LDAPEntry)
             assert p.client == o.client
-            assert p.dn.toWire() == b'dc=example,dc=com'
+            assert p.dn.getText() == u'dc=example,dc=com'
 
-            client.assertSent(pureldap.LDAPSearchRequest(
+            self.client.assertSent(pureldap.LDAPSearchRequest(
                 baseObject='',
                 scope=pureldap.LDAP_SCOPE_baseObject,
                 filter=pureldap.LDAPFilter_present('objectClass'),
@@ -1071,6 +1073,16 @@ class LDAPSyntaxContainingNamingContext(unittest.TestCase):
                 ))
         d.addCallback(cb)
         return d
+
+    def testNoContainingNamingContext(self):
+        """LDAPEntry.namingContext raises exception if there are no naming contexts with it"""
+        o = ldapsyntax.LDAPEntry(
+            client=self.client,
+            dn='cn=foo,dc=foo,dc=com',
+            attributes={'objectClass': ['a']}
+        )
+        fail = self.failureResultOf(o.namingContext())
+        self.assertIsInstance(fail.value, ldapsyntax.NoContainingNamingContext)
 
 
 class LDAPSyntaxPasswords(unittest.TestCase):
@@ -1703,7 +1715,7 @@ class LDAPSyntaxMove(unittest.TestCase):
                 newSuperior='ou=somewhere,dc=example,dc=com',
                 ))
 
-            self.assertEqual(o.dn, 'cn=bar,ou=somewhere,dc=example,dc=com')
+            self.assertEqual(o.dn, u'cn=bar,ou=somewhere,dc=example,dc=com')
         d.addCallback(cb)
         return d
 

@@ -18,6 +18,7 @@ try:
     SRVConnector = utils.SRVConnector
 except AttributeError:
     from twisted.names.srvconnect import SRVConnector
+from ldaptor._encoder import get_strings
 
 
 def connectToLDAPEndpoint(reactor, endpointStr, clientProtocol):
@@ -48,8 +49,9 @@ class LDAPConnector(SRVConnector):
 
     def _findOverRide(self, dn, overrides):
         while True:
-            if dn in overrides:
-                return overrides[dn]
+            for dn_variant in get_strings(dn):
+                if dn_variant in overrides:
+                    return overrides[dn]
             if dn == '':
                 break
             dn = dn.up()

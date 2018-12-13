@@ -343,6 +343,21 @@ changetype: delete
 
         self.assertEqual(first, second)
 
+    def testDeleteOpEqualityEqualDN(self):
+        """
+        DeleteOp objects are equal if their DNs are equal.
+        """
+        first_dn = distinguishedname.DistinguishedName(stringValue='ou=Team,dc=example,dc=com')
+        first = delta.DeleteOp(first_dn)
+
+        second_entry = entry.BaseLDAPEntry(dn='ou=Team, dc=example, dc=com')
+        second = delta.DeleteOp(second_entry)
+
+        third = delta.DeleteOp('ou=Team, dc=example,dc=com')
+
+        self.assertEqual(first, second)
+        self.assertEqual(first, third)
+
     def testDeleteOpInequalityDifferentEntry(self):
         """
         DeleteOp objects are not equal when the have different LDAP entries.
@@ -400,6 +415,12 @@ changetype: delete
 
         failure = self.failureResultOf(deferred)
         self.assertIsInstance(failure.value, ldaperrors.LDAPNoSuchObject)
+
+    def testDeleteOpInvalidDN(self):
+        """
+        Invalid type of DN raises AssertionError
+        """
+        self.assertRaises(AssertionError, delta.DeleteOp, 0)
 
     def testRepr(self):
         """

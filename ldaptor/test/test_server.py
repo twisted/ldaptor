@@ -513,7 +513,7 @@ class LDAPServerTest(unittest.TestCase):
     def test_delete(self):
         self.server.dataReceived(
             pureldap.LDAPMessage(
-                pureldap.LDAPDelRequest(self.thingie.dn),
+                pureldap.LDAPDelRequest(self.thingie.dn.getText()),
                 id=2).toWire())
         self.assertEqual(
             self.server.transport.value(),
@@ -565,7 +565,7 @@ class LDAPServerTest(unittest.TestCase):
         self.server.dataReceived(
             pureldap.LDAPMessage(
                 pureldap.LDAPAddRequest(
-                    entry=self.thingie.dn,
+                    entry=self.thingie.dn.getText(),
                     attributes=[
                         (
                             pureldap.LDAPAttributeDescription("objectClass"),
@@ -581,7 +581,7 @@ class LDAPServerTest(unittest.TestCase):
             pureldap.LDAPMessage(
                 pureldap.LDAPAddResponse(
                     resultCode=ldaperrors.LDAPEntryAlreadyExists.resultCode,
-                    errorMessage=self.thingie.dn),
+                    errorMessage=self.thingie.dn.getText()),
                 id=2).toWire())
         # tree did not change
         d = self.stuff.children()
@@ -594,7 +594,7 @@ class LDAPServerTest(unittest.TestCase):
         self.server.dataReceived(
             pureldap.LDAPMessage(
                 pureldap.LDAPModifyDNRequest(
-                    entry=self.thingie.dn,
+                    entry=self.thingie.dn.getText(),
                     newrdn=newrdn,
                     deleteoldrdn=True),
                 id=2).toWire())
@@ -624,7 +624,7 @@ class LDAPServerTest(unittest.TestCase):
         self.server.dataReceived(
             pureldap.LDAPMessage(
                 pureldap.LDAPModifyRequest(
-                    self.stuff.dn,
+                    self.stuff.dn.getText(),
                     modification=[
                         delta.Add('foo', ['bar']).asLDAP(),
                     ]),

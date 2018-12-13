@@ -8,7 +8,7 @@ from twisted.python.util import InsensitiveDict
 from zope.interface import implementer
 
 from ldaptor import interfaces, attributeset, delta
-from ldaptor._encoder import WireStrAlias, to_bytes, to_unicode, get_strings
+from ldaptor._encoder import WireStrAlias, to_bytes, get_strings
 from ldaptor.protocols.ldap import distinguishedname, ldif, ldaperrors
 
 
@@ -139,7 +139,10 @@ class BaseLDAPEntry(WireStrAlias):
                 vs = list(values)
                 vs.sort()
                 a.append((key, vs))
-        return ldif.asLDIF(self.dn, a)
+        return ldif.asLDIF(self.dn.getText(), a)
+
+    def getLDIF(self):
+        return self.toWire().decode('utf-8')
 
     def __eq__(self, other):
         if not isinstance(other, BaseLDAPEntry):
@@ -164,8 +167,11 @@ class BaseLDAPEntry(WireStrAlias):
     def __len__(self):
         return len(self.keys())
 
-    def __nonzero__(self):
+    def __bool__(self):
         return True
+
+    def __nonzero__(self):
+        return self.__bool__()
 
     def __repr__(self):
         keys = sorted((key for key in self), key=to_bytes)
@@ -173,7 +179,7 @@ class BaseLDAPEntry(WireStrAlias):
         for key in keys:
             a.append('%s: %s' % (repr(key), repr(list(self[key]))))
         attributes = ', '.join(a)
-        dn = self.dn.toWire() if six.PY2 else to_unicode(self.dn.toWire())
+        dn = to_bytes(self.dn.getText()) if six.PY2 else self.dn.getText()
         return '%s(%s, {%s})' % (
             self.__class__.__name__,
             repr(dn),

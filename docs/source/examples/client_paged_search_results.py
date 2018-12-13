@@ -1,17 +1,15 @@
 #! /usr/bin/env python
 
-from __future__ import print_function
 import argparse
+import sys
+
 from twisted.internet import defer
 from twisted.internet.endpoints import clientFromString, connectProtocol
 from twisted.internet.task import react
 from ldaptor.protocols.ldap.ldapclient import LDAPClient
 from ldaptor.protocols.ldap.ldapsyntax import LDAPEntry
-from ldaptor.protocols import (
-    pureber,
-    pureldap
-)
-import sys
+from ldaptor.protocols import pureber
+
 
 @defer.inlineCallbacks
 def onConnect(client, args):
@@ -43,6 +41,7 @@ def onConnect(client, args):
         page += 1
     print("There were {} results returned in total.".format(count))
 
+
 @defer.inlineCallbacks
 def process_entry(client, args, search_filter, page_size=100, cookie=''):
     basedn = args.base_dn
@@ -60,13 +59,16 @@ def process_entry(client, args, search_filter, page_size=100, cookie=''):
     cookie = get_paged_search_cookie(resp_controls)
     defer.returnValue((results, cookie))
 
+
 def display_results(results):
     for entry in results:
-        print(entry.dn.toWire())
+        print(entry.dn.getText())
+
 
 def get_paged_search_cookie(controls):
     """
-    Input: semi-parsed controls list from LDAP response; list of tuples (controlType, criticality, controlValue).
+    Input: semi-parsed controls list from LDAP response;
+    list of tuples (controlType, criticality, controlValue).
     Parses the controlValue and returns the cookie as a byte string.
     """
     control_value = controls[0][2]
@@ -76,8 +78,10 @@ def get_paged_search_cookie(controls):
     cookie = raw_cookie.value
     return cookie
 
+
 def onError(err):
     err.printDetailedTraceback(file=sys.stderr)
+
 
 def main(reactor, args):
     endpoint_str = args.endpoint
@@ -87,12 +91,14 @@ def main(reactor, args):
     d.addErrback(onError)
     return d
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="AD LDAP demo.")
     parser.add_argument(
         "endpoint",
         action="store",
-        help="The Active Directory service endpoint.  See https://twistedmatrix.com/documents/current/core/howto/endpoints.html#clients")
+        help="The Active Directory service endpoint. See "
+             "https://twistedmatrix.com/documents/current/core/howto/endpoints.html#clients")
     parser.add_argument(
         "bind_dn",
         action="store",
