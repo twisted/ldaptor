@@ -1,5 +1,4 @@
 import codecs
-import warnings
 
 import string
 try:
@@ -9,6 +8,8 @@ except AttributeError:
     maketrans = bytes.maketrans
 
 import six
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
 
 from ldaptor import md4, config
 
@@ -36,13 +37,7 @@ def lmhash_locked(password=b''):
     return 32 * b'X'
 
 
-def _no_lmhash(password=b''):
-    if config.useLMhash():
-        warnings.warn("Cannot import Crypto.Cipher.DES, lmhash passwords disabled.")
-    return lmhash_locked()
-
-
-def _have_lmhash(password=b''):
+def lmhash(password=b''):
     """
     Generates lanman password hash for a given password.
 
@@ -58,14 +53,20 @@ def _have_lmhash(password=b''):
 
     return _deshash(password[:7]) + _deshash(password[7:])
 
-try:
-    from Crypto.Cipher import DES
-except ImportError:
-    lmhash = _no_lmhash
-else:
-    lmhash = _have_lmhash
 
 LM_MAGIC = "KGS!@#$%"
+
+
+def _des(key, data):
+    encryptor = (
+        Cipher(
+            algorithms.TripleDES(key),
+            modes.ECB(),
+            backend=default_backend(),
+        )
+        .encryptor()
+    )
+    return encryptor.update(data) + encryptor.finalize()
 
 
 def _deshash(p):
@@ -102,6 +103,5 @@ def _deshash(p):
              _pack(bits[49:]))
 
     data = b''.join([six.int2byte(x) for x in bytes])
-    cipher = DES.new(data, DES.MODE_ECB)
-    raw = cipher.encrypt(LM_MAGIC)
+    raw = _des(key=data, data=LM_MAGIC.encode('ascii'))
     return  codecs.encode(raw, 'hex').upper()

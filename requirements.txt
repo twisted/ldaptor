@@ -1,7 +1,7 @@
 -e .
 
 pyOpenSSL
-PyCrypto
+cryptography
 service_identity
 pyparsing
 twisted

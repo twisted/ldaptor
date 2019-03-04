@@ -36,7 +36,7 @@ if __name__ == '__main__':
           url="https://github.com/twisted/ldaptor",
           license="MIT",
           install_requires=[
-              'PyCrypto',
+              'cryptography',
               'Twisted',
               'pyOpenSSL',
               'pyparsing',
