@@ -66,3 +66,8 @@ after_script:
 
 notifications:
     email: false
+
+cache:
+  - pip
+  - directories:
+    - $HOME/.pyenv_cache
