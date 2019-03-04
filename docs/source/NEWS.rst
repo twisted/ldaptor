@@ -22,16 +22,18 @@ Changes
 - ``toWire`` method is used to get bytes representation of `ldaptor` classes
   instead of ``__str__`` which is deprecated now.
 - Code was updated to pass `python3 -m compileall` in preparation for py3 port.
+- Code is linted under python 3  in preparation for py3 port.
 - Continuous test are executed only against latest related Twisted and latest
   Twisted trunk branch.
 - The local development environment was updated to produce overall and diff
   coverage reports in HTML format.
 - `six` package is now a direct dependency in preparation for the Python 3
-  port.
+  port, and has replaced the ldaptor.compat module.
 - Remove Python 3.3 from tox as it is EOL.
 - Add API documentation for ``LDAPAttributeSet`` and ``startTLS``.
 - Quick start and cookbook examples were moved to separate files and
   made agnostic to the Python version.
+- dependency on pyCrypto replaced with pure python passlib.
 
 Bugfixes
 ^^^^^^^^
