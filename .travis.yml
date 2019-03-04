@@ -17,10 +17,22 @@ matrix:
     env: TOX_ENV=py35-ported
   - python: 3.5
     env: TOX_ENV=py35-test-twtrunk
+  - python: 3.6
+    env: TOX_ENV=py36-ported
+  - python: 3.6
+    env: TOX_ENV=py36-test-twtrunk
+  - python: 3.7
+    env: TOX_ENV=py37-ported
+  - python: 3.7
+    env: TOX_ENV=py37-test-twtrunk
   - python: 2.7
+    env: TOX_ENV=linters
+  - python: 3.7
     env: TOX_ENV=linters
   allow_failures:
     - env: TOX_ENV=py35-test-twtrunk
+    - env: TOX_ENV=py36-test-twtrunk
+    - env: TOX_ENV=py37-test-twtrunk
 
 install:
   - pip install tox codecov
