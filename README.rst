@@ -76,4 +76,4 @@ Dependencies:
 - `Twisted <https://pypi.python.org/pypi/Twisted/>`_
 - `pyparsing <https://pypi.python.org/pypi/pyparsing/>`_
 - `pyOpenSSL <https://pypi.python.org/pypi/pyOpenSSL/>`_
-- `PyCrypto <https://pypi.python.org/pypi/cryptography/>`_ for Samba passwords
+- `passlib <https://pypi.python.org/pypi/passlib/>`_ for Samba passwords
