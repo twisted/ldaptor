@@ -31,11 +31,30 @@ matrix:
     env: TOX_ENV=py27-linters
   - python: 3.7
     env: TOX_ENV=py37-linters
+  - python: 3.7
+    env: PYENV_VERSION=pypy2.7-7.0.0 TOX_ENV=pypy-ported
+  - &pypy27
+    python: 3.7
+    env: PYENV_VERSION=pypy2.7-7.0.0 TOX_ENV=pypy-test-twtrunk
+  - python: 3.7
+    env: PYENV_VERSION=pypy3.6-7.0.0 TOX_ENV=pypy3-ported
+  - &pypy37
+    python: 3.7
+    env: PYENV_VERSION=pypy3.6-7.0.0 TOX_ENV=pypy3-test-twtrunk
   allow_failures:
     - env: TOX_ENV=py35-test-twtrunk
     - env: TOX_ENV=py36-test-twtrunk
     - env: TOX_ENV=py37-test-twtrunk
+    - *pypy17
+    - *pypy27
+    - *pypy37
 
+before_install:
+  - |
+    if [[ -n "${PYENV_VERSION}" ]]; then
+      export PYENV_ROOT="${HOME}/.travis-pyenv"
+      source <(curl -SL https://git.io/fhPYW -o -)
+    fi
 install:
   - pip install tox codecov
 
