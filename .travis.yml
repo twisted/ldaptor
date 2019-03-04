@@ -28,9 +28,9 @@ matrix:
   - python: 3.7
     env: TOX_ENV=py37-test-twtrunk
   - python: 2.7
-    env: TOX_ENV=linters
+    env: TOX_ENV=py27-linters
   - python: 3.7
-    env: TOX_ENV=linters
+    env: TOX_ENV=py37-linters
   allow_failures:
     - env: TOX_ENV=py35-test-twtrunk
     - env: TOX_ENV=py36-test-twtrunk
