@@ -73,7 +73,6 @@ the project installed::
 
 Dependencies:
 
-- `Twisted <https://pypi.python.org/pypi/Twisted/>`_
+- `Twisted[tls] <https://pypi.python.org/pypi/Twisted/>`_
 - `pyparsing <https://pypi.python.org/pypi/pyparsing/>`_
-- `pyOpenSSL <https://pypi.python.org/pypi/pyOpenSSL/>`_
 - `passlib <https://pypi.python.org/pypi/passlib/>`_ for Samba passwords

@@ -1,8 +1,6 @@
 -e .
 
-pyOpenSSL
 passlib
-service_identity
 pyparsing
-twisted
+twisted[tls]
 zope.interface

@@ -34,6 +34,7 @@ Changes
 - Quick start and cookbook examples were moved to separate files and
   made agnostic to the Python version.
 - dependency on pyCrypto replaced with pure python passlib.
+- replace direct dependency on pyOpenSSL with Twisted[tls]
 
 Bugfixes
 ^^^^^^^^
