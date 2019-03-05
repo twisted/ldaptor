@@ -37,8 +37,7 @@ if __name__ == '__main__':
           license="MIT",
           install_requires=[
               'passlib',
-              'Twisted',
-              'pyOpenSSL',
+              'Twisted[tls]',
               'pyparsing',
               'six >= 1.7',
               'zope.interface',
