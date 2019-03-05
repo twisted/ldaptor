@@ -2,7 +2,6 @@
 Test cases for ldaptor.protocols.ldap.ldapserver module.
 """
 from __future__ import print_function
-
 import base64
 import types
 

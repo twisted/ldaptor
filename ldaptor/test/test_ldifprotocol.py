@@ -111,7 +111,6 @@ class TestLDIFParsing(unittest.TestCase):
         o = proto.listOfCompleted.pop(0)
         self.failUnlessEqual(o.dn.getText(), u'cn=foo,dc=example,dc=com')
         self.failUnlessEqual(o[b'objectClass'], [b'a', b'b'])
-
         self.failUnlessEqual(proto.listOfCompleted, [])
 
     def testCaseInsensitiveDN(self):
