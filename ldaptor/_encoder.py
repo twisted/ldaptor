@@ -58,7 +58,7 @@ class WireStrAlias(object):
         warnings.warn('{0}.__str__ method is deprecated and will not be used '
                       'for getting bytes representation in the future '
                       'releases, use {0}.toWire instead'.format(self.__class__.__name__),
-                      category=DeprecationWarning)
+                      category=DeprecationWarning, stacklevel=2)
         warnings.simplefilter('default', DeprecationWarning)
         return self.toWire()
 
@@ -77,7 +77,7 @@ class TextStrAlias(object):
         warnings.warn('{0}.__str__ method is deprecated and will not be used '
                       'for getting human readable representation in the future '
                       'releases, use {0}.getText instead'.format(self.__class__.__name__),
-                      category=DeprecationWarning)
+                      category=DeprecationWarning, stacklevel=2)
         warnings.simplefilter('default', DeprecationWarning)
         text = self.getText()
         return to_bytes(text) if six.PY2 else text
