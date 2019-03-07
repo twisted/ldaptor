@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Release 19.1 (Unreleased)
+-------------------------
+
+Bugfixes
+^^^^^^^^
+
+- ``DeprecationWarning`` stacklevel was set to mark the caller of the deprecated
+  methods of the ``ldaptor._encoder`` classes.
 
 Release 19.0 (2019-03-05)
 -------------------------
