@@ -67,11 +67,14 @@ class WireStrAliasTests(unittest.TestCase):
 class TextStrAliasTests(unittest.TestCase):
 
     def test_deprecation_warning(self):
-        obj = TextObject()
+        str(TextObject())
         msg = 'TextObject.__str__ method is deprecated and will not be used ' \
               'for getting human readable representation in the future ' \
               'releases, use TextObject.getText instead'
-        self.assertWarns(DeprecationWarning, msg, ldaptor._encoder.__file__, obj.__str__)
+        warnings = self.flushWarnings()
+        self.assertEqual(len(warnings), 1)
+        self.assertEqual(warnings[0]['category'], DeprecationWarning)
+        self.assertEqual(warnings[0]['message'], msg)
 
     def test_getText_not_implemented(self):
         """
