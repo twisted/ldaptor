@@ -4,11 +4,17 @@ Changelog
 Release 19.1 (Unreleased)
 -------------------------
 
+Features
+^^^^^^^^
+
+- Basic implementation of ``ldaptor.protocols.pureldap.LDAPSearchResultReference``.
+
 Bugfixes
 ^^^^^^^^
 
 - ``DeprecationWarning`` stacklevel was set to mark the caller of the deprecated
   methods of the ``ldaptor._encoder`` classes.
+- ``NotImplementedError`` for ``ldaptor.protocols.pureldap.LDAPSearchResultReference`` was fixed.
 
 Release 19.0 (2019-03-05)
 -------------------------

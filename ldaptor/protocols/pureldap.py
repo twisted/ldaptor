@@ -226,20 +226,38 @@ class LDAPReferral(BERSequence):
     tag = CLASS_CONTEXT | 0x03
 
 
-# This is currently just a stub and implements no real functionality.
-class LDAPSearchResultReference(LDAPProtocolResponse):
+class LDAPBERDecoderContext_LDAPSearchResultReference(BERDecoderContext):
+    Identities = {
+        BEROctetString.tag: LDAPString,
+    }
+
+
+class LDAPSearchResultReference(LDAPProtocolResponse, BERSequence):
     tag = CLASS_APPLICATION | 0x13
 
-    def __init__(self):
+    def __init__(self, uris=None, tag=None):
         LDAPProtocolResponse.__init__(self)
+        BERSequence.__init__(self, value=[], tag=tag)
+        assert uris is not None
+        self.uris = uris
 
     @classmethod
     def fromBER(cls, tag, content, berdecoder=None):
-        r = cls()
+        l = berDecodeMultiple(content,
+                              LDAPBERDecoderContext_LDAPSearchResultReference(
+                                  fallback=berdecoder))
+        r = cls(uris=l)
         return r
 
+    def toWire(self):
+        return BERSequence(BERSequence(self.uris), tag=self.tag).toWire()
+
     def __repr__(self):
-        return object.__repr__(self)
+        return '{}(uris={}{})'.format(
+            self.__class__.__name__,
+            repr(self.uris),
+            ', tag={}'.format(self.tag) if self.tag != self.__class__.tag else '',
+        )
 
 
 class LDAPResult(LDAPProtocolResponse, BERSequence):
@@ -1553,6 +1571,7 @@ class LDAPBERDecoderContext(BERDecoderContext):
         LDAPSearchRequest.tag: LDAPSearchRequest,
         LDAPSearchResultEntry.tag: LDAPSearchResultEntry,
         LDAPSearchResultDone.tag: LDAPSearchResultDone,
+        LDAPSearchResultReference.tag: LDAPSearchResultReference,
         LDAPReferral.tag: LDAPReferral,
         LDAPModifyRequest.tag: LDAPModifyRequest,
         LDAPModifyResponse.tag: LDAPModifyResponse,

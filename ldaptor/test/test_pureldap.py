@@ -211,6 +211,21 @@ class KnownValues(unittest.TestCase):
          [0x42, 0x00]
         ),
 
+        (pureldap.LDAPSearchResultReference,
+         [],
+         {'uris': [pureldap.LDAPString(b'ldap://example.com/dc=foo,dc=example,dc=com'),
+                   pureldap.LDAPString(b'ldap://example.com/dc=bar,dc=example,dc=com')]
+          },
+         None,
+         [0x73, 90]
+         + [0x04]
+         + [len(b'ldap://example.com/dc=foo,dc=example,dc=com')]
+         + l(b'ldap://example.com/dc=foo,dc=example,dc=com')
+         + [0x04]
+         + [len(b'ldap://example.com/dc=bar,dc=example,dc=com')]
+         + l(b'ldap://example.com/dc=bar,dc=example,dc=com'),
+        ),
+
         (pureldap.LDAPSearchResultDone,
          [],
          {'resultCode': 0,
@@ -1074,6 +1089,18 @@ class TestRepresentations(unittest.TestCase):
                 objectName='uid=mohamed,ou=people,dc=example,dc=fr',
                 attributes=[
                     ('uid', ['mohamed'])
+                ],
+                tag=tag
+            )
+            repr(resp)
+
+    def test_search_result_reference_repr(self):
+        tags = [pureldap.LDAPSearchResultReference.tag, 'tag']
+        for tag in tags:
+            resp = pureldap.LDAPSearchResultReference(
+                uris=[
+                    pureldap.LDAPString(b'ldap://example.com/dc=foo,dc=example,dc=com'),
+                    pureldap.LDAPString(b'ldap://example.com/dc=foo,dc=example,dc=com')
                 ],
                 tag=tag
             )
