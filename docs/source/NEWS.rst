@@ -9,6 +9,8 @@ Bugfixes
 
 - ``DeprecationWarning`` stacklevel was set to mark the caller of the deprecated
   methods of the ``ldaptor._encoder`` classes.
+- StartTLS regression bug was fixed: ``ldaptor.protocols.pureldap.LDAPStartTLSRequest.oid`` and
+  ``ldaptor.protocols.pureldap.LDAPStartTLSResponse.oid`` must be of bytes type.
 
 Release 19.0 (2019-03-05)
 -------------------------
