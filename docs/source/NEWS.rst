@@ -4,11 +4,19 @@ Changelog
 Release 19.1 (Unreleased)
 -------------------------
 
+Features
+^^^^^^^^
+
+- Explicit ``ldaptor.protocols.ldap.ldaperrors`` classes declaration was made
+  to allow syntax highlighting for this module.
+
 Bugfixes
 ^^^^^^^^
 
 - ``DeprecationWarning`` stacklevel was set to mark the caller of the deprecated
   methods of the ``ldaptor._encoder`` classes.
+- Regression bug with ``LDAPException`` instances was fixed (``ldaptor.protocols.ldap.ldapclient``
+  exceptions failed to get their string representations).
 - StartTLS regression bug was fixed: ``ldaptor.protocols.pureldap.LDAPStartTLSRequest.oid`` and
   ``ldaptor.protocols.pureldap.LDAPStartTLSResponse.oid`` must be of bytes type.
 
