@@ -64,3 +64,12 @@ class LDAPExceptionTests(unittest.TestCase):
         """Unknown exception with no message"""
         exception = ldaperrors.LDAPUnknownError(57)
         self.assertEqual(exception.toWire(), b'unknownError(57)')
+
+
+class LDAPExceptionStrTests(unittest.TestCase):
+    """Getting string representations of LDAP exceptions"""
+
+    def test_exception_with_message(self):
+        """Exception with a text message"""
+        exception = ldaperrors.LDAPProtocolError('Error message')
+        self.assertEqual(str(exception), 'protocolError: Error message')
