@@ -77,16 +77,16 @@ class TestLDIFParsing(unittest.TestCase):
         self.failUnlessEqual(len(proto.listOfCompleted), 2)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(str(o.dn), 'cn=foo,dc=example,dc=com')
-        self.failUnlessEqual(o['objectClass'], ['a', 'b'])
-        self.failUnlessEqual(o['aValue'], ['a', 'b'])
-        self.failUnlessEqual(o['bValue'], ['c'])
+        self.failUnlessEqual(o.dn.getText(), u'cn=foo,dc=example,dc=com')
+        self.failUnlessEqual(o[b'objectClass'], [b'a', b'b'])
+        self.failUnlessEqual(o[b'aValue'], [b'a', b'b'])
+        self.failUnlessEqual(o[b'bValue'], [b'c'])
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(str(o.dn), 'cn=bar,dc=example,dc=com')
-        self.failUnlessEqual(o['objectClass'], ['c'])
-        self.failUnlessEqual(o['aValue'], [' FOO!', 'b'])
-        self.failUnlessEqual(o['bValue'], ['C'])
+        self.failUnlessEqual(o.dn.getText(), u'cn=bar,dc=example,dc=com')
+        self.failUnlessEqual(o[b'objectClass'], [b'c'])
+        self.failUnlessEqual(o[b'aValue'], [b' FOO!', b'b'])
+        self.failUnlessEqual(o[b'bValue'], [b'C'])
 
         self.failUnlessEqual(proto.listOfCompleted, [])
 
@@ -109,9 +109,8 @@ class TestLDIFParsing(unittest.TestCase):
         self.failUnlessEqual(len(proto.listOfCompleted), 1)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(str(o.dn), 'cn=foo,dc=example,dc=com')
-        self.failUnlessEqual(o['objectClass'], ['a', 'b'])
-
+        self.failUnlessEqual(o.dn.getText(), u'cn=foo,dc=example,dc=com')
+        self.failUnlessEqual(o[b'objectClass'], [b'a', b'b'])
         self.failUnlessEqual(proto.listOfCompleted, [])
 
     def testCaseInsensitiveDN(self):
@@ -132,12 +131,12 @@ cn: bar
         self.failUnlessEqual(len(proto.listOfCompleted), 2)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(str(o.dn), 'cn=foo,dc=example,dc=com')
-        self.failUnlessEqual(o['CN'], ['foo'])
+        self.failUnlessEqual(o.dn.getText(), u'cn=foo,dc=example,dc=com')
+        self.failUnlessEqual(o[b'CN'], [b'foo'])
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(str(o.dn), 'cn=bar,dc=example,dc=com')
-        self.failUnlessEqual(o['CN'], ['bar'])
+        self.failUnlessEqual(o.dn.getText(), u'cn=bar,dc=example,dc=com')
+        self.failUnlessEqual(o[b'CN'], [b'bar'])
 
         self.failUnlessEqual(proto.listOfCompleted, [])
 
@@ -161,10 +160,10 @@ aValUe: B
         self.failUnlessEqual(len(proto.listOfCompleted), 1)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(str(o.dn), 'cn=foo,dc=example,dc=com')
-        self.failUnlessEqual(o['objectClass'], ['a', 'b'])
-        self.failUnlessEqual(o['CN'], ['foo'])
-        self.failUnlessEqual(o['aValue'], ['a', 'B'])
+        self.failUnlessEqual(o.dn.getText(), u'cn=foo,dc=example,dc=com')
+        self.failUnlessEqual(o[b'objectClass'], [b'a', b'b'])
+        self.failUnlessEqual(o[b'CN'], [b'foo'])
+        self.failUnlessEqual(o[b'aValue'], [b'a', b'B'])
 
         self.failUnlessEqual(proto.listOfCompleted, [])
 
@@ -184,10 +183,10 @@ bValue: c
         self.failUnlessEqual(len(proto.listOfCompleted), 1)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(str(o.dn), 'cn=foo,dc=example,dc=com')
-        self.failUnlessEqual(o['objectClass'], ['a', 'b'])
-        self.failUnlessEqual(o['aValue'], ['a', 'b'])
-        self.failUnlessEqual(o['bValue'], ['c'])
+        self.failUnlessEqual(o.dn.getText(), u'cn=foo,dc=example,dc=com')
+        self.failUnlessEqual(o[b'objectClass'], [b'a', b'b'])
+        self.failUnlessEqual(o[b'aValue'], [b'a', b'b'])
+        self.failUnlessEqual(o[b'bValue'], [b'c'])
 
     def testVersionInvalid(self):
         proto = LDIFDriver()
@@ -234,10 +233,10 @@ aValUe:b
         self.failUnlessEqual(len(proto.listOfCompleted), 1)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(str(o.dn), 'cn=foo,dc=example,dc=com')
-        self.failUnlessEqual(o['objectClass'], ['a', 'b'])
-        self.failUnlessEqual(o['CN'], ['foo'])
-        self.failUnlessEqual(o['aValue'], ['a', 'b'])
+        self.failUnlessEqual(o.dn.getText(), u'cn=foo,dc=example,dc=com')
+        self.failUnlessEqual(o[b'objectClass'], [b'a', b'b'])
+        self.failUnlessEqual(o[b'CN'], [b'foo'])
+        self.failUnlessEqual(o[b'aValue'], [b'a', b'b'])
 
         self.failUnlessEqual(proto.listOfCompleted, [])
 
@@ -280,12 +279,12 @@ cn: bar
         self.failUnlessEqual(len(proto.listOfCompleted), 2)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(str(o.dn), 'cn=foo,dc=example,dc=com')
-        self.failUnlessEqual(o['CN'], ['foo'])
+        self.failUnlessEqual(o.dn.getText(), u'cn=foo,dc=example,dc=com')
+        self.failUnlessEqual(o[b'CN'], [b'foo'])
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(str(o.dn), 'cn=bar,dc=example,dc=com')
-        self.failUnlessEqual(o['CN'], ['bar'])
+        self.failUnlessEqual(o.dn.getText(), u'cn=bar,dc=example,dc=com')
+        self.failUnlessEqual(o[b'CN'], [b'bar'])
 
         self.failUnlessEqual(proto.listOfCompleted, [])
 
@@ -310,12 +309,12 @@ cn: bar
         self.failUnlessEqual(len(proto.listOfCompleted), 2)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(str(o.dn), 'cn=foo,dc=example,dc=com')
-        self.failUnlessEqual(o['CN'], ['foo'])
+        self.failUnlessEqual(o.dn.getText(), u'cn=foo,dc=example,dc=com')
+        self.failUnlessEqual(o[b'CN'], [b'foo'])
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(str(o.dn), 'cn=bar,dc=example,dc=com')
-        self.failUnlessEqual(o['CN'], ['bar'])
+        self.failUnlessEqual(o.dn.getText(), u'cn=bar,dc=example,dc=com')
+        self.failUnlessEqual(o[b'CN'], [b'bar'])
 
         self.failUnlessEqual(proto.listOfCompleted, [])
 
@@ -393,22 +392,22 @@ sn: Jensen
 telephonenumber: +1 408 555 1212
 
 """,
-          [ ( 'cn=Barbara Jensen,ou=Product Development,dc=airius,dc=com',
-              { 'objectClass': ['top', 'person', 'organizationalPerson'],
-                'cn': ['Barbara Jensen',
-                       'Barbara J Jensen',
-                       'Babs Jensen'],
-                'sn': ['Jensen'],
-                'uid': ['bjensen'],
-                'telephonenumber': ['+1 408 555 1212'],
-                'description': ['A big sailing fan.'],
+          [ ( b'cn=Barbara Jensen,ou=Product Development,dc=airius,dc=com',
+              { b'objectClass': [b'top', b'person', b'organizationalPerson'],
+                b'cn': [b'Barbara Jensen',
+                       b'Barbara J Jensen',
+                       b'Babs Jensen'],
+                b'sn': [b'Jensen'],
+                b'uid': [b'bjensen'],
+                b'telephonenumber': [b'+1 408 555 1212'],
+                b'description': [b'A big sailing fan.'],
                 }),
 
-            ( 'cn=Bjorn Jensen,ou=Accounting,dc=airius,dc=com',
-              {  'objectClass': ['top', 'person', 'organizationalPerson'],
-                 'cn': ['Bjorn Jensen'],
-                 'sn': ['Jensen'],
-                 'telephonenumber': ['+1 408 555 1212'],
+            ( b'cn=Bjorn Jensen,ou=Accounting,dc=airius,dc=com',
+              {  b'objectClass': [b'top', b'person', b'organizationalPerson'],
+                 b'cn': [b'Bjorn Jensen'],
+                 b'sn': [b'Jensen'],
+                 b'telephonenumber': [b'+1 408 555 1212'],
                  }),
             ]),
 
@@ -430,14 +429,14 @@ description:Babs is a big sailing fan, and travels extensively in sea
 title:Product Manager, Rod and Reel Division
 
 """,
-          [ ( 'cn=Barbara Jensen, ou=Product Development, dc=airius, dc=com',
-              { 'objectclass': ['top', 'person', 'organizationalPerson'],
-                'cn': ['Barbara Jensen', 'Barbara J Jensen', 'Babs Jensen'],
-                'sn': ['Jensen'],
-                'uid': ['bjensen'],
-                'telephonenumber': ['+1 408 555 1212'],
-                'description': ['Babs is a big sailing fan, and travels extensively in search of perfect sailing conditions.'],
-                'title': ['Product Manager, Rod and Reel Division'],
+          [ ( b'cn=Barbara Jensen, ou=Product Development, dc=airius, dc=com',
+              { b'objectclass': [b'top', b'person', b'organizationalPerson'],
+                b'cn': [b'Barbara Jensen', b'Barbara J Jensen', b'Babs Jensen'],
+                b'sn': [b'Jensen'],
+                b'uid': [b'bjensen'],
+                b'telephonenumber': [b'+1 408 555 1212'],
+                b'description': [b'Babs is a big sailing fan, and travels extensively in search of perfect sailing conditions.'],
+                b'title': [b'Product Manager, Rod and Reel Division'],
                 }),
             ]),
 
@@ -456,13 +455,13 @@ telephonenumber: +1 408 555 1212
 description:: V2hhdCBhIGNhcmVmdWwgcmVhZGVyIHlvdSBhcmUhICBUaGlzIHZhbHVlIGlzIGJhc2UtNjQtZW5jb2RlZCBiZWNhdXNlIGl0IGhhcyBhIGNvbnRyb2wgY2hhcmFjdGVyIGluIGl0IChhIENSKS4NICBCeSB0aGUgd2F5LCB5b3Ugc2hvdWxkIHJlYWxseSBnZXQgb3V0IG1vcmUu
 
 """,
-          [ ( 'cn=Gern Jensen, ou=Product Testing, dc=airius, dc=com',
-              { 'objectclass': ['top', 'person', 'organizationalPerson'],
-                'cn': ['Gern Jensen', 'Gern O Jensen'],
-                'sn': ['Jensen'],
-                'uid': ['gernj'],
-                'telephonenumber': ['+1 408 555 1212'],
-                'description': ['What a careful reader you are!  This value is base-64-encoded because it has a control character in it (a CR).\r  By the way, you should really get out more.'],
+          [ ( b'cn=Gern Jensen, ou=Product Testing, dc=airius, dc=com',
+              { b'objectclass': [b'top', b'person', b'organizationalPerson'],
+                b'cn': [b'Gern Jensen', b'Gern O Jensen'],
+                b'sn': [b'Jensen'],
+                b'uid': [b'gernj'],
+                b'telephonenumber': [b'+1 408 555 1212'],
+                b'description': [b'What a careful reader you are!  This value is base-64-encoded because it has a control character in it (a CR).\r  By the way, you should really get out more.'],
                 }),
             ]),
 

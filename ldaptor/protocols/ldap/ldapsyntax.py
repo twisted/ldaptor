@@ -10,6 +10,7 @@ from ldaptor.protocols.ldap import ldapclient, ldif, distinguishedname, ldaperro
 from ldaptor.protocols import pureldap, pureber
 from ldaptor.samba import smbpassword
 from ldaptor import ldapfilter, interfaces, delta, attributeset, entry
+from ldaptor._encoder import to_bytes
 
 
 class PasswordSetAggregateError(Exception):
@@ -244,7 +245,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         for key, values in lst:
             if key != 'objectClass':
                 a.append((key, values))
-        return ldif.asLDIF(self.dn, a)
+        return ldif.asLDIF(self.dn.getText(), a)
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
@@ -278,7 +279,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         return hash(self.toWire())
 
     def bind(self, password):
-        r = pureldap.LDAPBindRequest(dn=self.dn, auth=password)
+        r = pureldap.LDAPBindRequest(dn=self.dn.getText(), auth=password)
         d = self.client.send(r)
         d.addCallback(self._handle_bind_msg)
         return d
@@ -315,13 +316,16 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             self._attributes[k] = self.buildAttributeSet(k, vs)
         self._journal = []
 
+    def _assertMatchedDN(self, dn):
+        assert dn == u'' or dn == b''
+
     def _commit_success(self, msg):
         assert isinstance(msg, pureldap.LDAPModifyResponse)
         assert msg.referral is None  # TODO
         if msg.resultCode != ldaperrors.Success.resultCode:
             raise ldaperrors.get(msg.resultCode, msg.errorMessage)
 
-        assert msg.matchedDN == ''
+        self._assertMatchedDN(msg.matchedDN)
 
         self._remoteData = entry.EditableLDAPEntry(self.dn, self)
         self._journal = []
@@ -333,7 +337,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             return defer.succeed(self)
 
         op = pureldap.LDAPModifyRequest(
-            object=self.dn,
+            object=self.dn.getText(),
             modification=[x.asLDAP() for x in self._journal])
         d = defer.maybeDeferred(self.client.send, op)
         d.addCallback(self._commit_success)
@@ -345,7 +349,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         if msg.resultCode != ldaperrors.Success.resultCode:
             raise ldaperrors.get(msg.resultCode, msg.errorMessage)
 
-        assert msg.matchedDN == ''
+        self._assertMatchedDN(msg.matchedDN)
         self.dn = newDN
         return self
 
@@ -356,10 +360,10 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         newrdn = newDN.split()[0]
         newSuperior = distinguishedname.DistinguishedName(listOfRDNs=newDN.split()[1:])
         newDN = distinguishedname.DistinguishedName((newrdn,) + newSuperior.split())
-        op = pureldap.LDAPModifyDNRequest(entry=self.dn,
-                                          newrdn=newrdn,
+        op = pureldap.LDAPModifyDNRequest(entry=self.dn.getText(),
+                                          newrdn=newrdn.getText(),
                                           deleteoldrdn=1,
-                                          newSuperior=newSuperior)
+                                          newSuperior=newSuperior.getText())
         d = self.client.send(op)
         d.addCallback(self._cbMoveDone, newDN)
         return d
@@ -373,13 +377,13 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         if msg.resultCode != ldaperrors.Success.resultCode:
             raise ldaperrors.get(msg.resultCode, msg.errorMessage)
 
-        assert msg.matchedDN == ''
+        self._assertMatchedDN(msg.matchedDN)
         return self
 
     def delete(self):
         self._checkState()
 
-        op = pureldap.LDAPDelRequest(entry=self.dn)
+        op = pureldap.LDAPDelRequest(entry=self.dn.getText())
         d = self.client.send(op)
         d.addCallback(self._cbDeleteDone)
         self._state = 'deleted'
@@ -392,7 +396,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         if msg.resultCode != ldaperrors.Success.resultCode:
             raise ldaperrors.get(msg.resultCode, msg.errorMessage)
 
-        assert msg.matchedDN == ''
+        self._assertMatchedDN(msg.matchedDN)
         e = self.__class__(dn=dn, client=self.client)
         return e
 
@@ -420,7 +424,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             ldapValues = pureber.BERSet(lst)
             ldapAttrs.append((ldapAttrType, ldapValues))
         op = pureldap.LDAPAddRequest(
-            entry=dn,
+            entry=dn.getText(),
             attributes=ldapAttrs)
         d = self.client.send(op)
         d.addCallback(self._cbAddDone, dn)
@@ -432,7 +436,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         if msg.resultCode != ldaperrors.Success.resultCode:
             raise ldaperrors.get(msg.resultCode, msg.errorMessage)
 
-        assert msg.matchedDN == ''
+        self._assertMatchedDN(msg.matchedDN)
         return self
 
     def setPassword_ExtendedOperation(self, newPasswd):
@@ -449,7 +453,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 
         self._checkState()
 
-        op = pureldap.LDAPPasswordModifyRequest(userIdentity=self.dn, newPasswd=newPasswd)
+        op = pureldap.LDAPPasswordModifyRequest(userIdentity=self.dn.getText(), newPasswd=newPasswd)
         d = self.client.send(op)
         d.addCallback(self._cbSetPassword_ExtendedOperation)
         return d
@@ -509,10 +513,10 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             d.addCallback(lambda dummy, self=self, newPasswd=newPasswd:
                           self.setPasswordMaybe_Samba(newPasswd))
         else:
-            objectClasses = [s.upper() for s in self.get('objectClass', ())]
-            if 'sambaAccount'.upper() in objectClasses:
+            objectClasses = [to_bytes(s.upper()) for s in self.get('objectClass', ())]
+            if b'SAMBAACCOUNT' in objectClasses:
                 d = self.setPassword_Samba(newPasswd, style="sambaAccount")
-            elif 'sambaSamAccount'.upper() in objectClasses:
+            elif b'SAMBASAMACCOUNT' in objectClasses:
                 d = self.setPassword_Samba(newPasswd, style="sambaSamAccount")
             else:
                 d = defer.succeed(self)
@@ -589,7 +593,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
                 dn = distinguishedname.DistinguishedName(namingContext)
                 if dn.contains(self.dn):
                     return LDAPEntry(self.client, dn)
-        raise NoContainingNamingContext(self.dn)
+        raise NoContainingNamingContext(self.dn.getText())
 
     def namingContext(self):
         o = LDAPEntry(client=self.client, dn='')
@@ -601,7 +605,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 
     def _cbFetch(self, results, overWrite):
         if len(results) != 1:
-            raise DNNotPresentError(self.dn)
+            raise DNNotPresentError(self.dn.getText())
         o = results[0]
 
         assert not self._journal
@@ -632,7 +636,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
     def _cbSearchEntry(self, callback, objectName, attributes, complete):
         attrib = {}
         for key, values in attributes:
-            attrib[str(key)] = [str(x) for x in values]
+            attrib[to_bytes(key)] = [to_bytes(x) for x in values]
         o = LDAPEntry(client=self.client,
                       dn=objectName,
                       attributes=attrib,
@@ -654,7 +658,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
                     return True
 
             # search ended successfully
-            assert msg.matchedDN == ''
+            self._assertMatchedDN(msg.matchedDN)
             d.callback(controls)
             return True
         elif isinstance(msg, pureldap.LDAPSearchResultEntry):
@@ -706,7 +710,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             cb = callback
         try:
             op = pureldap.LDAPSearchRequest(
-                baseObject=self.dn,
+                baseObject=self.dn.getText(),
                 scope=scope,
                 derefAliases=derefAliases,
                 sizeLimit=sizeLimit,

@@ -722,7 +722,7 @@ class LDAPFilter_extensibleMatch(LDAPMatchingRuleAssertion):
     def asText(self):
         return '(' + \
                (self.type.value if self.type else '') + \
-               (':dn' if self.dnAttributes.value else '') + \
+               (':dn' if self.dnAttributes and self.dnAttributes.value else '') + \
                ((':' + self.matchingRule.value) if self.matchingRule else '') + \
                ':=' + \
                self.escaper(self.matchValue.value) + \
@@ -1497,7 +1497,7 @@ class LDAPStartTLSRequest(LDAPExtendedRequest):
     Request to start Transport Layer Security.
     See RFC 2830 for details.
     """
-    oid = '1.3.6.1.4.1.1466.20037'
+    oid = b'1.3.6.1.4.1.1466.20037'
 
     def __init__(self, requestName=None, tag=None):
         assert (requestName is None
@@ -1522,7 +1522,7 @@ class LDAPStartTLSResponse(LDAPExtendedResponse):
     Response to start Transport Layer Security.
     See RFC 4511 section 4.14.2 for details.
     """
-    oid = '1.3.6.1.4.1.1466.20037'
+    oid = b'1.3.6.1.4.1.1466.20037'
 
     def __init__(self, resultCode=None, matchedDN=None, errorMessage=None,
                  referral=None, serverSaslCreds=None,

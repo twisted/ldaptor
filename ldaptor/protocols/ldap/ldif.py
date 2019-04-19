@@ -18,9 +18,11 @@ import six
 
 from ldaptor._encoder import to_bytes
 
+encodestring = base64.encodestring if six.PY2 else base64.encodebytes
+
 
 def base64_encode(s):
-    return b''.join(base64.encodestring(s).split(b'\n')) + b'\n'
+    return b''.join(encodestring(s).split(b'\n')) + b'\n'
 
 
 def attributeAsLDIF_base64(attribute, value):

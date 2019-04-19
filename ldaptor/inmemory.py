@@ -36,7 +36,7 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
 
     def _lookup(self, dn):
         if not self.dn.contains(dn):
-            raise ldaperrors.LDAPNoSuchObject(dn)
+            raise ldaperrors.LDAPNoSuchObject(dn.getText())
         if dn == self.dn:
             return defer.succeed(self)
 
@@ -44,9 +44,11 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
             if c.dn.contains(dn):
                 return c.lookup(dn)
 
-        raise ldaperrors.LDAPNoSuchObject(dn)
+        raise ldaperrors.LDAPNoSuchObject(dn.getText())
 
     def lookup(self, dn):
+        if not isinstance(dn, distinguishedname.DistinguishedName):
+            dn = distinguishedname.DistinguishedName(stringValue=dn)
         return defer.maybeDeferred(self._lookup, dn)
 
     def fetch(self, *attributes):
@@ -55,12 +57,12 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
     def addChild(self, rdn, attributes):
         """TODO ugly API. Returns the created entry."""
         rdn = distinguishedname.RelativeDistinguishedName(rdn)
-        rdn_str = rdn.toWire()
+        rdn_str = rdn.getText()
         if rdn_str in self._children:
-            raise ldaperrors.LDAPEntryAlreadyExists(self._children[rdn_str].dn)
+            raise ldaperrors.LDAPEntryAlreadyExists(self._children[rdn_str].dn.getText())
         dn = distinguishedname.DistinguishedName(
             listOfRDNs=(rdn,) + self.dn.split())
-        e = ReadOnlyInMemoryLDAPEntry(dn, attributes)
+        e = self.__class__(dn, attributes)
         e._parent = self
         self._children[rdn_str] = e
         return e
@@ -78,11 +80,11 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
     def _deleteChild(self, rdn):
         if not isinstance(rdn, distinguishedname.RelativeDistinguishedName):
             rdn = distinguishedname.RelativeDistinguishedName(stringValue=rdn)
-        rdn_str = rdn.toWire()
+        rdn_str = rdn.getText()
         try:
             return self._children.pop(rdn_str)
         except KeyError:
-            raise ldaperrors.LDAPNoSuchObject(rdn)
+            raise ldaperrors.LDAPNoSuchObject(rdn.getText())
 
     def deleteChild(self, rdn):
         return defer.maybeDeferred(self._deleteChild, rdn)
@@ -103,8 +105,8 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
 
     def _move2(self, newParent, newDN):
         if newParent is not None:
-            newParent._children[newDN.split()[0].toWire()] = self
-            del self._parent._children[self.dn.split()[0].toWire()]
+            newParent._children[newDN.split()[0].getText()] = self
+            del self._parent._children[self.dn.split()[0].getText()]
         # remove old RDN attributes
         for attr in self.dn.split()[0].split():
             self[attr.attributeType].remove(attr.value)

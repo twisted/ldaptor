@@ -4,7 +4,6 @@
 
 from twisted.trial import unittest
 
-from ldaptor.protocols.ldap import distinguishedname
 from ldaptor.protocols.ldap import ldaperrors
 
 
@@ -41,12 +40,6 @@ class GetTests(unittest.TestCase):
 class LDAPExceptionTests(unittest.TestCase):
     """Getting bytes representations of LDAP exceptions"""
 
-    def test_exception_with_dn(self):
-        """Exception with a distinguished name"""
-        dn = distinguishedname.DistinguishedName(stringValue='dc=example,dc=org')
-        exception = ldaperrors.LDAPNoSuchObject(dn)
-        self.assertEqual(exception.toWire(), b'noSuchObject: dc=example,dc=org')
-
     def test_exception_with_message(self):
         """Exception with a text message"""
         exception = ldaperrors.LDAPProtocolError('Error message')
@@ -71,3 +64,12 @@ class LDAPExceptionTests(unittest.TestCase):
         """Unknown exception with no message"""
         exception = ldaperrors.LDAPUnknownError(57)
         self.assertEqual(exception.toWire(), b'unknownError(57)')
+
+
+class LDAPExceptionStrTests(unittest.TestCase):
+    """Getting string representations of LDAP exceptions"""
+
+    def test_exception_with_message(self):
+        """Exception with a text message"""
+        exception = ldaperrors.LDAPProtocolError('Error message')
+        self.assertEqual(str(exception), 'protocolError: Error message')

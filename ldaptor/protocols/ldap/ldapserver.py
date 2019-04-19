@@ -172,7 +172,7 @@ class LDAPServer(BaseLDAPServer):
                     self.boundUser = entry
                     msg = pureldap.LDAPBindResponse(
                         resultCode=ldaperrors.Success.resultCode,
-                        matchedDN=entry.dn.toWire())
+                        matchedDN=entry.dn.getText())
                     return msg
                 d.addCallback(_cb)
                 return d
@@ -190,7 +190,7 @@ class LDAPServer(BaseLDAPServer):
         reply(pureldap.LDAPSearchResultEntry(
             objectName='',
             attributes=[('supportedLDAPVersion', ['3']),
-                        ('namingContexts', [root.dn.toWire()]),
+                        ('namingContexts', [root.dn.getText()]),
                         ('supportedExtension', [
                             pureldap.LDAPPasswordModifyRequest.oid, ]), ], ))
         return pureldap.LDAPSearchResultDone(
@@ -250,14 +250,14 @@ class LDAPServer(BaseLDAPServer):
     def _cbSearchGotBase(self, base, dn, request, reply):
         def _sendEntryToClient(entry):
             requested_attribs = request.attributes
-            if len(requested_attribs) > 0 and '*' not in requested_attribs:
+            if len(requested_attribs) > 0 and b'*' not in requested_attribs:
                 filtered_attribs = [
                     (k, entry.get(k)) for k in requested_attribs if k in entry]
             else:
                 filtered_attribs = entry.items()
             if len(filtered_attribs) > 0:
                 reply(pureldap.LDAPSearchResultEntry(
-                    objectName=entry.dn.toWire(),
+                    objectName=entry.dn.getText(),
                     attributes=filtered_attribs,
                     ))
         d = base.search(filterObject=request.filter,
@@ -333,7 +333,7 @@ class LDAPServer(BaseLDAPServer):
             attributes.setdefault(name.value, set())
             attributes[name.value].update([x.value for x in vals])
         dn = distinguishedname.DistinguishedName(request.entry)
-        rdn = dn.split()[0].toWire()
+        rdn = dn.split()[0].getText()
         parent = dn.up()
         root = interfaces.IConnectedLDAPEntry(self.factory)
         d = root.lookup(parent)
@@ -475,8 +475,8 @@ class LDAPServer(BaseLDAPServer):
         if (userIdentity is not None
                 and userIdentity != self.boundUser.dn):
             log.msg('User %(actor)s tried to change password of %(target)s' % {
-                'actor': self.boundUser.dn.toWire(),
-                'target': userIdentity.toWire(),
+                'actor': self.boundUser.dn.getText(),
+                'target': userIdentity,
                 })
             raise ldaperrors.LDAPInsufficientAccessRights()
         if (oldPasswd is not None

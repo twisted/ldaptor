@@ -2,7 +2,7 @@ from functools import total_ordering
 
 import six
 
-from ldaptor._encoder import to_unicode, WireStrAlias
+from ldaptor._encoder import to_unicode, TextStrAlias
 
 # See rfc2253
 # Note that RFC 2253 sections 2.4 and 3 disagree whether "=" needs to
@@ -95,7 +95,7 @@ class InvalidRelativeDistinguishedName(Exception):
                % repr(self.rdn)
 
 
-class LDAPAttributeTypeAndValue(WireStrAlias):
+class LDAPAttributeTypeAndValue(TextStrAlias):
     # TODO I should be used everywhere
     attributeType = None
     value = None
@@ -116,8 +116,8 @@ class LDAPAttributeTypeAndValue(WireStrAlias):
                 raise InvalidRelativeDistinguishedName(stringValue)
             self.attributeType, self.value = stringValue.split(u'=', 1)
 
-    def toWire(self):
-        return '='.join((escape(self.attributeType), escape(self.value))).encode('utf-8')
+    def getText(self):
+        return u'='.join((escape(self.attributeType), escape(self.value)))
 
     def __repr__(self):
         return (self.__class__.__name__
@@ -158,7 +158,7 @@ class LDAPAttributeTypeAndValue(WireStrAlias):
         return not self < other
 
 
-class RelativeDistinguishedName(WireStrAlias):
+class RelativeDistinguishedName(TextStrAlias):
     """LDAP Relative Distinguished Name."""
 
     attributeTypesAndValues = None
@@ -186,8 +186,8 @@ class RelativeDistinguishedName(WireStrAlias):
     def split(self):
         return self.attributeTypesAndValues
 
-    def toWire(self):
-        return b'+'.join([x.toWire() for x in self.attributeTypesAndValues])
+    def getText(self):
+        return u'+'.join([x.getText() for x in self.attributeTypesAndValues])
 
     def __repr__(self):
         return (self.__class__.__name__
@@ -226,7 +226,7 @@ class RelativeDistinguishedName(WireStrAlias):
 
 
 @total_ordering
-class DistinguishedName(WireStrAlias):
+class DistinguishedName(TextStrAlias):
     """LDAP Distinguished Name."""
     listOfRDNs = None
 
@@ -262,8 +262,8 @@ class DistinguishedName(WireStrAlias):
     def up(self):
         return DistinguishedName(listOfRDNs=self.listOfRDNs[1:])
 
-    def toWire(self):
-        return b','.join([x.toWire() for x in self.listOfRDNs])
+    def getText(self):
+        return u','.join([x.getText() for x in self.listOfRDNs])
 
     def __repr__(self):
         return (self.__class__.__name__
@@ -272,13 +272,13 @@ class DistinguishedName(WireStrAlias):
                 + ')')
 
     def __hash__(self):
-        return hash(self.toWire())
+        return hash(self.getText())
 
     def __eq__(self, other):
         if isinstance(other, six.binary_type):
-            return self.toWire() == other
+            return self.getText().encode('utf-8') == other
         if isinstance(other, six.text_type):
-            return self.toWire().decode('utf-8') == other
+            return self.getText() == other
         if not isinstance(other, DistinguishedName):
             return NotImplemented
         return self.split() == other.split()

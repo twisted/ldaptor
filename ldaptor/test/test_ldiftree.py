@@ -90,10 +90,10 @@ objectClass: top
 """)
 
     def testSimpleRead(self):
-        want = BaseLDAPEntry(dn='cn=foo,dc=example,dc=com',
+        want = BaseLDAPEntry(dn=b'cn=foo,dc=example,dc=com',
                              attributes={
-            'objectClass': ['top'],
-            'cn': ['foo'],
+            b'objectClass': [b'top'],
+            b'cn': [b'foo'],
             })
         d = ldiftree.get(self.tree, want.dn)
         d.addCallback(self.failUnlessEqual, want)
@@ -143,10 +143,10 @@ objectClass: top
             ldifprotocol.LDIFLineWithoutSemicolonError)
 
     def testTreeBranches(self):
-        want = BaseLDAPEntry(dn='cn=sales-thingie,ou=Sales,dc=example,dc=com',
+        want = BaseLDAPEntry(dn=b'cn=sales-thingie,ou=Sales,dc=example,dc=com',
                              attributes={
-            'objectClass': ['top'],
-            'cn': ['sales-thingie'],
+            b'objectClass': [b'top'],
+            b'cn': [b'sales-thingie'],
             })
         d = ldiftree.get(self.tree, want.dn)
         d.addCallback(self.failUnlessEqual, want)
@@ -190,7 +190,7 @@ objectClass: organizationalUnit
         path = os.path.join(self.tree, 'dc=com.dir', 'dc=example.dir', 'cn=foo.ldif')
         self.failUnless(os.path.isfile(path))
         self.failUnlessEqual(open(path, 'rb').read(),
-                             """\
+                             b"""\
 dn: cn=foo,dc=example,dc=com
 objectClass: top
 cn: foo
@@ -212,7 +212,7 @@ cn: foo
                             'ou=OrgUnit.dir', 'cn=create-me.ldif')
         self.failUnless(os.path.isfile(path))
         self.failUnlessEqual(open(path, 'rb').read(),
-                             """\
+                             b"""\
 dn: cn=create-me,ou=OrgUnit,dc=example,dc=com
 objectClass: top
 cn: create-me
@@ -236,7 +236,7 @@ cn: create-me
         path = os.path.join(dirpath, 'cn=create-me.ldif')
         self.failUnless(os.path.isfile(path))
         self.failUnlessEqual(open(path, 'rb').read(),
-                             """\
+                             b"""\
 dn: cn=create-me,ou=OrgUnit,dc=example,dc=com
 objectClass: top
 cn: create-me
@@ -269,7 +269,7 @@ cn: create-me
         path = os.path.join(self.tree, 'dc=org.ldif')
         self.failUnless(os.path.isfile(path))
         self.failUnlessEqual(open(path, 'rb').read(),
-                             """\
+                             b"""\
 dn: dc=org
 objectClass: dcObject
 dc: org
@@ -347,6 +347,9 @@ objectClass: b
 cn: theChild
 
 """)
+        # Invalid file
+        writeFile(os.path.join(oneChild, 'cn=invalidChild.lddd'), b'invalid data')
+        
         self.root = ldiftree.LDIFTreeEntry(self.tree)
         self.example = ldiftree.LDIFTreeEntry(example, 'dc=example,dc=com')
         self.empty = ldiftree.LDIFTreeEntry(empty, 'ou=empty,dc=example,dc=com')
@@ -455,7 +458,7 @@ cn: theChild
         test_children_noAccess_dir_noExec.skip = "Can't test as root"
 
     def test_children_noAccess_file(self):
-        os.chmod(os.path.join(self.meta.path, 'cn=foo.ldif'), 0)
+        os.chmod(os.path.join(self.meta.path, u'cn=foo.ldif'), 0)
         d = self.meta.children()
         def eb(fail):
             fail.trap(IOError)
@@ -600,7 +603,7 @@ cn: theChild
 
     def test_lookup_fail_multipleError(self):
         writeFile(os.path.join(self.example.path,
-                               'cn=bad-two-entries.ldif'),
+                               u'cn=bad-two-entries.ldif'),
                   b"""\
 dn: cn=bad-two-entries,dc=example,dc=com
 cn: bad-two-entries
@@ -618,7 +621,7 @@ objectClass: top
 
     def test_lookup_fail_emptyError(self):
         writeFile(os.path.join(self.example.path,
-                               'cn=bad-empty.ldif'),
+                               u'cn=bad-empty.ldif'),
                   b"")
         self.assertRaises(
             ldiftree.LDIFTreeEntryContainsNoEntries,
@@ -684,13 +687,13 @@ objectClass: top
         return d
 
     def test_setPassword(self):
-        self.foo.setPassword('s3krit', salt=b'\xf2\x4a')
+        self.foo.setPassword(b's3krit', salt=b'\xf2\x4a')
         self.failUnless('userPassword' in self.foo)
         self.assertEqual(self.foo['userPassword'],
-                          ['{SSHA}0n/Iw1NhUOKyaI9gm9v5YsO3ZInySg=='])
+                          [b'{SSHA}0n/Iw1NhUOKyaI9gm9v5YsO3ZInySg=='])
 
     def test_setPassword_noSalt(self):
-        self.foo.setPassword('s3krit')
+        self.foo.setPassword(b's3krit')
         self.failUnless('userPassword' in self.foo)
         d = self.foo.bind('s3krit')
         d.addCallback(self.assertIdentical, self.foo)
@@ -767,7 +770,7 @@ objectClass: top
         def cb3(got):
             self.assertEqual(got, [
                 delta.ModifyOp(self.empty.dn,
-                               [delta.Add('foo', ['bar'])],
+                               [delta.Add(b'foo', [b'bar'])],
                                ),
                 ])
         d.addCallback(cb3)
@@ -784,8 +787,8 @@ objectClass: top
             self.meta,
             BaseLDAPEntry(
             dn='ou=moved,dc=example,dc=com',
-            attributes={ 'objectClass': ['a', 'b'],
-                         'ou': ['moved'],
+            attributes={ b'objectClass': [b'a', b'b'],
+                         b'ou': [b'moved'],
             }),
             self.oneChild,
             ]))
@@ -799,8 +802,8 @@ objectClass: top
         d.addCallback(set)
         d.addCallback(self.assertEqual, set([
             BaseLDAPEntry(dn='ou=moved,dc=example,dc=com',
-                          attributes={ 'objectClass': ['a', 'b'],
-                                       'ou': ['moved'],
+                          attributes={ b'objectClass': [b'a', b'b'],
+                                       b'ou': [b'moved'],
                                        }),
             self.empty,
             self.oneChild,
@@ -826,8 +829,8 @@ objectClass: top
             self.theChild,
             BaseLDAPEntry(
             dn='ou=moved,ou=oneChild,dc=example,dc=com',
-            attributes={ 'objectClass': ['a', 'b'],
-                         'ou': ['moved'],
+            attributes={ b'objectClass': [b'a', b'b'],
+                         b'ou': [b'moved'],
             }),
             ]))
         return d
@@ -849,8 +852,8 @@ objectClass: top
         d.addCallback(self.assertEqual, set([
             self.theChild,
             BaseLDAPEntry(dn='ou=moved,ou=oneChild,dc=example,dc=com',
-                          attributes={ 'objectClass': ['a', 'b'],
-                                       'ou': ['moved'],
+                          attributes={ b'objectClass': [b'a', b'b'],
+                                       b'ou': [b'moved'],
                                        }),
             ]))
         return d

@@ -124,14 +124,6 @@ ldaptor.ldiftree module
     :undoc-members:
     :show-inheritance:
 
-ldaptor.md4 module
-------------------
-
-.. automodule:: ldaptor.md4
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 ldaptor.numberalloc module
 --------------------------
 

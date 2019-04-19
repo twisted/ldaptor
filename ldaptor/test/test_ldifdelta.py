@@ -86,8 +86,8 @@ foo: bar
         proto.connectionLost()
         self.assertEqual(
             proto.listOfCompleted,
-            [delta.ModifyOp(dn='cn=foo,dc=example,dc=com',
-                            modifications=[delta.Add('foo', ['bar']),
+            [delta.ModifyOp(dn=b'cn=foo,dc=example,dc=com',
+                            modifications=[delta.Add(b'foo', [b'bar']),
                                            ]),
              ])
 
@@ -109,9 +109,9 @@ thud: baz
         proto.connectionLost()
         self.assertEqual(
             proto.listOfCompleted,
-            [delta.ModifyOp(dn='cn=foo,dc=example,dc=com',
-                            modifications=[delta.Add('foo', ['bar']),
-                                           delta.Add('thud', ['quux', 'baz']),
+            [delta.ModifyOp(dn=b'cn=foo,dc=example,dc=com',
+                            modifications=[delta.Add(b'foo', [b'bar']),
+                                           delta.Add(b'thud', [b'quux', b'baz']),
                                            ]),
              ])
 
@@ -145,14 +145,14 @@ add: silly
         proto.connectionLost()
         self.assertEqual(
             proto.listOfCompleted,
-            [delta.ModifyOp(dn='cn=foo,dc=example,dc=com',
-                            modifications=[delta.Delete('foo', ['bar']),
-                                           delta.Delete('garply'),
-                                           delta.Add('thud', ['quux', 'baz']),
-                                           delta.Replace('waldo'),
-                                           delta.Add('foo', ['baz']),
-                                           delta.Replace('thud', ['xyzzy']),
-                                           delta.Add('silly'),
+            [delta.ModifyOp(dn=b'cn=foo,dc=example,dc=com',
+                            modifications=[delta.Delete(b'foo', [b'bar']),
+                                           delta.Delete(b'garply'),
+                                           delta.Add(b'thud', [b'quux', b'baz']),
+                                           delta.Replace(b'waldo'),
+                                           delta.Add(b'foo', [b'baz']),
+                                           delta.Replace(b'thud', [b'xyzzy']),
+                                           delta.Add(b'silly'),
                                            ]),
              ])
 
@@ -225,7 +225,7 @@ foo: bar
 
 """)
         self.assertEqual(
-            ('cn=foo,dc=example,dc=com', 'add', 'foo'), error.args)
+            (b'cn=foo,dc=example,dc=com', b'add', b'foo'), error.args)
 
 
     def testNoChangetTypeEmpty(self):
@@ -243,7 +243,7 @@ dn: cn=foo,dc=example,dc=com
 
 """)
 
-        self.assertEqual(('cn=foo,dc=example,dc=com',), error.args)
+        self.assertEqual((b'cn=foo,dc=example,dc=com',), error.args)
 
 
     def testAdd(self):
@@ -260,10 +260,10 @@ thud: baz
         proto.connectionLost()
         self.assertEqual(proto.listOfCompleted,
                          [delta.AddOp(entry.BaseLDAPEntry(
-            dn='cn=foo,dc=example,dc=com',
+            dn=b'cn=foo,dc=example,dc=com',
             attributes={
-            'foo': ['bar'],
-            'thud': ['quux', 'baz'],
+            b'foo': [b'bar'],
+            b'thud': [b'quux', b'baz'],
             }))])
 
     def testAdd_fail_noAttrvals(self):

@@ -9,6 +9,11 @@ import six
 from ldaptor import inmemory, delta, testutil
 from ldaptor.protocols.ldap import distinguishedname, ldaperrors
 
+
+class SubclassEntry(inmemory.ReadOnlyInMemoryLDAPEntry):
+    pass
+
+
 class TestInMemoryDatabase(unittest.TestCase):
     def setUp(self):
         self.root = inmemory.ReadOnlyInMemoryLDAPEntry(
@@ -128,6 +133,15 @@ class TestInMemoryDatabase(unittest.TestCase):
             'cn': 'foo',
             })
 
+    def test_addChild_subclass(self):
+        """
+        Adding child to ReadOnlyInMemoryLDAPEntry subclass instance
+        creates entry of the same class
+        """
+        entry = SubclassEntry(dn='dc=example,dc=com')
+        child = entry.addChild(rdn='ou=empty', attributes={'objectClass': ['a']})
+        self.assertIsInstance(child, SubclassEntry)
+
     def test_parent(self):
         self.assertEqual(self.foo.parent(), self.meta)
         self.assertEqual(self.meta.parent(), self.root)
@@ -219,9 +233,16 @@ class TestInMemoryDatabase(unittest.TestCase):
         d.addCallbacks(testutil.mustRaise, eb)
         return d
 
-    def test_lookup_deep(self):
+    def test_lookup_deep_dn(self):
+        """Entry lookup with a DN instance returns entry instance with this DN"""
         dn = distinguishedname.DistinguishedName('cn=bar,ou=metasyntactic,dc=example,dc=com')
         d = self.root.lookup(dn)
+        d.addCallback(self.assertEqual, self.bar)
+        return d
+
+    def test_lookup_deep_str(self):
+        """Entry lookup with a DN as a string returns entry instance with this DN"""
+        d = self.root.lookup('cn=bar,ou=metasyntactic,dc=example,dc=com')
         d.addCallback(self.assertEqual, self.bar)
         return d
 

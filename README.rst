@@ -22,30 +22,32 @@ Quick Usage Example
 
 .. code-block:: python
 
-   from twisted.internet import reactor, defer
-   from ldaptor.protocols.ldap import ldapclient, ldapsyntax, ldapconnector
+    from twisted.internet import reactor, defer
+    from ldaptor.protocols.ldap import ldapclient, ldapsyntax, ldapconnector
 
-   @defer.inlineCallbacks
-   def example():
-      serverip = '192.168.128.21'
-      basedn = 'dc=example,dc=com'
-      binddn = 'bjensen@example.com'
-      bindpw = 'secret'
-      query = '(cn=Babs*)'
-      c = ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
-      overrides = {basedn: (serverip, 389)}
-      client = yield c.connect(basedn, overrides=overrides)
-      yield client.bind(binddn, bindpw)
-      o = ldapsyntax.LDAPEntry(client, basedn)
-      results = yield o.search(filterText=query)
-      for entry in results:
-         print(entry)
+    @defer.inlineCallbacks
+    def example():
+        # The following arguments may be also specified as unicode strings
+        # but it is recommended to use byte strings for ldaptor objects
+        serverip = b'192.168.128.21'
+        basedn = b'dc=example,dc=com'
+        binddn = b'bjensen@example.com'
+        bindpw = b'secret'
+        query = b'(cn=Babs*)'
+        c = ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
+        overrides = {basedn: (serverip, 389)}
+        client = yield c.connect(basedn, overrides=overrides)
+        yield client.bind(binddn, bindpw)
+        o = ldapsyntax.LDAPEntry(client, basedn)
+        results = yield o.search(filterText=query)
+        for entry in results:
+            print(entry.getLDIF())
 
-   if __name__ == '__main__':
-      df = example()
-      df.addErrback(lambda err: err.printTraceback())
-      df.addCallback(lambda _: reactor.stop())
-      reactor.run()
+    if __name__ == '__main__':
+        df = example()
+        df.addErrback(lambda err: err.printTraceback())
+        df.addCallback(lambda _: reactor.stop())
+        reactor.run()
 
 
 Installation
@@ -71,7 +73,8 @@ the project installed::
 
 Dependencies:
 
-- `Twisted <https://pypi.python.org/pypi/Twisted/>`_
+- `Twisted[tls] <https://pypi.python.org/pypi/Twisted/>`_
 - `pyparsing <https://pypi.python.org/pypi/pyparsing/>`_
-- `pyOpenSSL <https://pypi.python.org/pypi/pyOpenSSL/>`_
-- `PyCrypto <https://pypi.python.org/pypi/pycrypto/>`_ for Samba passwords
+- `passlib <https://pypi.python.org/pypi/passlib/>`_ for Samba passwords
+- `six <https://pypi.python.org/pypi/six/>`_ for simultaneous Python 2 and 3 compatability
+- `zope.interface <https://pypi.python.org/pypi/zope.interface/>`_ to register implementers of Twisted interfaces

@@ -298,6 +298,21 @@ quux: thud
         failure = self.failureResultOf(deferred)
         self.assertIsInstance(failure.value, ldaperrors.LDAPEntryAlreadyExists)
 
+    def testRepr(self):
+        """
+        Getting string representation
+        """
+        sut = delta.AddOp(entry.BaseLDAPEntry(
+            dn='dc=example,dc=com',
+            attributes={
+                'bar': ['foo'],
+                'foo': ['bar'],
+            },
+        ))
+
+        self.assertEqual(repr(sut), "AddOp(BaseLDAPEntry('dc=example,dc=com', "
+                                    "{'bar': ['foo'], 'foo': ['bar']}))")
+
 
 class TestDeleteOpLDIF(OperationTestCase):
     """
@@ -327,6 +342,21 @@ changetype: delete
         second = delta.DeleteOp(second_entry)
 
         self.assertEqual(first, second)
+
+    def testDeleteOpEqualityEqualDN(self):
+        """
+        DeleteOp objects are equal if their DNs are equal.
+        """
+        first_dn = distinguishedname.DistinguishedName(stringValue='ou=Team,dc=example,dc=com')
+        first = delta.DeleteOp(first_dn)
+
+        second_entry = entry.BaseLDAPEntry(dn='ou=Team, dc=example, dc=com')
+        second = delta.DeleteOp(second_entry)
+
+        third = delta.DeleteOp('ou=Team, dc=example,dc=com')
+
+        self.assertEqual(first, second)
+        self.assertEqual(first, third)
 
     def testDeleteOpInequalityDifferentEntry(self):
         """
@@ -385,6 +415,20 @@ changetype: delete
 
         failure = self.failureResultOf(deferred)
         self.assertIsInstance(failure.value, ldaperrors.LDAPNoSuchObject)
+
+    def testDeleteOpInvalidDN(self):
+        """
+        Invalid type of DN raises AssertionError
+        """
+        self.assertRaises(AssertionError, delta.DeleteOp, 0)
+
+    def testRepr(self):
+        """
+        Getting string representation
+        """
+        sut = delta.DeleteOp('dc=example,dc=com')
+
+        self.assertEqual(repr(sut), "DeleteOp('dc=example,dc=com')")
 
 
 class TestModifyOp(OperationTestCase):
@@ -447,6 +491,22 @@ facsimiletelephonenumber: +1 408 555 9876
             'cn=doe,dc=example,dc=com',
             [delta.Delete('description')]
             )
+
+        self.assertNotEqual(first, second)
+
+    def testInequalityDifferentModifications(self):
+        """
+        Modify operations with different modifications are not equal
+        """
+        first = delta.ModifyOp(
+            'cn=john,dc=example,dc=com',
+            [delta.Add('description')]
+        )
+
+        second = delta.ModifyOp(
+            'cn=john,dc=example,dc=com',
+            [delta.Delete('description')]
+        )
 
         self.assertNotEqual(first, second)
 
@@ -529,6 +589,18 @@ facsimiletelephonenumber: +1 408 555 9876
 
         failure = self.failureResultOf(deferred)
         self.assertIsInstance(failure.value, ldaperrors.LDAPNoSuchObject)
+
+    def testRepr(self):
+        """
+        Getting string representation
+        """
+        sut = delta.ModifyOp(
+            'cn=john,dc=example,dc=com',
+            [delta.Delete('description')]
+        )
+
+        self.assertEqual(repr(sut), "ModifyOp(dn='cn=john,dc=example,dc=com', "
+                                    "modifications=[Delete('description', [])])")
 
 
 class TestModificationComparison(unittest.TestCase):

@@ -1,8 +1,26 @@
 Changelog
 =========
 
+Release 19.1 (Unreleased)
+-------------------------
 
-Release 18.0 (UNRELEASED)
+Features
+^^^^^^^^
+
+- Explicit ``ldaptor.protocols.ldap.ldaperrors`` classes declaration was made
+  to allow syntax highlighting for this module.
+
+Bugfixes
+^^^^^^^^
+
+- ``DeprecationWarning`` stacklevel was set to mark the caller of the deprecated
+  methods of the ``ldaptor._encoder`` classes.
+- Regression bug with ``LDAPException`` instances was fixed (``ldaptor.protocols.ldap.ldapclient``
+  exceptions failed to get their string representations).
+- StartTLS regression bug was fixed: ``ldaptor.protocols.pureldap.LDAPStartTLSRequest.oid`` and
+  ``ldaptor.protocols.pureldap.LDAPStartTLSResponse.oid`` must be of bytes type.
+
+Release 19.0 (2019-03-05)
 -------------------------
 
 Features
@@ -19,20 +37,22 @@ Changes
 
 - Using modern classmethod decorator instead of old-style method call.
 - Usage of zope.interfaces was updated in preparation for python3 port.
-- ``toWire`` method is used to get bytes representation of ``ldaptor.protocols.pureber``,
-  ``ldaptor.protocols.pureldap``, ``ldaptor.protocols.ldap.distinguishedname``,
-  ``ldaptor.protocols.ldap.ldaperrors``, ``ldaptor.protocols.ldap.ldapclient``,
-  ``ldaptor.protocols.ldap.ldapserver`` and ``ldaptor.entry`` classes
+- ``toWire`` method is used to get bytes representation of `ldaptor` classes
   instead of ``__str__`` which is deprecated now.
 - Code was updated to pass `python3 -m compileall` in preparation for py3 port.
+- Code is linted under python 3  in preparation for py3 port.
 - Continuous test are executed only against latest related Twisted and latest
   Twisted trunk branch.
 - The local development environment was updated to produce overall and diff
   coverage reports in HTML format.
 - `six` package is now a direct dependency in preparation for the Python 3
-  port.
+  port, and has replaced the ldaptor.compat module.
 - Remove Python 3.3 from tox as it is EOL.
 - Add API documentation for ``LDAPAttributeSet`` and ``startTLS``.
+- Quick start and cookbook examples were moved to separate files and
+  made agnostic to the Python version.
+- dependency on pyCrypto replaced with pure python passlib.
+- replace direct dependency on pyOpenSSL with Twisted[tls]
 
 Bugfixes
 ^^^^^^^^
@@ -40,6 +60,8 @@ Bugfixes
 - DN matching is now case insensitive.
 - Proxies now terminate the connection to the proxied server in case a client immediately closes the connection.
 - asText() implemented for LDAPFilter_extensibleMatch
+- Children of ``ldaptor.inmemory.ReadOnlyInMemoryLDAPEntry`` subclass instances are added as the same class instances.
+- Redundant attributes keys sorting was removed from ``ldaptor.entry.BaseLDAPEntry`` methods.
 
 Release 16.0 (2016-06-07)
 -------------------------

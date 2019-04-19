@@ -7,6 +7,7 @@ changing of location in tree)
 import six
 
 from ldaptor import attributeset
+from ldaptor._encoder import to_bytes
 from ldaptor.protocols import pureldap, pureber
 from ldaptor.protocols.ldap import ldif, distinguishedname
 
@@ -129,7 +130,7 @@ class ModifyOp(Operation):
 
     def asLDIF(self):
         r = []
-        r.append(ldif.attributeAsLDIF('dn', self.dn))
+        r.append(ldif.attributeAsLDIF('dn', self.dn.getText()))
         r.append(ldif.attributeAsLDIF('changetype', 'modify'))
         for m in self.modifications:
             r.append(m.asLDIF())
@@ -138,7 +139,7 @@ class ModifyOp(Operation):
 
     def asLDAP(self):
         return pureldap.LDAPModifyRequest(
-            object=self.dn,
+            object=self.dn.getText(),
             modification=[x.asLDAP() for x in self.modifications])
 
     @classmethod
@@ -179,9 +180,10 @@ class ModifyOp(Operation):
         return d
 
     def __repr__(self):
+        dn = self.dn.getText()
         return (self.__class__.__name__
                 + '('
-                + 'dn=%r' % self.dn
+                + 'dn=%r' % (to_bytes(dn) if six.PY2 else dn)
                 + ', '
                 + 'modifications=%r' % self.modifications
                 + ')')
@@ -245,11 +247,25 @@ class AddOp(Operation):
 
 class DeleteOp(Operation):
     def __init__(self, dn):
-        self.dn = dn
+        """
+        Instance can be initialized with different objects:
+
+        * ldaptor.entry.BaseLDAPEntry instance
+        * ldaptor.protocols.ldap.distinguishedname.DistinguishedName instance
+        * unicode or byte string
+        """
+        if hasattr(dn, 'dn') and isinstance(dn.dn, distinguishedname.DistinguishedName):
+            self.dn = dn.dn
+        elif isinstance(dn, distinguishedname.DistinguishedName):
+            self.dn = dn
+        elif isinstance(dn, (six.binary_type, six.text_type)):
+            self.dn = distinguishedname.DistinguishedName(stringValue=dn)
+        else:
+            raise AssertionError('Invalid type of object: %s' % dn.__class__.__name__)
 
     def asLDIF(self):
         r = []
-        r.append(ldif.attributeAsLDIF('dn', self.dn))
+        r.append(ldif.attributeAsLDIF('dn', self.dn.getText()))
         r.append(ldif.attributeAsLDIF('changetype', 'delete'))
         r.append(b"\n")
         return b''.join(r)
@@ -262,9 +278,10 @@ class DeleteOp(Operation):
         return d
 
     def __repr__(self):
+        dn = self.dn.getText()
         return (self.__class__.__name__
                 + '('
-                + '%r' % self.dn
+                + '%r' % (to_bytes(dn) if six.PY2 else dn)
                 + ')')
 
     def __eq__(self, other):
