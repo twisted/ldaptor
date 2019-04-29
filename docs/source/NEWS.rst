@@ -7,6 +7,7 @@ Release 19.1 (Unreleased)
 Features
 ^^^^^^^^
 
+- Basic implementation of ``ldaptor.protocols.pureldap.LDAPSearchResultReference``.
 - Explicit ``ldaptor.protocols.ldap.ldaperrors`` classes declaration was made
   to allow syntax highlighting for this module.
 
@@ -15,6 +16,7 @@ Bugfixes
 
 - ``DeprecationWarning`` stacklevel was set to mark the caller of the deprecated
   methods of the ``ldaptor._encoder`` classes.
+- ``NotImplementedError`` for ``ldaptor.protocols.pureldap.LDAPSearchResultReference`` was fixed.
 - Regression bug with ``LDAPException`` instances was fixed (``ldaptor.protocols.ldap.ldapclient``
   exceptions failed to get their string representations).
 - StartTLS regression bug was fixed: ``ldaptor.protocols.pureldap.LDAPStartTLSRequest.oid`` and
