@@ -1,3 +1,8 @@
+
+from __future__ import unicode_literals
+
+from ldaptor._encoder import to_unicode
+
 from twisted.internet import defer
 from ldaptor import delta, ldapfilter
 from ldaptor._encoder import get_strings
@@ -183,8 +188,8 @@ class MatchMixin:
                 possibleMatches = [
                     x[: -len(filter.substrings[0].value)]
                     for x in possibleMatches
-                    if x.lower().endswith(filter.substrings[-1].value.lower())
-                ]
+                    if x.lower().endswith(to_unicode(filter.substrings[-1].value.lower()))
+                    ]
                 del substrings[-1]
 
             while possibleMatches and substrings:
@@ -203,14 +208,14 @@ class MatchMixin:
             if filter.attributeDesc.value not in self:
                 return False
             for value in self[filter.attributeDesc.value]:
-                if value >= filter.assertionValue.value:
+                if value  >= to_unicode(filter.assertionValue.value):
                     return True
             return False
         elif isinstance(filter, pureldap.LDAPFilter_lessOrEqual):
             if filter.attributeDesc.value not in self:
                 return False
             for value in self[filter.attributeDesc.value]:
-                if value <= filter.assertionValue.value:
+                if value <= to_unicode(filter.assertionValue.value):
                     return True
             return False
         elif isinstance(filter, pureldap.LDAPFilter_and):
