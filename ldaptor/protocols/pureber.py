@@ -32,7 +32,7 @@
 
 import six
 
-from ldaptor._encoder import to_bytes, to_unicode, WireStrAlias
+from ldaptor._encoder import to_bytes, repr_converter, WireStrAlias
 
 # xxxxxxxx
 # |/|\.../
@@ -224,7 +224,7 @@ class BEROctetString(BERBase):
         return result
 
     def __repr__(self):
-        value = to_bytes(self.value) if six.PY2 else to_unicode(self.value)
+        value = repr_converter(self.value)
         if self.tag == self.__class__.tag:
             return self.__class__.__name__ + "(value=%s)" \
                    % repr(value)
