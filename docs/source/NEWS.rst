@@ -11,6 +11,14 @@ Features
 - Explicit ``ldaptor.protocols.ldap.ldaperrors`` classes declaration was made
   to allow syntax highlighting for this module.
 
+Changes
+^^^^^^^
+
+- ``ldaptor.protocols.pureldap.LDAPPasswordModifyRequest`` string representation now contains
+  ``userIdentity``, ``oldPasswd`` and ``newPasswd`` attributes. Password attributes are represented as asterisks.
+- ``ldaptor.protocols.pureldap.LDAPBindRequest`` string representation is now using asterisks to represent
+  ``auth`` attribute.
+
 Bugfixes
 ^^^^^^^^
 
@@ -21,6 +29,10 @@ Bugfixes
   exceptions failed to get their string representations).
 - StartTLS regression bug was fixed: ``ldaptor.protocols.pureldap.LDAPStartTLSRequest.oid`` and
   ``ldaptor.protocols.pureldap.LDAPStartTLSResponse.oid`` must be of bytes type.
+- ``ldaptor.protocols.pureldap`` and ``ldaptor.protocols.pureber`` string representations were fixed:
+  `LDAPResult(resultCode=0, matchedDN='uid=user')` instead of `LDAPResult(resultCode=0, matchedDN="b'uid=user'")`.
+- ``ldaptor.protocols.pureldap.LDAPMatchingRuleAssertion`` initialization for Python 3 was failed for bytes arguments.
+- ``ldaptor.protocols.pureldap.LDAPExtendedResponse`` custom tag parameter was not used.
 
 Release 19.0 (2019-03-05)
 -------------------------
