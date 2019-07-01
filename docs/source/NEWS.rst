@@ -15,7 +15,9 @@ Changes
 ^^^^^^^
 
 - ``ldaptor.protocols.pureldap.LDAPPasswordModifyRequest`` string representation now contains
-  ``userIdentity``, ``oldPasswd`` and ``newPasswd`` attributes.
+  ``userIdentity``, ``oldPasswd`` and ``newPasswd`` attributes. Password attributes are represented as asterisks.
+- ``ldaptor.protocols.pureldap.LDAPBindRequest`` string representation is now using asterisks to represent
+  ``auth`` attribute.
 
 Bugfixes
 ^^^^^^^^

@@ -1094,9 +1094,9 @@ class TestRepresentations(unittest.TestCase):
         """LDAPBindRequest.__repr__ with custom tag attribute"""
         dns = [b'uid=user,ou=users,dc=example,dc=org', u'uid=user,ou=users,dc=example,dc=org']
         for dn in dns:
-            req = pureldap.LDAPBindRequest(dn=dn, tag=42)
+            req = pureldap.LDAPBindRequest(dn=dn, auth='pass', tag=42)
             req_repr = "LDAPBindRequest(version=3, dn='uid=user,ou=users,dc=example,dc=org', " \
-                       "auth='', tag=42, sasl=False)"
+                       "auth='****', tag=42, sasl=False)"
             self.assertEqual(repr(req), req_repr)
 
     def test_bind_response_repr(self):
@@ -1416,8 +1416,8 @@ class TestRepresentations(unittest.TestCase):
                     )
                     pmr_repr = "LDAPPasswordModifyRequest(userIdentity=LDAPPasswordModifyRequest_userIdentity(" \
                                "value='uid=user,ou=users,dc=example,dc=org'), " \
-                               "oldPasswd=LDAPPasswordModifyRequest_oldPasswd(value='qwerty'), " \
-                               "newPasswd=LDAPPasswordModifyRequest_newPasswd(value='asdfgh'))"
+                               "oldPasswd=LDAPPasswordModifyRequest_oldPasswd(value='******'), " \
+                               "newPasswd=LDAPPasswordModifyRequest_newPasswd(value='******'))"
                     self.assertEqual(repr(pmr), pmr_repr)
 
     def test_password_modify_request_with_tag_repr(self):
@@ -1436,8 +1436,8 @@ class TestRepresentations(unittest.TestCase):
                     )
                     pmr_repr = "LDAPPasswordModifyRequest(userIdentity=LDAPPasswordModifyRequest_userIdentity(" \
                                "value='uid=user,ou=users,dc=example,dc=org'), " \
-                               "oldPasswd=LDAPPasswordModifyRequest_oldPasswd(value='qwerty'), " \
-                               "newPasswd=LDAPPasswordModifyRequest_newPasswd(value='asdfgh'), tag=42)"
+                               "oldPasswd=LDAPPasswordModifyRequest_oldPasswd(value='******'), " \
+                               "newPasswd=LDAPPasswordModifyRequest_newPasswd(value='******'), tag=42)"
                     self.assertEqual(repr(pmr), pmr_repr)
 
     def test_starttls_request_repr(self):

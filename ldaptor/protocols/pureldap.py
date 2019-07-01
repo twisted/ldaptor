@@ -213,10 +213,11 @@ class LDAPBindRequest(LDAPProtocolRequest, BERSequence):
 
     def __repr__(self):
         converter = to_bytes if six.PY2 else to_unicode
+        auth = '*' * len(self.auth)
         l = []
         l.append('version=%d' % self.version)
         l.append('dn=%s' % repr(converter(self.dn)))
-        l.append('auth=%s' % repr(converter(self.auth)))
+        l.append('auth=%s' % repr(converter(auth)))
         if self.tag != self.__class__.tag:
             l.append('tag=%d' % self.tag)
         l.append('sasl=%s' % repr(self.sasl))
@@ -1394,11 +1395,21 @@ class LDAPPasswordModifyRequest_userIdentity(BEROctetString):
     tag = CLASS_CONTEXT | 0
 
 
-class LDAPPasswordModifyRequest_oldPasswd(BEROctetString):
+class LDAPPasswordModifyRequest_passwd(BEROctetString):
+    def __repr__(self):
+        value = '*' * len(self.value)
+        return '{}(value={}{})'.format(
+            self.__class__.__name__,
+            repr(value),
+            ', tag={}'.format(self.tag) if self.tag != self.__class__.tag else '',
+        )
+
+
+class LDAPPasswordModifyRequest_oldPasswd(LDAPPasswordModifyRequest_passwd):
     tag = CLASS_CONTEXT | 1
 
 
-class LDAPPasswordModifyRequest_newPasswd(BEROctetString):
+class LDAPPasswordModifyRequest_newPasswd(LDAPPasswordModifyRequest_passwd):
     tag = CLASS_CONTEXT | 2
 
 
