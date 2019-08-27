@@ -53,6 +53,14 @@ class EncoderTests(unittest.TestCase):
         obj = b'bytes'
         self.assertEqual(ldaptor._encoder.to_bytes(obj), b'bytes')
 
+    def test_int_object(self):
+        """
+        integer is converted to a string representation, then encoded to bytes
+        if passed to to_bytes function
+        """
+        obj = 42
+        self.assertEqual(ldaptor._encoder.to_bytes(obj), b'42')
+
 
 class WireStrAliasTests(unittest.TestCase):
 

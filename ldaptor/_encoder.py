@@ -17,6 +17,8 @@ def to_bytes(value):
     """
     if hasattr(value, 'toWire'):
         return value.toWire()
+    if isinstance(value, six.integer_types):
+        return str(value).encode("utf-8")
     if isinstance(value, six.text_type):
         return value.encode('utf-8')
     return bytes(value)
