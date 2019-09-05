@@ -10,6 +10,8 @@ Features
 - Basic implementation of ``ldaptor.protocols.pureldap.LDAPSearchResultReference``.
 - Explicit ``ldaptor.protocols.ldap.ldaperrors`` classes declaration was made
   to allow syntax highlighting for this module.
+- Example of using LDAP server with the database. Employees are store in the database table and retrieved
+  on server initialization.
 
 Changes
 ^^^^^^^
