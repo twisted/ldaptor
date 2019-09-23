@@ -31,6 +31,7 @@
 #     this protocol definition.
 
 import six
+from six.moves import UserList
 
 from ldaptor._encoder import to_bytes, repr_converter, WireStrAlias
 
@@ -294,7 +295,7 @@ class BEREnumerated(BERInteger):
     tag = 0x0a
 
 
-class BERSequence(BERStructured, six.moves.UserList):
+class BERSequence(BERStructured, UserList):
     # TODO __getslice__ calls __init__ with no args.
     tag = 0x10
 
@@ -307,7 +308,7 @@ class BERSequence(BERStructured, six.moves.UserList):
     def __init__(self, value=None, tag=None):
         BERStructured.__init__(self, tag)
         assert value is not None
-        six.moves.UserList.__init__(self, value)
+        UserList.__init__(self, value)
 
     def toWire(self):
         r = b''.join(to_bytes(x) for x in self.data)

@@ -10,6 +10,8 @@ Features
 - Basic implementation of ``ldaptor.protocols.pureldap.LDAPSearchResultReference``.
 - Explicit ``ldaptor.protocols.ldap.ldaperrors`` classes declaration was made
   to allow syntax highlighting for this module.
+- Example of using LDAP server with the database. Employees are store in the database table and retrieved
+  on server initialization.
 
 Changes
 ^^^^^^^
@@ -33,6 +35,8 @@ Bugfixes
   `LDAPResult(resultCode=0, matchedDN='uid=user')` instead of `LDAPResult(resultCode=0, matchedDN="b'uid=user'")`.
 - ``ldaptor.protocols.pureldap.LDAPMatchingRuleAssertion`` initialization for Python 3 was failed for bytes arguments.
 - ``ldaptor.protocols.pureldap.LDAPExtendedResponse`` custom tag parameter was not used.
+- ``ldaptor._encoder.to_bytes()`` was fixed under Python 3 to return integers as their numeric
+  representation rather than a sequence of null bytes.
 
 Release 19.0 (2019-03-05)
 -------------------------
