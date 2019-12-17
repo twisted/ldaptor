@@ -27,7 +27,8 @@ class Proxy(unittest.TestCase):
         server = self.createServer([ pureldap.LDAPBindResponse(resultCode=14, 
                                                                serverSaslCreds='test123'),])
 
-        server.dataReceived(pureldap.LDAPMessage(pureldap.LDAPBindRequest(auth=('GSS-SPNEGO',None)), id=4).toWire())
+        server.dataReceived(pureldap.LDAPMessage(pureldap.LDAPBindRequest(
+            auth=('GSS-SPNEGO', None), sasl=True), id=4).toWire())
         reactor.iterate() #TODO
         self.assertEqual(
             server.transport.value(),
