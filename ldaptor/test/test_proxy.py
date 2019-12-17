@@ -21,6 +21,19 @@ class Proxy(unittest.TestCase):
             server.transport.value(),
             pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=0), id=4).toWire()
         )
+    
+    def test_bind_sasl_no_credentials(self):
+        # result code 14 is saslInprogress, with some server credentials.
+        server = self.createServer([ pureldap.LDAPBindResponse(resultCode=14, 
+                                                               serverSaslCreds='test123'),])
+
+        server.dataReceived(pureldap.LDAPMessage(pureldap.LDAPBindRequest(auth=('GSS-SPNEGO',None)), id=4).toWire())
+        reactor.iterate() #TODO
+        self.assertEqual(
+            server.transport.value(),
+            pureldap.LDAPMessage(pureldap.LDAPBindResponse(resultCode=14, 
+                                                           serverSaslCreds='test123'), id=4).toWire()
+        )
 
     def test_search(self):
         server = self.createServer([ pureldap.LDAPBindResponse(resultCode=0),
