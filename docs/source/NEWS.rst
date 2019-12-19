@@ -9,6 +9,7 @@ Features
 
 Changes
 ^^^^^^^
+- Replaced depricated calls to base64.decodestring with base64.decodebytes
 
 Bugfixes
 ^^^^^^^^
