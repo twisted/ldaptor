@@ -718,7 +718,7 @@ class LDAPServerTest(unittest.TestCase):
         self.assertEqual(len(secrets), 1)
         for secret in secrets:
             self.assertEqual(secret[:len(b'{SSHA}')], b'{SSHA}')
-            raw = base64.decodestring(secret[len(b'{SSHA}'):])
+            raw = base64.decodebytes(secret[len(b'{SSHA}'):])
             salt = raw[20:]
             self.assertEqual(entry.sshaDigest(b'hushhush', salt), secret)
 
