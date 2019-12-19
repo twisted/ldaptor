@@ -1,6 +1,23 @@
 Changelog
 =========
 
+Release.next
+-------------------------
+
+Features
+^^^^^^^^
+
+Changes
+^^^^^^^
+
+Bugfixes
+^^^^^^^^
+
+- SASL Bind without credentials caused list index out of range. Issue #157, Fixed
+
+
+
+
 Release 19.1 (2019-09-09)
 -------------------------
 

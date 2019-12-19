@@ -169,7 +169,12 @@ class LDAPBindRequest(LDAPProtocolRequest, BERSequence):
         if isinstance(l[2], BEROctetString):
             auth = l[2].value
         elif isinstance(l[2], BERSequence):
-            auth = (l[2][0].value, l[2][1].value)
+            # per https://ldap.com/ldapv3-wire-protocol-reference-bind/
+            # Credentials are optional and not always provided
+            if len(l[2].data) == 2:
+                auth = (l[2][0].value, l[2][1].value)
+            else:
+                auth = (l[2][0].value, None)
             sasl = True
 
         r = klass(version=l[0].value,
@@ -203,7 +208,13 @@ class LDAPBindRequest(LDAPProtocolRequest, BERSequence):
         if not self.sasl:
             auth_ber = BEROctetString(self.auth, tag=CLASS_CONTEXT | 0)
         else:
-            auth_ber = BERSequence([BEROctetString(self.auth[0]), BEROctetString(self.auth[1])],
+            # since the credentails for SASL is optional must check first
+            # if credentials are None don't send them.
+            if self.auth[1]:
+                auth_ber = BERSequence([BEROctetString(self.auth[0]), BEROctetString(self.auth[1])],
+                                   tag=CLASS_CONTEXT | 3)
+            else:
+                auth_ber = BERSequence([BEROctetString(self.auth[0])],
                                    tag=CLASS_CONTEXT | 3)
         return BERSequence([
             BERInteger(self.version),
@@ -297,12 +308,20 @@ class LDAPResult(LDAPProtocolResponse, BERSequence):
 
     def toWire(self):
         assert self.referral is None  # TODO
-        return BERSequence([
-            BEREnumerated(self.resultCode),
-            BEROctetString(self.matchedDN),
-            BEROctetString(self.errorMessage),
-            #TODO referral [3] Referral OPTIONAL
-            ], tag=self.tag).toWire()
+        if self.serverSaslCreds:
+            return BERSequence([
+                BEREnumerated(self.resultCode),
+                BEROctetString(self.matchedDN),
+                BEROctetString(self.errorMessage),
+                LDAPBindResponse_serverSaslCreds(self.serverSaslCreds)],
+                tag=self.tag).toWire()
+        else:
+            return BERSequence([
+                BEREnumerated(self.resultCode),
+                BEROctetString(self.matchedDN),
+                BEROctetString(self.errorMessage)],
+                tag=self.tag).toWire()
+
 
     def __repr__(self):
         l = []
@@ -348,7 +367,7 @@ class LDAPBindResponse(LDAPResult):
 
         try:
             if isinstance(l[3], LDAPBindResponse_serverSaslCreds):
-                serverSaslCreds = l[3]
+                serverSaslCreds = l[3].value
             else:
                 serverSaslCreds = None
         except IndexError:
