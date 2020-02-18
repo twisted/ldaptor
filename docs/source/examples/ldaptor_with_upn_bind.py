@@ -18,6 +18,7 @@ userPrincipalName: bob@ad.example.org
 """
 from __future__ import absolute_import
 
+from ldaptor import interfaces
 from ldaptor.protocols import pureldap
 from twisted.internet import defer
 from ldaptor.protocols.ldap.ldapserver import LDAPServer
