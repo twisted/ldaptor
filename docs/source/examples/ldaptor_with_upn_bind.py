@@ -17,6 +17,7 @@ userPassword: pass
 userPrincipalName: bob@ad.example.org
 """
 
+from ldaptor import interfaces
 from ldaptor.protocols import pureldap
 from twisted.internet import defer
 from ldaptor.protocols.ldap.ldapserver import LDAPServer
