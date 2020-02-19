@@ -1,29 +1,17 @@
 from io import BytesIO
 
 from twisted.python import failure
-from twisted.internet import reactor, protocol, address, error
+from twisted.internet import reactor, protocol
 from twisted.test import testutils
-from twisted.trial import unittest
 
 
 class FakeTransport(protocol.FileWrapper):
     disconnecting = False
     disconnect_done = False
 
-    def __init__(self, addr, peerAddr):
+    def __init__(self):
         self.data = BytesIO()
         protocol.FileWrapper.__init__(self, self.data)
-        self.addr = addr
-        self.peerAddr = peerAddr
-
-    def getHost(self):
-        return self.addr
-
-    def getPeer(self):
-        return self.peerAddr
-
-    def loseConnection(self):
-        self.disconnecting = True
 
 
 class FasterIOPump(testutils.IOPump):
@@ -63,46 +51,13 @@ class IOPump(FasterIOPump):
                                   serverIO=serverTransport.data)
         self.active.append(self)
 
-    def pump(self):
-        FasterIOPump.pump(self)
-        if (self.clientTransport.disconnecting
-            and not self.clientTransport.data.getvalue()
-            and not self.clientTransport.disconnect_done):
-            self.server.connectionLost(error.ConnectionDone)
-            self.clientTransport.disconnect_done = True
 
-        if (self.serverTransport.disconnecting
-            and not self.serverTransport.data.getvalue()
-            and not self.serverTransport.disconnect_done):
-            self.client.connectionLost(error.ConnectionDone)
-            self.serverTransport.disconnect_done = True
-
-        if (self.clientTransport.disconnect_done
-            and self.serverTransport.disconnect_done):
-            self.active.remove(self)
-
-    def __repr__(self):
-        return '<%s client=%r/%r server=%r/%r>' % (
-            self.__class__.__name__,
-            self.client,
-            self.clientIO.getvalue(),
-            self.server,
-            self.serverIO.getvalue(),
-            )
-
-
-def returnConnected(server, client,
-                    clientAddress=None,
-                    serverAddress=None):
+def returnConnected(server, client):
     """Take two Protocol instances and connect them.
     """
-    if serverAddress is None:
-        serverAddress = address.IPv4Address('TCP', 'localhost', 1)
-    if clientAddress is None:
-        clientAddress = address.IPv4Address('TCP', 'localhost', 2)
-    clientTransport = FakeTransport(clientAddress, serverAddress)
+    clientTransport = FakeTransport()
     client.makeConnection(clientTransport)
-    serverTransport = FakeTransport(serverAddress, clientAddress)
+    serverTransport = FakeTransport()
     server.makeConnection(serverTransport)
     pump = IOPump(client, server,
                   clientTransport,
@@ -114,15 +69,9 @@ def returnConnected(server, client,
     return pump
 
 
-def _append(result, lst):
-    lst.append(result)
-
-
-def _getDeferredResult(d, timeout=None):
-    if timeout is not None:
-        d.setTimeout(timeout)
+def _getDeferredResult(d):
     resultSet = []
-    d.addBoth(_append, resultSet)
+    d.addBoth(resultSet.append)
     while not resultSet:
         for pump in IOPump.active:
             pump.pump()
@@ -130,19 +79,10 @@ def _getDeferredResult(d, timeout=None):
     return resultSet[0]
 
 
-def pumpingDeferredResult(d, timeout=None):
-    result = _getDeferredResult(d, timeout)
-    if isinstance(result, failure.Failure):
-        if result.tb:
-            raise result.value.__class__(result.value, result.tb)
-        raise result.value
-    else:
-        return result
-
-
-def pumpingDeferredError(d, timeout=None):
-    result = _getDeferredResult(d, timeout)
-    if isinstance(result, failure.Failure):
-        return result
-    else:
-        raise unittest.FailTest("Deferred did not fail: %r" % (result,))
+def pumpingDeferredResult(d):
+    result = _getDeferredResult(d)
+    return (
+        result.raiseException()
+        if isinstance(result, failure.Failure)
+        else result
+    )
