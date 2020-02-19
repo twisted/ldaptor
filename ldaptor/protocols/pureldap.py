@@ -340,7 +340,14 @@ class LDAPResult(LDAPProtocolResponse, BERSequence):
 class LDAPBindResponse_serverSaslCreds(BEROctetString):
     tag = CLASS_CONTEXT | 0x07
 
-    pass
+    def __repr__(self):
+        if self.tag == self.__class__.tag:
+            return self.__class__.__name__ + "(value=%s)" \
+                   % self.value
+        else:
+            return self.__class__.__name__ \
+                   + "(value=%s, tag=%d)" \
+                     % (self.value, self.tag)
 
 
 class LDAPBERDecoderContext_BindResponse(BERDecoderContext):
