@@ -24,12 +24,7 @@ from ldaptor.protocols import pureldap, pureber
 
 def s(*l):
     """Join all members of list to a byte string. Integer members are chr()ed"""
-    r = b''
-    for e in l:
-        if isinstance(e, int):
-            e = six.int2byte(e)
-        r = r + e
-    return r
+    return b''.join([six.int2byte(e) if isinstance(e, int) else e for e in l])
 
 
 def l(s):

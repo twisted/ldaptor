@@ -3,6 +3,8 @@ Ldaptor
 
 .. image:: https://travis-ci.org/twisted/ldaptor.svg?branch=master
     :target: https://travis-ci.org/twisted/ldaptor
+.. image:: https://codecov.io/gh/twisted/ldaptor/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/twisted/ldaptor
 
 Ldaptor is a pure-Python library that implements:
 
