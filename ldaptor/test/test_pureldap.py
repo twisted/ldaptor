@@ -1571,8 +1571,8 @@ class TestRepresentations(unittest.TestCase):
         self.assertEqual(actual_repr, expected_repr)
 
     def test_ldap_bind_response_server_sasl_creds_with_tag_repr(self):
-        """ ServerSaslCreds will often have binary data. A custom repr is needed because
-        it cannot be turned into a unicode string like most BEROctetString objects.
+        """ An LDAPBindResponse_serverSaslCreds with a non-standard tag will have that
+        tag show up in the text representation.
         """
         sasl_creds = pureldap.LDAPBindResponse_serverSaslCreds(value=b'NTLMSSP\xbe', tag=12)
         if six.PY3:
