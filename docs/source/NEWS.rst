@@ -14,6 +14,7 @@ Bugfixes
 ^^^^^^^^
 
 - SASL Bind without credentials caused list index out of range. Issue #157, Fixed
+- return an LDAPSearchResultEntry even if all attributes are filtered. Issue #166, Fixed
 
 
 
