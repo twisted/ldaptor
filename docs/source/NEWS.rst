@@ -16,7 +16,7 @@ Bugfixes
 - SASL Bind without credentials caused list index out of range. Issue #157.
 - ldaptor.protocols.ldap.ldapserver.LDAPServer.handle_LDAPSearchRequest
   now returns an LDAPSearchResultEntry without any attributes when there is no match
-  between the requested attributes and the entrie's attributes .Issue #166.
+  between the requested attributes and the entrie's attributes. Issue #166.
 
 
 Release 19.1 (2019-09-09)
