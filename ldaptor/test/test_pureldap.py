@@ -1556,3 +1556,29 @@ class TestRepresentations(unittest.TestCase):
                                "value='rule'), type=LDAPMatchingRuleAssertion_type(value='type'), matchValue=" \
                                "LDAPMatchingRuleAssertion_matchValue(value='value'), dnAttributes=None, tag=42)"
                     self.assertEqual(repr(mra), mra_repr)
+
+    def test_ldap_bind_response_server_sasl_creds_repr(self):
+        """ ServerSaslCreds will often have binary data. A custom repr is needed because
+        it cannot be turned into a unicode string like most BEROctetString objects.
+        """
+        sasl_creds = pureldap.LDAPBindResponse_serverSaslCreds(value=b'NTLMSSP\xbe')
+        if six.PY3:
+            expected_repr = r"LDAPBindResponse_serverSaslCreds(value=b'NTLMSSP\xbe')"
+        else:
+            expected_repr = "LDAPBindResponse_serverSaslCreds(value=NTLMSSP\xbe)"
+
+        actual_repr = repr(sasl_creds)
+        self.assertEqual(actual_repr, expected_repr)
+
+    def test_ldap_bind_response_server_sasl_creds_with_tag_repr(self):
+        """ An LDAPBindResponse_serverSaslCreds with a non-standard tag will have that
+        tag show up in the text representation.
+        """
+        sasl_creds = pureldap.LDAPBindResponse_serverSaslCreds(value=b'NTLMSSP\xbe', tag=12)
+        if six.PY3:
+            expected_repr = r"LDAPBindResponse_serverSaslCreds(value=b'NTLMSSP\xbe', tag=12)"
+        else:
+            expected_repr = "LDAPBindResponse_serverSaslCreds(value=NTLMSSP\xbe, tag=12)"
+
+        actual_repr = repr(sasl_creds)
+        self.assertEqual(actual_repr, expected_repr)
