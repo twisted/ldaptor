@@ -365,13 +365,20 @@ class LDAPServerTest(unittest.TestCase):
     def test_search_matchAll_oneResult_filteredNoAttribsRemaining(self):
         """
         Attempt to search an existing object with a set of nonexistent attributes
-        results in an empty successful response
+        results in a successful response with no attributes
         """
         self.makeSearch(
             baseObject='cn=thingie,ou=stuff,dc=example,dc=com',
             attributes=['xyzzy']
         )
-        self.assertSearchResults()
+        self.assertSearchResults(
+            [
+                {
+                    'objectName': 'cn=thingie,ou=stuff,dc=example,dc=com',
+                    'attributes': [],
+                },
+            ],
+        )
 
     def test_search_matchAll_manyResults(self):
         """Searching for a tree object with receiving it and all its children (default scope)"""
