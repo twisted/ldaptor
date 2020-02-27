@@ -255,11 +255,12 @@ class LDAPServer(BaseLDAPServer):
                     (k, entry.get(k)) for k in requested_attribs if k in entry]
             else:
                 filtered_attribs = entry.items()
-            if len(filtered_attribs) > 0:
-                reply(pureldap.LDAPSearchResultEntry(
+            reply(
+                pureldap.LDAPSearchResultEntry(
                     objectName=entry.dn.getText(),
                     attributes=filtered_attribs,
-                    ))
+                )
+            )
         d = base.search(filterObject=request.filter,
                         attributes=request.attributes,
                         scope=request.scope,
