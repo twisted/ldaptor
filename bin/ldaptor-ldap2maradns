@@ -21,10 +21,10 @@ class HostIPAddress:
         self.host=host
         self.ipAddress=ipAddress
 
-    def printZone(self, domain):
-        print('#  '+self.host.dn)
-        printIPAddress(self.host.name+'.'+domain, self.ipAddress)
-        printPTR(self.host.name+'.'+domain, self.ipAddress)
+    def printZone(self):
+        print('#Host:'+self.host.dn)
+        printIPAddress(self.host.name, self.ipAddress)
+        printPTR(self.host.name, self.ipAddress)
 
     def __repr__(self):
         return (self.__class__.__name__
@@ -47,44 +47,6 @@ class Host:
                 +'ipAddresses=%s' % repr(self.ipAddresses)
                 +')')
 
-class Net:
-    def __init__(self, dn, name, address, mask):
-        self.dn=dn
-        self.name=name
-        self.address=address
-        self.mask=mask
-
-    def isInNet(self, ipAddress):
-        net = dns.aton(self.address)
-        mask = dns.aton(self.mask)
-        ip = dns.aton(ipAddress)
-        if ip&mask == net:
-            return 1
-        return 0
-
-    def printZone(self):
-        print('#'+self.dn)
-        printIPAddress(self.name, self.address)
-        printPTR(self.name, self.address)
-        ip = dns.aton(self.address)
-        mask = dns.aton(self.mask)
-        ipmask = dns.ntoa(mask)
-        broadcast = dns.ntoa(ip|~mask)
-        printIPAddress('netmask.'+self.name, ipmask)
-        printIPAddress('broadcast.'+self.name, broadcast)
-        printPTR('broadcast.'+self.name, broadcast)
-
-    def __repr__(self):
-        return (self.__class__.__name__
-                +'('
-                +'dn=%s, ' % repr(self.dn)
-                +'name=%s, ' % repr(self.name)
-                +'address=%s, ' % repr(self.address)
-                +'mask=%s' % repr(self.mask)
-                +')')
-
-
-
 exitStatus=0
 
 def error(fail):
@@ -99,52 +61,18 @@ def only(e, attrName):
     for val in e[attrName]:
         return val
 
-def getNets(e, filter):
-    filt=pureldap.LDAPFilter_and(value=(
-        pureldap.LDAPFilter_present('cn'),
-        pureldap.LDAPFilter_present('ipNetworkNumber'),
-        pureldap.LDAPFilter_present('ipNetmaskNumber'),
-        ))
-    if filter:
-        filt = pureldap.LDAPFilter_and(value=(filter, filt))
-    d = e.search(filterObject=filt,
-                 attributes=['cn',
-                             'ipNetworkNumber',
-                             'ipNetmaskNumber',
-                             ])
-    def _cbGotNets(nets):
-        r = []
-        for e in nets:
-            net = Net(str(e.dn),
-                      str(only(e, 'cn')),
-                      str(only(e, 'ipNetworkNumber')),
-                      str(only(e, 'ipNetmaskNumber')))
-            net.printZone()
-            r.append(net)
-        return r
-    d.addCallback(_cbGotNets)
-    return d
-
-def getHosts(nets, e, filter):
+def getHosts(e, filter):
     filt=pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('objectClass'),
                                            assertionValue=pureber.BEROctetString('ipHost'))
     if filter:
         filt = pureldap.LDAPFilter_and(value=(filter, filt))
     def _cbGotHost(e):
-        host = Host(str(e.dn),
+        host = Host(str(e.dn.getText()),
                     str(only(e, 'cn')),
                     list(str(i) for i in e['ipHostNumber']))
         for hostIP in host.ipAddresses:
-            parent=None
-            for net in nets:
-                if net.isInNet(hostIP.ipAddress):
-                    parent=net
-                    break
+            hostIP.printZone()
 
-            if parent:
-                hostIP.printZone(parent.name)
-            else:
-                sys.stderr.write("IP address %s is in no net, discarding.\n" % hostIP)
     d = e.search(filterObject=filt,
                  attributes=['ipHostNumber',
                              'cn'],
@@ -153,8 +81,7 @@ def getHosts(nets, e, filter):
 
 def cbConnected(client, cfg, filter):
     e = ldapsyntax.LDAPEntryWithClient(client, cfg.getBaseDN())
-    d = getNets(e, filter)
-    d.addCallback(getHosts, e, filter)
+    d = getHosts(e, filter)
     def unbind(r, e):
         e.client.unbind()
         return r
