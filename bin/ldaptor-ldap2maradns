@@ -16,42 +16,18 @@ def _printPTRVOne(name, ip):
     octets.append('in-addr.arpa.')
     print('P'+('.'.join(octets))+'|86400|'+name+'.%')
 
-class _HostIPAddress:
-    def __init__(self, hostObject, ipAddress):
-        self.host = hostObject
-        self.ipAddress = ipAddress
+def _printHostLineVTwo(name, ttl, recordType,ip):
+    nameStr=name+'.'
+    if '.' not in name: nameStr=name+'.%'
+    print(nameStr+'\t'+'+'+ttl+'\t'+recordType+'\t'+ip+' ~')
 
-    def createConfEntry(self):
-        print('#Host:'+self.host.dn)
-        if self.host.version == 1:
-            _printIPAddressVOne(self.host.name, self.ipAddress)
-            _printPTRVOne(self.host.name, self.ipAddress)
-        elif self.host.version == 2:
-            _printIPAddressVOne(self.host.name, self.ipAddress)
-            _printPTRVOne(self.host.name, self.ipAddress)
-
-    def __repr__(self):
-        return (self.__class__.__name__
-                +'('
-                +'host=%r, ' % self.host.name
-                +'ipAddress=%s' % repr(self.ipAddress)
-                +')')
-
-class _Host:
-    def __init__(self, maraDnsConfVersion, dn, name, ipAddresses):
-        self.version = maraDnsConfVersion
-        self.dn = dn
-        self.name = name
-        self.ipAddresses = [_HostIPAddress(self, ip) for ip in ipAddresses]
-
-    def __repr__(self):
-        return (self.__class__.__name__
-                +'('
-                +'version=%s, ' % repr(self.version)
-                +'dn=%s, ' % repr(self.dn)
-                +'name=%s, ' % repr(self.name)
-                +'ipAddresses=%s' % repr(self.ipAddresses)
-                +')')
+def _printPTRVTwo(name, ttl, ip):
+    octets = ip.split('.')
+    octets.reverse()
+    octets.append('in-addr.arpa.')
+    nameStr=name+'.'
+    if '.' not in name: nameStr=name+'.%'
+    print (('.'.join(octets))+'\t','+'+ttl+'\tPTR\t'+nameStr+' ~')
 
 exitStatus = 0
 
@@ -67,36 +43,40 @@ def only(serverResponse, attrName):
     for val in serverResponse[attrName]:
         return val
 
-def getHosts(serverResponse, maraDnsVersion, filterText):
+def getHosts(serverRequest, maraDnsVersion, filterText):
     filt = pureldap.LDAPFilter_equalityMatch(
         attributeDesc=pureldap.LDAPAttributeDescription('objectClass'),
         assertionValue=pureber.BEROctetString('maradnsRecord'))
     if filterText:
         filt = pureldap.LDAPFilter_and(value=(filterText, filt))
-    def _cbGotHost(serverResponse):
-        host = _Host(maraDnsVersion,
-                     str(serverResponse.dn.getText()),
-                     str(only(serverResponse, 'idnsName')),
-                     list(str(i) for i in serverResponse['FQDNRecord']))
-        for hostIP in host.ipAddresses:
-            hostIP.createConfEntry()
 
-    d = serverResponse.search(filterObject=filt,
+    def _cbGotHost(serverResponse):
+        name = str(only(serverResponse, 'idnsName'))
+
+        ttl = '86400'
+        if 'dNSTTL' in serverResponse.keys(): ttl = str(only(serverResponse, 'dNSTTL'))
+        
+        if 'FQDNRecord' in serverResponse.keys():
+            for ipAddress in serverResponse['FQDNRecord']:
+                _printHostLineVTwo (name, ttl, 'FQDN4', ipAddress) 
+
+
+    serverResponse = serverRequest.search(filterObject=filt,
                               attributes=[
                                   'idnsName', 'FQDNRecord',
                                   'ARecord', 'cNAMERecord',
                                   'dNSTTL', 'mXRecord',
                                   'NSRecord'],
                               callback=_cbGotHost)
-    return d
+    return serverResponse 
 
 def cbConnected(client, cfg, maraDnsVersion, filterText):
-    serverResponse = ldapsyntax.LDAPEntryWithClient(client, cfg.getBaseDN())
-    d = getHosts(serverResponse, maraDnsVersion, filterText)
-    def unbind(r, serverResponse):
-        serverResponse.client.unbind()
+    serverRequest = ldapsyntax.LDAPEntryWithClient(client, cfg.getBaseDN())
+    d = getHosts(serverRequest, maraDnsVersion, filterText)
+    def unbind(r, serverRequest):
+        serverRequest.client.unbind()
         return r
-    d.addCallback(unbind, serverResponse)
+    d.addCallback(unbind, serverRequest)
     return d
 
 def main(cfg, maraDnsVersion, filterText):
