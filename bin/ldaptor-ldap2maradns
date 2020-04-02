@@ -1,16 +1,16 @@
 #!/usr/bin/python
 
 from __future__ import print_function
+import sys
+from twisted.internet import protocol, defer, reactor
 from ldaptor.protocols.ldap import distinguishedname, ldapconnector, ldapsyntax, ldapclient
 from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage, ldapfilter, config, dns
-import sys
-from twisted.internet import protocol, defer, reactor
 
-def printIPAddress(name, ip):
+def printIPAddressVOne(name, ip):
     print('A'+name+'.%|86400|'+ip)
 
-def printPTR(name, ip):
+def printPTRVOne(name, ip):
     octets = ip.split('.')
     octets.reverse()
     octets.append('in-addr.arpa.')
@@ -18,13 +18,17 @@ def printPTR(name, ip):
 
 class HostIPAddress:
     def __init__(self, host, ipAddress):
-        self.host=host
-        self.ipAddress=ipAddress
+        self.host = host
+        self.ipAddress = ipAddress
 
-    def printZone(self):
+    def createConfEntry(self):
         print('#Host:'+self.host.dn)
-        printIPAddress(self.host.name, self.ipAddress)
-        printPTR(self.host.name, self.ipAddress)
+        if 1 == 1:
+            printIPAddressVOne(self.host.name, self.ipAddress)
+            printPTRVOne(self.host.name, self.ipAddress)
+        elif 1 == 2:
+            printIPAddressVOne(self.host.name, self.ipAddress)
+            printPTRVOne(self.host.name, self.ipAddress)
 
     def __repr__(self):
         return (self.__class__.__name__
@@ -35,9 +39,9 @@ class HostIPAddress:
 
 class Host:
     def __init__(self, dn, name, ipAddresses):
-        self.dn=dn
-        self.name=name
-        self.ipAddresses=[HostIPAddress(self, ip) for ip in ipAddresses]
+        self.dn = dn
+        self.name = name
+        self.ipAddresses = [HostIPAddress(self, ip) for ip in ipAddresses]
 
     def __repr__(self):
         return (self.__class__.__name__
@@ -47,45 +51,49 @@ class Host:
                 +'ipAddresses=%s' % repr(self.ipAddresses)
                 +')')
 
-exitStatus=0
+exitStatus = 0
 
 def error(fail):
     print('fail:', str(fail), file=sys.stderr) #.getErrorMessage()
     global exitStatus
-    exitStatus=1
+    exitStatus = 1
 
-def only(e, attrName):
-    assert len(e[attrName])==1, \
+def only(serverResponse, attrName):
+    assert len(serverResponse[attrName]) == 1, \
            "object %s attribute %r has multiple values: %s" \
-           % (e.dn, attrName, e[attrName])
-    for val in e[attrName]:
+           % (serverResponse.dn, attrName, serverResponse[attrName])
+    for val in serverResponse[attrName]:
         return val
 
-def getHosts(e, filter):
-    filt=pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('objectClass'),
-                                           assertionValue=pureber.BEROctetString('ipHost'))
-    if filter:
-        filt = pureldap.LDAPFilter_and(value=(filter, filt))
-    def _cbGotHost(e):
-        host = Host(str(e.dn.getText()),
-                    str(only(e, 'cn')),
-                    list(str(i) for i in e['ipHostNumber']))
+def getHosts(serverResponse, filterText):
+    filt = pureldap.LDAPFilter_equalityMatch(
+        attributeDesc=pureldap.LDAPAttributeDescription('objectClass'),
+        assertionValue=pureber.BEROctetString('maradnsRecord'))
+    if filterText:
+        filt = pureldap.LDAPFilter_and(value=(filterText, filt))
+    def _cbGotHost(serverResponse):
+        host = Host(str(serverResponse.dn),
+                    str(only(serverResponse, 'idnsName')),
+                    list(str(i) for i in serverResponse['FQDNRecord']))
         for hostIP in host.ipAddresses:
-            hostIP.printZone()
+            hostIP.createConfEntry()
 
-    d = e.search(filterObject=filt,
-                 attributes=['ipHostNumber',
-                             'cn'],
-                 callback=_cbGotHost)
+    d = serverResponse.search(filterObject=filt,
+                              attributes=[
+                                  'idnsName', 'FQDNRecord',
+                                  'ARecord', 'cNAMERecord',
+                                  'dNSTTL', 'mXRecord',
+                                  'NSRecord'],
+                              callback=_cbGotHost)
     return d
 
-def cbConnected(client, cfg, filter):
-    e = ldapsyntax.LDAPEntryWithClient(client, cfg.getBaseDN())
-    d = getHosts(e, filter)
-    def unbind(r, e):
-        e.client.unbind()
+def cbConnected(client, cfg, filterText):
+    serverResponse = ldapsyntax.LDAPEntryWithClient(client, cfg.getBaseDN())
+    d = getHosts(serverResponse, filterText)
+    def unbind(r, serverResponse):
+        serverResponse.client.unbind()
         return r
-    d.addCallback(unbind, e)
+    d.addCallback(unbind, serverResponse)
     return d
 
 def main(cfg, filter_text):
@@ -103,7 +111,7 @@ def main(cfg, filter_text):
     else:
         filt = None
 
-    c=ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
+    c = ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
     d = c.connectAnonymously(
         baseDN,
         overrides=cfg.getServiceLocationOverrides())
@@ -115,9 +123,9 @@ def main(cfg, filter_text):
     sys.exit(exitStatus)
 
 class MyOptions(usage.Options, usage.Options_service_location, usage.Options_base_optional):
-    """LDAPtor maradns zone file exporter"""
-    def parseArgs(self, filter=None):
-        self.opts['filter'] = filter
+    """LDAPtor maradns v1 and v2 zone file exporter"""
+    def parseArgs(self, customFilter=None):
+        self.opts['customFilter'] = customFilter
 
 if __name__ == "__main__":
     import sys
@@ -131,4 +139,4 @@ if __name__ == "__main__":
     cfg = config.LDAPConfig(baseDN=opts['base'],
                             serviceLocationOverrides=opts['service-location'])
     main(cfg,
-         opts['filter'])
+         opts['customFilter'])
