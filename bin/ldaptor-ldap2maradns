@@ -60,6 +60,10 @@ def getHosts(serverRequest, maraDnsVersion, filterText):
             for ipAddress in serverResponse['FQDNRecord']:
                 _printHostLineVTwo (name, ttl, 'FQDN4', ipAddress) 
 
+        if 'ARecord' in serverResponse.keys():
+            for ipAddress in serverResponse['ARecord']:
+                _printHostLineVTwo (name, ttl, 'ARecord', ipAddress)
+
 
     serverResponse = serverRequest.search(filterObject=filt,
                               attributes=[
