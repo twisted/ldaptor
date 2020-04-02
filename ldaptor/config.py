@@ -121,6 +121,7 @@ class LDAPConfig(object):
 
 DEFAULTS = {
     'samba': {'use-lmhash': 'no'},
+    'maradns': {'version': '2'},
 }
 
 CONFIG_FILES = [
@@ -159,3 +160,11 @@ def useLMhash():
     """
     cfg = loadConfig()
     return cfg.getboolean('samba', 'use-lmhash')
+
+def maraDnsVersion():
+    """
+    Read configuration file if necessary and return which
+    version of the MaraDNS configuration file to write
+    """
+    cfg = loadConfig()
+    return cfg.getint('maradns', 'version')

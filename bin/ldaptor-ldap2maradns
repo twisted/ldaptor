@@ -7,28 +7,28 @@ from ldaptor.protocols.ldap import distinguishedname, ldapconnector, ldapsyntax,
 from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage, ldapfilter, config, dns
 
-def printIPAddressVOne(name, ip):
+def _printIPAddressVOne(name, ip):
     print('A'+name+'.%|86400|'+ip)
 
-def printPTRVOne(name, ip):
+def _printPTRVOne(name, ip):
     octets = ip.split('.')
     octets.reverse()
     octets.append('in-addr.arpa.')
     print('P'+('.'.join(octets))+'|86400|'+name+'.%')
 
-class HostIPAddress:
-    def __init__(self, host, ipAddress):
-        self.host = host
+class _HostIPAddress:
+    def __init__(self, hostObject, ipAddress):
+        self.host = hostObject
         self.ipAddress = ipAddress
 
     def createConfEntry(self):
         print('#Host:'+self.host.dn)
-        if 1 == 1:
-            printIPAddressVOne(self.host.name, self.ipAddress)
-            printPTRVOne(self.host.name, self.ipAddress)
-        elif 1 == 2:
-            printIPAddressVOne(self.host.name, self.ipAddress)
-            printPTRVOne(self.host.name, self.ipAddress)
+        if self.host.version == 1:
+            _printIPAddressVOne(self.host.name, self.ipAddress)
+            _printPTRVOne(self.host.name, self.ipAddress)
+        elif self.host.version == 2:
+            _printIPAddressVOne(self.host.name, self.ipAddress)
+            _printPTRVOne(self.host.name, self.ipAddress)
 
     def __repr__(self):
         return (self.__class__.__name__
@@ -37,15 +37,17 @@ class HostIPAddress:
                 +'ipAddress=%s' % repr(self.ipAddress)
                 +')')
 
-class Host:
-    def __init__(self, dn, name, ipAddresses):
+class _Host:
+    def __init__(self, maraDnsConfVersion, dn, name, ipAddresses):
+        self.version = maraDnsConfVersion
         self.dn = dn
         self.name = name
-        self.ipAddresses = [HostIPAddress(self, ip) for ip in ipAddresses]
+        self.ipAddresses = [_HostIPAddress(self, ip) for ip in ipAddresses]
 
     def __repr__(self):
         return (self.__class__.__name__
                 +'('
+                +'version=%s, ' % repr(self.version)
                 +'dn=%s, ' % repr(self.dn)
                 +'name=%s, ' % repr(self.name)
                 +'ipAddresses=%s' % repr(self.ipAddresses)
@@ -65,16 +67,17 @@ def only(serverResponse, attrName):
     for val in serverResponse[attrName]:
         return val
 
-def getHosts(serverResponse, filterText):
+def getHosts(serverResponse, maraDnsVersion, filterText):
     filt = pureldap.LDAPFilter_equalityMatch(
         attributeDesc=pureldap.LDAPAttributeDescription('objectClass'),
         assertionValue=pureber.BEROctetString('maradnsRecord'))
     if filterText:
         filt = pureldap.LDAPFilter_and(value=(filterText, filt))
     def _cbGotHost(serverResponse):
-        host = Host(str(serverResponse.dn),
-                    str(only(serverResponse, 'idnsName')),
-                    list(str(i) for i in serverResponse['FQDNRecord']))
+        host = _Host(maraDnsVersion,
+                     str(serverResponse.dn.getText()),
+                     str(only(serverResponse, 'idnsName')),
+                     list(str(i) for i in serverResponse['FQDNRecord']))
         for hostIP in host.ipAddresses:
             hostIP.createConfEntry()
 
@@ -87,16 +90,16 @@ def getHosts(serverResponse, filterText):
                               callback=_cbGotHost)
     return d
 
-def cbConnected(client, cfg, filterText):
+def cbConnected(client, cfg, maraDnsVersion, filterText):
     serverResponse = ldapsyntax.LDAPEntryWithClient(client, cfg.getBaseDN())
-    d = getHosts(serverResponse, filterText)
+    d = getHosts(serverResponse, maraDnsVersion, filterText)
     def unbind(r, serverResponse):
         serverResponse.client.unbind()
         return r
     d.addCallback(unbind, serverResponse)
     return d
 
-def main(cfg, filter_text):
+def main(cfg, maraDnsVersion, filterText):
     from twisted.python import log
     log.startLogging(sys.stderr, setStdout=0)
 
@@ -106,8 +109,8 @@ def main(cfg, filter_text):
         print("%s: %s." % (sys.argv[0], e), file=sys.stderr)
         sys.exit(1)
 
-    if filter_text is not None:
-        filt = ldapfilter.parseFilter(filter_text)
+    if filterText is not None:
+        filt = ldapfilter.parseFilter(filterText)
     else:
         filt = None
 
@@ -115,7 +118,7 @@ def main(cfg, filter_text):
     d = c.connectAnonymously(
         baseDN,
         overrides=cfg.getServiceLocationOverrides())
-    d.addCallback(cbConnected, cfg, filt)
+    d.addCallback(cbConnected, cfg, maraDnsVersion, filt)
     d.addErrback(error)
     d.addBoth(lambda x: reactor.stop())
 
@@ -128,15 +131,16 @@ class MyOptions(usage.Options, usage.Options_service_location, usage.Options_bas
         self.opts['customFilter'] = customFilter
 
 if __name__ == "__main__":
-    import sys
     try:
         opts = MyOptions()
         opts.parseOptions()
-    except usage.UsageError as ue:
-        sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
+    except usage.UsageError as usageError:
+        sys.stderr.write('%s: %s\n' % (sys.argv[0], usageError))
         sys.exit(1)
 
     cfg = config.LDAPConfig(baseDN=opts['base'],
                             serviceLocationOverrides=opts['service-location'])
+    maraDnsVersion = config.maraDnsVersion()
     main(cfg,
+         maraDnsVersion,
          opts['customFilter'])
