@@ -77,6 +77,12 @@ attributeTypes: ( 1.3.6.1.4.1.2428.20.1.33
  EQUALITY caseIgnoreIA5Match
  SUBSTR caseIgnoreIA5SubstringsMatch )
 
+attributeTypes: ( 1.3.6.1.4.1.2428.20.1.12
+ NAME 'pTRRecord'
+ DESC 'domain name pointer, RFC 1035'
+ SYNTAX 1.3.6.1.4.1.1466.115.121.1.26
+ EQUALITY caseIgnoreIA5Match
+ SUBSTR caseIgnoreIA5SubstringsMatch )
 
 # It is suggested that the RDN contains
 # both the cn and owner attributes, to
@@ -106,4 +112,4 @@ objectclass ( 1.3.6.1.4.1.22924.1.1.2.2
 	SUP top
 	STRUCTURAL
 	MUST idnsName
-	MAY ( aRecord $ FQDNRecord $ cNAMERecord $ DNSTTL $ mXRecord $ tXTRecord $ SRVRecord $ nSRecord) )
+	MAY ( aRecord $ FQDNRecord $ cNAMERecord $ DNSTTL $ mXRecord $ tXTRecord $ SRVRecord $ nSRecord $ pTRRecord ) )

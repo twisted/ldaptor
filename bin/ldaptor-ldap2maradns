@@ -2,32 +2,39 @@
 
 from __future__ import print_function
 import sys
-from twisted.internet import protocol, defer, reactor
-from ldaptor.protocols.ldap import distinguishedname, ldapconnector, ldapsyntax, ldapclient
+from twisted.internet import reactor
+from ldaptor.protocols.ldap import ldapconnector, ldapsyntax, ldapclient
 from ldaptor.protocols import pureber, pureldap
-from ldaptor import usage, ldapfilter, config, dns
+from ldaptor import usage, ldapfilter, config 
 
-def _printIPAddressVOne(name, ip):
-    print('A'+name+'.%|86400|'+ip)
+def _printIPAddressVOne(name, ipAddress):
+    print('A'+name+'.%|86400|'+ipAddress)
 
-def _printPTRVOne(name, ip):
-    octets = ip.split('.')
+def _printPTRVOne(name, ipAddress):
+    octets = ipAddress.split('.')
     octets.reverse()
     octets.append('in-addr.arpa.')
     print('P'+('.'.join(octets))+'|86400|'+name+'.%')
 
-def _printHostLineVTwo(name, ttl, recordType,ip):
-    nameStr=name+'.'
-    if '.' not in name: nameStr=name+'.%'
-    print(nameStr+'\t'+'+'+ttl+'\t'+recordType+'\t'+ip+' ~')
+def _printHostLineVTwo(name, ttl, recordType, ipAddress):
+    nameStr = name+'.'
+    if '.' not in name: nameStr = name+'.%'
+    # If the 'ip' is an IP address (i.e. removing the '.' leaves a numeric string) then no further treatment is necessary.
+    # If it's a name (i.e. second charaters is in the alphanet) then it needs a trailing .
+    # If it's a name that needs a domain then append the %
+    ipStr = ipAddress
+    if not ((ipAddress.replace('.', '')).replace(' ', '')).isdigit():
+        ipStr = ipAddress+'.'
+        if '.' not in ipAddress: ipStr = ipAddress+'.%'
+    print(nameStr+'\t'+ttl+'\t'+recordType+'\t'+ipStr+' ~')
 
-def _printPTRVTwo(name, ttl, ip):
-    octets = ip.split('.')
+def _printPTRVTwo(name, ttl, ipAddress):
+    octets = ipAddress.split('.')
     octets.reverse()
     octets.append('in-addr.arpa.')
-    nameStr=name+'.'
-    if '.' not in name: nameStr=name+'.%'
-    print (('.'.join(octets))+'\t','+'+ttl+'\tPTR\t'+nameStr+' ~')
+    nameStr = name+'.'
+    if '.' not in name: nameStr = name+'.%'
+    print (('.'.join(octets))+'\t'+ttl+'\tPTR\t'+nameStr+' ~')
 
 exitStatus = 0
 
@@ -43,7 +50,7 @@ def only(serverResponse, attrName):
     for val in serverResponse[attrName]:
         return val
 
-def getHosts(serverRequest, maraDnsVersion, filterText):
+def getHosts(serverRequest, filterText):
     filt = pureldap.LDAPFilter_equalityMatch(
         attributeDesc=pureldap.LDAPAttributeDescription('objectClass'),
         assertionValue=pureber.BEROctetString('maradnsRecord'))
@@ -53,37 +60,53 @@ def getHosts(serverRequest, maraDnsVersion, filterText):
     def _cbGotHost(serverResponse):
         name = str(only(serverResponse, 'idnsName'))
 
+        # If there's a TTL in the response the use it, otherwise, give it the default.
+        # The /ttl line in the MaraDNS zone file is not implemented here.
         ttl = '86400'
         if 'dNSTTL' in serverResponse.keys(): ttl = str(only(serverResponse, 'dNSTTL'))
-        
-        if 'FQDNRecord' in serverResponse.keys():
-            for ipAddress in serverResponse['FQDNRecord']:
-                _printHostLineVTwo (name, ttl, 'FQDN4', ipAddress) 
 
-        if 'ARecord' in serverResponse.keys():
-            for ipAddress in serverResponse['ARecord']:
-                _printHostLineVTwo (name, ttl, 'ARecord', ipAddress)
+        # Array to translate the record types from LDAP language to MaraDNS language
+        # So the MX record is a hack but that's how BIND does it too
+        records = [
+            ['FQDNRecord', 'FQDN4'],
+            ['aRecord', 'A'],
+            ['cNAMERecord', 'CNAME'],
+            ['sRVRecord', 'SRV'],
+            ['nSRecord', 'NS'],
+            ['tXTRecord', 'TXT'],
+            ['mXRecord', 'MX'],
+            ['pTRRecord', 'PTR']]
 
+        for record in records:
+            if record[0] in serverResponse.keys():
+                for ipAddress in serverResponse[record[0]]:
+                    if maraDnsVersion == 1 and record[0] == 'aRecord': _printIPAddressVOne(name, ipAddress) ; _printPTRVOne(name, ipAddress)
+                    if maraDnsVersion == 2: 
+                        if record[0] == 'pTRRecord':
+                            _printPTRVTwo(name, '+'+ttl, ipAddress)
+                        else:
+                            _printHostLineVTwo(name, '+'+ttl, record[1], ipAddress)
 
     serverResponse = serverRequest.search(filterObject=filt,
-                              attributes=[
-                                  'idnsName', 'FQDNRecord',
-                                  'ARecord', 'cNAMERecord',
-                                  'dNSTTL', 'mXRecord',
-                                  'NSRecord'],
-                              callback=_cbGotHost)
+                                          attributes=[
+                                              'idnsName', 'FQDNRecord',
+                                              'aRecord', 'cNAMERecord',
+                                              'dNSTTL', 'mXRecord',
+                                              'sRVRecord', 'nSRecord',
+                                              'pTRRecord','tXTRecord'],
+                                          callback=_cbGotHost)
     return serverResponse 
 
-def cbConnected(client, cfg, maraDnsVersion, filterText):
+def cbConnected(client, filterText):
     serverRequest = ldapsyntax.LDAPEntryWithClient(client, cfg.getBaseDN())
-    d = getHosts(serverRequest, maraDnsVersion, filterText)
+    d = getHosts(serverRequest, filterText)
     def unbind(r, serverRequest):
         serverRequest.client.unbind()
         return r
     d.addCallback(unbind, serverRequest)
     return d
 
-def main(cfg, maraDnsVersion, filterText):
+def main(filterText):
     from twisted.python import log
     log.startLogging(sys.stderr, setStdout=0)
 
@@ -102,7 +125,7 @@ def main(cfg, maraDnsVersion, filterText):
     d = c.connectAnonymously(
         baseDN,
         overrides=cfg.getServiceLocationOverrides())
-    d.addCallback(cbConnected, cfg, maraDnsVersion, filt)
+    d.addCallback(cbConnected, filt)
     d.addErrback(error)
     d.addBoth(lambda x: reactor.stop())
 
@@ -125,6 +148,4 @@ if __name__ == "__main__":
     cfg = config.LDAPConfig(baseDN=opts['base'],
                             serviceLocationOverrides=opts['service-location'])
     maraDnsVersion = config.maraDnsVersion()
-    main(cfg,
-         maraDnsVersion,
-         opts['customFilter'])
+    main(opts['customFilter'])
