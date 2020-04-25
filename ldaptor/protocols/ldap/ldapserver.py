@@ -62,10 +62,10 @@ class BaseLDAPServer(protocol.Protocol):
         """Called when TCP connection has been lost"""
         self.connected = 0
 
-    def queue(self, id, op):
+    def queue(self, id, op, controls):
         if not self.connected:
             raise LDAPServerConnectionLostException()
-        msg = pureldap.LDAPMessage(op, id=id)
+        msg = pureldap.LDAPMessage(op, controls=controls, id=id)
         if self.debug:
             log.msg('S->C %s' % repr(msg), debug=True)
         self.transport.write(msg.toWire())
@@ -94,9 +94,14 @@ class BaseLDAPServer(protocol.Protocol):
                                       resultCode=reason.value.resultCode,
                                       errorMessage=reason.value.message)
 
-    def _cbHandle(self, response, id):
-        if response is not None:
-            self.queue(id, response)
+    def _cbHandle(self, responseAndControls, id):
+        if (responseAndControls.__class__.__name__ == 'tuple'):
+            response, controls = responseAndControls
+        else:
+            response = responseAndControls
+            controls = None
+        if response is not None:   
+            self.queue(id, response, controls)
 
     def failDefault(self, resultCode, errorMessage):
         return pureldap.LDAPExtendedResponse(

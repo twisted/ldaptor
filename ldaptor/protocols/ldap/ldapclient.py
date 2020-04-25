@@ -110,7 +110,7 @@ class LDAPClient(protocol.Protocol):
         self.transport.write(msg.toWire())
         return d
 
-    def send_multiResponse(self, op, handler, *args, **kwargs):
+    def send_multiResponse(self, op, controls=None, handler=None, *args, **kwargs):
         """
         Send an LDAP operation to the server, expecting one or more
         responses.
@@ -133,46 +133,13 @@ class LDAPClient(protocol.Protocol):
         completes when the first response has been received
         @rtype: Deferred LDAPProtocolResponse
         """
-        msg = self._send(op)
-        assert op.needs_answer
-        d = defer.Deferred()
-        self.onwire[msg.id] = (d, False, handler, args, kwargs)
-        self.transport.write(msg.toWire())
-        return d
-
-    def send_multiResponse_ex(self, op, controls=None, handler=None, *args, **kwargs):
-        """
-        Send an LDAP operation to the server, expecting one or more
-        responses.
-
-        If `handler` is provided, it will receive a LDAP response *and*
-        response controls as its first 2 arguments. The Deferred returned
-        by this function will never fire.
-
-        If `handler` is not provided, the Deferred returned by this
-        function will fire with a tuple of the first LDAP response
-        and any associated response controls.
-
-        @param op: the operation to send
-        @type op: LDAPProtocolRequest
-        @param controls: LDAP controls to send with the message.
-        @type controls: LDAPControls
-        @param handler: a callable that will be called for each
-        response. It should return a boolean, whether this was the
-        final response.
-        @param args: positional arguments to pass to handler
-        @param kwargs: keyword arguments to pass to handler
-        @return: the result from the last handler as a deferred that
-        completes when the last response has been received
-        @rtype: Deferred LDAPProtocolResponse
-        """
         msg = self._send(op, controls=controls)
         assert op.needs_answer
         d = defer.Deferred()
         self.onwire[msg.id] = (d, True, handler, args, kwargs)
         self.transport.write(msg.toWire())
         return d
-
+        
     def send_noResponse(self, op, controls=None):
         """
         Send an LDAP operation to the server, with no response
