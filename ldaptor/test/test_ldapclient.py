@@ -181,7 +181,7 @@ class SendTests(unittest.TestCase):
     def test_send_multiResponse(self):
         client, transport = self.create_test_client()
         op = self.create_test_search_req()
-        d = client.send_multiResponse(op, None)
+        d = client.send_multiResponse(op, None, None)
         expected_value = pureldap.LDAPMessage(op)
         expected_value.id -= 1
         expected_bytestring = expected_value.toWire()
@@ -209,7 +209,7 @@ class SendTests(unittest.TestCase):
                 return True
             return False
 
-        client.send_multiResponse(op, collect_result_)
+        client.send_multiResponse(op, None, collect_result_)
         expected_value = pureldap.LDAPMessage(op)
         expected_value.id -= 1
         expected_bytestring = expected_value.toWire()
@@ -230,11 +230,11 @@ class SendTests(unittest.TestCase):
             response.value,
             results[1])
 
-    def test_send_multiResponse_ex(self):
+    def test_send_multiResponse_with_controls(self):
         client, transport = self.create_test_client()
         op = self.create_test_search_req()
         controls = self.create_paged_search_controls()
-        d = client.send_multiResponse_ex(op, controls)
+        d = client.send_multiResponse(op, controls)
         expected_value = pureldap.LDAPMessage(op, controls)
         expected_value.id -= 1
         expected_bytestring = expected_value.toWire()

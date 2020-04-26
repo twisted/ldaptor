@@ -56,7 +56,7 @@ class MergedLDAPServer(ldapserver.BaseLDAPServer):
         # Controls are ignored.
         for c in self.clients:
             if request.needs_answer:
-                d = c.send_multiResponse(request, self._gotResponse, reply)
+                d = c.send_multiResponse(request, None, self._gotResponse, reply)
                 d.addErrback(defer.logError)
             else:
                 c.send_noResponse(request)
