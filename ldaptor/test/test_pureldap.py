@@ -16,7 +16,6 @@
 """
 Test cases for ldaptor.protocols.pureldap module.
 """
-import six
 from twisted.trial import unittest
 
 from ldaptor.protocols import pureldap, pureber
@@ -660,7 +659,7 @@ class KnownValues(unittest.TestCase):
             if decoder is None:
                 decoder = pureldap.LDAPBERDecoderContext(
                     fallback=pureber.BERDecoderContext())
-            for i in six.moves.range(1, len(encoded)):
+            for i in range(1, len(encoded)):
                 m=s(*encoded)[:i]
                 self.assertRaises(pureber.BERExceptionInsufficientData,
                                   pureber.berDecodeObject,
@@ -690,8 +689,8 @@ class TestEquality(unittest.TestCase):
 
     def testInEquality(self):
         """LDAP objects do not equal LDAP objects with different type or content"""
-        for i in six.moves.range(len(self.valuesToTest)):
-            for j in six.moves.range(len(self.valuesToTest)):
+        for i in range(len(self.valuesToTest)):
+            for j in range(len(self.valuesToTest)):
                 if i!=j:
                     i_class, i_args = self.valuesToTest[i]
                     j_class, j_args = self.valuesToTest[j]

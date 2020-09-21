@@ -16,7 +16,6 @@
 """
 Test cases for ldaptor.protocols.pureber module.
 """
-import six
 from twisted.trial import unittest
 
 from ldaptor.protocols import pureber
@@ -107,8 +106,8 @@ class BERBaseTests(unittest.TestCase):
         """
         BER objects do not equal BER objects with different type or content
         """
-        for i in six.moves.range(len(self.valuesToTest)):
-            for j in six.moves.range(len(self.valuesToTest)):
+        for i in range(len(self.valuesToTest)):
+            for j in range(len(self.valuesToTest)):
                 if i!=j:
                     i_class, i_args = self.valuesToTest[i]
                     j_class, j_args = self.valuesToTest[j]
@@ -452,7 +451,7 @@ class TestBERSequence(unittest.TestCase):
             self.assertIsInstance(result, pureber.BERSequence)
             result = result.data
             self.assertEqual(len(content), len(result))
-            for i in six.moves.range(len(content)):
+            for i in range(len(content)):
                 self.assertEqual(content[i], result[i])
             self.assertEqual(content, result)
 

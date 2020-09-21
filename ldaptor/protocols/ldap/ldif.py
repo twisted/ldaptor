@@ -30,7 +30,7 @@ def attributeAsLDIF_base64(attribute, value):
 
 
 def containsNonprintable(s):
-    for i in six.moves.xrange(len(s)):
+    for i in range(len(s)):
         c = s[i:i + 1]
         if ord(c) > 127 or c == b'\0' or c == b'\n' or c == b'\r':
             return True

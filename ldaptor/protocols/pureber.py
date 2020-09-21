@@ -30,7 +30,7 @@
 #     Only some BOOLEAN and INTEGER types have default values in
 #     this protocol definition.
 
-from six.moves import UserList
+from collections import UserList
 
 from ldaptor._encoder import to_bytes, repr_converter, WireStrAlias
 

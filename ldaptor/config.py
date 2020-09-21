@@ -1,6 +1,6 @@
 import os.path
 
-from six.moves import configparser
+import configparser
 from zope.interface import implementer
 
 from ldaptor import interfaces

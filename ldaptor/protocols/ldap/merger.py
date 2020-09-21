@@ -5,7 +5,7 @@
 """
 
 from twisted.internet import reactor, defer
-from six.moves.queue import Queue
+from queue import Queue
 
 from ldaptor.protocols.ldap import ldapclient, ldapconnector
 from ldaptor.protocols.ldap import ldapserver
