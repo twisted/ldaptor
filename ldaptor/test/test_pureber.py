@@ -140,10 +140,10 @@ class BERDecoderContextRepr(unittest.TestCase):
         self.assertEqual(
             repr(pureber.BERDecoderContext(fallback="foo", inherit="bar")),
             "<BERDecoderContext identities={"
+            "0x01: BERBoolean, "
             "0x02: BERInteger, "
             "0x04: BEROctetString, "
             "0x05: BERNull, "
-            "0x01: BERBoolean, "
             "0x0a: BEREnumerated, "
             "0x10: BERSequence, "
             "0x11: BERSet"

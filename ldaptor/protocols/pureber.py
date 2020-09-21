@@ -30,6 +30,7 @@
 #     Only some BOOLEAN and INTEGER types have default values in
 #     this protocol definition.
 
+import sys
 from collections import UserList
 
 from ldaptor._encoder import to_bytes, repr_converter, WireStrAlias
@@ -332,10 +333,10 @@ class BERSet(BERSequence):
 
 class BERDecoderContext:
     Identities = {
+        BERBoolean.tag: BERBoolean,
         BERInteger.tag: BERInteger,
         BEROctetString.tag: BEROctetString,
         BERNull.tag: BERNull,
-        BERBoolean.tag: BERBoolean,
         BEREnumerated.tag: BEREnumerated,
         BERSequence.tag: BERSequence,
         BERSet.tag: BERSet,
@@ -361,6 +362,10 @@ class BERDecoderContext:
         identities = []
         for tag, class_ in self.Identities.items():
             identities.append('0x{:02x}: {}'.format(tag, class_.__name__))
+
+        if sys.version_info < (3, 6):
+            identities.sort()
+
         return "<"+self.__class__.__name__ \
                +" identities={%s}" % ', '.join(identities) \
                +" fallback="+repr(self.fallback) \
