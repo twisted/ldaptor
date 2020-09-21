@@ -40,7 +40,6 @@ if __name__ == '__main__':
               'passlib',
               'Twisted[tls]',
               'pyparsing',
-              'six >= 1.7',
               'zope.interface',
           ],
           classifiers=[
