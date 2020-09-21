@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # Copyright (C) 2001 Tommi Virtanen
 #
 # This library is free software; you can redistribute it and/or

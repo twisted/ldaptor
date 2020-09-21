@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 from ldaptor.protocols.ldap import distinguishedname, ldapconnector, ldapsyntax, ldapclient
 from ldaptor.protocols import pureber, pureldap

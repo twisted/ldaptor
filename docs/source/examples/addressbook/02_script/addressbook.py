@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 from twisted.internet import reactor, defer
 
 from ldaptor.protocols.ldap import ldapclient, ldapsyntax, ldapconnector, \
