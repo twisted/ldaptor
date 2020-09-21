@@ -4,7 +4,6 @@ Test cases for ldaptor.inmemory module.
 from io import BytesIO
 
 from twisted.trial import unittest
-import six
 
 from ldaptor import inmemory, delta, testutil
 from ldaptor.protocols.ldap import distinguishedname, ldaperrors

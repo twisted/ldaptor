@@ -7,7 +7,6 @@ import random
 import errno
 import shutil
 
-import six
 from twisted.trial import unittest
 
 from ldaptor import ldiftree, entry, delta, testutil

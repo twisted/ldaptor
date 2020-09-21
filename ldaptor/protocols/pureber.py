@@ -30,7 +30,6 @@
 #     Only some BOOLEAN and INTEGER types have default values in
 #     this protocol definition.
 
-import six
 from six.moves import UserList
 
 from ldaptor._encoder import to_bytes, repr_converter, WireStrAlias
@@ -328,7 +327,6 @@ class BERSequenceOf(BERSequence):
 
 class BERSet(BERSequence):
     tag = 0x11
-    pass
 
 
 

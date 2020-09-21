@@ -4,7 +4,6 @@ Test cases for ldaptor.protocols.ldap.ldapserver module.
 import base64
 import types
 
-import six
 from twisted.internet import address, protocol
 from twisted.python import components
 from twisted.test import proto_helpers

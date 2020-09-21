@@ -2,8 +2,7 @@
 
 import sys
 from ldaptor.protocols.ldap import ldapclient, ldapsyntax
-from ldaptor.protocols import pureber, pureldap
-from ldaptor import ldapfilter
+from ldaptor.protocols import pureldap
 from twisted.internet.defer import Deferred, DeferredList
 from twisted.internet import protocol, reactor
 

@@ -17,32 +17,26 @@ class LDIFParseError(Exception):
 
 class LDIFLineWithoutSemicolonError(LDIFParseError):
     """LDIF line without semicolon seen"""
-    pass
 
 
 class LDIFEntryStartsWithNonDNError(LDIFParseError):
     """LDIF entry starts with a non-DN line"""
-    pass
 
 
 class LDIFEntryStartsWithSpaceError(LDIFParseError):
     """Invalid LDIF value format"""
-    pass
 
 
 class LDIFVersionNotANumberError(LDIFParseError):
     """Non-numeric LDIF version number"""
-    pass
 
 
 class LDIFUnsupportedVersionError(LDIFParseError):
     """LDIF version not supported"""
-    pass
 
 
 class LDIFTruncatedError(LDIFParseError):
     """LDIF appears to be truncated"""
-    pass
 
 
 HEADER = b'HEADER'

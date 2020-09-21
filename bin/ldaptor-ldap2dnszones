@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
-from ldaptor.protocols.ldap import distinguishedname, ldapconnector, ldapsyntax, ldapclient
+from ldaptor.protocols.ldap import ldapclient, ldapconnector, ldapsyntax
 from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage, ldapfilter, config, dns
-import sys, os, socket
-from twisted.internet import protocol, defer, reactor
+import os
+import sys
+from twisted.internet import reactor
 
 def formatIPAddress(name, ip):
     return '{}\tIN A\t{}\n'.format(name, ip)

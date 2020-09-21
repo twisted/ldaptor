@@ -15,7 +15,6 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 from ldaptor.protocols.ldap import ldapclient, ldapsyntax, ldapconnector, distinguishedname
-from ldaptor.protocols import pureber
 from twisted.internet import defer, reactor
 from twisted.python import log
 import sys

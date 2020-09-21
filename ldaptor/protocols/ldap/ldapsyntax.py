@@ -1,7 +1,6 @@
 """Pythonic API for LDAP operations."""
 import functools
 
-import six
 from twisted.internet import defer
 from twisted.python.failure import Failure
 from zope.interface import implementer
@@ -39,27 +38,22 @@ class PasswordSetAborted(Exception):
 
 class DNNotPresentError(Exception):
     """The requested DN cannot be found by the server."""
-    pass
 
 
 class ObjectInBadStateError(Exception):
     """The LDAP object in in a bad state."""
-    pass
 
 
 class ObjectDeletedError(ObjectInBadStateError):
     """The LDAP object has already been removed, unable to perform operations on it."""
-    pass
 
 
 class ObjectDirtyError(ObjectInBadStateError):
     """The LDAP object has a journal which needs to be committed or undone before this operation."""
-    pass
 
 
 class NoContainingNamingContext(Exception):
     """The server contains to LDAP naming context that would contain this object."""
-    pass
 
 
 class CannotRemoveRDNError(Exception):

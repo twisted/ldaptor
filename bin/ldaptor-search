@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
 import sys
-from ldaptor.protocols.ldap import ldapclient, ldif, ldapsyntax, ldapconnector
-from ldaptor.protocols import pureber, pureldap
-from ldaptor import usage, ldapfilter, config
-from twisted.internet import protocol, reactor, defer
+from ldaptor.protocols.ldap import ldapclient, ldapconnector, ldapsyntax
+from ldaptor import config, usage
+from twisted.internet import reactor
 
 def printResults(o):
     sys.stdout.write(str(o))

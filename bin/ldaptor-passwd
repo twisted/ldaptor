@@ -2,7 +2,6 @@
 
 import sys, getpass
 from ldaptor.protocols.ldap import ldapclient, distinguishedname, ldapconnector, ldapsyntax
-from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage, generate_password
 from twisted.internet import defer, reactor, protocol
 

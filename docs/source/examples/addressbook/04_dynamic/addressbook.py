@@ -1,4 +1,4 @@
-from twisted.internet import reactor, defer
+from twisted.internet import reactor
 from twisted.web import server, resource
 
 from ldaptor.protocols.ldap import ldapclient, ldapsyntax, ldapconnector, \

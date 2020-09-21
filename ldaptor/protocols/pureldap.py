@@ -17,7 +17,6 @@
 
 import string
 
-import six
 
 from ldaptor.protocols.pureber import (
 
@@ -141,7 +140,6 @@ class LDAPProtocolOp:
 
 class LDAPProtocolRequest(LDAPProtocolOp):
     needs_answer = 1
-    pass
 
 
 class LDAPProtocolResponse(LDAPProtocolOp):
@@ -657,22 +655,18 @@ class LDAPAssertionValue(BEROctetString):
 
 class LDAPMatchingRuleAssertion_matchingRule(LDAPMatchingRuleId):
     tag = CLASS_CONTEXT | 0x01
-    pass
 
 
 class LDAPMatchingRuleAssertion_type(LDAPAttributeDescription):
     tag = CLASS_CONTEXT | 0x02
-    pass
 
 
 class LDAPMatchingRuleAssertion_matchValue(LDAPAssertionValue):
     tag = CLASS_CONTEXT | 0x03
-    pass
 
 
 class LDAPMatchingRuleAssertion_dnAttributes(BERBoolean):
     tag = CLASS_CONTEXT | 0x04
-    pass
 
 
 class LDAPBERDecoderContext_MatchingRuleAssertion(BERDecoderContext):
@@ -944,7 +938,6 @@ class LDAPSearchResultEntry(LDAPProtocolResponse, BERSequence):
 class LDAPSearchResultDone(LDAPResult):
     tag = CLASS_APPLICATION | 0x05
 
-    pass
 
 
 class LDAPControls(BERSequence):
@@ -1185,13 +1178,11 @@ class LDAPDelRequest(LDAPProtocolRequest, LDAPString):
 
 class LDAPDelResponse(LDAPResult):
     tag = CLASS_APPLICATION | 0x0b
-    pass
 
 
 class LDAPModifyDNResponse_newSuperior(LDAPString):
     tag = CLASS_CONTEXT | 0x00
 
-    pass
 
 
 class LDAPBERDecoderContext_ModifyDNRequest(BERDecoderContext):

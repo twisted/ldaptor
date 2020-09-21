@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import sys
 from twisted.internet import stdio, reactor
 from ldaptor.protocols.ldap import ldifprotocol
 

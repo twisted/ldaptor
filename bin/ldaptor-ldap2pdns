@@ -5,10 +5,9 @@ from twisted.internet.defer import succeed, fail
 from twisted.internet import defer, reactor
 from twisted.internet.stdio import StandardIO
 from twisted.protocols.basic import LineReceiver
-from twisted.internet.protocol import ClientFactory
 from twisted.python.failure import Failure
 from twisted.python import log
-from ldaptor.protocols.ldap import ldapclient, distinguishedname, ldapconnector
+from ldaptor.protocols.ldap import ldapclient, ldapconnector
 from ldaptor.protocols.ldap.ldapsyntax import LDAPEntry
 from ldaptor import usage, config
 from cStringIO import StringIO

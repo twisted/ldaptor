@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import sys
-from ldaptor.protocols.ldap import ldapclient, ldif, distinguishedname, ldapconnector, ldapsyntax
-from ldaptor.protocols import pureber, pureldap
+from ldaptor.protocols.ldap import ldapclient, ldapconnector, ldapsyntax
+from ldaptor.protocols import pureldap
 from ldaptor import usage, ldapfilter, config
-from twisted.internet import protocol, reactor, defer
+from twisted.internet import reactor
 
 def _cbSearch(obj):
     a={}

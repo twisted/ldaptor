@@ -3,7 +3,7 @@
 import sys
 from ldaptor.protocols.ldap import ldif
 from ldaptor import usage, inmemory
-from twisted.internet import protocol, reactor, defer
+from twisted.internet import reactor
 
 exitStatus=0
 

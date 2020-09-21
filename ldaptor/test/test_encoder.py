@@ -4,7 +4,6 @@
 
 from twisted.trial import unittest
 
-import six
 
 import ldaptor._encoder
 
