@@ -35,6 +35,7 @@ if __name__ == '__main__':
           maintainer_email="psi29a@gmail.com",
           url="https://github.com/twisted/ldaptor",
           license="MIT",
+          python_requires="~=3.5",
           install_requires=[
               'passlib',
               'Twisted[tls]',
@@ -47,7 +48,13 @@ if __name__ == '__main__':
               'License :: OSI Approved :: MIT License',
               'Operating System :: OS Independent',
               'Development Status :: 5 - Production/Stable',
-              'Framework :: Twisted', 'Programming Language :: Python',
+              'Framework :: Twisted',
+              'Programming Language :: Python',
+              'Programming Language :: Python :: 3',
+              'Programming Language :: Python :: 3.5',
+              'Programming Language :: Python :: 3.6',
+              'Programming Language :: Python :: 3.7',
+              'Programming Language :: Python :: 3.8',
               'Topic :: Software Development :: Libraries :: Python Modules',
               'Topic :: System :: Systems Administration '
               ':: Authentication/Directory :: LDAP'
