@@ -17,16 +17,21 @@ from ldaptor.test import util, test_schema
 from ldaptor._encoder import to_bytes
 
 
-def wrapCommit(entry, cb, *args, **kwds):
+def observeCommits(entry):
+    commits = []
     bound_commit = entry.commit
 
-    def commit_(self):
+    def observe(v):
+        commits.append(v)
+        return v
+
+    def commit(self):
         d = bound_commit()
-        d.addCallback(cb, *args, **kwds)
+        d.addBoth(observe)
         return d
 
-    f = types.MethodType(commit_, entry)
-    entry.commit = f
+    entry.commit = types.MethodType(commit, entry)
+    return commits
 
 
 class LDAPServerTest(unittest.TestCase):
@@ -676,13 +681,7 @@ class LDAPServerTest(unittest.TestCase):
                 id=2).toWire())
 
     def test_passwordModify_simple(self):
-        data = {'committed': False}
-
-        def onCommit_(result, info):
-            info['committed'] = result
-            return result
-
-        wrapCommit(self.thingie, onCommit_, data)
+        commits = observeCommits(self.thingie)
         # first bind to some entry
         self.thingie['userPassword'] = ['{SSHA}yVLLj62rFf3kDAbzwEU0zYAVvbWrze8=']  # "secret"
         self.server.dataReceived(
@@ -705,7 +704,7 @@ class LDAPServerTest(unittest.TestCase):
                     userIdentity='cn=thingie,ou=stuff,dc=example,dc=com',
                     newPasswd='hushhush'),
                 id=2).toWire())
-        self.assertEqual(data['committed'], True, "Server never committed data.")
+        self.assertListEqual(commits, [True], "Server never committed data.")
         self.assertEqual(
             self.server.transport.value(),
             pureldap.LDAPMessage(
@@ -723,13 +722,7 @@ class LDAPServerTest(unittest.TestCase):
             self.assertEqual(entry.sshaDigest(b'hushhush', salt), secret)
 
     def test_passwordModify_someoneElse(self):
-        data = {'committed': False}
-
-        def onCommit_(result, info):
-            info['committed'] = result
-            return result
-
-        wrapCommit(self.thingie, onCommit_, data)
+        commits = observeCommits(self.thingie)
         # first bind to some entry
         userPassword = b'{SSHA}yVLLj62rFf3kDAbzwEU0zYAVvbWrze8=' # secret
         self.thingie['userPassword'] = [userPassword]
@@ -760,7 +753,7 @@ class LDAPServerTest(unittest.TestCase):
             "tried to change password of "
             "b'cn=another,ou=stuff,dc=example,dc=com'"
         )
-        self.assertEqual(data['committed'], False, "Server committed data.")
+        self.assertListEqual(commits, [], "Server committed data.")
         self.assertEqual(
             self.server.transport.value(),
             pureldap.LDAPMessage(
