@@ -14,11 +14,10 @@ TODO implement rest of syntax from RFC2849
 
 import base64
 
-import six
 
 from ldaptor._encoder import to_bytes
 
-encodestring = base64.encodestring if six.PY2 else base64.encodebytes
+encodestring = base64.encodebytes
 
 
 def base64_encode(s):

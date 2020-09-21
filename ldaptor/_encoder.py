@@ -4,7 +4,6 @@
 
 import warnings
 
-import six
 
 
 def to_bytes(value):
@@ -43,7 +42,7 @@ def repr_converter(value):
     * Byte string for Python 2
     * Unicode string for Python 3
     """
-    return to_bytes(value) if six.PY2 else to_unicode(value)
+    return to_unicode(value)
 
 
 def get_strings(value):
@@ -92,7 +91,7 @@ class TextStrAlias:
                       category=DeprecationWarning, stacklevel=2)
         warnings.simplefilter('default', DeprecationWarning)
         text = self.getText()
-        return to_bytes(text) if six.PY2 else text
+        return text
 
     def getText(self):
         raise NotImplementedError('getText method is not implemented')

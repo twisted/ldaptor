@@ -1,6 +1,5 @@
 from functools import total_ordering
 
-import six
 
 from ldaptor._encoder import to_unicode, TextStrAlias
 
@@ -88,7 +87,7 @@ class InvalidRelativeDistinguishedName(Exception):
 
     def __init__(self, rdn):
         Exception.__init__(self)
-        self.rdn = rdn.encode('utf-8') if six.PY2 else rdn
+        self.rdn = rdn
 
     def __str__(self):
         return "Invalid relative distinguished name %s." \

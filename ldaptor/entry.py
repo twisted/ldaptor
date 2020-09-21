@@ -1,7 +1,6 @@
 import base64
 import random
 
-import six
 
 from twisted.internet import defer
 from twisted.python.util import InsensitiveDict
@@ -178,7 +177,7 @@ class BaseLDAPEntry(WireStrAlias):
         for key in keys:
             a.append('{}: {}'.format(repr(key), repr(list(self[key]))))
         attributes = ', '.join(a)
-        dn = to_bytes(self.dn.getText()) if six.PY2 else self.dn.getText()
+        dn = self.dn.getText()
         return '{}({}, {{{}}})'.format(
             self.__class__.__name__,
             repr(dn),

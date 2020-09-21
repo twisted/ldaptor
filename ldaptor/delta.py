@@ -4,10 +4,8 @@ Changes to the content of one single LDAP entry.
 (This means these do not belong here: adding or deleting of entries,
 changing of location in tree)
 """
-import six
 
 from ldaptor import attributeset
-from ldaptor._encoder import to_bytes
 from ldaptor.protocols import pureldap, pureber
 from ldaptor.protocols.ldap import ldif, distinguishedname
 
@@ -183,7 +181,7 @@ class ModifyOp(Operation):
         dn = self.dn.getText()
         return (self.__class__.__name__
                 + '('
-                + 'dn=%r' % (to_bytes(dn) if six.PY2 else dn)
+                + 'dn=%r' % dn
                 + ', '
                 + 'modifications=%r' % self.modifications
                 + ')')
@@ -281,7 +279,7 @@ class DeleteOp(Operation):
         dn = self.dn.getText()
         return (self.__class__.__name__
                 + '('
-                + '%r' % (to_bytes(dn) if six.PY2 else dn)
+                + '%r' % dn
                 + ')')
 
     def __eq__(self, other):

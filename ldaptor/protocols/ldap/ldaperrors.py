@@ -13,7 +13,6 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import six
 
 from ldaptor._encoder import to_bytes
 
@@ -69,7 +68,7 @@ class LDAPException(Exception, LDAPResult):
 
     def __str__(self):
         message = self.toWire()
-        return message if six.PY2 else message.decode('utf-8')
+        return message.decode('utf-8')
 
     def toWire(self):
         if self.message:
