@@ -114,7 +114,7 @@ if __name__ == '__main__':
     factory.debug = True
     application = service.Application("ldaptor-server")
     myService = service.IServiceCollection(application)
-    serverEndpointStr = "tcp:{0}".format(port)
+    serverEndpointStr = "tcp:{}".format(port)
     e = serverFromString(reactor, serverEndpointStr)
     d = e.listen(factory)
     reactor.run()

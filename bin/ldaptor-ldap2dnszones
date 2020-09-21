@@ -8,13 +8,13 @@ import sys, os, socket
 from twisted.internet import protocol, defer, reactor
 
 def formatIPAddress(name, ip):
-    return '%s\tIN A\t%s\n' % (name, ip)
+    return '{}\tIN A\t{}\n'.format(name, ip)
 
 def formatPTR(name, ip):
     octets = ip.split('.')
     octets.reverse()
     octets.append('in-addr.arpa.')
-    return '%s\tIN PTR\t%s.\n' % ('.'.join(octets), name)
+    return '{}\tIN PTR\t{}.\n'.format('.'.join(octets), name)
 
 class HostIPAddress:
     def __init__(self, host, ipAddress):
@@ -228,7 +228,7 @@ def main(cfg, domain, forward, reverse, filter_text):
     try:
         baseDN = cfg.getBaseDN()
     except config.MissingBaseDNError as e:
-        print("%s: %s." % (sys.argv[0], e), file=sys.stderr)
+        print("{}: {}.".format(sys.argv[0], e), file=sys.stderr)
         sys.exit(1)
 
     if filter_text is not None:
@@ -300,7 +300,7 @@ if __name__ == "__main__":
         opts = MyOptions()
         opts.parseOptions()
     except usage.UsageError as ue:
-        sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
+        sys.stderr.write('{}: {}\n'.format(sys.argv[0], ue))
         sys.exit(1)
 
     cfg = config.LDAPConfig(baseDN=opts['base'],

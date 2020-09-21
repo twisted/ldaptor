@@ -362,7 +362,7 @@ class BERDecoderContext:
     def __repr__(self):
         identities = []
         for tag, class_ in self.Identities.items():
-            identities.append('0x%02x: %s' % (tag, class_.__name__))
+            identities.append('0x{:02x}: {}'.format(tag, class_.__name__))
         return "<"+self.__class__.__name__ \
                +" identities={%s}" % ', '.join(identities) \
                +" fallback="+repr(self.fallback) \

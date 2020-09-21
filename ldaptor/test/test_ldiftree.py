@@ -783,7 +783,7 @@ objectClass: top
             return self.example.children()
         d.addCallback(getChildren)
         d.addCallback(set)
-        d.addCallback(self.assertEqual, set([
+        d.addCallback(self.assertEqual, {
             self.meta,
             BaseLDAPEntry(
             dn='ou=moved,dc=example,dc=com',
@@ -791,7 +791,7 @@ objectClass: top
                          b'ou': [b'moved'],
             }),
             self.oneChild,
-            ]))
+            })
         return d
 
     def test_move_children_sameSuperior(self):
@@ -800,14 +800,14 @@ objectClass: top
             return self.example.children()
         d.addCallback(getChildren)
         d.addCallback(set)
-        d.addCallback(self.assertEqual, set([
+        d.addCallback(self.assertEqual, {
             BaseLDAPEntry(dn='ou=moved,dc=example,dc=com',
                           attributes={ b'objectClass': [b'a', b'b'],
                                        b'ou': [b'moved'],
                                        }),
             self.empty,
             self.oneChild,
-            ]))
+            })
         return d
 
 
@@ -817,22 +817,22 @@ objectClass: top
             return self.example.children()
         d.addCallback(getChildren)
         d.addCallback(set)
-        d.addCallback(self.assertEqual, set([
+        d.addCallback(self.assertEqual, {
             self.meta,
             self.oneChild,
-            ]))
+            })
         def getChildren2(dummy):
             return self.oneChild.children()
         d.addCallback(getChildren2)
         d.addCallback(set)
-        d.addCallback(self.assertEqual, set([
+        d.addCallback(self.assertEqual, {
             self.theChild,
             BaseLDAPEntry(
             dn='ou=moved,ou=oneChild,dc=example,dc=com',
             attributes={ b'objectClass': [b'a', b'b'],
                          b'ou': [b'moved'],
             }),
-            ]))
+            })
         return d
 
     def test_move_children_newSuperior(self):
@@ -841,21 +841,21 @@ objectClass: top
             return self.example.children()
         d.addCallback(getChildren)
         d.addCallback(set)
-        d.addCallback(self.assertEqual, set([
+        d.addCallback(self.assertEqual, {
             self.empty,
             self.oneChild,
-            ]))
+            })
         def getChildren2(dummy):
             return self.oneChild.children()
         d.addCallback(getChildren2)
         d.addCallback(set)
-        d.addCallback(self.assertEqual, set([
+        d.addCallback(self.assertEqual, {
             self.theChild,
             BaseLDAPEntry(dn='ou=moved,ou=oneChild,dc=example,dc=com',
                           attributes={ b'objectClass': [b'a', b'b'],
                                        b'ou': [b'moved'],
                                        }),
-            ]))
+            })
         return d
 
 

@@ -78,7 +78,7 @@ def _get(path, dn):
 
 def _putEntry(fileName, entry):
     """fileName is without extension."""
-    tmp = u'%s.%s.tmp' % (fileName, str(uuid.uuid4()))
+    tmp = u'{}.{}.tmp'.format(fileName, str(uuid.uuid4()))
     f = open(tmp, 'wb')
     f.write(entry.toWire())
     f.close()
@@ -243,7 +243,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
         if not os.path.exists(self.path):
             os.mkdir(self.path)
         fileName = os.path.join(self.path, u'%s' % rdn.getText())
-        tmp = u'%s.%s.tmp' % (fileName, str(uuid.uuid4()))
+        tmp = u'{}.{}.tmp'.format(fileName, str(uuid.uuid4()))
         f = open(tmp, 'wb')
         f.write(e.toWire())
         f.close()
@@ -282,7 +282,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
         return defer.maybeDeferred(self._deleteChild, rdn)
 
     def __repr__(self):
-        return '%s(%r, %r)' % (self.__class__.__name__,
+        return '{}({!r}, {!r})'.format(self.__class__.__name__,
                                self.path,
                                self.dn.getText())
 
@@ -290,12 +290,12 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
         if not isinstance(other, LDIFTreeEntry):
             # We don't return NotImplemented so that we get the same
             # result in Python2 and Python3.
-            raise(TypeError, 'unorderable types: %r > %r' % (self, other))
+            raise(TypeError, 'unorderable types: {!r} > {!r}'.format(self, other))
         return self.dn < other.dn
 
     def __gt__(self, other):
         if not isinstance(other, LDIFTreeEntry):
-            raise(TypeError, 'unorderable types: %r < %r' % (self, other))
+            raise(TypeError, 'unorderable types: {!r} < {!r}'.format(self, other))
         return self.dn > other.dn
 
     def commit(self):
@@ -305,7 +305,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
 
         def eb_(err):
             from twisted.python import log
-            log.msg("[ERROR] Could not commit entry: {0}.".format(self.dn))
+            log.msg("[ERROR] Could not commit entry: {}.".format(self.dn))
             return False
 
         d.addErrback(eb_)

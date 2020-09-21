@@ -21,9 +21,9 @@ class PasswordSetAggregateError(Exception):
         self.errors = errors
 
     def __str__(self):
-        return '%s: %s.' % (
+        return '{}: {}.'.format(
             self.__doc__,
-            '; '.join(['%s failed with %s' % (name, fail.getErrorMessage())
+            '; '.join(['{} failed with {}'.format(name, fail.getErrorMessage())
                        for name, fail in self.errors]))
 
     def __repr__(self):
@@ -74,7 +74,7 @@ class CannotRemoveRDNError(Exception):
         if self.val is None:
             r = repr(self.key)
         else:
-            r = '%s=%s' % (repr(self.key), repr(self.val))
+            r = '{}={}'.format(repr(self.key), repr(self.val))
         return """The attribute to be removed, %s, is the RDN for the object and cannot be removed.""" % r
 
 
@@ -86,7 +86,7 @@ class MatchNotImplemented(NotImplementedError):
         self.op = op
 
     def __str__(self):
-        return '%s: %r' % (self.__doc__, self.op)
+        return '{}: {!r}'.format(self.__doc__, self.op)
 
 
 class JournaledLDAPAttributeSet(attributeset.LDAPAttributeSet):
@@ -192,7 +192,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
                 raise ObjectDeletedError
             else:
                 raise ObjectInBadStateError(
-                    "State is %s while expecting %s" % (
+                    "State is {} while expecting {}".format(
                         repr(self._state), repr('ready')))
 
     def journal(self, journalOperation):
@@ -758,9 +758,9 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         keys.sort()
         a = []
         for key in keys:
-            a.append('%s: %s' % (repr(key), repr(self[key])))
+            a.append('{}: {}'.format(repr(key), repr(self[key])))
         attributes = ', '.join(a)
-        return '%s(dn=%s, attributes={%s})' % (
+        return '{}(dn={}, attributes={{{}}})'.format(
             self.__class__.__name__,
             repr(self.dn),
             attributes)

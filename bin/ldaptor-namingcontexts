@@ -15,7 +15,7 @@ class Search(ldapclient.LDAPClient):
 
     def _printResults(self, result, host):
         for context in result['namingContexts']:
-            print('%s\t%s' % (host, context))
+            print('{}\t{}'.format(host, context))
 
     def _handle_bind_success(self, x):
         matchedDN, serverSaslCreds = x

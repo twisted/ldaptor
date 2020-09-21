@@ -478,8 +478,8 @@ description:: V2hhdCBhIGNhcmVmdWwgcmVhZGVyIHlvdSBhcmUhICBUaGlzIHZhbHVlIGlzIGJhc2
                 o = proto.listOfCompleted.pop(0)
                 self.failUnlessEqual(o.dn, distinguishedname.DistinguishedName(dn))
 
-                got = set([x.lower() for x in o.keys()])
-                want = set([x.lower() for x in attr.keys()])
+                got = {x.lower() for x in o.keys()}
+                want = {x.lower() for x in attr.keys()}
                 self.failUnlessEqual(got, want)
 
                 for k, v in attr.items():

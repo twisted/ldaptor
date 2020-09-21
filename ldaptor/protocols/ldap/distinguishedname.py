@@ -8,7 +8,7 @@ from ldaptor._encoder import to_unicode, TextStrAlias
 # Note that RFC 2253 sections 2.4 and 3 disagree whether "=" needs to
 # be quoted. Let's trust the syntax, slapd refuses to accept unescaped
 # "=" in RDN values.
-escapedChars = u',+"\<>;='
+escapedChars = u',+"\\<>;='
 escapedChars_leading = u' #'
 escapedChars_trailing = u' #'
 

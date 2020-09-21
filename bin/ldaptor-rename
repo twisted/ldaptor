@@ -61,7 +61,7 @@ if __name__ == "__main__":
         opts = MyOptions()
         opts.parseOptions()
     except usage.UsageError as ue:
-        sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
+        sys.stderr.write('{}: {}\n'.format(sys.argv[0], ue))
         sys.exit(1)
 
     from twisted.python import log

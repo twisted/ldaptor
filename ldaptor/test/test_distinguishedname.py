@@ -122,8 +122,8 @@ class LDAPDistinguishedName_Escaping(TestCaseWithKnownValues):
             ])
         got = got.getText()
         self.assertEqual(got,
-                          'cn=test+owner=uid\=foo\,ou\=depar'
-                          +'tment\,dc\=example\,dc\=com,dc=ex'
+                          r'cn=test+owner=uid\=foo\,ou\=depar'
+                          +r'tment\,dc\=example\,dc\=com,dc=ex'
                           +'ample,dc=com')
 
 
@@ -181,7 +181,7 @@ class LDAPDistinguishedName_InitialSpaces(TestCaseWithKnownValues):
     """
     knownValues = (
 
-        ('cn=foo, ou=bar,  dc=quux, \ attributeThatStartsWithSpace=Value',
+        (r'cn=foo, ou=bar,  dc=quux, \ attributeThatStartsWithSpace=Value',
          [[('cn', 'foo')],
           [('ou', 'bar')],
           [('dc', 'quux')],

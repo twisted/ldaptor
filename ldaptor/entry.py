@@ -177,10 +177,10 @@ class BaseLDAPEntry(WireStrAlias):
         keys = sorted((key for key in self), key=to_bytes)
         a = []
         for key in keys:
-            a.append('%s: %s' % (repr(key), repr(list(self[key]))))
+            a.append('{}: {}'.format(repr(key), repr(list(self[key]))))
         attributes = ', '.join(a)
         dn = to_bytes(self.dn.getText()) if six.PY2 else self.dn.getText()
-        return '%s(%s, {%s})' % (
+        return '{}({}, {{{}}})'.format(
             self.__class__.__name__,
             repr(dn),
             attributes)
@@ -200,8 +200,8 @@ class BaseLDAPEntry(WireStrAlias):
 
         r = []
 
-        myKeys = set(key for key in self)
-        otherKeys = set(key for key in other)
+        myKeys = {key for key in self}
+        otherKeys = {key for key in other}
 
         addedKeys = list(otherKeys - myKeys)
         addedKeys.sort(key=to_bytes)  # for reproducability only

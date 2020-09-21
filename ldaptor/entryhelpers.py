@@ -30,8 +30,8 @@ class DiffTreeMixin(object):
             assert len(r) == 1
             return r[0]
 
-        my = set([x.dn.split()[0] for x in myChildren])
-        his = set([x.dn.split()[0] for x in otherChildren])
+        my = {x.dn.split()[0] for x in myChildren}
+        his = {x.dn.split()[0] for x in otherChildren}
 
         # differences in common children
         commonRDN = list(my & his)

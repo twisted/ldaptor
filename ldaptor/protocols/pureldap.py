@@ -49,7 +49,7 @@ def escape(s):
     return s
 
 def binary_escape(s):
-    return ''.join('\\{0:02x}'.format(ord(c)) for c in s)
+    return ''.join('\\{:02x}'.format(ord(c)) for c in s)
 
 def smart_escape(s, threshold=0.30):
     binary_count = sum(c not in string.printable for c in s)
@@ -1585,7 +1585,7 @@ class LDAPStartTLSRequest(LDAPExtendedRequest):
     def __repr__(self):
         l = []
         if self.tag != self.__class__.tag:
-            l.append('tag={0}'.format(self.tag))
+            l.append('tag={}'.format(self.tag))
         return self.__class__.__name__ + '(' + ', '.join(l) + ')'
 
 
@@ -1613,7 +1613,7 @@ class LDAPStartTLSResponse(LDAPExtendedResponse):
     def __repr__(self):
         l = []
         if self.tag != self.__class__.tag:
-            l.append('tag={0}'.format(self.tag))
+            l.append('tag={}'.format(self.tag))
         return self.__class__.__name__ + '(' + ', '.join(l) + ')'
 
 

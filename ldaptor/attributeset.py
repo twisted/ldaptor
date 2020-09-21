@@ -26,7 +26,7 @@ class LDAPAttributeSet(set):
         values = list(self)
         values.sort()
         attributes = ', '.join([repr(x) for x in values])
-        return '%s(%r, [%s])' % (
+        return '{}({!r}, [{}])'.format(
             self.__class__.__name__,
             self.key,
             attributes)
