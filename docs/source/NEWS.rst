@@ -10,6 +10,8 @@ Features
 Changes
 ^^^^^^^
 
+- Dropped support for Python 2
+
 Bugfixes
 ^^^^^^^^
 
