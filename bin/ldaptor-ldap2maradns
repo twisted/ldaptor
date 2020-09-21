@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-from __future__ import print_function
 from ldaptor.protocols.ldap import distinguishedname, ldapconnector, ldapsyntax, ldapclient
 from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage, ldapfilter, config, dns

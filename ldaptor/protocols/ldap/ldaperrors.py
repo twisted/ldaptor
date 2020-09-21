@@ -49,7 +49,7 @@ class LDAPExceptionCollection(type):
         return LDAPUnknownError(code, message)
 
 
-class LDAPResult(six.with_metaclass(LDAPExceptionCollection)):
+class LDAPResult(metaclass=LDAPExceptionCollection):
     resultCode = None
     name = None
 

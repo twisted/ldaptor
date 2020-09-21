@@ -65,7 +65,7 @@ userPassword: eekretsay
 """
 
 
-class Tree(object):
+class Tree:
 
     def __init__(self):
         global LDIF

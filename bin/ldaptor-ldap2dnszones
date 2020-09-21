@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-from __future__ import print_function
 from ldaptor.protocols.ldap import distinguishedname, ldapconnector, ldapsyntax, ldapclient
 from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage, ldapfilter, config, dns
@@ -65,7 +64,7 @@ class Net:
             net = dns.aton(self.address)
             mask = dns.aton(self.mask)
             ip = dns.aton(ipAddress)
-        except socket.error:
+        except OSError:
             # no need to log here, higher levels will log a warning
             # when they see the address is in no net
             return False
@@ -275,12 +274,12 @@ class MyOptions(usage.Options, usage.Options_service_location, usage.Options_bas
 
         try:
             address = dns.aton(addressString)
-        except socket.error as e:
+        except OSError as e:
             raise usage.UsageError('--reverse= address is invalid: %s' % e)
 
         try:
             netmask = dns.aton(netmaskString)
-        except socket.error as e:
+        except OSError as e:
             raise usage.UsageError('--reverse= netmask is invalid: %s' % e)
 
         self.opts.setdefault('reverse', []).append({

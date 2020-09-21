@@ -6,7 +6,7 @@ from twisted.trial import unittest
 from ldaptor.protocols.ldap import ldifprotocol, distinguishedname
 
 
-class FixStringRepresentation(object):
+class FixStringRepresentation:
     """
     A simple object which has a fix string representation.
     """
@@ -77,13 +77,13 @@ class TestLDIFParsing(unittest.TestCase):
         self.failUnlessEqual(len(proto.listOfCompleted), 2)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), u'cn=foo,dc=example,dc=com')
+        self.failUnlessEqual(o.dn.getText(), 'cn=foo,dc=example,dc=com')
         self.failUnlessEqual(o[b'objectClass'], [b'a', b'b'])
         self.failUnlessEqual(o[b'aValue'], [b'a', b'b'])
         self.failUnlessEqual(o[b'bValue'], [b'c'])
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), u'cn=bar,dc=example,dc=com')
+        self.failUnlessEqual(o.dn.getText(), 'cn=bar,dc=example,dc=com')
         self.failUnlessEqual(o[b'objectClass'], [b'c'])
         self.failUnlessEqual(o[b'aValue'], [b' FOO!', b'b'])
         self.failUnlessEqual(o[b'bValue'], [b'C'])
@@ -109,7 +109,7 @@ class TestLDIFParsing(unittest.TestCase):
         self.failUnlessEqual(len(proto.listOfCompleted), 1)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), u'cn=foo,dc=example,dc=com')
+        self.failUnlessEqual(o.dn.getText(), 'cn=foo,dc=example,dc=com')
         self.failUnlessEqual(o[b'objectClass'], [b'a', b'b'])
         self.failUnlessEqual(proto.listOfCompleted, [])
 
@@ -131,11 +131,11 @@ cn: bar
         self.failUnlessEqual(len(proto.listOfCompleted), 2)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), u'cn=foo,dc=example,dc=com')
+        self.failUnlessEqual(o.dn.getText(), 'cn=foo,dc=example,dc=com')
         self.failUnlessEqual(o[b'CN'], [b'foo'])
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), u'cn=bar,dc=example,dc=com')
+        self.failUnlessEqual(o.dn.getText(), 'cn=bar,dc=example,dc=com')
         self.failUnlessEqual(o[b'CN'], [b'bar'])
 
         self.failUnlessEqual(proto.listOfCompleted, [])
@@ -160,7 +160,7 @@ aValUe: B
         self.failUnlessEqual(len(proto.listOfCompleted), 1)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), u'cn=foo,dc=example,dc=com')
+        self.failUnlessEqual(o.dn.getText(), 'cn=foo,dc=example,dc=com')
         self.failUnlessEqual(o[b'objectClass'], [b'a', b'b'])
         self.failUnlessEqual(o[b'CN'], [b'foo'])
         self.failUnlessEqual(o[b'aValue'], [b'a', b'B'])
@@ -183,7 +183,7 @@ bValue: c
         self.failUnlessEqual(len(proto.listOfCompleted), 1)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), u'cn=foo,dc=example,dc=com')
+        self.failUnlessEqual(o.dn.getText(), 'cn=foo,dc=example,dc=com')
         self.failUnlessEqual(o[b'objectClass'], [b'a', b'b'])
         self.failUnlessEqual(o[b'aValue'], [b'a', b'b'])
         self.failUnlessEqual(o[b'bValue'], [b'c'])
@@ -233,7 +233,7 @@ aValUe:b
         self.failUnlessEqual(len(proto.listOfCompleted), 1)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), u'cn=foo,dc=example,dc=com')
+        self.failUnlessEqual(o.dn.getText(), 'cn=foo,dc=example,dc=com')
         self.failUnlessEqual(o[b'objectClass'], [b'a', b'b'])
         self.failUnlessEqual(o[b'CN'], [b'foo'])
         self.failUnlessEqual(o[b'aValue'], [b'a', b'b'])
@@ -279,11 +279,11 @@ cn: bar
         self.failUnlessEqual(len(proto.listOfCompleted), 2)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), u'cn=foo,dc=example,dc=com')
+        self.failUnlessEqual(o.dn.getText(), 'cn=foo,dc=example,dc=com')
         self.failUnlessEqual(o[b'CN'], [b'foo'])
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), u'cn=bar,dc=example,dc=com')
+        self.failUnlessEqual(o.dn.getText(), 'cn=bar,dc=example,dc=com')
         self.failUnlessEqual(o[b'CN'], [b'bar'])
 
         self.failUnlessEqual(proto.listOfCompleted, [])
@@ -309,11 +309,11 @@ cn: bar
         self.failUnlessEqual(len(proto.listOfCompleted), 2)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), u'cn=foo,dc=example,dc=com')
+        self.failUnlessEqual(o.dn.getText(), 'cn=foo,dc=example,dc=com')
         self.failUnlessEqual(o[b'CN'], [b'foo'])
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), u'cn=bar,dc=example,dc=com')
+        self.failUnlessEqual(o.dn.getText(), 'cn=bar,dc=example,dc=com')
         self.failUnlessEqual(o[b'CN'], [b'bar'])
 
         self.failUnlessEqual(proto.listOfCompleted, [])

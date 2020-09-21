@@ -169,8 +169,8 @@ class LDAPDistinguishedName_UTF8_Init(TestCaseWithKnownValues):
     keep the representation as UTF-8.
     """
     knownValues = (
-        (u'SN=Lu\u010di\u0107'.encode('utf-8'),
-         [[(b'SN', u'Lu\u010di\u0107'.encode('utf-8'))]]),
+        ('SN=Lu\u010di\u0107'.encode(),
+         [[(b'SN', 'Lu\u010di\u0107'.encode())]]),
         )
 
 
@@ -317,17 +317,17 @@ class LDAPDistinguishedName_Prettify(unittest.TestCase):
     def testPrettifySpaces(self):
         """DistinguishedName(...).getText() prettifies the DN by removing extra whitespace."""
         d=dn.DistinguishedName('cn=foo, o=bar,  c=us')
-        assert d.getText() == u'cn=foo,o=bar,c=us'
+        assert d.getText() == 'cn=foo,o=bar,c=us'
 
 class DistinguishedName_Init(unittest.TestCase):
     def testGetText(self):
         d=dn.DistinguishedName('dc=example,dc=com')
-        self.assertEqual(d.getText(), u'dc=example,dc=com')
+        self.assertEqual(d.getText(), 'dc=example,dc=com')
 
     def testDN(self):
         proto=dn.DistinguishedName('dc=example,dc=com')
         d=dn.DistinguishedName(proto)
-        self.assertEqual(d.getText(), u'dc=example,dc=com')
+        self.assertEqual(d.getText(), 'dc=example,dc=com')
 
     def testEqualToByteString(self):
         """
@@ -341,18 +341,18 @@ class DistinguishedName_Init(unittest.TestCase):
         DistinguishedName is equal to its unicode representation
         """
         d = dn.DistinguishedName('dc=example,dc=com')
-        self.assertEqual(d, u'dc=example,dc=com')
+        self.assertEqual(d, 'dc=example,dc=com')
 
 
 class RelativeDistinguishedName_Init(unittest.TestCase):
     def testGetText(self):
         rdn=dn.RelativeDistinguishedName('dc=example')
-        self.assertEqual(rdn.getText(), u'dc=example')
+        self.assertEqual(rdn.getText(), 'dc=example')
 
     def testRDN(self):
         proto=dn.RelativeDistinguishedName('dc=example')
         rdn=dn.RelativeDistinguishedName(proto)
-        self.assertEqual(rdn.getText(), u'dc=example')
+        self.assertEqual(rdn.getText(), 'dc=example')
 
 class DistinguishedName_Comparison(unittest.TestCase):
     """

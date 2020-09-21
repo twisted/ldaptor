@@ -46,7 +46,7 @@ class RandomizeListdirTestCase(unittest.TestCase):
 
 class Dir2LDIF(RandomizeListdirTestCase):
     def setUp(self):
-        super(Dir2LDIF, self).setUp()
+        super().setUp()
         self.tree = self.mktemp()
         os.mkdir(self.tree)
         com = os.path.join(self.tree, 'dc=com.dir')
@@ -154,7 +154,7 @@ objectClass: top
 
 class LDIF2Dir(RandomizeListdirTestCase):
     def setUp(self):
-        super(LDIF2Dir, self).setUp()
+        super().setUp()
         self.tree = self.mktemp()
         os.mkdir(self.tree)
         com = os.path.join(self.tree, 'dc=com.dir')
@@ -284,7 +284,7 @@ class LDIFTreeEntryTests(RandomizeListdirTestCase):
     # TODO share the actual tests with inmemory and any other
     # implementations of the same interface
     def setUp(self):
-        super(LDIFTreeEntryTests, self).setUp()
+        super().setUp()
         self.tree = self.mktemp()
         os.mkdir(self.tree)
         com = os.path.join(self.tree, 'dc=com.dir')
@@ -458,7 +458,7 @@ cn: theChild
         test_children_noAccess_dir_noExec.skip = "Can't test as root"
 
     def test_children_noAccess_file(self):
-        os.chmod(os.path.join(self.meta.path, u'cn=foo.ldif'), 0)
+        os.chmod(os.path.join(self.meta.path, 'cn=foo.ldif'), 0)
         d = self.meta.children()
         def eb(fail):
             fail.trap(IOError)
@@ -555,7 +555,7 @@ cn: theChild
             self.bar,
             self.foo,
             ]
-        six.assertCountEqual(self, expected, result)
+        self.assertCountEqual(expected, result)
 
     def test_subtree_many_cb(self):
         got = []
@@ -573,7 +573,7 @@ cn: theChild
             self.bar,
             self.foo,
             ]
-        six.assertCountEqual(self, expected, got)
+        self.assertCountEqual(expected, got)
 
     def test_lookup_fail(self):
         dn = 'cn=thud,ou=metasyntactic,dc=example,dc=com'
@@ -603,7 +603,7 @@ cn: theChild
 
     def test_lookup_fail_multipleError(self):
         writeFile(os.path.join(self.example.path,
-                               u'cn=bad-two-entries.ldif'),
+                               'cn=bad-two-entries.ldif'),
                   b"""\
 dn: cn=bad-two-entries,dc=example,dc=com
 cn: bad-two-entries
@@ -621,7 +621,7 @@ objectClass: top
 
     def test_lookup_fail_emptyError(self):
         writeFile(os.path.join(self.example.path,
-                               u'cn=bad-empty.ldif'),
+                               'cn=bad-empty.ldif'),
                   b"")
         self.assertRaises(
             ldiftree.LDIFTreeEntryContainsNoEntries,

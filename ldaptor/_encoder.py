@@ -17,9 +17,9 @@ def to_bytes(value):
     """
     if hasattr(value, 'toWire'):
         return value.toWire()
-    if isinstance(value, six.integer_types):
+    if isinstance(value, int):
         return str(value).encode("utf-8")
-    if isinstance(value, six.text_type):
+    if isinstance(value, str):
         return value.encode('utf-8')
     return bytes(value)
 
@@ -31,7 +31,7 @@ def to_unicode(value):
     * Decodes value from utf-8 if it is a byte string
     * Otherwise just returns the same value
     """
-    if isinstance(value, six.binary_type):
+    if isinstance(value, bytes):
         return value.decode('utf-8')
     return value
 
@@ -52,14 +52,14 @@ def get_strings(value):
     (byte string and unicode string) for
     given value
     """
-    if isinstance(value, six.text_type):
+    if isinstance(value, str):
         return value, value.encode('utf-8')
-    if isinstance(value, six.binary_type):
+    if isinstance(value, bytes):
         return value, value.decode('utf-8')
     return value,
 
 
-class WireStrAlias(object):
+class WireStrAlias:
     """
     A helper base or mixin class which adds __str__ method
     as an alias of toWire method but marks it as deprecated
@@ -78,7 +78,7 @@ class WireStrAlias(object):
         raise NotImplementedError('toWire method is not implemented')
 
 
-class TextStrAlias(object):
+class TextStrAlias:
     """
     A helper base or mixin class which adds __str__ method
     as an alias of getText method but marks it as deprecated

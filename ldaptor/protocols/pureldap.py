@@ -65,7 +65,7 @@ class LDAPInteger(BERInteger):
 class LDAPString(BEROctetString):
     def __init__(self, *args, **kwargs):
         self.escaper = kwargs.pop('escaper', escape)
-        super(LDAPString, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 class LDAPAttributeValue(BEROctetString):
     pass
@@ -512,7 +512,7 @@ class LDAPFilter_not(LDAPFilter):
 
     def toWire(self):
         value = to_bytes(self.value)
-        return six.int2byte(self.identification()) + int2berlen(len(value)) + value
+        return bytes((self.identification(),)) + int2berlen(len(value)) + value
 
     def asText(self):
         return '(!' + self.value.asText() + ')'
@@ -726,13 +726,13 @@ class LDAPMatchingRuleAssertion(BERSequence):
     def __init__(self, matchingRule=None, type=None, matchValue=None, dnAttributes=None, tag=None, escaper=escape):
         BERSequence.__init__(self, value=[], tag=tag)
         assert matchValue is not None
-        if isinstance(matchingRule, (six.binary_type, six.text_type)):
+        if isinstance(matchingRule, (bytes, str)):
             matchingRule = LDAPMatchingRuleAssertion_matchingRule(matchingRule)
 
-        if isinstance(type, (six.binary_type, six.text_type)):
+        if isinstance(type, (bytes, str)):
             type = LDAPMatchingRuleAssertion_type(type)
 
-        if isinstance(matchValue, (six.binary_type, six.text_type)):
+        if isinstance(matchValue, (bytes, str)):
             matchValue = LDAPMatchingRuleAssertion_matchValue(matchValue)
 
         if isinstance(dnAttributes, bool):
@@ -1397,9 +1397,9 @@ class LDAPExtendedRequest(LDAPProtocolRequest, BERSequence):
         LDAPProtocolRequest.__init__(self)
         BERSequence.__init__(self, [], tag=tag)
         assert requestName is not None
-        assert isinstance(requestName, (six.binary_type, six.text_type))
+        assert isinstance(requestName, (bytes, str))
         assert requestValue is None or isinstance(
-            requestValue, (six.binary_type, six.text_type))
+            requestValue, (bytes, str))
         self.requestName = requestName
         self.requestValue = requestValue
 

@@ -9,7 +9,7 @@ import six
 import ldaptor._encoder
 
 
-class WireableObject(object):
+class WireableObject:
     """
     Object with bytes representation as a constant toWire value
     """
@@ -24,7 +24,7 @@ class TextObject(ldaptor._encoder.TextStrAlias):
     """
 
     def getText(self):
-        return u'text'
+        return 'text'
 
 
 class EncoderTests(unittest.TestCase):
@@ -42,7 +42,7 @@ class EncoderTests(unittest.TestCase):
         unicode string is encoded to utf-8 if passed
         to to_bytes function
         """
-        obj = six.u('unicode')
+        obj = 'unicode'
         self.assertEqual(ldaptor._encoder.to_bytes(obj), b'unicode')
 
     def test_bytes_object(self):

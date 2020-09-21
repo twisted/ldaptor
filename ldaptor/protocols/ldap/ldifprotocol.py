@@ -49,7 +49,7 @@ HEADER = b'HEADER'
 WAIT_FOR_DN = b'WAIT_FOR_DN'
 IN_ENTRY = b'IN_ENTRY'
 
-class LDIF(basic.LineReceiver, object):
+class LDIF(basic.LineReceiver):
     delimiter = b'\n'
     mode = HEADER
 

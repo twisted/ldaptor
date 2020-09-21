@@ -1,7 +1,6 @@
 """
 Test cases for ldaptor.protocols.ldap.ldapserver module.
 """
-from __future__ import print_function
 import base64
 import types
 
@@ -154,8 +153,7 @@ class LDAPServerTest(unittest.TestCase):
                 id=2
             )
         )
-        six.assertCountEqual(
-            self,
+        self.assertCountEqual(
             self._makeResultList(self.server.transport.value()),
             [msg.toWire() for msg in messages]
         )
@@ -527,8 +525,7 @@ class LDAPServerTest(unittest.TestCase):
                 pureldap.LDAPDelResponse(resultCode=0),
                 id=2).toWire())
         d = self.stuff.children()
-        d.addCallback(lambda actual: six.assertCountEqual(
-            self, actual, [self.another]))
+        d.addCallback(lambda actual: self.assertCountEqual(actual, [self.another]))
         return d
 
     def test_add_success(self):
@@ -555,8 +552,7 @@ class LDAPServerTest(unittest.TestCase):
                 id=2).toWire())
         # tree changed
         d = self.stuff.children()
-        d.addCallback(lambda actual: six.assertCountEqual(
-            self,
+        d.addCallback(lambda actual: self.assertCountEqual(
             actual,
             [
                 self.thingie,
@@ -591,8 +587,7 @@ class LDAPServerTest(unittest.TestCase):
                 id=2).toWire())
         # tree did not change
         d = self.stuff.children()
-        d.addCallback(lambda actual: six.assertCountEqual(
-            self, actual, [self.thingie, self.another]))
+        d.addCallback(lambda actual: self.assertCountEqual(actual, [self.thingie, self.another]))
         return d
 
     def test_modifyDN_rdnOnly_deleteOldRDN_success(self):
@@ -612,8 +607,7 @@ class LDAPServerTest(unittest.TestCase):
                 id=2).toWire())
         # tree changed
         d = self.stuff.children()
-        d.addCallback(lambda actual: six.assertCountEqual(
-            self,
+        d.addCallback(lambda actual: self.assertCountEqual(
             actual,
             [
                 inmemory.ReadOnlyInMemoryLDAPEntry(

@@ -26,7 +26,7 @@ class Modification(attributeset.LDAPAttributeSet):
         tmplist = list(self)
         newlist = []
         for x in range(len(tmplist)):
-            if (isinstance(tmplist[x], six.text_type)):
+            if (isinstance(tmplist[x], str)):
                 value = tmplist[x].encode('utf-8')
                 newlist.append(value)
             else:
@@ -43,7 +43,7 @@ class Modification(attributeset.LDAPAttributeSet):
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return False
-        return super(Modification, self).__eq__(other)
+        return super().__eq__(other)
 
 class Add(Modification):
     _LDAP_OP = 0
@@ -107,7 +107,7 @@ class Replace(Modification):
         return b''.join(r)
 
 
-class Operation(object):
+class Operation:
     def patch(self, root):
         """
         Find the correct entry in IConnectedLDAPEntry and patch it.
@@ -258,7 +258,7 @@ class DeleteOp(Operation):
             self.dn = dn.dn
         elif isinstance(dn, distinguishedname.DistinguishedName):
             self.dn = dn
-        elif isinstance(dn, (six.binary_type, six.text_type)):
+        elif isinstance(dn, (bytes, str)):
             self.dn = distinguishedname.DistinguishedName(stringValue=dn)
         else:
             raise AssertionError('Invalid type of object: %s' % dn.__class__.__name__)

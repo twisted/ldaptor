@@ -26,7 +26,7 @@ class LDAPEntryTests(unittest.TestCase):
             'aValue': ['a'],
             'bValue': ['b'],
             })
-        self.failUnlessEqual(o.dn.getText(), u'cn=foo,dc=example,dc=com')
+        self.failUnlessEqual(o.dn.getText(), 'cn=foo,dc=example,dc=com')
         self.failUnlessEqual(o['objectClass'], ['a', 'b'])
         self.failUnlessEqual(o['aValue'], ['a'])
         self.failUnlessEqual(o['bValue'], ['b'])
@@ -1063,7 +1063,7 @@ class LDAPSyntaxContainingNamingContext(unittest.SynchronousTestCase):
         def cb(p):
             assert isinstance(p, ldapsyntax.LDAPEntry)
             assert p.client == o.client
-            assert p.dn.getText() == u'dc=example,dc=com'
+            assert p.dn.getText() == 'dc=example,dc=com'
 
             self.client.assertSent(pureldap.LDAPSearchRequest(
                 baseObject='',
@@ -1715,7 +1715,7 @@ class LDAPSyntaxMove(unittest.TestCase):
                 newSuperior='ou=somewhere,dc=example,dc=com',
                 ))
 
-            self.assertEqual(o.dn, u'cn=bar,ou=somewhere,dc=example,dc=com')
+            self.assertEqual(o.dn, 'cn=bar,ou=somewhere,dc=example,dc=com')
         d.addCallback(cb)
         return d
 

@@ -43,7 +43,7 @@ class LDIFDeltaDeleteHasJunkAfterChangeTypeError(ldifprotocol.LDIFParseError):
 
 class LDIFDelta(ldifprotocol.LDIF):
     def state_WAIT_FOR_DN(self, line):
-        super(LDIFDelta, self).state_WAIT_FOR_DN(line)
+        super().state_WAIT_FOR_DN(line)
         if self.mode == ldifprotocol.IN_ENTRY:
             self.mode = WAIT_FOR_CHANGETYPE
 

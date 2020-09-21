@@ -20,7 +20,7 @@ class LDAPAttributeSet(set):
         @param args: set of values for this attribute, eg. "jsmith"
         """
         self.key = key
-        super(LDAPAttributeSet, self).__init__(*a, **kw)
+        super().__init__(*a, **kw)
 
     def __repr__(self):
         values = list(self)
@@ -39,7 +39,7 @@ class LDAPAttributeSet(set):
         if isinstance(other, LDAPAttributeSet):
             if self.key != other.key:
                 return False
-            return super(LDAPAttributeSet, self).__eq__(other)
+            return super().__eq__(other)
         else:
             me = list(self)
             me.sort()

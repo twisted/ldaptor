@@ -1,7 +1,6 @@
 """
 LDAP protocol proxy server.
 """
-from __future__ import absolute_import, division, print_function
 from ldaptor.protocols.ldap import ldapserver, ldapconnector, ldaperrors
 from ldaptor.protocols import pureldap
 from twisted.internet import defer

@@ -92,26 +92,26 @@ class MatchNotImplemented(NotImplementedError):
 class JournaledLDAPAttributeSet(attributeset.LDAPAttributeSet):
     def __init__(self, ldapObject, *a, **kw):
         self.ldapObject = ldapObject
-        super(JournaledLDAPAttributeSet, self).__init__(*a, **kw)
+        super().__init__(*a, **kw)
 
     def add(self, value):
         self.ldapObject.journal(delta.Add(self.key, [value]))
-        super(JournaledLDAPAttributeSet, self).add(value)
+        super().add(value)
 
     def update(self, sequence):
         self.ldapObject.journal(delta.Add(self.key, sequence))
-        super(JournaledLDAPAttributeSet, self).update(sequence)
+        super().update(sequence)
 
     def remove(self, value):
         if value not in self:
             raise LookupError(value)
         self.ldapObject._canRemove(self.key, value)
         self.ldapObject.journal(delta.Delete(self.key, [value]))
-        super(JournaledLDAPAttributeSet, self).remove(value)
+        super().remove(value)
 
     def clear(self):
         self.ldapObject._canRemoveAll(self.key)
-        super(JournaledLDAPAttributeSet, self).clear()
+        super().clear()
         self.ldapObject.journal(delta.Delete(self.key))
 
 
@@ -149,7 +149,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 
         """
 
-        super(LDAPEntryWithClient, self).__init__(dn, attributes)
+        super().__init__(dn, attributes)
         self.client = client
         self.complete = complete
 
@@ -181,7 +181,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 
         """
         self._checkState()
-        assert not isinstance(self.dn, six.string_types)
+        assert not isinstance(self.dn, str)
         for keyval in self.dn.split()[0].split():
             if keyval.attributeType == key:
                 raise CannotRemoveRDNError(key)
@@ -211,15 +211,15 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
     # start ILDAPEntry
     def __getitem__(self, *a, **kw):
         self._checkState()
-        return super(LDAPEntryWithClient, self).__getitem__(*a, **kw)
+        return super().__getitem__(*a, **kw)
 
     def get(self, *a, **kw):
         self._checkState()
-        return super(LDAPEntryWithClient, self).get(*a, **kw)
+        return super().get(*a, **kw)
 
     def has_key(self, *a, **kw):
         self._checkState()
-        return super(LDAPEntryWithClient, self).has_key(*a, **kw)
+        return super().has_key(*a, **kw)
 
     def __contains__(self, key):
         self._checkState()
@@ -227,11 +227,11 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 
     def keys(self):
         self._checkState()
-        return super(LDAPEntryWithClient, self).keys()
+        return super().keys()
 
     def items(self):
         self._checkState()
-        return super(LDAPEntryWithClient, self).items()
+        return super().items()
 
     def toWire(self):
         a = []
@@ -299,14 +299,14 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         self._canRemoveAll(key)
 
         new = JournaledLDAPAttributeSet(self, key, value)
-        super(LDAPEntryWithClient, self).__setitem__(key, new)
+        super().__setitem__(key, new)
         self.journal(delta.Replace(key, value))
 
     def __delitem__(self, key):
         self._checkState()
         self._canRemoveAll(key)
 
-        super(LDAPEntryWithClient, self).__delitem__(key)
+        super().__delitem__(key)
         self.journal(delta.Delete(key))
 
     def undo(self):
@@ -317,7 +317,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         self._journal = []
 
     def _assertMatchedDN(self, dn):
-        assert dn == u'' or dn == b''
+        assert dn == '' or dn == b''
 
     def _commit_success(self, msg):
         assert isinstance(msg, pureldap.LDAPModifyResponse)
@@ -418,7 +418,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             ldapAttrType = pureldap.LDAPAttributeDescription(attrType)
             lst = []
             for value in values:
-                if (isinstance(value, six.text_type)):
+                if (isinstance(value, str)):
                     value = value.encode('utf-8')
                 lst.append(pureldap.LDAPAttributeValue(value))
             ldapValues = pureber.BERSet(lst)
@@ -752,7 +752,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
 
     def __repr__(self):
         x = {}
-        for key in super(LDAPEntryWithClient, self).keys():
+        for key in super().keys():
             x[key] = self[key]
         keys = list(x.keys())
         keys.sort()

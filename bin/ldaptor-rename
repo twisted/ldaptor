@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-from __future__ import print_function
 import sys, os, getpass
 from ldaptor.protocols.ldap import ldapclient, ldif, ldapsyntax, distinguishedname, ldapconnector
 from ldaptor.protocols import pureber, pureldap

@@ -26,14 +26,14 @@ def s(*l):
     """Join all members of list to a byte string. Integer members are converted to bytes"""
     r = b''
     for e in l:
-        e = six.int2byte(e)
+        e = bytes((e,))
         r = r + e
     return r
 
 
 def l(s):
     """Split a byte string to ord's of chars."""
-    return [six.byte2int([x]) for x in s]
+    return [[x][0] for x in s]
 
 
 class BerLengths(unittest.TestCase):
@@ -193,7 +193,7 @@ class BERIntegerSanityCheck(unittest.TestCase):
             self.assertEqual(n, result)
 
 
-class ObjectWithToWireMethod(object):
+class ObjectWithToWireMethod:
     def toWire(self):
         return b"bar"
 

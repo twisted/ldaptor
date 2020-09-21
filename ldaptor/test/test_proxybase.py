@@ -4,7 +4,6 @@ Test cases for ldaptor.protocols.ldap.proxybase module.
 from functools import partial
 import itertools
 
-from six import next
 from twisted.internet import error, defer
 from twisted.internet.task import Clock
 from twisted.trial import unittest

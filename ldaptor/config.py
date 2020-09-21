@@ -15,7 +15,7 @@ class MissingBaseDNError(Exception):
 
 
 @implementer(interfaces.ILDAPConfig)
-class LDAPConfig(object):
+class LDAPConfig:
 
     baseDN = None
     identityBaseDN = None

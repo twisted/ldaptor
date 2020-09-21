@@ -15,7 +15,6 @@
 #shared-network "foo" {
 #}
 
-from __future__ import print_function
 from ldaptor.protocols.ldap import ldapclient, ldapconnector, ldapsyntax
 from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage, ldapfilter, config
@@ -91,9 +90,9 @@ class Group:
             self.hosts.add(host)
 
     def printDHCP(self, domain, addrs, prefix=''):
-        addresses = set(addr
+        addresses = {addr
                         for host in self.hosts
-                        for addr in host.ipAddresses)
+                        for addr in host.ipAddresses}
         addresses.intersection_update(addrs)
         addrs.difference_update(addresses)
 
@@ -285,7 +284,7 @@ def haveGroups(hosts, nets, sharedNets, dnsDomain):
     for net in nets:
         net.printDHCP(dnsDomain)
 
-class _NO_DEFAULT(object): pass
+class _NO_DEFAULT: pass
 def only(e, attr, default=_NO_DEFAULT):
     val = e.get(attr, _NO_DEFAULT)
     if val is _NO_DEFAULT:

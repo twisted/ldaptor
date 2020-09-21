@@ -16,7 +16,6 @@ homeDirectory: e:\\Users\\bob
 userPassword: pass
 userPrincipalName: bob@ad.example.org
 """
-from __future__ import absolute_import
 
 from ldaptor import interfaces
 from ldaptor.protocols import pureldap

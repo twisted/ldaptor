@@ -179,7 +179,7 @@ class InMemoryLDIFProtocol(ldifprotocol.LDIF):
         return reason  # pass the error (abort) by default
 
     def connectionLost(self, reason):
-        super(InMemoryLDIFProtocol, self).connectionLost(reason)
+        super().connectionLost(reason)
         if not reason.check(error.ConnectionDone):
             self._deferred.addCallback(lambda db: reason)
         else:

@@ -5,7 +5,7 @@ from ldaptor.protocols.ldap import ldapclient, ldapsyntax, ldapconnector, \
      distinguishedname
 from ldaptor import ldapfilter
 
-class LDAPConfig(object):
+class LDAPConfig:
     def __init__(self,
                  baseDN,
                  serviceLocationOverrides=None):

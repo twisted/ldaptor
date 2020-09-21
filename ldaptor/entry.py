@@ -90,8 +90,7 @@ class BaseLDAPEntry(WireStrAlias):
         return self.has_key(key)
 
     def __iter__(self):
-        for key in self._attributes.iterkeys():
-            yield key
+        yield from self._attributes.iterkeys()
 
     def keys(self):
         a = []

@@ -124,7 +124,7 @@ class TestBaseLDAPEntry(unittest.TestCase):
                 'bar': ['foo'],
             }
         )
-        self.assertEqual(sut.getLDIF(), u'dn: dc=foo\nbar: foo\nfoo: bar\n\n')
+        self.assertEqual(sut.getLDIF(), 'dn: dc=foo\nbar: foo\nfoo: bar\n\n')
 
     def testNonzero(self):
         """Entry is always non-zero"""

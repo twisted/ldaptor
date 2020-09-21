@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-from __future__ import print_function
 import sys
 from twisted.internet.defer import succeed, fail
 from twisted.internet import defer, reactor

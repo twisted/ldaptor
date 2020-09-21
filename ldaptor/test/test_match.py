@@ -432,7 +432,7 @@ class TestEntryMatch(unittest.TestCase):
             'aValue': ['b'],
             'num': [4],
             })
-        class UnknownMatch(object): pass
+        class UnknownMatch: pass
         unknownMatch = UnknownMatch()
         self.assertRaises(ldapsyntax.MatchNotImplemented,
                           o.match, unknownMatch)

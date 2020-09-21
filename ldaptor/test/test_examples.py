@@ -1,7 +1,6 @@
 """
 Tests for the code from docs/source/example.
 """
-from __future__ import absolute_import
 import os
 import sys
 
