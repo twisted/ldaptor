@@ -4,8 +4,8 @@ Test cases for ldaptor.protocols.ldap.ldapserver module.
 import base64
 import types
 
-from twisted.internet import address, protocol
-from twisted.python import components
+from twisted.internet import address, protocol, testing
+from twisted.python import components, log
 from twisted.test import proto_helpers
 from twisted.trial import unittest
 
@@ -721,6 +721,58 @@ class LDAPServerTest(unittest.TestCase):
             raw = base64.decodestring(secret[len(b'{SSHA}'):])
             salt = raw[20:]
             self.assertEqual(entry.sshaDigest(b'hushhush', salt), secret)
+
+    def test_passwordModify_someoneElse(self):
+        data = {'committed': False}
+
+        def onCommit_(result, info):
+            info['committed'] = result
+            return result
+
+        wrapCommit(self.thingie, onCommit_, data)
+        # first bind to some entry
+        userPassword = b'{SSHA}yVLLj62rFf3kDAbzwEU0zYAVvbWrze8=' # secret
+        self.thingie['userPassword'] = [userPassword]
+        self.server.dataReceived(
+            pureldap.LDAPMessage(
+                pureldap.LDAPBindRequest(
+                    dn='cn=thingie,ou=stuff,dc=example,dc=com',
+                    auth=b'secret'),
+                id=4).toWire())
+        self.assertEqual(
+            self.server.transport.value(),
+            pureldap.LDAPMessage(
+                pureldap.LDAPBindResponse(
+                    resultCode=0,
+                    matchedDN='cn=thingie,ou=stuff,dc=example,dc=com'),
+                id=4).toWire())
+        self.server.transport.clear()
+        observer = testing.EventLoggingObserver.createWithCleanup(self, log)
+        self.server.dataReceived(
+            pureldap.LDAPMessage(
+                pureldap.LDAPPasswordModifyRequest(
+                    userIdentity='cn=another,ou=stuff,dc=example,dc=com',
+                    newPasswd='hushhush'),
+                id=2).toWire())
+        self.assertEqual(
+            observer[0]["log_text"],
+            "User cn=thingie,ou=stuff,dc=example,dc=com "
+            "tried to change password of "
+            "b'cn=another,ou=stuff,dc=example,dc=com'"
+        )
+        self.assertEqual(data['committed'], False, "Server committed data.")
+        self.assertEqual(
+            self.server.transport.value(),
+            pureldap.LDAPMessage(
+                pureldap.LDAPExtendedResponse(
+                    resultCode=ldaperrors.LDAPInsufficientAccessRights.resultCode,
+                    responseName=pureldap.LDAPPasswordModifyRequest.oid),
+                id=2).toWire())
+        self.assertSequenceEqual(
+            self.thingie.get('userPassword', []),
+            [userPassword],
+        )
+
 
     def test_unknownRequest(self):
         # make server miss one of the handle_* attributes

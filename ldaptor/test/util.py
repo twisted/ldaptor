@@ -1,7 +1,8 @@
+import functools
 from io import BytesIO
 
 from twisted.python import failure
-from twisted.internet import reactor, protocol
+from twisted.internet import reactor, protocol, defer
 from twisted.test import testutils
 
 
@@ -86,3 +87,11 @@ def pumpingDeferredResult(d):
         if isinstance(result, failure.Failure)
         else result
     )
+
+
+def fromCoroutineFunction(corofn):
+    @functools.wraps(corofn)
+    def wrapper(*args, **kwargs):
+        return defer.ensureDeferred(corofn(*args, **kwargs))
+
+    return wrapper

@@ -7,11 +7,14 @@ import random
 import errno
 import shutil
 
+from twisted.python import log
 from twisted.trial import unittest
+from twisted.internet import testing
 
 from ldaptor import ldiftree, entry, delta, testutil
 from ldaptor.entry import BaseLDAPEntry
 from ldaptor.protocols.ldap import ldaperrors, ldifprotocol
+from ldaptor.test import util
 
 
 def writeFile(path, content):
@@ -750,6 +753,22 @@ objectClass: top
             self.assertEqual(got, [delta.DeleteOp(self.empty)])
         d.addCallback(cb3)
         return d
+
+    @util.fromCoroutineFunction
+    async def test_diffTree_edit_failure(self):
+        otherDir = self.mktemp()
+        shutil.copytree(self.tree, otherDir)
+        other = ldiftree.LDIFTreeEntry(otherDir)
+
+        otherEmpty = await other.lookup('ou=empty,dc=example,dc=com')
+        otherEmpty['foo'] = ['bar']
+        shutil.rmtree(otherDir)
+        observer = testing.EventLoggingObserver.createWithCleanup(self, log)
+        self.assertFalse(await otherEmpty.commit())
+        self.assertEqual(
+            observer[0]["log_text"],
+            "[ERROR] Could not commit entry: ou=empty,dc=example,dc=com.",
+        )
 
     def test_diffTree_edit(self):
         otherDir = self.mktemp()

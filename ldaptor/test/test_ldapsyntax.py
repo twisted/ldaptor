@@ -2,6 +2,8 @@
 Test cases for ldaptor.protocols.ldap.ldapsyntax module.
 """
 
+import re
+
 from twisted.trial import unittest
 from ldaptor import config, testutil, delta
 from ldaptor.protocols.ldap import ldapclient, ldapsyntax, ldaperrors
@@ -1672,24 +1674,48 @@ class LDAPSyntaxRDNHandling(unittest.TestCase):
             })
         o['cn'].remove('bar')
         del o['a']
-        self.assertRaises(ldapsyntax.CannotRemoveRDNError,
-                          o['cn'].remove,
-                          'foo')
+        self.assertRaisesRegex(
+            ldapsyntax.CannotRemoveRDNError,
+            re.escape(
+                "The attribute to be removed, 'cn'='foo', "
+                "is the RDN for the object and cannot be removed."
+            ),
+            o['cn'].remove,
+            'foo',
+        )
         def f():
             del o['cn']
-        self.assertRaises(ldapsyntax.CannotRemoveRDNError,
-                          f)
+        self.assertRaisesRegex(
+            ldapsyntax.CannotRemoveRDNError,
+            re.escape(
+                "The attribute to be removed, 'cn', "
+                "is the RDN for the object and cannot be removed."
+            ),
+            f,
+        )
         def f():
             o['cn']=['thud']
-        self.assertRaises(ldapsyntax.CannotRemoveRDNError,
-                          f)
+        self.assertRaisesRegex(
+            ldapsyntax.CannotRemoveRDNError,
+            re.escape(
+                "The attribute to be removed, 'cn', "
+                "is the RDN for the object and cannot be removed."
+            ),
+            f,
+        )
 
         # TODO maybe this should be ok, it preserves the RDN.
         # For now, disallow it.
         def f():
             o['cn']=['foo']
-        self.assertRaises(ldapsyntax.CannotRemoveRDNError,
-                          f)
+        self.assertRaisesRegex(
+            ldapsyntax.CannotRemoveRDNError,
+            re.escape(
+                "The attribute to be removed, 'cn', "
+                "is the RDN for the object and cannot be removed."
+            ),
+            f,
+        )
 
 class LDAPSyntaxMove(unittest.TestCase):
     def test_move(self):
