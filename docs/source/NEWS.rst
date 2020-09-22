@@ -1,14 +1,15 @@
 Changelog
 =========
 
-Release.next
--------------------------
+Release 20.0.0 (2020-09-22)
+---------------------------
 
-Features
-^^^^^^^^
 
 Changes
 ^^^^^^^
+
+- PyPi release is now done via GitHub Action
+
 
 Bugfixes
 ^^^^^^^^
