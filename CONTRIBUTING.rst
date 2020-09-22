@@ -49,7 +49,7 @@ Release process
 
 The release is done manually.
 You can test the release process (without the publish) using `tox -e release`.
-Inspect the released files with `tree dist`, you could upload them with `twine`.
+Inspect the distributable files with `tree dist`, you could upload them with `twine`.
 
 
 Building the documentation
