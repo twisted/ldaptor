@@ -5,7 +5,7 @@
 #
 name: PyPi Release
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
 
@@ -16,7 +16,7 @@ jobs:
 
     steps:
     - name: Get the code
-    - uses: actions/checkout@v2
+      uses: actions/checkout@v2
 
     - name: Set up Python 3.8
       uses: actions/setup-python@v1
