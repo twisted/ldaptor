@@ -1447,7 +1447,13 @@ class LDAPSyntaxPasswords(unittest.TestCase):
 
         def checkError(fail):
             fail.trap(ldapsyntax.PasswordSetAggregateError)
-            l=fail.value.errors
+            value = fail.value
+            self.assertEqual(
+                str(value),
+                "Some of the password plugins failed: "
+                "Samba failed with cn=foo,dc=example,dc=com."
+            )
+            l=value.errors
             assert len(l)==1
             assert len(l[0])==2
             assert l[0][0]=='Samba'
@@ -1488,7 +1494,14 @@ class LDAPSyntaxPasswords(unittest.TestCase):
         d=o.setPassword(newPasswd=b'new')
         def eb(fail):
             fail.trap(ldapsyntax.PasswordSetAggregateError)
-            l=fail.value.errors
+            value = fail.value
+            self.assertEqual(
+                str(value),
+                "Some of the password plugins failed: "
+                "ExtendedOperation failed with insufficientAccessRights; "
+                "Samba failed with Aborted."
+            )
+            l=value.errors
             assert len(l)==2
 
             assert len(l[0])==2
