@@ -1,6 +1,7 @@
 #
 # Release to PyPi on a new tag.
 #
+# No tests are executed before a release.
 #
 name: PyPi Release
 
