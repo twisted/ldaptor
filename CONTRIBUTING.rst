@@ -51,7 +51,8 @@ The release is done automatically via GitHub actions when a new tag
 is pushed.
 
 PyPI access is done via the HTTP API token stored in GitHub Secrets as
-PYPI_GITHUB_PACKAGE_UPLOAD.
+PYPI_GITHUB_PACKAGE_UPLOAD from
+https://github.com/twisted/ldaptor/settings/secrets
 
 
 Building the documentation
