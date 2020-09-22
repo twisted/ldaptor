@@ -15,7 +15,6 @@ legacy_tox_ini = """
 minversion=3.20.0
 isolated_build=True
 requires=virtualenv >= 20.0.31
-toxworkdir=build/
 ;
 ; Tags explanation:
 ; * test - run trial tests
@@ -29,7 +28,7 @@ envlist =
 
 [testenv]
 deps = 
-    coverage
+    coverage >= 5.3
     pyparsing
     passlib
     six
