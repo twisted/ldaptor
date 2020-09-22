@@ -79,4 +79,15 @@ commands =
     mkdir -p docs/build
     sphinx-build -b html -Ean -j 2 -w build/sphinx-errors \
         docs/source docs/build
+
+[testenv:release]
+basepython=python3.8
+deps = pep517
+whitelist_externals =
+    cp
+    rm
+commands =
+    rm -rf {toxinidir}/dist
+    cp --no-target-directory --recursive {distdir} {toxinidir}/dist; # copy the wheel built by tox-wheel
+    {envpython} -m pep517.build --source --out-dir={toxinidir}/dist {toxinidir}
 """
