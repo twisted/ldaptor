@@ -1008,7 +1008,7 @@ class LDAPSyntaxAddChild(unittest.TestCase):
         d = sut.addChild(
             rdn='givenName=Firstname+surname=Lastname',
             attributes={
-                'objectClass': ['person', 'otherStuff'],
+                'objectClass': ['person', b'otherStuff'],
                 'givenName': ['Firstname'],
                 'surname': ['Lastname'],
                 },
