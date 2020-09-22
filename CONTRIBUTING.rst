@@ -54,6 +54,8 @@ PyPI access is done via the HTTP API token stored in GitHub Secrets as
 PYPI_GITHUB_PACKAGE_UPLOAD from
 https://github.com/twisted/ldaptor/settings/secrets
 
+You can test the release process (without the publis) using `tox -e release`.
+
 
 Building the documentation
 --------------------------
