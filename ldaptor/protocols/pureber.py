@@ -363,8 +363,7 @@ class BERDecoderContext:
         for tag, class_ in self.Identities.items():
             identities.append('0x{:02x}: {}'.format(tag, class_.__name__))
 
-        if sys.version_info < (3, 6):
-            identities.sort()
+        sys.version_info < (3, 6) and identities.sort()
 
         return "<"+self.__class__.__name__ \
                +" identities={%s}" % ', '.join(identities) \
