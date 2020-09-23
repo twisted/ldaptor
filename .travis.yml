@@ -14,15 +14,15 @@ matrix:
   - python: 2.7
     env: TOX_ENV=py27-test-twlatest
   - python: 3.5
-    env: TOX_ENV=py35-ported
+    env: TOX_ENV=py35-test-twlatest
   - python: 3.5
     env: TOX_ENV=py35-test-twtrunk
   - python: 3.6
-    env: TOX_ENV=py36-ported
+    env: TOX_ENV=py36-test-twlatest
   - python: 3.6
     env: TOX_ENV=py36-test-twtrunk
   - python: 3.7
-    env: TOX_ENV=py37-ported
+    env: TOX_ENV=py37-test-twlatest
   - python: 3.7
     env: TOX_ENV=py37-test-twtrunk
   - python: 2.7
@@ -30,12 +30,12 @@ matrix:
   - python: 3.7
     env: TOX_ENV=py37-linters
   - python: 3.7
-    env: PYENV_VERSION=pypy2.7-7.0.0 TOX_ENV=pypy-ported
+    env: PYENV_VERSION=pypy2.7-7.0.0 TOX_ENV=pypy-test-twlatest
   - &pypy27
     python: 3.7
     env: PYENV_VERSION=pypy2.7-7.0.0 TOX_ENV=pypy-test-twtrunk
   - python: 3.7
-    env: PYENV_VERSION=pypy3.6-7.0.0 TOX_ENV=pypy3-ported
+    env: PYENV_VERSION=pypy3.6-7.0.0 TOX_ENV=pypy3-test-twlatest
   - &pypy37
     python: 3.7
     env: PYENV_VERSION=pypy3.6-7.0.0 TOX_ENV=pypy3-test-twtrunk
