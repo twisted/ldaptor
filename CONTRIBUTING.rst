@@ -44,6 +44,14 @@ docs/source/NEWS.rst in a wording targeted to end users.
 Try not to write the release notes as a commit message.
 
 
+Release process
+---------------
+
+The release is done manually.
+You can test the release process (without the publish) using `tox -e release`.
+Inspect the distributable files with `tree dist`, you could upload them with `twine`.
+
+
 Building the documentation
 --------------------------
 
