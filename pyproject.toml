@@ -81,7 +81,6 @@ commands =
         docs/source docs/build
 
 [testenv:release]
-basepython=python3.8
 deps = pep517
 whitelist_externals =
     cp
@@ -90,4 +89,12 @@ commands =
     rm -rf {toxinidir}/dist
     cp --no-target-directory --recursive {distdir} {toxinidir}/dist; # copy the wheel built by tox-wheel
     {envpython} -m pep517.build --source --out-dir={toxinidir}/dist {toxinidir}
+
+[testenv:publishcov]
+passenv = CI GITHUB_* TRAVIS TRAVIS_* CODECOV_*
+deps =
+  codecov
+  coverage>=5.3
+commands =
+    codecov
 """
