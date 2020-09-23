@@ -5,7 +5,6 @@ include LICENSE
 include docs/source/examples/ldif2ldif
 include ldaptor.schema
 include test-ldapserver.tac
-include tox.ini
 recursive-include docs *.cfg
 recursive-include docs *.conf
 recursive-include docs *.dia

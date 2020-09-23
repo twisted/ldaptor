@@ -13,8 +13,6 @@ matrix:
   include:
   - python: 2.7
     env: TOX_ENV=py27-test-twlatest
-  - python: 2.7
-    env: TOX_ENV=py27-test-twtrunk
   - python: 3.5
     env: TOX_ENV=py35-ported
   - python: 3.5
@@ -56,13 +54,13 @@ before_install:
       source <(curl -SL https://git.io/fhPYW -o -)
     fi
 install:
-  - pip install tox codecov
+  - pip install tox
 
 script:
   - tox -e $TOX_ENV
 
 after_script:
-  - codecov
+  - tox -e publishcov
 
 notifications:
     email: false
