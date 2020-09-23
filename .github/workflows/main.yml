@@ -45,4 +45,4 @@ jobs:
       - name: tox
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: tox -e py-test-twlatest,py-linters,publishcov,release
+        run: tox -e py-test-twlatest,py-test-twtrunk,py-linters,publishcov,release
