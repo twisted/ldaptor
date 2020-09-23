@@ -8,7 +8,7 @@ Release 20.0.0 (2020-09-22)
 Changes
 ^^^^^^^
 
-- PyPi release is now done via GitHub Action
+- PyPI release is now done via GitHub Action
 - the ldaptor whl is now built with pep517.
 - the ldaptor whl is tested with tox. The sdist is now untested,
   deprecated and should only be used for compatability with very old
