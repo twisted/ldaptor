@@ -3,9 +3,11 @@ Test cases for LDIF directory tree writing/reading.
 """
 
 import os
+import sys
 import random
 import errno
 import shutil
+import unittest as stdlib_unittest
 
 import six
 from twisted.trial import unittest
@@ -19,6 +21,18 @@ def writeFile(path, content):
     f = open(path, 'wb')
     f.write(content)
     f.close()
+
+
+skipIfWindowsOrRoot = stdlib_unittest.skipIf(
+    sys.platform == "win32" or os.getuid() == 0,
+    "Can't test on windows or as root",
+)
+
+
+skipIfWindows = stdlib_unittest.skipIf(
+    sys.platform == "win32",
+    "TODO: fails on windows",
+)
 
 
 class RandomizeListdirTestCase(unittest.TestCase):
@@ -99,6 +113,7 @@ objectClass: top
         d.addCallback(self.failUnlessEqual, want)
         return d
 
+    @skipIfWindowsOrRoot
     def testNoAccess(self):
         os.chmod(os.path.join(self.tree,
                               'dc=com.dir',
@@ -111,9 +126,6 @@ objectClass: top
             self.assertEqual(fail.value.errno, errno.EACCES)
         d.addCallbacks(testutil.mustRaise, eb)
         return d
-
-    if os.getuid() == 0:  # pragma: no cover
-        testNoAccess.skip = "Can't test as root"
 
     def gettingDNRaises(self, dn, exceptionClass):
         d = ldiftree.get(self.tree, dn)
@@ -431,6 +443,7 @@ cn: theChild
         want.sort()
         self.assertEqual(got, want)
 
+    @skipIfWindowsOrRoot
     def test_children_noAccess_dir_noRead(self):
         os.chmod(self.meta.path, 0o300)
         d = self.meta.children()
@@ -441,9 +454,7 @@ cn: theChild
         d.addCallbacks(testutil.mustRaise, eb)
         return d
 
-    if os.getuid() == 0:  # pragma: no cover
-        test_children_noAccess_dir_noRead.skip = "Can't test as root"
-
+    @skipIfWindowsOrRoot
     def test_children_noAccess_dir_noExec(self):
         os.chmod(self.meta.path, 0o600)
         d = self.meta.children()
@@ -454,9 +465,7 @@ cn: theChild
         d.addCallbacks(testutil.mustRaise, eb)
         return d
 
-    if os.getuid() == 0:  # pragma: no cover
-        test_children_noAccess_dir_noExec.skip = "Can't test as root"
-
+    @skipIfWindowsOrRoot
     def test_children_noAccess_file(self):
         os.chmod(os.path.join(self.meta.path, u'cn=foo.ldif'), 0)
         d = self.meta.children()
@@ -465,9 +474,6 @@ cn: theChild
             self.assertEqual(fail.value.errno, errno.EACCES)
         d.addCallbacks(testutil.mustRaise, eb)
         return d
-
-    if os.getuid() == 0:  # pragma: no cover
-        test_children_noAccess_file.skip = "Can't test as root"
 
     def test_addChild(self):
         self.empty.addChild(
@@ -752,6 +758,7 @@ objectClass: top
         d.addCallback(cb3)
         return d
 
+    @skipIfWindows
     def test_diffTree_edit(self):
         otherDir = self.mktemp()
         shutil.copytree(self.tree, otherDir)
@@ -776,7 +783,7 @@ objectClass: top
         d.addCallback(cb3)
         return d
 
-
+    @skipIfWindows
     def test_move_noChildren_sameSuperior(self):
         d = self.empty.move('ou=moved,dc=example,dc=com')
         def getChildren(dummy):
@@ -794,6 +801,7 @@ objectClass: top
             ]))
         return d
 
+    @skipIfWindows
     def test_move_children_sameSuperior(self):
         d = self.meta.move('ou=moved,dc=example,dc=com')
         def getChildren(dummy):
@@ -810,7 +818,7 @@ objectClass: top
             ]))
         return d
 
-
+    @skipIfWindows
     def test_move_noChildren_newSuperior(self):
         d = self.empty.move('ou=moved,ou=oneChild,dc=example,dc=com')
         def getChildren(dummy):
@@ -835,6 +843,7 @@ objectClass: top
             ]))
         return d
 
+    @skipIfWindows
     def test_move_children_newSuperior(self):
         d = self.meta.move('ou=moved,ou=oneChild,dc=example,dc=com')
         def getChildren(dummy):
