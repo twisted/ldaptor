@@ -13,8 +13,6 @@ matrix:
   include:
   - python: 2.7
     env: TOX_ENV=py27-test-twlatest
-  - python: 2.7
-    env: TOX_ENV=py27-test-twtrunk
   - python: 3.5
     env: TOX_ENV=py35-ported
   - python: 3.5

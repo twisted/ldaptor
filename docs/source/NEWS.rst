@@ -10,6 +10,11 @@ Features
 Changes
 ^^^^^^^
 
+- the ldaptor whl is now built with pep517.
+- the ldaptor whl is tested with tox. The sdist is now untested,
+  deprecated and should only be used for compatability with very old
+  packaging tools.
+
 Bugfixes
 ^^^^^^^^
 

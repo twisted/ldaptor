@@ -1,3 +1,10 @@
+[build-system]
+requires = [ "setuptools >= 35.0.2", "wheel >= 0.29.0"]
+build-backend = "setuptools.build_meta"
+
+
+[tool.tox]
+legacy_tox_ini = """
 ; tox configuration file for running tests on local dev env and Travis CI.
 ;
 ; The local dev environment will be executed against latest released Twisted.
@@ -5,7 +12,10 @@
 ; we have separate reported (ex codecov.io)
 
 [tox]
-toxworkdir=build/
+minversion=3.20.0
+requires=
+    virtualenv >= 20.0.31
+    tox-wheel >= 0.5.0
 ;
 ; Tags explanation:
 ; * test - run trial tests
@@ -18,8 +28,10 @@ envlist =
 
 
 [testenv]
+wheel = True
+wheel_pep571 = True
 deps = 
-    coverage
+    coverage >= 5.3
     pyparsing
     passlib
     six
@@ -67,3 +79,15 @@ commands =
     mkdir -p docs/build
     sphinx-build -b html -Ean -j 2 -w build/sphinx-errors \
         docs/source docs/build
+
+[testenv:release]
+basepython=python3.8
+deps = pep517
+whitelist_externals =
+    cp
+    rm
+commands =
+    rm -rf {toxinidir}/dist
+    cp --no-target-directory --recursive {distdir} {toxinidir}/dist; # copy the wheel built by tox-wheel
+    {envpython} -m pep517.build --source --out-dir={toxinidir}/dist {toxinidir}
+"""
