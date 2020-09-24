@@ -87,7 +87,7 @@ whitelist_externals =
     rm
 commands =
     rm -rf {toxinidir}/dist
-    cp -r {distdir} {toxinidir}/dist; # copy the wheel built by tox-wheel
+    cp -r {distdir} {toxinidir}/dist # copy the wheel built by tox-wheel
     {envpython} -m pep517.build --source --out-dir={toxinidir}/dist {toxinidir}
 
 [testenv:publishcov]
