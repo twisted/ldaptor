@@ -15,6 +15,7 @@ Changes
 - the ldaptor whl is tested with tox. The sdist is now untested,
   deprecated and should only be used for compatability with very old
   packaging tools.
+- the setup.py file is deprecated and will be removed in a future release.
 
 Bugfixes
 ^^^^^^^^

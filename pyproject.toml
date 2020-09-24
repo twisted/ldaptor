@@ -22,20 +22,20 @@ requires=
 ; * dev - run things in local dev mode
 envlist =
     {py27,py34,py35,py36,py37,pypy,pypy3}-test-{twlatest,twtrunk,dev},
-    {py27,py35,py35,py36,py37,pypy,pypy3}-ported,
     {py27,py37}-linters,
     documentation,
 
 
 [testenv]
 wheel = True
-wheel_pep571 = True
+wheel_pep517 = True
+wheel_build_env = build
 deps = 
     coverage >= 5.3
     pyparsing
     passlib
     six
-    {twlatest,ported}: Twisted[tls]
+    twlatest: Twisted[tls]
     twtrunk: https://github.com/twisted/twisted/archive/trunk.tar.gz#egg=Twisted[tls]
     tw162: Twisted[tls]==16.2
     tw160: Twisted[tls]==16.0
@@ -57,11 +57,8 @@ passenv = *
 ; This is done in order to reuse
 commands =
     {envpython} --version
-    {test,ported}: trial --version
-
+    test: trial --version
     test: coverage run --rcfile={toxinidir}/.coveragerc -m twisted.trial {posargs:ldaptor}
-
-    ported: trial ldaptor
 
     ; Only run on local dev env.
     dev: coverage report --show-missing
@@ -71,6 +68,9 @@ commands =
     {dev,linters}: pyflakes ldaptor
     {dev,linters}: check-manifest
 
+[testenv:build]
+# empty environment to build universal wheel once per tox invocation
+# https://github.com/ionelmc/tox-wheel#build-configuration
 
 [testenv:documentation]
 deps = sphinx
