@@ -48,7 +48,9 @@ Release process
 ---------------
 
 The release is done automatically via GitHub actions when a new tag
-is pushed.
+is pushed. A new tag can be pushed with::
+
+    pipx run --spec="zest.releaser[recommended]>=6.22.1" fullrelease
 
 PyPI access is done via the HTTP API token stored in GitHub Secrets as
 PYPI_GITHUB_PACKAGE_UPLOAD from
