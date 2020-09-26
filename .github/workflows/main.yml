@@ -69,7 +69,7 @@ jobs:
         name: ubuntu-latest_3.8_dist
         path: dist
 
-    - name: Display structure of donwloaded files
+    - name: Display structure of downloaded files
       run: ls -R
 
     - name: Publish to PyPI for a new tag
