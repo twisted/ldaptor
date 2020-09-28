@@ -1,6 +1,7 @@
 include *.rst
 include *.txt
 include .travis.yml
+exclude .readthedocs.yml
 include LICENSE
 include docs/source/examples/ldif2ldif
 include ldaptor.schema
