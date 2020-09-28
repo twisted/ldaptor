@@ -28,7 +28,8 @@ envlist =
 
 [testenv]
 wheel = True
-wheel_pep571 = True
+wheel_pep517 = True
+wheel_build_env = build
 deps = 
     coverage >= 5.3
     pyparsing
@@ -66,6 +67,9 @@ commands =
     {dev,linters}: pyflakes ldaptor
     {dev,linters}: check-manifest
 
+[testenv:build]
+# empty environment to build universal wheel once per tox invocation
+# https://github.com/ionelmc/tox-wheel#build-configuration
 
 [testenv:documentation]
 deps = sphinx
@@ -82,7 +86,7 @@ whitelist_externals =
     rm
 commands =
     rm -rf {toxinidir}/dist
-    cp -r {distdir} {toxinidir}/dist; # copy the wheel built by tox-wheel
+    cp -r {distdir} {toxinidir}/dist # copy the wheel built by tox-wheel
     {envpython} -m pep517.build --source --out-dir={toxinidir}/dist {toxinidir}
 
 [testenv:publishcov]

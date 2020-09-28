@@ -1,4 +1,5 @@
-__version__ = "19.1.0"
+"""A Pure-Python Twisted library for LDAP"""
+__version__ = "20.0.0rc2.dev0"
 
 __title__ = "ldaptor"
 __description__ = "A Pure-Python Twisted library for LDAP"

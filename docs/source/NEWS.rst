@@ -1,8 +1,14 @@
 Changelog
 =========
 
-Release.next
--------------------------
+20.0.0rc2 (unreleased)
+----------------------
+
+- Dropped support for Python 2
+
+
+20.0.0rc1 (2020-09-25)
+----------------------
 
 Features
 ^^^^^^^^
@@ -10,11 +16,12 @@ Features
 Changes
 ^^^^^^^
 
-- Dropped support for Python 2
+- PyPI release is now done via GitHub Action
 - the ldaptor whl is now built with pep517.
 - the ldaptor whl is tested with tox. The sdist is now untested,
   deprecated and should only be used for compatability with very old
   packaging tools.
+- the setup.py file is deprecated and will be removed in a future release.
 
 Bugfixes
 ^^^^^^^^

@@ -59,6 +59,10 @@ class RandomizeListdirTestCase(unittest.TestCase):
 
         self.addCleanup(reverse_listdir)
 
+    def chmod(self, path, mode):
+        self.addCleanup(os.chmod, path, os.stat(path).st_mode)
+        os.chmod(path, mode)
+
 
 class Dir2LDIF(RandomizeListdirTestCase):
     def setUp(self):
@@ -117,7 +121,7 @@ objectClass: top
 
     @skipIfWindowsOrRoot
     def testNoAccess(self):
-        os.chmod(os.path.join(self.tree,
+        self.chmod(os.path.join(self.tree,
                               'dc=com.dir',
                               'dc=example.dir',
                               'cn=foo.ldif'),
@@ -447,29 +451,29 @@ cn: theChild
 
     @skipIfWindowsOrRoot
     def test_children_noAccess_dir_noRead(self):
-        os.chmod(self.meta.path, 0o300)
+        self.chmod(self.meta.path, 0o300)
         d = self.meta.children()
         def eb(fail):
             fail.trap(OSError)
             self.assertEqual(fail.value.errno, errno.EACCES)
-            os.chmod(self.meta.path, 0o755)
+            self.chmod(self.meta.path, 0o755)
         d.addCallbacks(testutil.mustRaise, eb)
         return d
 
     @skipIfWindowsOrRoot
     def test_children_noAccess_dir_noExec(self):
-        os.chmod(self.meta.path, 0o600)
+        self.chmod(self.meta.path, 0o600)
         d = self.meta.children()
         def eb(fail):
             fail.trap(IOError)
             self.assertEqual(fail.value.errno, errno.EACCES)
-            os.chmod(self.meta.path, 0o755)
+            self.chmod(self.meta.path, 0o755)
         d.addCallbacks(testutil.mustRaise, eb)
         return d
 
     @skipIfWindowsOrRoot
     def test_children_noAccess_file(self):
-        os.chmod(os.path.join(self.meta.path, 'cn=foo.ldif'), 0)
+        self.chmod(os.path.join(self.meta.path, 'cn=foo.ldif'), 0)
         d = self.meta.children()
         def eb(fail):
             fail.trap(IOError)
