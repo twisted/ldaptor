@@ -8,17 +8,6 @@ Changes
 ^^^^^^^
 
 - The next release v20.1.0 will drop support for Python 2, and require Python~=3.5
-
-
-20.0.0rc1 (2020-09-25)
-----------------------
-
-Features
-^^^^^^^^
-
-Changes
-^^^^^^^
-
 - PyPI release is now done via GitHub Action
 - the ldaptor whl is now built with pep517.
 - the ldaptor whl is tested with tox. The sdist is now untested,
