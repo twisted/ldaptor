@@ -28,14 +28,6 @@ ldaptor.checkers module
     :undoc-members:
     :show-inheritance:
 
-ldaptor.compat module
----------------------
-
-.. automodule:: ldaptor.compat
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 ldaptor.config module
 ---------------------
 
@@ -88,14 +80,6 @@ ldaptor.inmemory module
 -----------------------
 
 .. automodule:: ldaptor.inmemory
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-ldaptor.insensitive module
---------------------------
-
-.. automodule:: ldaptor.insensitive
     :members:
     :undoc-members:
     :show-inheritance:

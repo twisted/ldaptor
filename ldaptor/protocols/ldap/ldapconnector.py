@@ -81,6 +81,9 @@ class LDAPConnector(SRVConnector):
             SRVConnector.connect(self)
 
     def pickServer(self):
+        """
+        Pick the next server.
+        """
         if self.override is None:
             overriddenHost, overriddenPort = None, None
         else:
