@@ -4,7 +4,10 @@ Changelog
 20.0.0rc2 (unreleased)
 ----------------------
 
-- Nothing changed yet.
+Changes
+^^^^^^^
+
+- The next release v20.1.0 will drop support for Python 2, and require Python~=3.5
 
 
 20.0.0rc1 (2020-09-25)
