@@ -1,6 +1,0 @@
--e .
-
-passlib
-pyparsing
-twisted[tls]
-zope.interface
