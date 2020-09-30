@@ -36,7 +36,7 @@ def main():
     d = search(config)
     def _show(results):
         for item in results:
-            print item
+            print(item)
     d.addCallback(_show)
     d.addErrback(defer.logError)
     d.addBoth(lambda _: reactor.stop())

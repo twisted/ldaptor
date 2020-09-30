@@ -65,7 +65,7 @@ class PasswdClient(ldapclient.LDAPClient):
         return d
 
     def _report_pwgen_error(self, fail):
-        fail.trap(PwgenException)
+        fail.trap(generate_password.PwgenException)
         print('pwgen:', fail.getErrorMessage(), file=sys.stderr)
         return fail
 

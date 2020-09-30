@@ -198,7 +198,7 @@ class PdnsPipeProtocol(LineReceiver):
                 d=succeed(['LOG\tUnknown command %s in state %s'
                            % (repr(type), self.state),
                            'END'])
-        except:
+        except BaseException:
             f=Failure()
             d=fail(f)
 
@@ -276,7 +276,6 @@ if __name__ == "__main__":
         sys.stderr.write('{}: {}\n'.format(sys.argv[0], ue))
         sys.exit(1)
 
-    from twisted.python import log
     log.startLogging(sys.stderr, setStdout=0)
 
     cfg = config.LDAPConfig(baseDN=opts['base'],

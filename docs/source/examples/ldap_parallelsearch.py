@@ -22,7 +22,7 @@ import sys
 exitStatus=0
 
 def error(fail):
-    print >>sys.stderr, 'fail:', fail.getErrorMessage()
+    print('fail:', fail.getErrorMessage(), file=sys.stderr)
     global exitStatus
     exitStatus=1
 
@@ -34,7 +34,7 @@ def _search(proto, base, connection, numOfSearches):
     l=[]
     baseEntry = ldapsyntax.LDAPEntry(client=proto,
                                      dn=base)
-    for search in xrange(0, numOfSearches):
+    for search in range(0, numOfSearches):
         d=baseEntry.search(callback=lambda x:
                            _handle_entry(x, connection, search))
         d.addErrback(error)
@@ -46,7 +46,7 @@ def _search(proto, base, connection, numOfSearches):
 def main(base, serviceLocationOverrides, numOfConnections=3, numOfSearches=3):
     log.startLogging(sys.stderr, setStdout=0)
     l=[]
-    for connection in xrange(0, numOfConnections):
+    for connection in range(0, numOfConnections):
         c=ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
         d=c.connectAnonymously(base, serviceLocationOverrides)
 
