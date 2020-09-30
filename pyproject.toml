@@ -45,8 +45,7 @@ deps =
     dev: Twisted[tls]
     dev: diff_cover
     ; Linters are installed both on local dev and the dedicated env.
-    {dev,linters}: pyflakes
-    {dev,linters}: check-manifest
+    {dev,linters}: pre-commit
 
 ; All environment variables are passed.
 passenv = *
@@ -64,8 +63,7 @@ commands =
     dev: coverage xml -o {toxinidir}/build/coverage.xml
     dev: coverage html -d build/coverage-html
     dev: diff-cover --fail-under 100 --html-report {toxinidir}/build/coverage-diff.html {toxinidir}/build/coverage.xml
-    {dev,linters}: pyflakes ldaptor
-    {dev,linters}: check-manifest
+    {dev,linters}: pre-commit run --all-files --show-diff-on-failure {posargs}
 
 [testenv:build]
 # empty environment to build universal wheel once per tox invocation
