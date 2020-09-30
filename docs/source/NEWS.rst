@@ -15,6 +15,7 @@ Changes
 
 Features
 ^^^^^^^^
+- Updated the MaraDNS support to include v2 of the MaraDNS zone file and improved the v2 record type support
 
 Changes
 ^^^^^^^

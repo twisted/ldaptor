@@ -1,167 +1,112 @@
 #!/usr/bin/python
 
 from __future__ import print_function
-from ldaptor.protocols.ldap import distinguishedname, ldapconnector, ldapsyntax, ldapclient
-from ldaptor.protocols import pureber, pureldap
-from ldaptor import usage, ldapfilter, config, dns
 import sys
-from twisted.internet import protocol, defer, reactor
+from twisted.internet import reactor
+from ldaptor.protocols.ldap import ldapconnector, ldapsyntax, ldapclient
+from ldaptor.protocols import pureber, pureldap
+from ldaptor import usage, ldapfilter, config 
 
-def printIPAddress(name, ip):
-    print('A'+name+'.%|86400|'+ip)
+def _printIPAddressVOne(name, ipAddress):
+    print('A'+name+'.%|86400|'+ipAddress)
 
-def printPTR(name, ip):
-    octets = ip.split('.')
+def _printPTRVOne(name, ipAddress):
+    octets = ipAddress.split('.')
     octets.reverse()
     octets.append('in-addr.arpa.')
     print('P'+('.'.join(octets))+'|86400|'+name+'.%')
 
-class HostIPAddress:
-    def __init__(self, host, ipAddress):
-        self.host=host
-        self.ipAddress=ipAddress
+def _printHostLineVTwo(name, ttl, recordType, ipAddress):
+    nameStr = name+'.'
+    if '.' not in name: nameStr = name+'.%'
+    # If the 'ip' is an IP address (i.e. removing the '.' leaves a numeric string) then no further treatment is necessary.
+    # If it's a name (i.e. second charaters is in the alphanet) then it needs a trailing .
+    # If it's a name that needs a domain then append the %
+    ipStr = ipAddress
+    if not ((ipAddress.replace('.', '')).replace(' ', '')).isdigit():
+        ipStr = ipAddress+'.'
+        if '.' not in ipAddress: ipStr = ipAddress+'.%'
+    print(nameStr+'\t'+ttl+'\t'+recordType+'\t'+ipStr+' ~')
 
-    def printZone(self, domain):
-        print('#  '+self.host.dn)
-        printIPAddress(self.host.name+'.'+domain, self.ipAddress)
-        printPTR(self.host.name+'.'+domain, self.ipAddress)
+def _printPTRVTwo(name, ttl, ipAddress):
+    octets = ipAddress.split('.')
+    octets.reverse()
+    octets.append('in-addr.arpa.')
+    nameStr = name+'.'
+    if '.' not in name: nameStr = name+'.%'
+    print (('.'.join(octets))+'\t'+ttl+'\tPTR\t'+nameStr+' ~')
 
-    def __repr__(self):
-        return (self.__class__.__name__
-                +'('
-                +'host=%r, ' % self.host.name
-                +'ipAddress=%s' % repr(self.ipAddress)
-                +')')
-
-class Host:
-    def __init__(self, dn, name, ipAddresses):
-        self.dn=dn
-        self.name=name
-        self.ipAddresses=[HostIPAddress(self, ip) for ip in ipAddresses]
-
-    def __repr__(self):
-        return (self.__class__.__name__
-                +'('
-                +'dn=%s, ' % repr(self.dn)
-                +'name=%s, ' % repr(self.name)
-                +'ipAddresses=%s' % repr(self.ipAddresses)
-                +')')
-
-class Net:
-    def __init__(self, dn, name, address, mask):
-        self.dn=dn
-        self.name=name
-        self.address=address
-        self.mask=mask
-
-    def isInNet(self, ipAddress):
-        net = dns.aton(self.address)
-        mask = dns.aton(self.mask)
-        ip = dns.aton(ipAddress)
-        if ip&mask == net:
-            return 1
-        return 0
-
-    def printZone(self):
-        print('#'+self.dn)
-        printIPAddress(self.name, self.address)
-        printPTR(self.name, self.address)
-        ip = dns.aton(self.address)
-        mask = dns.aton(self.mask)
-        ipmask = dns.ntoa(mask)
-        broadcast = dns.ntoa(ip|~mask)
-        printIPAddress('netmask.'+self.name, ipmask)
-        printIPAddress('broadcast.'+self.name, broadcast)
-        printPTR('broadcast.'+self.name, broadcast)
-
-    def __repr__(self):
-        return (self.__class__.__name__
-                +'('
-                +'dn=%s, ' % repr(self.dn)
-                +'name=%s, ' % repr(self.name)
-                +'address=%s, ' % repr(self.address)
-                +'mask=%s' % repr(self.mask)
-                +')')
-
-
-
-exitStatus=0
+exitStatus = 0
 
 def error(fail):
     print('fail:', str(fail), file=sys.stderr) #.getErrorMessage()
     global exitStatus
-    exitStatus=1
+    exitStatus = 1
 
-def only(e, attrName):
-    assert len(e[attrName])==1, \
+def only(serverResponse, attrName):
+    assert len(serverResponse[attrName]) == 1, \
            "object %s attribute %r has multiple values: %s" \
-           % (e.dn, attrName, e[attrName])
-    for val in e[attrName]:
+           % (serverResponse.dn, attrName, serverResponse[attrName])
+    for val in serverResponse[attrName]:
         return val
 
-def getNets(e, filter):
-    filt=pureldap.LDAPFilter_and(value=(
-        pureldap.LDAPFilter_present('cn'),
-        pureldap.LDAPFilter_present('ipNetworkNumber'),
-        pureldap.LDAPFilter_present('ipNetmaskNumber'),
-        ))
-    if filter:
-        filt = pureldap.LDAPFilter_and(value=(filter, filt))
-    d = e.search(filterObject=filt,
-                 attributes=['cn',
-                             'ipNetworkNumber',
-                             'ipNetmaskNumber',
-                             ])
-    def _cbGotNets(nets):
-        r = []
-        for e in nets:
-            net = Net(str(e.dn),
-                      str(only(e, 'cn')),
-                      str(only(e, 'ipNetworkNumber')),
-                      str(only(e, 'ipNetmaskNumber')))
-            net.printZone()
-            r.append(net)
+def getHosts(serverRequest, filterText):
+    filt = pureldap.LDAPFilter_equalityMatch(
+        attributeDesc=pureldap.LDAPAttributeDescription('objectClass'),
+        assertionValue=pureber.BEROctetString('maradnsRecord'))
+    if filterText:
+        filt = pureldap.LDAPFilter_and(value=(filterText, filt))
+
+    def _cbGotHost(serverResponse):
+        name = str(only(serverResponse, 'idnsName'))
+
+        # If there's a TTL in the response the use it, otherwise, give it the default.
+        # The /ttl line in the MaraDNS zone file is not implemented here.
+        ttl = '86400'
+        if 'dNSTTL' in serverResponse.keys(): ttl = str(only(serverResponse, 'dNSTTL'))
+
+        # Array to translate the record types from LDAP language to MaraDNS language
+        # So the MX record is a hack but that's how BIND does it too
+        records = [
+            ['FQDNRecord', 'FQDN4'],
+            ['aRecord', 'A'],
+            ['cNAMERecord', 'CNAME'],
+            ['sRVRecord', 'SRV'],
+            ['nSRecord', 'NS'],
+            ['tXTRecord', 'TXT'],
+            ['mXRecord', 'MX'],
+            ['pTRRecord', 'PTR']]
+
+        for record in records:
+            if record[0] in serverResponse.keys():
+                for ipAddress in serverResponse[record[0]]:
+                    if maraDnsVersion == 1 and record[0] == 'aRecord': _printIPAddressVOne(name, ipAddress) ; _printPTRVOne(name, ipAddress)
+                    if maraDnsVersion == 2: 
+                        if record[0] == 'pTRRecord':
+                            _printPTRVTwo(name, '+'+ttl, ipAddress)
+                        else:
+                            _printHostLineVTwo(name, '+'+ttl, record[1], ipAddress)
+
+    serverResponse = serverRequest.search(filterObject=filt,
+                                          attributes=[
+                                              'idnsName', 'FQDNRecord',
+                                              'aRecord', 'cNAMERecord',
+                                              'dNSTTL', 'mXRecord',
+                                              'sRVRecord', 'nSRecord',
+                                              'pTRRecord','tXTRecord'],
+                                          callback=_cbGotHost)
+    return serverResponse 
+
+def cbConnected(client, filterText):
+    serverRequest = ldapsyntax.LDAPEntryWithClient(client, cfg.getBaseDN())
+    d = getHosts(serverRequest, filterText)
+    def unbind(r, serverRequest):
+        serverRequest.client.unbind()
         return r
-    d.addCallback(_cbGotNets)
+    d.addCallback(unbind, serverRequest)
     return d
 
-def getHosts(nets, e, filter):
-    filt=pureldap.LDAPFilter_equalityMatch(attributeDesc=pureldap.LDAPAttributeDescription('objectClass'),
-                                           assertionValue=pureber.BEROctetString('ipHost'))
-    if filter:
-        filt = pureldap.LDAPFilter_and(value=(filter, filt))
-    def _cbGotHost(e):
-        host = Host(str(e.dn),
-                    str(only(e, 'cn')),
-                    list(str(i) for i in e['ipHostNumber']))
-        for hostIP in host.ipAddresses:
-            parent=None
-            for net in nets:
-                if net.isInNet(hostIP.ipAddress):
-                    parent=net
-                    break
-
-            if parent:
-                hostIP.printZone(parent.name)
-            else:
-                sys.stderr.write("IP address %s is in no net, discarding.\n" % hostIP)
-    d = e.search(filterObject=filt,
-                 attributes=['ipHostNumber',
-                             'cn'],
-                 callback=_cbGotHost)
-    return d
-
-def cbConnected(client, cfg, filter):
-    e = ldapsyntax.LDAPEntryWithClient(client, cfg.getBaseDN())
-    d = getNets(e, filter)
-    d.addCallback(getHosts, e, filter)
-    def unbind(r, e):
-        e.client.unbind()
-        return r
-    d.addCallback(unbind, e)
-    return d
-
-def main(cfg, filter_text):
+def main(filterText):
     from twisted.python import log
     log.startLogging(sys.stderr, setStdout=0)
 
@@ -171,16 +116,16 @@ def main(cfg, filter_text):
         print("%s: %s." % (sys.argv[0], e), file=sys.stderr)
         sys.exit(1)
 
-    if filter_text is not None:
-        filt = ldapfilter.parseFilter(filter_text)
+    if filterText is not None:
+        filt = ldapfilter.parseFilter(filterText)
     else:
         filt = None
 
-    c=ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
+    c = ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
     d = c.connectAnonymously(
         baseDN,
         overrides=cfg.getServiceLocationOverrides())
-    d.addCallback(cbConnected, cfg, filt)
+    d.addCallback(cbConnected, filt)
     d.addErrback(error)
     d.addBoth(lambda x: reactor.stop())
 
@@ -188,20 +133,19 @@ def main(cfg, filter_text):
     sys.exit(exitStatus)
 
 class MyOptions(usage.Options, usage.Options_service_location, usage.Options_base_optional):
-    """LDAPtor maradns zone file exporter"""
-    def parseArgs(self, filter=None):
-        self.opts['filter'] = filter
+    """LDAPtor maradns v1 and v2 zone file exporter"""
+    def parseArgs(self, customFilter=None):
+        self.opts['customFilter'] = customFilter
 
 if __name__ == "__main__":
-    import sys
     try:
         opts = MyOptions()
         opts.parseOptions()
-    except usage.UsageError as ue:
-        sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
+    except usage.UsageError as usageError:
+        sys.stderr.write('%s: %s\n' % (sys.argv[0], usageError))
         sys.exit(1)
 
     cfg = config.LDAPConfig(baseDN=opts['base'],
                             serviceLocationOverrides=opts['service-location'])
-    main(cfg,
-         opts['filter'])
+    maraDnsVersion = config.maraDnsVersion()
+    main(opts['customFilter'])
