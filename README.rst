@@ -1,10 +1,21 @@
 Ldaptor
 =======
 
-.. image:: https://travis-ci.org/twisted/ldaptor.svg?branch=master
+.. image:: https://img.shields.io/travis/com/twisted/ldaptor?label=TravisCI&logo=travis
+    :alt: Travis (.com)
     :target: https://travis-ci.org/twisted/ldaptor
-.. image:: https://codecov.io/gh/twisted/ldaptor/branch/master/graph/badge.svg
+.. image:: https://img.shields.io/codecov/c/github/twisted/ldaptor?label=codecov&logo=codecov
+    :alt: Codecov
     :target: https://codecov.io/gh/twisted/ldaptor
+.. image:: https://img.shields.io/readthedocs/ldaptor?logo=read-the-docs
+    :alt: Read the Docs
+    :target: https://ldaptor.readthedocs.io/en/latest/
+.. image:: https://img.shields.io/github/workflow/status/twisted/ldaptor/CI?label=GitHub%20Actions&logo=github
+    :alt: GitHub Actions
+    :target: https://github.com/twisted/ldaptor
+.. image:: https://img.shields.io/pypi/v/ldaptor?logo=pypi
+    :alt: PyPI
+    :target: https://pypi.org/project/ldaptor/
 
 Ldaptor is a pure-Python library that implements:
 
