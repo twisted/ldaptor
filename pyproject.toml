@@ -35,7 +35,7 @@ requires=
 ; * test - run trial tests
 ; * dev - run things in local dev mode
 envlist =
-    py{35,36,37,38,39,py3}-test-{twlatest,twtrunk,dev}
+    py{36,37,38,39,py3}-test-{twlatest,twtrunk,dev}
     py39-linters,
     documentation,
 
