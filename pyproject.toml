@@ -5,10 +5,10 @@ build-backend = "setuptools.build_meta"
 
 [tool.tox]
 legacy_tox_ini = """
-; tox configuration file for running tests on local dev env and Travis CI.
+; tox configuration file for running tests on local dev env and CI.
 ;
 ; The local dev environment will be executed against latest released Twisted.
-; The coverage is reported only and local dev and not on Travis-CI as there
+; The coverage is reported only and local dev and not on CI as there
 ; we have separate reported (ex codecov.io)
 
 [tox]
@@ -90,7 +90,7 @@ commands =
     {envpython} -m pep517.build --source --out-dir={toxinidir}/dist {toxinidir}
 
 [testenv:publishcov]
-passenv = CI GITHUB_* TRAVIS TRAVIS_* CODECOV_*
+passenv = GITHUB_*
 deps =
   codecov
   coverage>=5.3

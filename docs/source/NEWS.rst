@@ -5,6 +5,7 @@ Changelog
 -------------------
 
 - Dropped support for Python 2
+- removed Travis CI
 
 
 20.0.0 (2020-09-30)
