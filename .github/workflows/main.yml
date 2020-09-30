@@ -49,10 +49,14 @@ jobs:
         run: |
           pip install tox
 
+      - name: tox linters
+        if: matrix.python-version != 3.5 && matrix.python-version != 'pypy3'
+        run: tox -e py-linters
+
       - name: tox
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: tox -e py-test-twlatest,py-test-twtrunk,py-linters,publishcov,release
+        run: tox -e py-test-twlatest,py-test-twtrunk,publishcov,release
 
       - name: upload dist
         uses: actions/upload-artifact@v2
