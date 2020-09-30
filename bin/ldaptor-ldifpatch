@@ -1,10 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
-from __future__ import print_function
 import sys
 from ldaptor.protocols.ldap import ldif, ldifdelta
 from ldaptor import usage, inmemory
-from twisted.internet import protocol, reactor, defer
+from twisted.internet import reactor
 
 
 exitStatus=0
@@ -50,7 +49,7 @@ if __name__ == "__main__":
         config = MyOptions()
         config.parseOptions()
     except usage.UsageError as ue:
-        sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
+        sys.stderr.write('{}: {}\n'.format(sys.argv[0], ue))
         sys.exit(1)
 
     data = open(config['data'])

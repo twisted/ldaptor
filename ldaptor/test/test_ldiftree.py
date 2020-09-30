@@ -9,12 +9,14 @@ import errno
 import shutil
 import unittest as stdlib_unittest
 
-import six
+from twisted.python import log
 from twisted.trial import unittest
+from twisted.internet import testing
 
 from ldaptor import ldiftree, entry, delta, testutil
 from ldaptor.entry import BaseLDAPEntry
 from ldaptor.protocols.ldap import ldaperrors, ldifprotocol
+from ldaptor.test import util
 
 
 def writeFile(path, content):
@@ -64,7 +66,7 @@ class RandomizeListdirTestCase(unittest.TestCase):
 
 class Dir2LDIF(RandomizeListdirTestCase):
     def setUp(self):
-        super(Dir2LDIF, self).setUp()
+        super().setUp()
         self.tree = self.mktemp()
         os.mkdir(self.tree)
         com = os.path.join(self.tree, 'dc=com.dir')
@@ -170,7 +172,7 @@ objectClass: top
 
 class LDIF2Dir(RandomizeListdirTestCase):
     def setUp(self):
-        super(LDIF2Dir, self).setUp()
+        super().setUp()
         self.tree = self.mktemp()
         os.mkdir(self.tree)
         com = os.path.join(self.tree, 'dc=com.dir')
@@ -300,7 +302,7 @@ class LDIFTreeEntryTests(RandomizeListdirTestCase):
     # TODO share the actual tests with inmemory and any other
     # implementations of the same interface
     def setUp(self):
-        super(LDIFTreeEntryTests, self).setUp()
+        super().setUp()
         self.tree = self.mktemp()
         os.mkdir(self.tree)
         com = os.path.join(self.tree, 'dc=com.dir')
@@ -471,7 +473,7 @@ cn: theChild
 
     @skipIfWindowsOrRoot
     def test_children_noAccess_file(self):
-        self.chmod(os.path.join(self.meta.path, u'cn=foo.ldif'), 0)
+        self.chmod(os.path.join(self.meta.path, 'cn=foo.ldif'), 0)
         d = self.meta.children()
         def eb(fail):
             fail.trap(IOError)
@@ -565,7 +567,7 @@ cn: theChild
             self.bar,
             self.foo,
             ]
-        six.assertCountEqual(self, expected, result)
+        self.assertCountEqual(expected, result)
 
     def test_subtree_many_cb(self):
         got = []
@@ -583,7 +585,7 @@ cn: theChild
             self.bar,
             self.foo,
             ]
-        six.assertCountEqual(self, expected, got)
+        self.assertCountEqual(expected, got)
 
     def test_lookup_fail(self):
         dn = 'cn=thud,ou=metasyntactic,dc=example,dc=com'
@@ -613,7 +615,7 @@ cn: theChild
 
     def test_lookup_fail_multipleError(self):
         writeFile(os.path.join(self.example.path,
-                               u'cn=bad-two-entries.ldif'),
+                               'cn=bad-two-entries.ldif'),
                   b"""\
 dn: cn=bad-two-entries,dc=example,dc=com
 cn: bad-two-entries
@@ -631,7 +633,7 @@ objectClass: top
 
     def test_lookup_fail_emptyError(self):
         writeFile(os.path.join(self.example.path,
-                               u'cn=bad-empty.ldif'),
+                               'cn=bad-empty.ldif'),
                   b"")
         self.assertRaises(
             ldiftree.LDIFTreeEntryContainsNoEntries,
@@ -762,6 +764,22 @@ objectClass: top
         d.addCallback(cb3)
         return d
 
+    @util.fromCoroutineFunction
+    async def test_diffTree_edit_failure(self):
+        otherDir = self.mktemp()
+        shutil.copytree(self.tree, otherDir)
+        other = ldiftree.LDIFTreeEntry(otherDir)
+
+        otherEmpty = await other.lookup('ou=empty,dc=example,dc=com')
+        otherEmpty['foo'] = ['bar']
+        shutil.rmtree(otherDir)
+        observer = testing.EventLoggingObserver.createWithCleanup(self, log)
+        self.assertFalse(await otherEmpty.commit())
+        self.assertEqual(
+            observer[0]["log_text"],
+            "[ERROR] Could not commit entry: ou=empty,dc=example,dc=com.",
+        )
+
     @skipIfWindows
     def test_diffTree_edit(self):
         otherDir = self.mktemp()
@@ -794,7 +812,7 @@ objectClass: top
             return self.example.children()
         d.addCallback(getChildren)
         d.addCallback(set)
-        d.addCallback(self.assertEqual, set([
+        d.addCallback(self.assertEqual, {
             self.meta,
             BaseLDAPEntry(
             dn='ou=moved,dc=example,dc=com',
@@ -802,7 +820,7 @@ objectClass: top
                          b'ou': [b'moved'],
             }),
             self.oneChild,
-            ]))
+            })
         return d
 
     @skipIfWindows
@@ -812,14 +830,14 @@ objectClass: top
             return self.example.children()
         d.addCallback(getChildren)
         d.addCallback(set)
-        d.addCallback(self.assertEqual, set([
+        d.addCallback(self.assertEqual, {
             BaseLDAPEntry(dn='ou=moved,dc=example,dc=com',
                           attributes={ b'objectClass': [b'a', b'b'],
                                        b'ou': [b'moved'],
                                        }),
             self.empty,
             self.oneChild,
-            ]))
+            })
         return d
 
     @skipIfWindows
@@ -829,22 +847,22 @@ objectClass: top
             return self.example.children()
         d.addCallback(getChildren)
         d.addCallback(set)
-        d.addCallback(self.assertEqual, set([
+        d.addCallback(self.assertEqual, {
             self.meta,
             self.oneChild,
-            ]))
+            })
         def getChildren2(dummy):
             return self.oneChild.children()
         d.addCallback(getChildren2)
         d.addCallback(set)
-        d.addCallback(self.assertEqual, set([
+        d.addCallback(self.assertEqual, {
             self.theChild,
             BaseLDAPEntry(
             dn='ou=moved,ou=oneChild,dc=example,dc=com',
             attributes={ b'objectClass': [b'a', b'b'],
                          b'ou': [b'moved'],
             }),
-            ]))
+            })
         return d
 
     @skipIfWindows
@@ -854,21 +872,21 @@ objectClass: top
             return self.example.children()
         d.addCallback(getChildren)
         d.addCallback(set)
-        d.addCallback(self.assertEqual, set([
+        d.addCallback(self.assertEqual, {
             self.empty,
             self.oneChild,
-            ]))
+            })
         def getChildren2(dummy):
             return self.oneChild.children()
         d.addCallback(getChildren2)
         d.addCallback(set)
-        d.addCallback(self.assertEqual, set([
+        d.addCallback(self.assertEqual, {
             self.theChild,
             BaseLDAPEntry(dn='ou=moved,ou=oneChild,dc=example,dc=com',
                           attributes={ b'objectClass': [b'a', b'b'],
                                        b'ou': [b'moved'],
                                        }),
-            ]))
+            })
         return d
 
 

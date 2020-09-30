@@ -1,11 +1,11 @@
-from twisted.internet import reactor, defer
+from twisted.internet import reactor
 from twisted.web import server, resource
 
 from ldaptor.protocols.ldap import ldapclient, ldapsyntax, ldapconnector, \
      distinguishedname
 from ldaptor import ldapfilter
 
-class LDAPConfig(object):
+class LDAPConfig:
     def __init__(self,
                  baseDN,
                  serviceLocationOverrides=None):

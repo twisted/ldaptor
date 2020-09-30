@@ -4,7 +4,7 @@ Changelog
 20.0.1 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Dropped support for Python 2
 
 
 20.0.0 (2020-09-30)

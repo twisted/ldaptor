@@ -1,7 +1,6 @@
 """
 LDAP protocol proxy server.
 """
-from __future__ import absolute_import, division, print_function
 from ldaptor.protocols.ldap import ldapserver, ldapconnector, ldaperrors
 from ldaptor.protocols import pureldap
 from twisted.internet import defer
@@ -84,7 +83,7 @@ class ProxyBase(ldapserver.BaseLDAPServer):
         """
         log.msg(
             "[ERROR] Could not connect to proxied server.  "
-            "Error was:\n{0}".format(err))
+            "Error was:\n{}".format(err))
         while len(self.queuedRequests) > 0:
             request, controls, reply = self.queuedRequests.pop(0)
             if isinstance(request, pureldap.LDAPBindRequest):

@@ -1,4 +1,3 @@
-
 from twisted.internet import error
 from ldaptor import config, testutil
 from ldaptor.protocols.ldap import ldaperrors

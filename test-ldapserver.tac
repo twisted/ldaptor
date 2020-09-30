@@ -3,7 +3,6 @@ import shutil
 from twisted.application import service, internet
 from twisted.internet import protocol
 from twisted.python import components
-from twisted.trial import util
 from ldaptor import ldiftree, interfaces
 from ldaptor.protocols.ldap import ldapserver
 

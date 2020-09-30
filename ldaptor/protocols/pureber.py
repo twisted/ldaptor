@@ -30,8 +30,8 @@
 #     Only some BOOLEAN and INTEGER types have default values in
 #     this protocol definition.
 
-import six
-from six.moves import UserList
+import sys
+from collections import UserList
 
 from ldaptor._encoder import to_bytes, repr_converter, WireStrAlias
 
@@ -96,16 +96,16 @@ def int2berlen(i):
         l = len(e)
         assert l > 0
         assert l <= 127
-        return six.int2byte(0x80 | l) + e
+        return bytes((0x80 | l,)) + e
 
 
 def int2ber(i, signed=True):
     encoded = b''
     while ((signed and (i > 127 or i < -128))
            or (not signed and (i > 255))):
-        encoded = six.int2byte(i % 256) + encoded
+        encoded = bytes((i % 256,)) + encoded
         i = i >> 8
-    encoded = six.int2byte(i % 256) + encoded
+    encoded = bytes((i % 256,)) + encoded
     return encoded
 
 
@@ -188,7 +188,7 @@ class BERInteger(BERBase):
 
     def toWire(self):
         encoded = int2ber(self.value)
-        return six.int2byte(self.identification()) \
+        return bytes((self.identification(),)) \
                + int2berlen(len(encoded)) \
                + encoded
 
@@ -218,7 +218,7 @@ class BEROctetString(BERBase):
     def toWire(self):
         value = to_bytes(self.value)
         result = (
-            six.int2byte(self.identification()) +
+            bytes((self.identification(),)) +
             int2berlen(len(value)) +
             value
             )
@@ -248,7 +248,7 @@ class BERNull(BERBase):
         BERBase.__init__(self, tag)
 
     def toWire(self):
-        return six.int2byte(self.identification()) + six.int2byte(0)
+        return bytes((self.identification(),)) + bytes((0,))
 
     def __repr__(self):
         if self.tag == self.__class__.tag:
@@ -279,9 +279,9 @@ class BERBoolean(BERBase):
 
     def toWire(self):
         assert self.value == 0 or self.value == 0xFF
-        return six.int2byte(self.identification()) \
+        return bytes((self.identification(),)) \
                + int2berlen(1) \
-               + six.int2byte(self.value)
+               + bytes((self.value,))
 
     def __repr__(self):
         if self.tag == self.__class__.tag:
@@ -312,7 +312,7 @@ class BERSequence(BERStructured, UserList):
 
     def toWire(self):
         r = b''.join(to_bytes(x) for x in self.data)
-        return six.int2byte(self.identification()) + int2berlen(len(r)) + r
+        return bytes((self.identification(),)) + int2berlen(len(r)) + r
 
     def __repr__(self):
         if self.tag == self.__class__.tag:
@@ -328,16 +328,15 @@ class BERSequenceOf(BERSequence):
 
 class BERSet(BERSequence):
     tag = 0x11
-    pass
 
 
 
 class BERDecoderContext:
     Identities = {
+        BERBoolean.tag: BERBoolean,
         BERInteger.tag: BERInteger,
         BEROctetString.tag: BEROctetString,
         BERNull.tag: BERNull,
-        BERBoolean.tag: BERBoolean,
         BEREnumerated.tag: BEREnumerated,
         BERSequence.tag: BERSequence,
         BERSet.tag: BERSet,
@@ -362,7 +361,10 @@ class BERDecoderContext:
     def __repr__(self):
         identities = []
         for tag, class_ in self.Identities.items():
-            identities.append('0x%02x: %s' % (tag, class_.__name__))
+            identities.append('0x{:02x}: {}'.format(tag, class_.__name__))
+
+        sys.version_info < (3, 6) and identities.sort()
+
         return "<"+self.__class__.__name__ \
                +" identities={%s}" % ', '.join(identities) \
                +" fallback="+repr(self.fallback) \

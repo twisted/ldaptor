@@ -1,6 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
-import six
 
 from ldaptor.protocols import pureldap
 from ldaptor._encoder import to_unicode
@@ -228,7 +227,7 @@ def parseFilter(s):
     as pyparsing cannot parse Python 3 byte strings with
     the rules declared in this module.
     """
-    s = to_unicode(s) if not six.PY2 else s
+    s = to_unicode(s)
     try:
         x = toplevel.parseString(s)
     except ParseException as e:

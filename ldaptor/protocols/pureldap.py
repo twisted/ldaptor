@@ -17,7 +17,6 @@
 
 import string
 
-import six
 
 from ldaptor.protocols.pureber import (
 
@@ -49,7 +48,7 @@ def escape(s):
     return s
 
 def binary_escape(s):
-    return ''.join('\\{0:02x}'.format(ord(c)) for c in s)
+    return ''.join('\\{:02x}'.format(ord(c)) for c in s)
 
 def smart_escape(s, threshold=0.30):
     binary_count = sum(c not in string.printable for c in s)
@@ -65,7 +64,7 @@ class LDAPInteger(BERInteger):
 class LDAPString(BEROctetString):
     def __init__(self, *args, **kwargs):
         self.escaper = kwargs.pop('escaper', escape)
-        super(LDAPString, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 class LDAPAttributeValue(BEROctetString):
     pass
@@ -141,7 +140,6 @@ class LDAPProtocolOp:
 
 class LDAPProtocolRequest(LDAPProtocolOp):
     needs_answer = 1
-    pass
 
 
 class LDAPProtocolResponse(LDAPProtocolOp):
@@ -512,7 +510,7 @@ class LDAPFilter_not(LDAPFilter):
 
     def toWire(self):
         value = to_bytes(self.value)
-        return six.int2byte(self.identification()) + int2berlen(len(value)) + value
+        return bytes((self.identification(),)) + int2berlen(len(value)) + value
 
     def asText(self):
         return '(!' + self.value.asText() + ')'
@@ -657,22 +655,18 @@ class LDAPAssertionValue(BEROctetString):
 
 class LDAPMatchingRuleAssertion_matchingRule(LDAPMatchingRuleId):
     tag = CLASS_CONTEXT | 0x01
-    pass
 
 
 class LDAPMatchingRuleAssertion_type(LDAPAttributeDescription):
     tag = CLASS_CONTEXT | 0x02
-    pass
 
 
 class LDAPMatchingRuleAssertion_matchValue(LDAPAssertionValue):
     tag = CLASS_CONTEXT | 0x03
-    pass
 
 
 class LDAPMatchingRuleAssertion_dnAttributes(BERBoolean):
     tag = CLASS_CONTEXT | 0x04
-    pass
 
 
 class LDAPBERDecoderContext_MatchingRuleAssertion(BERDecoderContext):
@@ -726,13 +720,13 @@ class LDAPMatchingRuleAssertion(BERSequence):
     def __init__(self, matchingRule=None, type=None, matchValue=None, dnAttributes=None, tag=None, escaper=escape):
         BERSequence.__init__(self, value=[], tag=tag)
         assert matchValue is not None
-        if isinstance(matchingRule, (six.binary_type, six.text_type)):
+        if isinstance(matchingRule, (bytes, str)):
             matchingRule = LDAPMatchingRuleAssertion_matchingRule(matchingRule)
 
-        if isinstance(type, (six.binary_type, six.text_type)):
+        if isinstance(type, (bytes, str)):
             type = LDAPMatchingRuleAssertion_type(type)
 
-        if isinstance(matchValue, (six.binary_type, six.text_type)):
+        if isinstance(matchValue, (bytes, str)):
             matchValue = LDAPMatchingRuleAssertion_matchValue(matchValue)
 
         if isinstance(dnAttributes, bool):
@@ -944,7 +938,6 @@ class LDAPSearchResultEntry(LDAPProtocolResponse, BERSequence):
 class LDAPSearchResultDone(LDAPResult):
     tag = CLASS_APPLICATION | 0x05
 
-    pass
 
 
 class LDAPControls(BERSequence):
@@ -1185,13 +1178,11 @@ class LDAPDelRequest(LDAPProtocolRequest, LDAPString):
 
 class LDAPDelResponse(LDAPResult):
     tag = CLASS_APPLICATION | 0x0b
-    pass
 
 
 class LDAPModifyDNResponse_newSuperior(LDAPString):
     tag = CLASS_CONTEXT | 0x00
 
-    pass
 
 
 class LDAPBERDecoderContext_ModifyDNRequest(BERDecoderContext):
@@ -1397,9 +1388,9 @@ class LDAPExtendedRequest(LDAPProtocolRequest, BERSequence):
         LDAPProtocolRequest.__init__(self)
         BERSequence.__init__(self, [], tag=tag)
         assert requestName is not None
-        assert isinstance(requestName, (six.binary_type, six.text_type))
+        assert isinstance(requestName, (bytes, str))
         assert requestValue is None or isinstance(
-            requestValue, (six.binary_type, six.text_type))
+            requestValue, (bytes, str))
         self.requestName = requestName
         self.requestValue = requestValue
 
@@ -1585,7 +1576,7 @@ class LDAPStartTLSRequest(LDAPExtendedRequest):
     def __repr__(self):
         l = []
         if self.tag != self.__class__.tag:
-            l.append('tag={0}'.format(self.tag))
+            l.append('tag={}'.format(self.tag))
         return self.__class__.__name__ + '(' + ', '.join(l) + ')'
 
 
@@ -1613,7 +1604,7 @@ class LDAPStartTLSResponse(LDAPExtendedResponse):
     def __repr__(self):
         l = []
         if self.tag != self.__class__.tag:
-            l.append('tag={0}'.format(self.tag))
+            l.append('tag={}'.format(self.tag))
         return self.__class__.__name__ + '(' + ', '.join(l) + ')'
 
 

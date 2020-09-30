@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 #host fantasia {
 #  dhcp-client-identifier
@@ -15,7 +15,6 @@
 #shared-network "foo" {
 #}
 
-from __future__ import print_function
 from ldaptor.protocols.ldap import ldapclient, ldapconnector, ldapsyntax
 from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage, ldapfilter, config
@@ -29,7 +28,7 @@ def my_aton_octets(ip):
     return n
 
 def my_aton_numbits(num):
-    n=0L
+    n=0
     while num>0:
         n>>=1
         n |= 2**31
@@ -57,7 +56,7 @@ class HostIPAddress:
     def printDHCP(self, domain, prefix=''):
         def output():
             yield '# %s' % self.host.dn
-            yield 'host %s.%s {' % (self.host.name, domain)
+            yield 'host {}.{} {{'.format(self.host.name, domain)
             for mac in self.host.macAddresses:
                 yield '\thardware ethernet %s;' % mac
             yield '\tfixed-address %s;' % self.ipAddress
@@ -91,9 +90,9 @@ class Group:
             self.hosts.add(host)
 
     def printDHCP(self, domain, addrs, prefix=''):
-        addresses = set(addr
+        addresses = {addr
                         for host in self.hosts
-                        for addr in host.ipAddresses)
+                        for addr in host.ipAddresses}
         addresses.intersection_update(addrs)
         addrs.difference_update(addresses)
 
@@ -165,8 +164,8 @@ class Net:
         nm = my_aton(nm)
         nm = my_ntoa(nm)
         r = ['# %s' % self.dn,
-             'subnet %s netmask %s {' % (self.address, nm),
-             '\toption domain-name "%s.%s";' % (self.name, domain)]
+             'subnet {} netmask {} {{'.format(self.address, nm),
+             '\toption domain-name "{}.{}";'.format(self.name, domain)]
         if self.routers:
             r.append('\toption routers %s;' % (', '.join(self.routers)))
         for dhcpRange in self.dhcpRanges:
@@ -285,7 +284,7 @@ def haveGroups(hosts, nets, sharedNets, dnsDomain):
     for net in nets:
         net.printDHCP(dnsDomain)
 
-class _NO_DEFAULT(object): pass
+class _NO_DEFAULT: pass
 def only(e, attr, default=_NO_DEFAULT):
     val = e.get(attr, _NO_DEFAULT)
     if val is _NO_DEFAULT:
@@ -400,7 +399,7 @@ def main(cfg, filter_text, dnsDomain):
     try:
         baseDN = cfg.getBaseDN()
     except config.MissingBaseDNError as e:
-        print("%s: %s." % (sys.argv[0], e), file=sys.stderr)
+        print("{}: {}.".format(sys.argv[0], e), file=sys.stderr)
         sys.exit(1)
 
     from twisted.python import log
@@ -441,7 +440,7 @@ if __name__ == "__main__":
         opts = MyOptions()
         opts.parseOptions()
     except usage.UsageError as ue:
-        sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
+        sys.stderr.write('{}: {}\n'.format(sys.argv[0], ue))
         sys.exit(1)
 
     cfg = config.LDAPConfig(baseDN=opts['base'],

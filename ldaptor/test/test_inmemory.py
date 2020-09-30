@@ -4,7 +4,6 @@ Test cases for ldaptor.inmemory module.
 from io import BytesIO
 
 from twisted.trial import unittest
-import six
 
 from ldaptor import inmemory, delta, testutil
 from ldaptor.protocols.ldap import distinguishedname, ldaperrors
@@ -59,7 +58,7 @@ class TestInMemoryDatabase(unittest.TestCase):
 
     def test_children_empty(self):
         d = self.empty.children()
-        d.addCallback(lambda actual: six.assertCountEqual(self, actual, []))
+        d.addCallback(lambda actual: self.assertCountEqual(actual, []))
         return d
 
     def test_children_oneChild(self):
@@ -70,7 +69,7 @@ class TestInMemoryDatabase(unittest.TestCase):
             want = [distinguishedname.DistinguishedName('cn=theChild,ou=oneChild,dc=example,dc=com')]
             got.sort()
             want.sort()
-            six.assertCountEqual(self, got, want)
+            self.assertCountEqual(got, want)
         d.addCallback(cb)
         return d
 
@@ -100,7 +99,7 @@ class TestInMemoryDatabase(unittest.TestCase):
                 distinguishedname.DistinguishedName('cn=bar,ou=metasyntactic,dc=example,dc=com'),
                 ]
             got = [e.dn for e in children]
-            six.assertCountEqual(self, got, want)
+            self.assertCountEqual(got, want)
         d.addCallback(cb)
         return d
 
@@ -120,7 +119,7 @@ class TestInMemoryDatabase(unittest.TestCase):
                 ]
             got.sort()
             want.sort()
-            six.assertCountEqual(self, got, want)
+            self.assertCountEqual(got, want)
         d.addCallback(cb)
         return d
 
@@ -157,8 +156,7 @@ class TestInMemoryDatabase(unittest.TestCase):
 
     def test_subtree_oneChild(self):
         d = self.oneChild.subtree()
-        d.addCallback(lambda actual: six.assertCountEqual(
-            self,
+        d.addCallback(lambda actual: self.assertCountEqual(
             actual,
             [
             self.oneChild,
@@ -175,7 +173,7 @@ class TestInMemoryDatabase(unittest.TestCase):
                 self.oneChild,
                 self.theChild,
                 ]
-            six.assertCountEqual(self, got, want)
+            self.assertCountEqual(got, want)
         d.addCallback(cb)
         return d
 
@@ -192,7 +190,7 @@ class TestInMemoryDatabase(unittest.TestCase):
                 self.bar,
                 self.foo,
                 ]
-            six.assertCountEqual(self, got, want)
+            self.assertCountEqual(got, want)
         d.addCallback(cb)
         return d
 
@@ -211,7 +209,7 @@ class TestInMemoryDatabase(unittest.TestCase):
                 self.bar,
                 self.foo,
                 ]
-            six.assertCountEqual(self, got, want)
+            self.assertCountEqual(got, want)
         d.addCallback(cb)
         return d
 
@@ -266,16 +264,14 @@ class TestInMemoryDatabase(unittest.TestCase):
         d = self.foo.delete()
         d.addCallback(self.assertEqual, self.foo)
         d.addCallback(lambda _: self.meta.children())
-        d.addCallback(lambda actual: six.assertCountEqual(
-            self, actual, [self.bar]))
+        d.addCallback(lambda actual: self.assertCountEqual(actual, [self.bar]))
         return d
 
     def test_deleteChild(self):
         d = self.meta.deleteChild('cn=bar')
         d.addCallback(self.assertEqual, self.bar)
         d.addCallback(lambda _: self.meta.children())
-        d.addCallback(lambda actual: six.assertCountEqual(
-            self, actual, [self.foo]))
+        d.addCallback(lambda actual: self.assertCountEqual(actual, [self.foo]))
         return d
 
     def test_deleteChild_NonExisting(self):
@@ -313,14 +309,13 @@ class TestInMemoryDatabase(unittest.TestCase):
                 self.bar,
                 self.foo,
                 ]
-            six.assertCountEqual(self, got, want)
+            self.assertCountEqual(got, want)
         d.addCallback(cb)
         return d
 
     def testSearch_withoutCallback(self):
         d = self.root.search(filterText='(|(cn=foo)(cn=bar))')
-        d.addCallback(lambda actual: six.assertCountEqual(
-            self,
+        d.addCallback(lambda actual: self.assertCountEqual(
             actual,
             [
             self.bar,
@@ -333,8 +328,7 @@ class TestInMemoryDatabase(unittest.TestCase):
         def getChildren(dummy):
             return self.root.children()
         d.addCallback(getChildren)
-        d.addCallback(lambda actual: six.assertCountEqual(
-            self,
+        d.addCallback(lambda actual: self.assertCountEqual(
             actual,
             [
             self.meta,
@@ -352,8 +346,7 @@ class TestInMemoryDatabase(unittest.TestCase):
         def getChildren(dummy):
             return self.root.children()
         d.addCallback(getChildren)
-        d.addCallback(lambda actual: six.assertCountEqual(
-            self,
+        d.addCallback(lambda actual: self.assertCountEqual(
             actual,
             [
             inmemory.ReadOnlyInMemoryLDAPEntry(
@@ -372,8 +365,7 @@ class TestInMemoryDatabase(unittest.TestCase):
         def getChildren(dummy):
             return self.root.children()
         d.addCallback(getChildren)
-        d.addCallback(lambda actual: six.assertCountEqual(
-            self,
+        d.addCallback(lambda actual: self.assertCountEqual(
             actual,
             [
             self.meta,
@@ -382,8 +374,7 @@ class TestInMemoryDatabase(unittest.TestCase):
         def getChildren2(dummy):
             return self.oneChild.children()
         d.addCallback(getChildren2)
-        d.addCallback(lambda actual: six.assertCountEqual(
-            self,
+        d.addCallback(lambda actual: self.assertCountEqual(
             actual,
             [
             self.theChild,
@@ -400,8 +391,7 @@ class TestInMemoryDatabase(unittest.TestCase):
         def getChildren(dummy):
             return self.root.children()
         d.addCallback(getChildren)
-        d.addCallback(lambda actual: six.assertCountEqual(
-            self,
+        d.addCallback(lambda actual: self.assertCountEqual(
             actual,
             [
             self.empty,
@@ -410,8 +400,7 @@ class TestInMemoryDatabase(unittest.TestCase):
         def getChildren2(dummy):
             return self.oneChild.children()
         d.addCallback(getChildren2)
-        d.addCallback(lambda actual: six.assertCountEqual(
-            self,
+        d.addCallback(lambda actual: self.assertCountEqual(
             actual,
             [
             self.theChild,
@@ -475,7 +464,7 @@ cn: foo
                 distinguishedname.DistinguishedName('cn=foo,dc=example,dc=com'),
                 ]
             got = [e.dn for e in children]
-            six.assertCountEqual(self, got, want)
+            self.assertCountEqual(got, want)
         d.addCallback(cb2)
         return d
 

@@ -4,10 +4,8 @@ Changes to the content of one single LDAP entry.
 (This means these do not belong here: adding or deleting of entries,
 changing of location in tree)
 """
-import six
 
 from ldaptor import attributeset
-from ldaptor._encoder import to_bytes
 from ldaptor.protocols import pureldap, pureber
 from ldaptor.protocols.ldap import ldif, distinguishedname
 
@@ -26,7 +24,7 @@ class Modification(attributeset.LDAPAttributeSet):
         tmplist = list(self)
         newlist = []
         for x in range(len(tmplist)):
-            if (isinstance(tmplist[x], six.text_type)):
+            if (isinstance(tmplist[x], str)):
                 value = tmplist[x].encode('utf-8')
                 newlist.append(value)
             else:
@@ -43,7 +41,7 @@ class Modification(attributeset.LDAPAttributeSet):
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return False
-        return super(Modification, self).__eq__(other)
+        return super().__eq__(other)
 
 class Add(Modification):
     _LDAP_OP = 0
@@ -107,7 +105,7 @@ class Replace(Modification):
         return b''.join(r)
 
 
-class Operation(object):
+class Operation:
     def patch(self, root):
         """
         Find the correct entry in IConnectedLDAPEntry and patch it.
@@ -183,7 +181,7 @@ class ModifyOp(Operation):
         dn = self.dn.getText()
         return (self.__class__.__name__
                 + '('
-                + 'dn=%r' % (to_bytes(dn) if six.PY2 else dn)
+                + 'dn=%r' % dn
                 + ', '
                 + 'modifications=%r' % self.modifications
                 + ')')
@@ -258,7 +256,7 @@ class DeleteOp(Operation):
             self.dn = dn.dn
         elif isinstance(dn, distinguishedname.DistinguishedName):
             self.dn = dn
-        elif isinstance(dn, (six.binary_type, six.text_type)):
+        elif isinstance(dn, (bytes, str)):
             self.dn = distinguishedname.DistinguishedName(stringValue=dn)
         else:
             raise AssertionError('Invalid type of object: %s' % dn.__class__.__name__)
@@ -281,7 +279,7 @@ class DeleteOp(Operation):
         dn = self.dn.getText()
         return (self.__class__.__name__
                 + '('
-                + '%r' % (to_bytes(dn) if six.PY2 else dn)
+                + '%r' % dn
                 + ')')
 
     def __eq__(self, other):

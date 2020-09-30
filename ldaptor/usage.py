@@ -87,7 +87,7 @@ class Options_scope:
         try:
             scope=getattr(pureldap, 'LDAP_SCOPE_'+scope)
         except AttributeError:
-            raise usage.UsageError("bad scope: %s" % (scope,))
+            raise usage.UsageError("bad scope: {}".format(scope))
         self.opts['scope'] = scope
 
 class Options_bind:

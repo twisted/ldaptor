@@ -1,11 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
-from __future__ import print_function
 import sys
-from ldaptor.protocols.ldap import ldapclient, ldif, ldapsyntax, ldapconnector
-from ldaptor.protocols import pureber, pureldap
-from ldaptor import usage, ldapfilter, config
-from twisted.internet import protocol, reactor, defer
+from ldaptor.protocols.ldap import ldapclient, ldapconnector, ldapsyntax
+from ldaptor import config, usage
+from twisted.internet import reactor
 
 def printResults(o):
     sys.stdout.write(str(o))
@@ -28,7 +26,7 @@ def main(cfg, filter_text, attributes):
     try:
         baseDN = cfg.getBaseDN()
     except config.MissingBaseDNError as e:
-        print("%s: %s." % (sys.argv[0], e), file=sys.stderr)
+        print("{}: {}.".format(sys.argv[0], e), file=sys.stderr)
         sys.exit(1)
 
     c = ldapconnector.LDAPClientCreator(reactor,
@@ -54,7 +52,7 @@ if __name__ == "__main__":
         opts = MyOptions()
         opts.parseOptions()
     except usage.UsageError as ue:
-        sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
+        sys.stderr.write('{}: {}\n'.format(sys.argv[0], ue))
         sys.exit(1)
 
     cfg = config.LDAPConfig(baseDN=opts['base'],

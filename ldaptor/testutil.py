@@ -123,14 +123,14 @@ class LDAPClientTestDriver:
 
     def assertSent(self, *shouldBeSent):
         shouldBeSent = list(shouldBeSent)
-        msg = '%s expected to send %r but sent %r' % (
+        msg = '{} expected to send {!r} but sent {!r}'.format(
             self.__class__.__name__,
             shouldBeSent,
             self.sent)
         assert self.sent == shouldBeSent, msg
         sentStr = b''.join([to_bytes(x) for x in self.sent])
         shouldBeSentStr = b''.join([to_bytes(x) for x in shouldBeSent])
-        msg = '%s expected to send data %r but sent %r' % (
+        msg = '{} expected to send data {!r} but sent {!r}'.format(
             self.__class__.__name__,
             shouldBeSentStr,
             sentStr)

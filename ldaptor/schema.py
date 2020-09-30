@@ -1,5 +1,3 @@
-import six
-
 from ldaptor._encoder import WireStrAlias, to_bytes
 
 
@@ -565,7 +563,7 @@ class AttributeTypeDescription(ASN1ParserThingie, WireStrAlias):
         if self.usage is not None:
             r.append(b'USAGE %s' % self.usage)
         for name, value in self.x_attrs:
-            if isinstance(value, (six.binary_type, six.text_type)):
+            if isinstance(value, (bytes, str)):
                 r.append(b"%s '%s'" % (name, value))
             else:
                 r.append(

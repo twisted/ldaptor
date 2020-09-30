@@ -13,7 +13,7 @@ def encode(value):
     return b''.join(base64.encodestring(value).split(b'\n'))
 
 
-class WireableObject(object):
+class WireableObject:
     """
     Object with bytes representation as a constant toWire value
     """
@@ -38,7 +38,7 @@ class AttributeAsLDIFTests(unittest.TestCase):
 
     def test_unicode_string(self):
         """Key and value are unicode strings"""
-        result = attributeAsLDIF(u'another key', u'another value')
+        result = attributeAsLDIF('another key', 'another value')
         self.assertEqual(result, b'another key: another value\n')
 
     def test_wireable_object(self):
@@ -116,10 +116,10 @@ key2: value22
     def test_unicode_string(self):
         """DN and attribute keys and values are unicode string"""
         attributes = [
-            (u'key1', [u'value11', u'value12']),
-            (u'key2', [u'value21', u'value22']),
+            ('key1', ['value11', 'value12']),
+            ('key2', ['value21', 'value22']),
         ]
-        result = asLDIF(u'entry', attributes)
+        result = asLDIF('entry', attributes)
         self.assertEqual(result, b'''\
 dn: entry
 key1: value11

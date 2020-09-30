@@ -7,4 +7,4 @@ __uri__ = "https://github.com/twisted/ldaptor"
 
 __license__ = "MIT"
 __author__ = "The ldaptor developers"
-__copyright__ = "Copyright (c) 2002-2019 {0}".format(__author__)
+__copyright__ = "Copyright (c) 2002-2019 {}".format(__author__)

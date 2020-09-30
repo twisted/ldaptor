@@ -92,7 +92,7 @@ class TestLDAPAttributeSet(unittest.TestCase):
         a.add(b'b')
         self.assertEqual(a, {'b', 'c', 'd'})
 
-        a.add(u'b')
+        a.add('b')
         self.assertEqual(a, {'b', 'c', 'd'})
 
     def testRemoveExistingValue(self):
@@ -101,7 +101,7 @@ class TestLDAPAttributeSet(unittest.TestCase):
         """
         a = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
         a.remove(b'b')
-        a.remove(u'c')
+        a.remove('c')
 
         self.assertEqual(a, {'d'})
 

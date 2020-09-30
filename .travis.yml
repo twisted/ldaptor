@@ -11,8 +11,10 @@ branches:
 matrix:
   fast_finish: true
   include:
-  - python: 2.7
-    env: TOX_ENV=py27-test-twlatest
+  - python: 3.8
+    env: TOX_ENV=py38-test-twlatest
+  - python: 3.8
+    env: TOX_ENV=py38-test-twtrunk
   - python: 3.5
     env: TOX_ENV=py35-test-twlatest
   - python: 3.5
@@ -25,15 +27,10 @@ matrix:
     env: TOX_ENV=py37-test-twlatest
   - python: 3.7
     env: TOX_ENV=py37-test-twtrunk
-  - python: 2.7
-    env: TOX_ENV=py27-linters
+  - python: 3.8
+    env: TOX_ENV=py38-linters
   - python: 3.7
     env: TOX_ENV=py37-linters
-  - python: 3.7
-    env: PYENV_VERSION=pypy2.7-7.0.0 TOX_ENV=pypy-test-twlatest
-  - &pypy27
-    python: 3.7
-    env: PYENV_VERSION=pypy2.7-7.0.0 TOX_ENV=pypy-test-twtrunk
   - python: 3.7
     env: PYENV_VERSION=pypy3.6-7.0.0 TOX_ENV=pypy3-test-twlatest
   - &pypy37
@@ -43,8 +40,6 @@ matrix:
     - env: TOX_ENV=py35-test-twtrunk
     - env: TOX_ENV=py36-test-twtrunk
     - env: TOX_ENV=py37-test-twtrunk
-    - *pypy17
-    - *pypy27
     - *pypy37
 
 before_install:

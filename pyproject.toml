@@ -21,8 +21,8 @@ requires=
 ; * test - run trial tests
 ; * dev - run things in local dev mode
 envlist =
-    {py27,py34,py35,py36,py37,pypy,pypy3}-test-{twlatest,twtrunk,dev},
-    {py27,py37}-linters,
+    {py38,py34,py35,py36,py37,pypy,pypy3}-test-{twlatest,twtrunk,dev},
+    {py38,py37}-linters,
     documentation,
 
 
@@ -34,7 +34,6 @@ deps =
     coverage >= 5.3
     pyparsing
     passlib
-    six
     twlatest: Twisted[tls]
     twtrunk: https://github.com/twisted/twisted/archive/trunk.tar.gz#egg=Twisted[tls]
     tw162: Twisted[tls]==16.2
@@ -74,7 +73,7 @@ commands =
 
 [testenv:documentation]
 deps = sphinx
-basepython=python2.7
+basepython=python3.8
 commands =
     mkdir -p docs/build
     sphinx-build -b html -Ean -j 2 -w build/sphinx-errors \

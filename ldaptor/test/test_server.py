@@ -1,13 +1,11 @@
 """
 Test cases for ldaptor.protocols.ldap.ldapserver module.
 """
-from __future__ import print_function
 import base64
 import types
 
-import six
-from twisted.internet import address, protocol
-from twisted.python import components
+from twisted.internet import address, protocol, testing
+from twisted.python import components, log
 from twisted.test import proto_helpers
 from twisted.trial import unittest
 
@@ -19,16 +17,21 @@ from ldaptor.test import util, test_schema
 from ldaptor._encoder import to_bytes
 
 
-def wrapCommit(entry, cb, *args, **kwds):
+def observeCommits(entry):
+    commits = []
     bound_commit = entry.commit
 
-    def commit_(self):
+    def observe(v):
+        commits.append(v)
+        return v
+
+    def commit(self):
         d = bound_commit()
-        d.addCallback(cb, *args, **kwds)
+        d.addBoth(observe)
         return d
 
-    f = types.MethodType(commit_, entry)
-    entry.commit = f
+    entry.commit = types.MethodType(commit, entry)
+    return commits
 
 
 class LDAPServerTest(unittest.TestCase):
@@ -154,8 +157,7 @@ class LDAPServerTest(unittest.TestCase):
                 id=2
             )
         )
-        six.assertCountEqual(
-            self,
+        self.assertCountEqual(
             self._makeResultList(self.server.transport.value()),
             [msg.toWire() for msg in messages]
         )
@@ -527,8 +529,7 @@ class LDAPServerTest(unittest.TestCase):
                 pureldap.LDAPDelResponse(resultCode=0),
                 id=2).toWire())
         d = self.stuff.children()
-        d.addCallback(lambda actual: six.assertCountEqual(
-            self, actual, [self.another]))
+        d.addCallback(lambda actual: self.assertCountEqual(actual, [self.another]))
         return d
 
     def test_add_success(self):
@@ -555,8 +556,7 @@ class LDAPServerTest(unittest.TestCase):
                 id=2).toWire())
         # tree changed
         d = self.stuff.children()
-        d.addCallback(lambda actual: six.assertCountEqual(
-            self,
+        d.addCallback(lambda actual: self.assertCountEqual(
             actual,
             [
                 self.thingie,
@@ -591,8 +591,7 @@ class LDAPServerTest(unittest.TestCase):
                 id=2).toWire())
         # tree did not change
         d = self.stuff.children()
-        d.addCallback(lambda actual: six.assertCountEqual(
-            self, actual, [self.thingie, self.another]))
+        d.addCallback(lambda actual: self.assertCountEqual(actual, [self.thingie, self.another]))
         return d
 
     def test_modifyDN_rdnOnly_deleteOldRDN_success(self):
@@ -612,8 +611,7 @@ class LDAPServerTest(unittest.TestCase):
                 id=2).toWire())
         # tree changed
         d = self.stuff.children()
-        d.addCallback(lambda actual: six.assertCountEqual(
-            self,
+        d.addCallback(lambda actual: self.assertCountEqual(
             actual,
             [
                 inmemory.ReadOnlyInMemoryLDAPEntry(
@@ -683,13 +681,7 @@ class LDAPServerTest(unittest.TestCase):
                 id=2).toWire())
 
     def test_passwordModify_simple(self):
-        data = {'committed': False}
-
-        def onCommit_(result, info):
-            info['committed'] = result
-            return result
-
-        wrapCommit(self.thingie, onCommit_, data)
+        commits = observeCommits(self.thingie)
         # first bind to some entry
         self.thingie['userPassword'] = ['{SSHA}yVLLj62rFf3kDAbzwEU0zYAVvbWrze8=']  # "secret"
         self.server.dataReceived(
@@ -712,7 +704,7 @@ class LDAPServerTest(unittest.TestCase):
                     userIdentity='cn=thingie,ou=stuff,dc=example,dc=com',
                     newPasswd='hushhush'),
                 id=2).toWire())
-        self.assertEqual(data['committed'], True, "Server never committed data.")
+        self.assertListEqual(commits, [True], "Server never committed data.")
         self.assertEqual(
             self.server.transport.value(),
             pureldap.LDAPMessage(
@@ -728,6 +720,52 @@ class LDAPServerTest(unittest.TestCase):
             raw = base64.decodestring(secret[len(b'{SSHA}'):])
             salt = raw[20:]
             self.assertEqual(entry.sshaDigest(b'hushhush', salt), secret)
+
+    def test_passwordModify_someoneElse(self):
+        commits = observeCommits(self.thingie)
+        # first bind to some entry
+        userPassword = b'{SSHA}yVLLj62rFf3kDAbzwEU0zYAVvbWrze8=' # secret
+        self.thingie['userPassword'] = [userPassword]
+        self.server.dataReceived(
+            pureldap.LDAPMessage(
+                pureldap.LDAPBindRequest(
+                    dn='cn=thingie,ou=stuff,dc=example,dc=com',
+                    auth=b'secret'),
+                id=4).toWire())
+        self.assertEqual(
+            self.server.transport.value(),
+            pureldap.LDAPMessage(
+                pureldap.LDAPBindResponse(
+                    resultCode=0,
+                    matchedDN='cn=thingie,ou=stuff,dc=example,dc=com'),
+                id=4).toWire())
+        self.server.transport.clear()
+        observer = testing.EventLoggingObserver.createWithCleanup(self, log)
+        self.server.dataReceived(
+            pureldap.LDAPMessage(
+                pureldap.LDAPPasswordModifyRequest(
+                    userIdentity='cn=another,ou=stuff,dc=example,dc=com',
+                    newPasswd='hushhush'),
+                id=2).toWire())
+        self.assertEqual(
+            observer[0]["log_text"],
+            "User cn=thingie,ou=stuff,dc=example,dc=com "
+            "tried to change password of "
+            "b'cn=another,ou=stuff,dc=example,dc=com'"
+        )
+        self.assertListEqual(commits, [], "Server committed data.")
+        self.assertEqual(
+            self.server.transport.value(),
+            pureldap.LDAPMessage(
+                pureldap.LDAPExtendedResponse(
+                    resultCode=ldaperrors.LDAPInsufficientAccessRights.resultCode,
+                    responseName=pureldap.LDAPPasswordModifyRequest.oid),
+                id=2).toWire())
+        self.assertSequenceEqual(
+            self.thingie.get('userPassword', []),
+            [userPassword],
+        )
+
 
     def test_unknownRequest(self):
         # make server miss one of the handle_* attributes

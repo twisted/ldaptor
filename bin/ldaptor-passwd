@@ -1,9 +1,7 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
-from __future__ import print_function
 import sys, getpass
 from ldaptor.protocols.ldap import ldapclient, distinguishedname, ldapconnector, ldapsyntax
-from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage, generate_password
 from twisted.internet import defer, reactor, protocol
 

@@ -1,11 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
-from __future__ import print_function
 import sys, os, getpass
-from ldaptor.protocols.ldap import ldapclient, ldif, ldapsyntax, distinguishedname, ldapconnector
-from ldaptor.protocols import pureber, pureldap
+from ldaptor.protocols.ldap import distinguishedname, ldapclient, ldapconnector, ldapsyntax
 from ldaptor import usage, config
-from twisted.internet import protocol, reactor, defer
+from twisted.internet import reactor
 
 def move(client, fromDN, toDN):
     e = ldapsyntax.LDAPEntry(client=client,
@@ -61,7 +59,7 @@ if __name__ == "__main__":
         opts = MyOptions()
         opts.parseOptions()
     except usage.UsageError as ue:
-        sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
+        sys.stderr.write('{}: {}\n'.format(sys.argv[0], ue))
         sys.exit(1)
 
     from twisted.python import log

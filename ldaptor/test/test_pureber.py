@@ -16,7 +16,6 @@
 """
 Test cases for ldaptor.protocols.pureber module.
 """
-import six
 from twisted.trial import unittest
 
 from ldaptor.protocols import pureber
@@ -26,14 +25,14 @@ def s(*l):
     """Join all members of list to a byte string. Integer members are converted to bytes"""
     r = b''
     for e in l:
-        e = six.int2byte(e)
+        e = bytes((e,))
         r = r + e
     return r
 
 
 def l(s):
     """Split a byte string to ord's of chars."""
-    return [six.byte2int([x]) for x in s]
+    return [[x][0] for x in s]
 
 
 class BerLengths(unittest.TestCase):
@@ -107,8 +106,8 @@ class BERBaseTests(unittest.TestCase):
         """
         BER objects do not equal BER objects with different type or content
         """
-        for i in six.moves.range(len(self.valuesToTest)):
-            for j in six.moves.range(len(self.valuesToTest)):
+        for i in range(len(self.valuesToTest)):
+            for j in range(len(self.valuesToTest)):
                 if i!=j:
                     i_class, i_args = self.valuesToTest[i]
                     j_class, j_args = self.valuesToTest[j]
@@ -133,6 +132,23 @@ class BERBaseTests(unittest.TestCase):
             first = klass(*arguments)
             second = klass(*arguments)
             self.assertEqual(hash(first), hash(second))
+
+
+
+class BERDecoderContextRepr(unittest.TestCase):
+    def testRepr(self):
+        self.assertEqual(
+            repr(pureber.BERDecoderContext(fallback="foo", inherit="bar")),
+            "<BERDecoderContext identities={"
+            "0x01: BERBoolean, "
+            "0x02: BERInteger, "
+            "0x04: BEROctetString, "
+            "0x05: BERNull, "
+            "0x0a: BEREnumerated, "
+            "0x10: BERSequence, "
+            "0x11: BERSet"
+            "} fallback='foo' inherit='bar'>"
+        )
 
 
 class BERIntegerKnownValues(unittest.TestCase):
@@ -193,7 +209,7 @@ class BERIntegerSanityCheck(unittest.TestCase):
             self.assertEqual(n, result)
 
 
-class ObjectWithToWireMethod(object):
+class ObjectWithToWireMethod:
     def toWire(self):
         return b"bar"
 
@@ -452,7 +468,7 @@ class TestBERSequence(unittest.TestCase):
             self.assertIsInstance(result, pureber.BERSequence)
             result = result.data
             self.assertEqual(len(content), len(result))
-            for i in six.moves.range(len(content)):
+            for i in range(len(content)):
                 self.assertEqual(content[i], result[i])
             self.assertEqual(content, result)
 

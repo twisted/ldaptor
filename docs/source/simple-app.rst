@@ -279,7 +279,7 @@ Our first Python program
 
 .. code-block:: python
 
-    #!/usr/bin/python
+    #!/usr/bin/env python3
 
     from twisted.internet import defer
     from twisted.internet.task import react

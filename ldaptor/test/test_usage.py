@@ -1,12 +1,44 @@
 """
 Test cases for ldaptor.usage
 """
+import re
 
 from twisted.python.usage import UsageError
 from twisted.trial.unittest import TestCase
 
 from ldaptor.protocols.ldap.distinguishedname import DistinguishedName
-from ldaptor.usage import Options, Options_service_location
+from ldaptor.usage import Options, Options_service_location, Options_scope
+
+class ScopeOptionsImplementation(Options, Options_scope):
+    """
+    Minimal implementation for a command line using `Options_scope`.
+    """
+
+class TestOptions_scope(TestCase):
+    def test_parseOptions_bad_scope(self):
+        """
+        It fails to parse the option when the scope is bad
+        """
+        self.assertRaisesRegex(
+            UsageError,
+            re.escape("bad scope: this is a bad scope"),
+            ScopeOptionsImplementation().parseOptions,
+            options=['--scope', 'this is a bad scope'],
+        )
+
+
+    def test_parseOptions_default(self):
+        """
+        When no explicit options is provided it will set an empty dict.
+        """
+        sut = ServiceLocationOptionsImplementation()
+        self.assertNotIn('service-location', sut.opts)
+
+        sut.parseOptions(options=[])
+
+        self.assertEqual({}, sut.opts['service-location'])
+
+
 
 class ServiceLocationOptionsImplementation(Options, Options_service_location):
     """

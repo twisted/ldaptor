@@ -14,7 +14,7 @@ def safelower(s):
         return s
 
 
-class DiffTreeMixin(object):
+class DiffTreeMixin:
     def _diffTree_gotMyChildren(self, myChildren, other, result):
         d = other.children()
         d.addCallback(self._diffTree_gotBothChildren, myChildren, other, result)
@@ -30,8 +30,8 @@ class DiffTreeMixin(object):
             assert len(r) == 1
             return r[0]
 
-        my = set([x.dn.split()[0] for x in myChildren])
-        his = set([x.dn.split()[0] for x in otherChildren])
+        my = {x.dn.split()[0] for x in myChildren}
+        his = {x.dn.split()[0] for x in otherChildren}
 
         # differences in common children
         commonRDN = list(my & his)
@@ -126,7 +126,7 @@ class DiffTreeMixin(object):
         return d
 
 
-class SubtreeFromChildrenMixin(object):
+class SubtreeFromChildrenMixin:
     def subtree(self, callback=None):
         if callback is None:
             result = []
@@ -144,7 +144,7 @@ class SubtreeFromChildrenMixin(object):
             return d
 
 
-class MatchMixin(object):
+class MatchMixin:
     def match(self, filter):
         if isinstance(filter, pureldap.LDAPFilter_present):
             for value in get_strings(filter.value):
@@ -240,7 +240,7 @@ class MatchMixin(object):
             raise ldapsyntax.MatchNotImplemented(filter)
 
 
-class SearchByTreeWalkingMixin(object):
+class SearchByTreeWalkingMixin:
     def search(self,
                filterText=None,
                filterObject=None,

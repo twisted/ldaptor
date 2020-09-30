@@ -1,5 +1,4 @@
 """Find an available uidNumber/gidNumber/other similar number."""
-from __future__ import division
 
 from ldaptor.protocols import pureldap
 

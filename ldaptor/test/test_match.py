@@ -1,7 +1,9 @@
 """
 Test cases for ldaptor.protocols.ldap.ldapserver module.
 """
+import re
 
+import attr
 from twisted.trial import unittest
 from ldaptor import inmemory
 from ldaptor.protocols import pureldap, pureber
@@ -432,10 +434,16 @@ class TestEntryMatch(unittest.TestCase):
             'aValue': ['b'],
             'num': [4],
             })
-        class UnknownMatch(object): pass
+
+        @attr.s
+        class UnknownMatch: pass
         unknownMatch = UnknownMatch()
-        self.assertRaises(ldapsyntax.MatchNotImplemented,
-                          o.match, unknownMatch)
+        self.assertRaisesRegex(
+            ldapsyntax.MatchNotImplemented,
+            re.escape("Match type not implemented: UnknownMatch()"),
+            o.match,
+            unknownMatch,
+        )
 
 # TODO LDAPFilter_approxMatch
 # TODO LDAPFilter_extensibleMatch

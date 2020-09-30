@@ -10,4 +10,3 @@ class ObjectMissingObjectClassException(AutofillException):
     operate.
 
     """
-    pass

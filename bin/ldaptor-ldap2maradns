@@ -1,11 +1,10 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
-from __future__ import print_function
-from ldaptor.protocols.ldap import distinguishedname, ldapconnector, ldapsyntax, ldapclient
+from ldaptor.protocols.ldap import ldapclient, ldapconnector, ldapsyntax
 from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage, ldapfilter, config, dns
 import sys
-from twisted.internet import protocol, defer, reactor
+from twisted.internet import reactor
 
 def printIPAddress(name, ip):
     print('A'+name+'.%|86400|'+ip)
@@ -168,7 +167,7 @@ def main(cfg, filter_text):
     try:
         baseDN = cfg.getBaseDN()
     except config.MissingBaseDNError as e:
-        print("%s: %s." % (sys.argv[0], e), file=sys.stderr)
+        print("{}: {}.".format(sys.argv[0], e), file=sys.stderr)
         sys.exit(1)
 
     if filter_text is not None:
@@ -198,7 +197,7 @@ if __name__ == "__main__":
         opts = MyOptions()
         opts.parseOptions()
     except usage.UsageError as ue:
-        sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
+        sys.stderr.write('{}: {}\n'.format(sys.argv[0], ue))
         sys.exit(1)
 
     cfg = config.LDAPConfig(baseDN=opts['base'],

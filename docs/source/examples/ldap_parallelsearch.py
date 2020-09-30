@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # Copyright (C) 2001 Tommi Virtanen
 #
 # This library is free software; you can redistribute it and/or
@@ -15,7 +15,6 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 from ldaptor.protocols.ldap import ldapclient, ldapsyntax, ldapconnector, distinguishedname
-from ldaptor.protocols import pureber
 from twisted.internet import defer, reactor
 from twisted.python import log
 import sys

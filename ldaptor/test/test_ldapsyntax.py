@@ -2,6 +2,8 @@
 Test cases for ldaptor.protocols.ldap.ldapsyntax module.
 """
 
+import re
+
 from twisted.trial import unittest
 from ldaptor import config, testutil, delta
 from ldaptor.protocols.ldap import ldapclient, ldapsyntax, ldaperrors
@@ -26,7 +28,7 @@ class LDAPEntryTests(unittest.TestCase):
             'aValue': ['a'],
             'bValue': ['b'],
             })
-        self.failUnlessEqual(o.dn.getText(), u'cn=foo,dc=example,dc=com')
+        self.failUnlessEqual(o.dn.getText(), 'cn=foo,dc=example,dc=com')
         self.failUnlessEqual(o['objectClass'], ['a', 'b'])
         self.failUnlessEqual(o['aValue'], ['a'])
         self.failUnlessEqual(o['bValue'], ['b'])
@@ -1006,7 +1008,7 @@ class LDAPSyntaxAddChild(unittest.TestCase):
         d = sut.addChild(
             rdn='givenName=Firstname+surname=Lastname',
             attributes={
-                'objectClass': ['person', 'otherStuff'],
+                'objectClass': ['person', b'otherStuff'],
                 'givenName': ['Firstname'],
                 'surname': ['Lastname'],
                 },
@@ -1063,7 +1065,7 @@ class LDAPSyntaxContainingNamingContext(unittest.SynchronousTestCase):
         def cb(p):
             assert isinstance(p, ldapsyntax.LDAPEntry)
             assert p.client == o.client
-            assert p.dn.getText() == u'dc=example,dc=com'
+            assert p.dn.getText() == 'dc=example,dc=com'
 
             self.client.assertSent(pureldap.LDAPSearchRequest(
                 baseObject='',
@@ -1445,7 +1447,13 @@ class LDAPSyntaxPasswords(unittest.TestCase):
 
         def checkError(fail):
             fail.trap(ldapsyntax.PasswordSetAggregateError)
-            l=fail.value.errors
+            value = fail.value
+            self.assertEqual(
+                str(value),
+                "Some of the password plugins failed: "
+                "Samba failed with cn=foo,dc=example,dc=com."
+            )
+            l=value.errors
             assert len(l)==1
             assert len(l[0])==2
             assert l[0][0]=='Samba'
@@ -1486,7 +1494,14 @@ class LDAPSyntaxPasswords(unittest.TestCase):
         d=o.setPassword(newPasswd=b'new')
         def eb(fail):
             fail.trap(ldapsyntax.PasswordSetAggregateError)
-            l=fail.value.errors
+            value = fail.value
+            self.assertEqual(
+                str(value),
+                "Some of the password plugins failed: "
+                "ExtendedOperation failed with insufficientAccessRights; "
+                "Samba failed with Aborted."
+            )
+            l=value.errors
             assert len(l)==2
 
             assert len(l[0])==2
@@ -1672,24 +1687,48 @@ class LDAPSyntaxRDNHandling(unittest.TestCase):
             })
         o['cn'].remove('bar')
         del o['a']
-        self.assertRaises(ldapsyntax.CannotRemoveRDNError,
-                          o['cn'].remove,
-                          'foo')
+        self.assertRaisesRegex(
+            ldapsyntax.CannotRemoveRDNError,
+            re.escape(
+                "The attribute to be removed, 'cn'='foo', "
+                "is the RDN for the object and cannot be removed."
+            ),
+            o['cn'].remove,
+            'foo',
+        )
         def f():
             del o['cn']
-        self.assertRaises(ldapsyntax.CannotRemoveRDNError,
-                          f)
+        self.assertRaisesRegex(
+            ldapsyntax.CannotRemoveRDNError,
+            re.escape(
+                "The attribute to be removed, 'cn', "
+                "is the RDN for the object and cannot be removed."
+            ),
+            f,
+        )
         def f():
             o['cn']=['thud']
-        self.assertRaises(ldapsyntax.CannotRemoveRDNError,
-                          f)
+        self.assertRaisesRegex(
+            ldapsyntax.CannotRemoveRDNError,
+            re.escape(
+                "The attribute to be removed, 'cn', "
+                "is the RDN for the object and cannot be removed."
+            ),
+            f,
+        )
 
         # TODO maybe this should be ok, it preserves the RDN.
         # For now, disallow it.
         def f():
             o['cn']=['foo']
-        self.assertRaises(ldapsyntax.CannotRemoveRDNError,
-                          f)
+        self.assertRaisesRegex(
+            ldapsyntax.CannotRemoveRDNError,
+            re.escape(
+                "The attribute to be removed, 'cn', "
+                "is the RDN for the object and cannot be removed."
+            ),
+            f,
+        )
 
 class LDAPSyntaxMove(unittest.TestCase):
     def test_move(self):
@@ -1715,7 +1754,7 @@ class LDAPSyntaxMove(unittest.TestCase):
                 newSuperior='ou=somewhere,dc=example,dc=com',
                 ))
 
-            self.assertEqual(o.dn, u'cn=bar,ou=somewhere,dc=example,dc=com')
+            self.assertEqual(o.dn, 'cn=bar,ou=somewhere,dc=example,dc=com')
         d.addCallback(cb)
         return d
 

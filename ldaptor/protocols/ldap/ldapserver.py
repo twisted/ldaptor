@@ -475,10 +475,10 @@ class LDAPServer(BaseLDAPServer):
 
         if (userIdentity is not None
                 and userIdentity != self.boundUser.dn):
-            log.msg('User %(actor)s tried to change password of %(target)s' % {
-                'actor': self.boundUser.dn.getText(),
-                'target': userIdentity,
-                })
+            log.msg('User {actor} tried to change password of {target}'.format(
+                actor=self.boundUser.dn.getText(),
+                target=userIdentity,
+                ))
             raise ldaperrors.LDAPInsufficientAccessRights()
         if (oldPasswd is not None
                 or newPasswd is None):

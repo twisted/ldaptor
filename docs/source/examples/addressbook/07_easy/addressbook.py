@@ -22,7 +22,7 @@ class ILDAPConfig(Interface):
         DistinguishedName to (host, port) tuples.
         """
 
-class LDAPConfig(object):
+class LDAPConfig:
     implements(ILDAPConfig)
 
     def __init__(self,
@@ -49,7 +49,7 @@ class IAddressBookSearch(annotate.TypedInterface):
         pass
     search = annotate.autocallable(search)
 
-class CurrentSearch(object):
+class CurrentSearch:
     implements(IAddressBookSearch, inevow.IContainer)
     data = {}
 
@@ -81,8 +81,7 @@ class CurrentSearch(object):
     def __iter__(self):
         if self.data is None:
             return
-        for k,v in self.data.items():
-            yield (k,v)
+        yield from self.data.items()
 
     def child(self, context, name):
         if name == 'searchFilter':

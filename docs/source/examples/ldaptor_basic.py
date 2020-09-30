@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
     Testing a simple ldaptor ldap server
@@ -21,7 +20,7 @@ from ldaptor.ldiftree import LDIFTreeEntry
 from schema import COUNTRY, COMPANY, PEOPLE, USERS
 
 
-class Tree(object):
+class Tree:
 
     def __init__(self):
         dirname = tempfile.mkdtemp('.ldap', 'test-server', '/tmp')

@@ -367,7 +367,7 @@ class ServiceBindingProxy(unittest.TestCase):
                                                                      +('(|(!(validUntil=*))(validUntil>=%s))' % server.now)
                                                                      +')'),
                                        attributes=('1.1',)),
-            pureldap.LDAPBindRequest(dn='cn=svc3+owner=cn\=jack\,dc\=example\,dc\=com,dc=example,dc=com', auth='secret'),
+            pureldap.LDAPBindRequest(dn=r'cn=svc3+owner=cn\=jack\,dc\=example\,dc\=com,dc=example,dc=com', auth='secret'),
             )
         self.assertEqual(
             server.transport.value(),
@@ -456,7 +456,7 @@ class ServiceBindingProxy(unittest.TestCase):
                                                                      +('(|(!(validUntil=*))(validUntil>=%s))' % server.now)
                                                                      +')'),
                                        attributes=('1.1',)),
-            pureldap.LDAPBindRequest(dn='cn=svc3+owner=cn\=jack\,dc\=example\,dc\=com,dc=example,dc=com', auth='wrong-s3krit'),
+            pureldap.LDAPBindRequest(dn=r'cn=svc3+owner=cn\=jack\,dc\=example\,dc\=com,dc=example,dc=com', auth='wrong-s3krit'),
             pureldap.LDAPBindRequest(version=3, dn='cn=jack,dc=example,dc=com', auth='wrong-s3krit'),
             )
         self.assertEqual(

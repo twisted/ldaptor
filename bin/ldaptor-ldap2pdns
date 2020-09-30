@@ -1,15 +1,13 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
-from __future__ import print_function
 import sys
 from twisted.internet.defer import succeed, fail
 from twisted.internet import defer, reactor
 from twisted.internet.stdio import StandardIO
 from twisted.protocols.basic import LineReceiver
-from twisted.internet.protocol import ClientFactory
 from twisted.python.failure import Failure
 from twisted.python import log
-from ldaptor.protocols.ldap import ldapclient, distinguishedname, ldapconnector
+from ldaptor.protocols.ldap import ldapclient, ldapconnector
 from ldaptor.protocols.ldap.ldapsyntax import LDAPEntry
 from ldaptor import usage, config
 from cStringIO import StringIO
@@ -238,7 +236,7 @@ def main(cfg, dnsDomain):
     try:
         baseDN = cfg.getBaseDN()
     except config.MissingBaseDNError as e:
-        print("%s: %s." % (sys.argv[0], e), file=sys.stderr)
+        print("{}: {}.".format(sys.argv[0], e), file=sys.stderr)
         sys.exit(1)
 
     def ldapEntryFactory(pdnsProto):
@@ -275,7 +273,7 @@ if __name__ == "__main__":
         opts = MyOptions()
         opts.parseOptions()
     except usage.UsageError as ue:
-        sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
+        sys.stderr.write('{}: {}\n'.format(sys.argv[0], ue))
         sys.exit(1)
 
     from twisted.python import log
