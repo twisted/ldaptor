@@ -24,7 +24,7 @@ repos:
       - id: mixed-line-ending
 
   - repo: https://github.com/prettier/prettier
-    rev: 2.1.1
+    rev: 2.1.2
     hooks:
       - id: prettier
         args: [--prose-wrap=always, --print-width=88]
@@ -41,6 +41,6 @@ repos:
           - --remove-unused-variables
 
   - repo: https://github.com/mgedmin/check-manifest
-    rev: "0.39"
+    rev: "0.43"
     hooks:
       - id: check-manifest
