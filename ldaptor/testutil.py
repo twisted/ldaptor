@@ -9,19 +9,25 @@ from ldaptor._encoder import to_bytes
 
 
 def mustRaise(dummy):
-    raise unittest.FailTest('Should have raised an exception.')
+    raise unittest.FailTest("Should have raised an exception.")
 
 
 def calltrace():
     """Print out all function calls. For debug use only."""
 
     def printfuncnames(frame, event, arg):
-        print("|%s: %s:%d:%s" %
-              (event, frame.f_code.co_filename,
-               frame.f_code.co_firstlineno,
-               frame.f_code.co_name))
+        print(
+            "|%s: %s:%d:%s"
+            % (
+                event,
+                frame.f_code.co_filename,
+                frame.f_code.co_firstlineno,
+                frame.f_code.co_name,
+            )
+        )
 
     import sys
+
     sys.setprofile(printfuncnames)
 
 
@@ -48,7 +54,8 @@ class LDAPClientTestDriver:
     of LDAPProtocolResponses which will cause the errback to be called
     with the failure.
     """
-    fakeUnbindResponse = 'fake-unbind-by-LDAPClientTestDriver'
+
+    fakeUnbindResponse = "fake-unbind-by-LDAPClientTestDriver"
 
     def __init__(self, *responses):
         self.sent = []
@@ -66,7 +73,9 @@ class LDAPClientTestDriver:
         else:
             return defer.succeed(r)
 
-    def send_multiResponse_(self, op, controls, return_controls, handler, *args, **kwargs):
+    def send_multiResponse_(
+        self, op, controls, return_controls, handler, *args, **kwargs
+    ):
         d = defer.Deferred()
         self.sent.append(op)
         responses = self._response()
@@ -83,12 +92,14 @@ class LDAPClientTestDriver:
             if responses:
                 msg = (
                     "got %d responses still to give, "
-                    "but handler wants none (got %r).") % (len(responses), ret)
+                    "but handler wants none (got %r)."
+                ) % (len(responses), ret)
                 assert not ret, msg
             else:
                 msg = (
                     "no more responses to give, but handler "
-                    "still wants more (got %r)." % ret)
+                    "still wants more (got %r)." % ret
+                )
                 assert ret, msg
         return d
 
@@ -96,13 +107,7 @@ class LDAPClientTestDriver:
         return self.send_multiResponse_(op, None, False, handler, *args, **kwargs)
 
     def send_multiResponse_ex(self, op, controls, handler, *args, **kwargs):
-        return self.send_multiResponse_(
-            op,
-            controls,
-            True,
-            handler,
-            *args,
-            **kwargs)
+        return self.send_multiResponse_(op, controls, True, handler, *args, **kwargs)
 
     def send_noResponse(self, op):
         if len(self.responses) == 0:
@@ -113,7 +118,7 @@ class LDAPClientTestDriver:
         self.sent.append(op)
 
     def _response(self):
-        assert self.responses, 'Ran out of responses'
+        assert self.responses, "Ran out of responses"
         responses = self.responses.pop(0)
         return responses
 
@@ -123,17 +128,15 @@ class LDAPClientTestDriver:
 
     def assertSent(self, *shouldBeSent):
         shouldBeSent = list(shouldBeSent)
-        msg = '{} expected to send {!r} but sent {!r}'.format(
-            self.__class__.__name__,
-            shouldBeSent,
-            self.sent)
+        msg = "{} expected to send {!r} but sent {!r}".format(
+            self.__class__.__name__, shouldBeSent, self.sent
+        )
         assert self.sent == shouldBeSent, msg
-        sentStr = b''.join([to_bytes(x) for x in self.sent])
-        shouldBeSentStr = b''.join([to_bytes(x) for x in shouldBeSent])
-        msg = '{} expected to send data {!r} but sent {!r}'.format(
-            self.__class__.__name__,
-            shouldBeSentStr,
-            sentStr)
+        sentStr = b"".join([to_bytes(x) for x in self.sent])
+        shouldBeSentStr = b"".join([to_bytes(x) for x in shouldBeSent])
+        msg = "{} expected to send data {!r} but sent {!r}".format(
+            self.__class__.__name__, shouldBeSentStr, sentStr
+        )
         assert sentStr == shouldBeSentStr, msg
 
     def connectionMade(self):
@@ -146,7 +149,8 @@ class LDAPClientTestDriver:
         """
         msg = (
             "connectionLost called even when have "
-            "responses left: %r" % self.responses)
+            "responses left: %r" % self.responses
+        )
         assert not self.responses, msg
         self.connected = 0
 
@@ -164,9 +168,9 @@ def createServer(proto, *responses, **kw):
     :param responses: The responses to initialize the `LDAPClientTestDrive`.
     :param proto_args: Optional mapping passed as keyword args to protocol factory.
     """
-    if 'proto_args' in kw:
-        proto_args = kw['proto_args']
-        del kw['proto_args']
+    if "proto_args" in kw:
+        proto_args = kw["proto_args"]
+        del kw["proto_args"]
     else:
         proto_args = {}
 
@@ -175,8 +179,8 @@ def createServer(proto, *responses, **kw):
         proto = factory.buildProtocol(addr=None)
         proto.connectionMade()
 
-    overrides = kw.setdefault('serviceLocationOverrides', {})
-    overrides.setdefault('', createClient)
+    overrides = kw.setdefault("serviceLocationOverrides", {})
+    overrides.setdefault("", createClient)
     conf = config.LDAPConfig(**kw)
     server = proto(conf, **proto_args)
     clientTestDriver = LDAPClientTestDriver(*responses)

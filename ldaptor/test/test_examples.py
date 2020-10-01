@@ -24,16 +24,17 @@ class LDAPServerWithUPNBind(unittest.TestCase):
 
     def setUp(self):
         self.root = inmemory.ReadOnlyInMemoryLDAPEntry(
-            dn='dc=example,dc=com',
-            attributes={'dc': 'example'})
+            dn="dc=example,dc=com", attributes={"dc": "example"}
+        )
         self.user = self.root.addChild(
-            rdn=b'cn=bob',
+            rdn=b"cn=bob",
             attributes={
-                'objectClass': ['a', 'b'],
+                "objectClass": ["a", "b"],
                 # Hash is for "secret".
-                'userPassword': [b'{SSHA}yVLLj62rFf3kDAbzwEU0zYAVvbWrze8='],
-                'userPrincipalName': ['bob@ad.example.com'],
-            })
+                "userPassword": [b"{SSHA}yVLLj62rFf3kDAbzwEU0zYAVvbWrze8="],
+                "userPrincipalName": ["bob@ad.example.com"],
+            },
+        )
 
         server = ldaptor_with_upn_bind.LDAPServerWithUPNBind()
         server.factory = self.root
@@ -47,33 +48,30 @@ class LDAPServerWithUPNBind(unittest.TestCase):
         """
         self.server.dataReceived(
             pureldap.LDAPMessage(
-                pureldap.LDAPBindRequest(
-                    dn=bind_dn,
-                    auth=password),
-                id=4).toWire()
+                pureldap.LDAPBindRequest(dn=bind_dn, auth=password), id=4
+            ).toWire()
         )
         self.assertEqual(
             self.server.transport.value(),
             pureldap.LDAPMessage(
                 pureldap.LDAPBindResponse(
-                    resultCode=0,
-                    matchedDN='cn=bob,dc=example,dc=com'),
-                id=4).toWire()
+                    resultCode=0, matchedDN="cn=bob,dc=example,dc=com"
+                ),
+                id=4,
+            ).toWire(),
         )
 
     def test_bindSuccessUPN(self):
         """
         It can authenticate based on the UPN.
         """
-        self.checkSuccessfulBIND('bob@ad.example.com', b'secret')
-
+        self.checkSuccessfulBIND("bob@ad.example.com", b"secret")
 
     def test_bindSuccessDN(self):
         """
         It can still authenticate based on the normal DN.
         """
-        self.checkSuccessfulBIND('cn=bob,dc=example,dc=com', b'secret')
-
+        self.checkSuccessfulBIND("cn=bob,dc=example,dc=com", b"secret")
 
     def test_bindBadPassword(self):
         """
@@ -81,15 +79,16 @@ class LDAPServerWithUPNBind(unittest.TestCase):
         """
         self.server.dataReceived(
             pureldap.LDAPMessage(
-                pureldap.LDAPBindRequest(
-                    dn='bob@ad.example.com',
-                    auth='invalid'),
-                id=734).toWire()
+                pureldap.LDAPBindRequest(dn="bob@ad.example.com", auth="invalid"),
+                id=734,
+            ).toWire()
         )
         self.assertEqual(
             self.server.transport.value(),
             pureldap.LDAPMessage(
                 pureldap.LDAPBindResponse(
-                    resultCode=ldaperrors.LDAPInvalidCredentials.resultCode),
-                id=734).toWire()
+                    resultCode=ldaperrors.LDAPInvalidCredentials.resultCode
+                ),
+                id=734,
+            ).toWire(),
         )

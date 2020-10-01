@@ -232,16 +232,18 @@ class IConnectedLDAPEntry(Interface):
         done.
         """
 
-    def search(self,
-               filterText=None,
-               filterObject=None,
-               attributes=(),
-               scope=None,
-               derefAliases=None,
-               sizeLimit=0,
-               timeLimit=0,
-               typesOnly=0,
-               callback=None):
+    def search(
+        self,
+        filterText=None,
+        filterObject=None,
+        attributes=(),
+        scope=None,
+        derefAliases=None,
+        sizeLimit=0,
+        timeLimit=0,
+        typesOnly=0,
+        callback=None,
+    ):
         """
 
         Perform an LDAP search with this object as the base.
@@ -353,9 +355,7 @@ class ILDAPConfig(Interface):
         DistinguishedName to (host, port) tuples.
         """
 
-    def copy(self,
-             baseDN=None,
-             serviceLocationOverrides=None):
+    def copy(self, baseDN=None, serviceLocationOverrides=None):
         """
         Make a copy of this configuration, overriding certain aspects
         of it.

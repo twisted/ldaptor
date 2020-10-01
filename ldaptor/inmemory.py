@@ -11,13 +11,13 @@ class LDAPCannotRemoveRootError(ldaperrors.LDAPNamingViolation):
 
 
 @implementer(interfaces.IConnectedLDAPEntry)
-class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
-                                entryhelpers.DiffTreeMixin,
-                                entryhelpers.SubtreeFromChildrenMixin,
-                                entryhelpers.MatchMixin,
-                                entryhelpers.SearchByTreeWalkingMixin,
-                                ):
-
+class ReadOnlyInMemoryLDAPEntry(
+    entry.EditableLDAPEntry,
+    entryhelpers.DiffTreeMixin,
+    entryhelpers.SubtreeFromChildrenMixin,
+    entryhelpers.MatchMixin,
+    entryhelpers.SearchByTreeWalkingMixin,
+):
     def __init__(self, *a, **kw):
         entry.BaseLDAPEntry.__init__(self, *a, **kw)
         self._parent = None
@@ -59,9 +59,10 @@ class ReadOnlyInMemoryLDAPEntry(entry.EditableLDAPEntry,
         rdn = distinguishedname.RelativeDistinguishedName(rdn)
         rdn_str = rdn.getText()
         if rdn_str in self._children:
-            raise ldaperrors.LDAPEntryAlreadyExists(self._children[rdn_str].dn.getText())
-        dn = distinguishedname.DistinguishedName(
-            listOfRDNs=(rdn,) + self.dn.split())
+            raise ldaperrors.LDAPEntryAlreadyExists(
+                self._children[rdn_str].dn.getText()
+            )
+        dn = distinguishedname.DistinguishedName(listOfRDNs=(rdn,) + self.dn.split())
         e = self.__class__(dn, attributes)
         e._parent = self
         self._children[rdn_str] = e
@@ -150,8 +151,7 @@ class InMemoryLDIFProtocol(ldifprotocol.LDIF):
 
         def _add(parent, entry):
             if parent is not None:
-                parent.addChild(rdn=entry.dn.split()[0],
-                                attributes=entry)
+                parent.addChild(rdn=entry.dn.split()[0], attributes=entry)
 
         d.addCallback(_add, entry)
         d.addErrback(self.addFailed, entry)
@@ -165,9 +165,7 @@ class InMemoryLDIFProtocol(ldifprotocol.LDIF):
     def gotEntry(self, entry):
         if self.db is None:
             # first entry, create the db, prepare to process the rest
-            self.db = ReadOnlyInMemoryLDAPEntry(
-                dn=entry.dn,
-                attributes=entry)
+            self.db = ReadOnlyInMemoryLDAPEntry(dn=entry.dn, attributes=entry)
             self._deferred.callback(self.db)
         else:
             self._deferred.addCallback(self._addEntry, entry)

@@ -66,7 +66,6 @@ userPassword: eekretsay
 
 
 class Tree:
-
     def __init__(self):
         global LDIF
         self.f = BytesIO(LDIF)
@@ -91,7 +90,7 @@ class LDAPServerFactory(ServerFactory):
         return proto
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from twisted.internet import reactor
 
     if len(sys.argv) == 2:
@@ -106,10 +105,7 @@ if __name__ == '__main__':
     # `root = interfaces.IConnectedLDAPEntry(self.factory)` to get the root
     # of the DIT.  The factory that creates the protocol must therefore
     # be adapted to the IConnectedLDAPEntry interface.
-    registerAdapter(
-        lambda x: x.root,
-        LDAPServerFactory,
-        IConnectedLDAPEntry)
+    registerAdapter(lambda x: x.root, LDAPServerFactory, IConnectedLDAPEntry)
     factory = LDAPServerFactory(tree.db)
     factory.debug = True
     application = service.Application("ldaptor-server")
