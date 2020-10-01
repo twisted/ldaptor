@@ -1,6 +1,7 @@
 include *.rst
 include *.txt
 exclude .readthedocs.yml
+exclude .pre-commit-config.yaml
 include LICENSE
 include docs/source/examples/ldif2ldif
 include ldaptor.schema

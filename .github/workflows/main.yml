@@ -39,7 +39,9 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
-          key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml', 'setup.py', 'setup.cfg') }}
+          key:
+            ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml', 'setup.py',
+            'setup.cfg') }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
@@ -47,10 +49,14 @@ jobs:
         run: |
           pip install tox
 
+      - name: tox linters
+        if: matrix.python-version != 3.5 && matrix.python-version != 'pypy3'
+        run: tox -e py-linters
+
       - name: tox
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: tox -e py-test-twlatest,py-test-twtrunk,py-linters,publishcov,release
+        run: tox -e py-test-twlatest,py-test-twtrunk,publishcov,release
 
       - name: upload dist
         uses: actions/upload-artifact@v2
@@ -63,20 +69,20 @@ jobs:
     runs-on: ubuntu-latest
     needs: [tox]
     steps:
-    - name: Download dists for PyPI
-      uses: actions/download-artifact@v2
-      with:
-        name: ubuntu-latest_3.8_dist
-        path: dist
+      - name: Download dists for PyPI
+        uses: actions/download-artifact@v2
+        with:
+          name: ubuntu-latest_3.8_dist
+          path: dist
 
-    - name: Display structure of downloaded files
-      run: ls -R
+      - name: Display structure of downloaded files
+        run: ls -R
 
-    - name: Publish to PyPI for a new tag
-      if: startsWith(github.ref, 'refs/tags')
-      uses: pypa/gh-action-pypi-publish@v1.3.1
-      with:
-        password: ${{ secrets.PYPI_GITHUB_PACKAGE_UPLOAD }}
+      - name: Publish to PyPI for a new tag
+        if: startsWith(github.ref, 'refs/tags')
+        uses: pypa/gh-action-pypi-publish@v1.3.1
+        with:
+          password: ${{ secrets.PYPI_GITHUB_PACKAGE_UPLOAD }}
 
-    - name: note that all tests succeeded
-      run: echo "🎉"
+      - name: note that all tests succeeded
+        run: echo "🎉"

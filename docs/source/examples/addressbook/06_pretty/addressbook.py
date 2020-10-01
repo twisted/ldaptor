@@ -23,7 +23,7 @@ class ILDAPConfig(Interface):
         DistinguishedName to (host, port) tuples.
         """
 
-class LDAPConfig(object):
+class LDAPConfig:
     implements(ILDAPConfig)
 
     def __init__(self,
@@ -44,18 +44,17 @@ class LDAPConfig(object):
 
 class LDAPSearchFilter(annotate.String):
     def coerce(self, *a, **kw):
-        val = super(LDAPSearchFilter, self).coerce(*a, **kw)
+        val = super().coerce(*a, **kw)
         try:
             f = ldapfilter.parseFilter(val)
-        except ldapfilter.InvalidLDAPFilter, e:
-            raise annotate.InputError, \
-                  "%r is not a valid LDAP search filter: %s" % (val, e)
+        except ldapfilter.InvalidLDAPFilter as e:
+            raise annotate.InputError("{!r} is not a valid LDAP search filter: {}".format(val, e))
         return f
 
 class IAddressBookSearch(annotate.TypedInterface):
     search = LDAPSearchFilter(label="Search filter")
 
-class CurrentSearch(object):
+class CurrentSearch:
     implements(IAddressBookSearch, inevow.IContainer)
     search = None
 
@@ -157,7 +156,7 @@ class AddressBookRealm:
 
     def requestAvatar(self, avatarId, mind, *interfaces):
         if inevow.IResource not in interfaces:
-            raise NotImplementedError, "no interface"
+            raise NotImplementedError("no interface")
         return (inevow.IResource,
                 self.resource,
                 lambda: None)

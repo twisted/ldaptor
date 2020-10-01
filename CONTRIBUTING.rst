@@ -64,7 +64,7 @@ Building the documentation
 --------------------------
 
 The documentation is managed using Python Sphinx and is generated in
-docs/build.
+build/docs.
 
 There is a helper to build the documentation using tox ::
 

@@ -192,7 +192,6 @@ class MyOptions(usage.Options, usage.Options_service_location, usage.Options_bas
         self.opts['filter'] = filter
 
 if __name__ == "__main__":
-    import sys
     try:
         opts = MyOptions()
         opts.parseOptions()
