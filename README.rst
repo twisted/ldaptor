@@ -13,6 +13,9 @@ Ldaptor
 .. image:: https://img.shields.io/pypi/v/ldaptor?logo=pypi
     :alt: PyPI
     :target: https://pypi.org/project/ldaptor/
+.. image:: https://img.shields.io/badge/code%20style-black-black
+    :alt: Black
+    :target: https://github.com/psf/black
 
 Ldaptor is a pure-Python library that implements:
 
