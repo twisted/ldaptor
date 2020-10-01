@@ -35,10 +35,7 @@ def to_unicode(value):
 
 
 def repr_converter(value):
-    """
-    Converts value to its string representation:
-    """
-    return to_unicode(value)
+    return value
 
 
 def get_strings(value):
