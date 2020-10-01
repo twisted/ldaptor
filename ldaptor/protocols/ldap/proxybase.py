@@ -124,6 +124,7 @@ class ProxyBase(ldapserver.BaseLDAPServer):
                 dseq = []
                 d2 = self.client.send_multiResponse(
                     request,
+                    controls,
                     self._gotResponseFromProxiedServer,
                     reply,
                     request,
@@ -146,7 +147,7 @@ class ProxyBase(ldapserver.BaseLDAPServer):
         """
         return defer.succeed((request, controls))
 
-    def _gotResponseFromProxiedServer(self, response, reply, request, controls, dseq):
+    def _gotResponseFromProxiedServer(self, response, response_controls, reply, request, controls, dseq):
         """
         Returns True if this is the last response to the request.
         """
@@ -155,7 +156,7 @@ class ProxyBase(ldapserver.BaseLDAPServer):
 
         def replyAndLinkToNextEntry(result):
             dseq.pop(0)
-            reply(result)
+            reply((result, response_controls))
             if len(dseq) > 0:
                 dseq[0].addCallback(replyAndLinkToNextEntry)
 

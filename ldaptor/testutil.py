@@ -92,17 +92,11 @@ class LDAPClientTestDriver:
                 assert ret, msg
         return d
 
-    def send_multiResponse(self, op, handler, *args, **kwargs):
-        return self.send_multiResponse_(op, None, False, handler, *args, **kwargs)
-
-    def send_multiResponse_ex(self, op, controls, handler, *args, **kwargs):
-        return self.send_multiResponse_(
-            op,
-            controls,
-            True,
-            handler,
-            *args,
-            **kwargs)
+    def send_multiResponse(self, op, controls, handler, *args, **kwargs):
+        if controls == None:
+            return self.send_multiResponse_(op, None, False, handler, *args, **kwargs)
+        else:
+            return self.send_multiResponse_(op, controls, True, handler, *args, **kwargs)
 
     def send_noResponse(self, op):
         if len(self.responses) == 0:

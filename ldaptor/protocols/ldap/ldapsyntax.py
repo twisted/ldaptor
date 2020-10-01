@@ -712,7 +712,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
                 typesOnly=typesOnly,
                 filter=filterObject,
                 attributes=attributes)
-            dsend = self.client.send_multiResponse_ex(
+            dsend = self.client.send_multiResponse(
                 op,
                 controls,
                 self._cbSearchMsg,
