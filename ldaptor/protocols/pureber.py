@@ -33,7 +33,7 @@
 import sys
 from collections import UserList
 
-from ldaptor._encoder import to_bytes, repr_converter, WireStrAlias
+from ldaptor._encoder import to_bytes, WireStrAlias
 
 # xxxxxxxx
 # |/|\.../
@@ -225,7 +225,7 @@ class BEROctetString(BERBase):
         return result
 
     def __repr__(self):
-        value = repr_converter(self.value)
+        value = self.value
         if self.tag == self.__class__.tag:
             return self.__class__.__name__ + "(value=%s)" % repr(value)
         else:

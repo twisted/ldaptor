@@ -34,10 +34,6 @@ def to_unicode(value):
     return value
 
 
-def repr_converter(value):
-    return value
-
-
 def get_strings(value):
     """
     Getting tuple of available string values
