@@ -5,11 +5,12 @@ from ldaptor._encoder import to_bytes
 
 
 def _fetchCb(subschemaSubentry, client):
-    o = ldapsyntax.LDAPEntry(client=client,
-                             dn=subschemaSubentry)
-    d = o.search(scope=pureldap.LDAP_SCOPE_baseObject,
-                 sizeLimit=1,
-                 attributes=["attributeTypes", "objectClasses"])
+    o = ldapsyntax.LDAPEntry(client=client, dn=subschemaSubentry)
+    d = o.search(
+        scope=pureldap.LDAP_SCOPE_baseObject,
+        sizeLimit=1,
+        attributes=["attributeTypes", "objectClasses"],
+    )
 
     def handleSearchResults(l):
         if len(l) == 0:
@@ -23,7 +24,10 @@ def _fetchCb(subschemaSubentry, client):
                 attributeTypes.append(schema.AttributeTypeDescription(to_bytes(text)))
             for text in o.get("objectClasses", []):
                 objectClasses.append(schema.ObjectClassDescription(to_bytes(text)))
-            assert attributeTypes, "LDAP server doesn't give attributeTypes for subschemaSubentry dn=%s" % o.dn
+            assert attributeTypes, (
+                "LDAP server doesn't give attributeTypes for subschemaSubentry dn=%s"
+                % o.dn
+            )
             return (attributeTypes, objectClasses)
         else:
             raise ldaperrors.LDAPOther("DN matched multiple entries")
@@ -33,11 +37,12 @@ def _fetchCb(subschemaSubentry, client):
 
 
 def fetch(client, baseObject):
-    o = ldapsyntax.LDAPEntry(client=client,
-                             dn=baseObject)
-    d = o.search(scope=pureldap.LDAP_SCOPE_baseObject,
-                 sizeLimit=1,
-                 attributes=["subschemaSubentry"])
+    o = ldapsyntax.LDAPEntry(client=client, dn=baseObject)
+    d = o.search(
+        scope=pureldap.LDAP_SCOPE_baseObject,
+        sizeLimit=1,
+        attributes=["subschemaSubentry"],
+    )
 
     def handleSearchResults(l):
         if len(l) == 0:
@@ -46,7 +51,9 @@ def fetch(client, baseObject):
             o = l[0]
             assert "subschemaSubentry" in o, "No subschemaSubentry. TODO"
             subSchemas = o["subschemaSubentry"]
-            assert len(subSchemas) == 1, "More than one subschemaSubentry is not support yet. TODO"
+            assert (
+                len(subSchemas) == 1
+            ), "More than one subschemaSubentry is not support yet. TODO"
             for s in subSchemas:
                 return s
         else:

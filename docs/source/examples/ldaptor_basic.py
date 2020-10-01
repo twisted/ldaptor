@@ -21,16 +21,15 @@ from schema import COUNTRY, COMPANY, PEOPLE, USERS
 
 
 class Tree:
-
     def __init__(self):
-        dirname = tempfile.mkdtemp('.ldap', 'test-server', '/tmp')
+        dirname = tempfile.mkdtemp(".ldap", "test-server", "/tmp")
         self.db = LDIFTreeEntry(dirname)
         self.init_db()
 
     def init_db(self):
         """
-            Add subtrees to the top entry
-            top->country->company->people
+        Add subtrees to the top entry
+        top->country->company->people
         """
         country = self.db.addChild(COUNTRY[0], COUNTRY[1])
         company = country.addChild(COMPANY[0], COMPANY[1])
@@ -41,8 +40,9 @@ class Tree:
 
 class LDAPServerFactory(ServerFactory):
     """
-        Our Factory is meant to persistently store the ldap tree
+    Our Factory is meant to persistently store the ldap tree
     """
+
     protocol = LDAPServer
 
     def __init__(self, root):
@@ -55,7 +55,7 @@ class LDAPServerFactory(ServerFactory):
         return proto
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     if len(sys.argv) == 2:
         port = int(sys.argv[1])
     else:
@@ -69,10 +69,7 @@ if __name__ == '__main__':
     # the factory to the IConnectedLDAPEntry interface
     # So we need to register an adapter for our factory
     # to match the IConnectedLDAPEntry
-    registerAdapter(
-        lambda x: x.root,
-        LDAPServerFactory,
-        IConnectedLDAPEntry)
+    registerAdapter(lambda x: x.root, LDAPServerFactory, IConnectedLDAPEntry)
     # Run it !!
     factory = LDAPServerFactory(tree.db)
     factory.debug = True

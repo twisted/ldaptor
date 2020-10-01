@@ -23,16 +23,13 @@ def onConnect(client, args):
         print(ex)
         raise
     page_size = args.page_size
-    cookie = ''
+    cookie = ""
     page = 1
     count = 0
     while True:
         results, cookie = yield process_entry(
-            client,
-            args,
-            args.filter,
-            page_size=page_size,
-            cookie=cookie)
+            client, args, args.filter, page_size=page_size, cookie=cookie
+        )
         count += len(results)
         print("Page {}".format(page))
         display_results(results)
@@ -43,19 +40,22 @@ def onConnect(client, args):
 
 
 @defer.inlineCallbacks
-def process_entry(client, args, search_filter, page_size=100, cookie=''):
+def process_entry(client, args, search_filter, page_size=100, cookie=""):
     basedn = args.base_dn
-    control_value = pureber.BERSequence([
-        pureber.BERInteger(page_size),
-        pureber.BEROctetString(cookie),
-    ])
-    controls = [('1.2.840.113556.1.4.319', None, control_value)]
+    control_value = pureber.BERSequence(
+        [
+            pureber.BERInteger(page_size),
+            pureber.BEROctetString(cookie),
+        ]
+    )
+    controls = [("1.2.840.113556.1.4.319", None, control_value)]
     o = LDAPEntry(client, basedn)
-    results, resp_controls  = yield o.search(
+    results, resp_controls = yield o.search(
         filterText=search_filter,
-        attributes=['dn'],
+        attributes=["dn"],
         controls=controls,
-        return_controls=True)
+        return_controls=True,
+    )
     cookie = get_paged_search_cookie(resp_controls)
     defer.returnValue((results, cookie))
 
@@ -98,35 +98,33 @@ if __name__ == "__main__":
         "endpoint",
         action="store",
         help="The Active Directory service endpoint. See "
-             "https://twistedmatrix.com/documents/current/core/howto/endpoints.html#clients")
+        "https://twistedmatrix.com/documents/current/core/howto/endpoints.html#clients",
+    )
     parser.add_argument(
-        "bind_dn",
-        action="store",
-        help="The DN to BIND to the service as.")
+        "bind_dn", action="store", help="The DN to BIND to the service as."
+    )
     parser.add_argument(
         "passwd_file",
         action="store",
-        type=argparse.FileType('r'),
-        help="A file containing the password used to log into the service.")
+        type=argparse.FileType("r"),
+        help="A file containing the password used to log into the service.",
+    )
     parser.add_argument(
-        "base_dn",
-        action="store",
-        help="The base DN to start from when searching.")
-    parser.add_argument(
-        "-f",
-        "--filter",
-        action='store',
-        help='LDAP filter')
+        "base_dn", action="store", help="The base DN to start from when searching."
+    )
+    parser.add_argument("-f", "--filter", action="store", help="LDAP filter")
     parser.add_argument(
         "-p",
         "--page-size",
         type=int,
-        action='store',
+        action="store",
         default=100,
-        help='Page size (default 100).')
+        help="Page size (default 100).",
+    )
     parser.add_argument(
         "--start-tls",
         action="store_true",
-        help="Request StartTLS after connecting to the service.")
+        help="Request StartTLS after connecting to the service.",
+    )
     args = parser.parse_args()
     react(main, [args])

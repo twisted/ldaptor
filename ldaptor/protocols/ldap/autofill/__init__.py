@@ -1,7 +1,9 @@
 """LDAP object field value suggestion and autoupdate mechanism."""
 
+
 class AutofillException(Exception):
     pass
+
 
 class ObjectMissingObjectClassException(AutofillException):
     """

@@ -24,7 +24,7 @@ from twisted.internet import protocol, defer, ssl, reactor
 
 class LDAPClientConnectionLostException(ldaperrors.LDAPException):
     def toWire(self):
-        return b'Connection lost'
+        return b"Connection lost"
 
 
 class LDAPStartTLSBusyError(ldaperrors.LDAPOperationsError):
@@ -33,7 +33,7 @@ class LDAPStartTLSBusyError(ldaperrors.LDAPOperationsError):
         ldaperrors.LDAPOperationsError.__init__(self, message=message)
 
     def toWire(self):
-        return b'Cannot STARTTLS while operations on wire: %r' % self.onwire
+        return b"Cannot STARTTLS while operations on wire: %r" % self.onwire
 
 
 class LDAPStartTLSInvalidResponseName(ldaperrors.LDAPException):
@@ -42,22 +42,29 @@ class LDAPStartTLSInvalidResponseName(ldaperrors.LDAPException):
         ldaperrors.LDAPException.__init__(self)
 
     def toWire(self):
-        return b'Invalid responseName in STARTTLS response: %r' % (self.responseName, )
+        return b"Invalid responseName in STARTTLS response: %r" % (self.responseName,)
 
 
 class LDAPClient(protocol.Protocol):
     """An LDAP client"""
+
     debug = False
 
     def __init__(self):
         self.onwire = {}
-        self.buffer = b''
+        self.buffer = b""
         self.connected = None
 
     berdecoder = pureldap.LDAPBERDecoderContext_TopLevel(
         inherit=pureldap.LDAPBERDecoderContext_LDAPMessage(
-            fallback=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext()),
-            inherit=pureldap.LDAPBERDecoderContext(fallback=pureber.BERDecoderContext())))
+            fallback=pureldap.LDAPBERDecoderContext(
+                fallback=pureber.BERDecoderContext()
+            ),
+            inherit=pureldap.LDAPBERDecoderContext(
+                fallback=pureber.BERDecoderContext()
+            ),
+        )
+    )
 
     def dataReceived(self, recd):
         self.buffer += recd
@@ -89,7 +96,7 @@ class LDAPClient(protocol.Protocol):
             raise LDAPClientConnectionLostException()
         msg = pureldap.LDAPMessage(op, controls=controls)
         if self.debug:
-            log.msg('C->S %s' % repr(msg))
+            log.msg("C->S %s" % repr(msg))
         assert msg.id not in self.onwire
         return msg
 
@@ -191,7 +198,7 @@ class LDAPClient(protocol.Protocol):
     def handle(self, msg):
         assert isinstance(msg.value, pureldap.LDAPProtocolResponse)
         if self.debug:
-            log.msg('C<-S %s' % repr(msg))
+            log.msg("C<-S %s" % repr(msg))
 
         if msg.id == 0:
             self.unsolicitedNotification(msg.value)
@@ -217,7 +224,7 @@ class LDAPClient(protocol.Protocol):
                     if handler(msg.value, *args, **kwargs):
                         del self.onwire[msg.id]
 
-    def bind(self, dn='', auth=''):
+    def bind(self, dn="", auth=""):
         """
         @depreciated: Use e.bind(auth).
 
@@ -251,8 +258,9 @@ class LDAPClient(protocol.Protocol):
         if msg.resultCode != ldaperrors.Success.resultCode:
             raise ldaperrors.get(msg.resultCode, msg.errorMessage)
 
-        if (msg.responseName is not None) and \
-                (msg.responseName != pureldap.LDAPStartTLSResponse.oid):
+        if (msg.responseName is not None) and (
+            msg.responseName != pureldap.LDAPStartTLSResponse.oid
+        ):
             raise LDAPStartTLSInvalidResponseName(msg.responseName)
 
         self.transport.startTLS(ctx)

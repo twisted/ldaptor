@@ -25,11 +25,8 @@ class LDAPAttributeSet(set):
     def __repr__(self):
         values = list(self)
         values.sort()
-        attributes = ', '.join([repr(x) for x in values])
-        return '{}({!r}, [{}])'.format(
-            self.__class__.__name__,
-            self.key,
-            attributes)
+        attributes = ", ".join([repr(x) for x in values])
+        return "{}({!r}, [{}])".format(self.__class__.__name__, self.key, attributes)
 
     def __eq__(self, other):
         """

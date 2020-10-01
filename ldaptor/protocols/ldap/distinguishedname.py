@@ -8,27 +8,27 @@ from ldaptor._encoder import to_unicode, TextStrAlias
 # be quoted. Let's trust the syntax, slapd refuses to accept unescaped
 # "=" in RDN values.
 escapedChars = ',+"\\<>;='
-escapedChars_leading = ' #'
-escapedChars_trailing = ' #'
+escapedChars_leading = " #"
+escapedChars_trailing = " #"
 
 
 def escape(s):
-    r = ''
-    r_trailer = ''
+    r = ""
+    r_trailer = ""
 
     if s and s[0] in escapedChars_leading:
-        r = '\\' + s[0]
+        r = "\\" + s[0]
         s = s[1:]
 
     if s and s[-1] in escapedChars_trailing:
-        r_trailer = '\\' + s[-1]
+        r_trailer = "\\" + s[-1]
         s = s[:-1]
 
     for c in s:
         if c in escapedChars:
-            r = r + '\\' + c
+            r = r + "\\" + c
         elif ord(c) <= 31:
-            r = r + '\\%02X' % ord(c)
+            r = r + "\\%02X" % ord(c)
         else:
             r = r + c
 
@@ -36,11 +36,11 @@ def escape(s):
 
 
 def unescape(s):
-    r = ''
+    r = ""
 
     while s:
-        if s[0] == '\\':
-            if s[1] in '0123456789abcdef':
+        if s[0] == "\\":
+            if s[1] in "0123456789abcdef":
                 r = r + chr(int(s[1:3], 16))
                 s = s[3:]
             else:
@@ -57,19 +57,19 @@ def _splitOnNotEscaped(s, separator):
     if not s:
         return []
 
-    r = ['']
+    r = [""]
     while s:
         first = s[0:1]
 
-        if first == '\\':
+        if first == "\\":
             r[-1] = r[-1] + s[:2]
             s = s[2:]
         else:
 
             if first == separator:
-                r.append('')
+                r.append("")
                 s = s[1:]
-                while s[0:1] == ' ':
+                while s[0:1] == " ":
                     s = s[1:]
             else:
                 r[-1] = r[-1] + first
@@ -90,8 +90,7 @@ class InvalidRelativeDistinguishedName(Exception):
         self.rdn = rdn
 
     def __str__(self):
-        return "Invalid relative distinguished name %s." \
-               % repr(self.rdn)
+        return "Invalid relative distinguished name %s." % repr(self.rdn)
 
 
 class LDAPAttributeTypeAndValue(TextStrAlias):
@@ -111,20 +110,22 @@ class LDAPAttributeTypeAndValue(TextStrAlias):
 
             stringValue = to_unicode(stringValue)
 
-            if '=' not in stringValue:
+            if "=" not in stringValue:
                 raise InvalidRelativeDistinguishedName(stringValue)
-            self.attributeType, self.value = stringValue.split('=', 1)
+            self.attributeType, self.value = stringValue.split("=", 1)
 
     def getText(self):
-        return '='.join((escape(self.attributeType), escape(self.value)))
+        return "=".join((escape(self.attributeType), escape(self.value)))
 
     def __repr__(self):
-        return (self.__class__.__name__
-                + '(attributeType='
-                + repr(self.attributeType)
-                + ', value='
-                + repr(self.value)
-                + ')')
+        return (
+            self.__class__.__name__
+            + "(attributeType="
+            + repr(self.attributeType)
+            + ", value="
+            + repr(self.value)
+            + ")"
+        )
 
     def __hash__(self):
         return hash((self.attributeType, self.value))
@@ -132,8 +133,10 @@ class LDAPAttributeTypeAndValue(TextStrAlias):
     def __eq__(self, other):
         if not isinstance(other, LDAPAttributeTypeAndValue):
             return NotImplemented
-        return (self.attributeType.lower() == other.attributeType.lower()
-                and self.value.lower() == other.value.lower())
+        return (
+            self.attributeType.lower() == other.attributeType.lower()
+            and self.value.lower() == other.value.lower()
+        )
 
     def __ne__(self, other):
         return not (self == other)
@@ -147,8 +150,7 @@ class LDAPAttributeTypeAndValue(TextStrAlias):
             return self.value < other.value
 
     def __gt__(self, other):
-        return (self != other
-                and self > other)
+        return self != other and self > other
 
     def __le__(self, other):
         return not self > other
@@ -179,20 +181,26 @@ class RelativeDistinguishedName(TextStrAlias):
             self.attributeTypesAndValues = tuple(attributeTypesAndValues)
         else:
             assert attributeTypesAndValues is None
-            self.attributeTypesAndValues = tuple([LDAPAttributeTypeAndValue(stringValue=unescape(x))
-                                                  for x in _splitOnNotEscaped(to_unicode(stringValue), '+')])
+            self.attributeTypesAndValues = tuple(
+                [
+                    LDAPAttributeTypeAndValue(stringValue=unescape(x))
+                    for x in _splitOnNotEscaped(to_unicode(stringValue), "+")
+                ]
+            )
 
     def split(self):
         return self.attributeTypesAndValues
 
     def getText(self):
-        return '+'.join([x.getText() for x in self.attributeTypesAndValues])
+        return "+".join([x.getText() for x in self.attributeTypesAndValues])
 
     def __repr__(self):
-        return (self.__class__.__name__
-                + '(attributeTypesAndValues='
-                + repr(self.attributeTypesAndValues)
-                + ')')
+        return (
+            self.__class__.__name__
+            + "(attributeTypesAndValues="
+            + repr(self.attributeTypesAndValues)
+            + ")"
+        )
 
     def __hash__(self):
         return hash(self.attributeTypesAndValues)
@@ -211,8 +219,7 @@ class RelativeDistinguishedName(TextStrAlias):
         return self.split() < other.split()
 
     def __gt__(self, other):
-        return (self != other
-                and self >= other)
+        return self != other and self >= other
 
     def __le__(self, other):
         return not self > other
@@ -227,12 +234,11 @@ class RelativeDistinguishedName(TextStrAlias):
 @total_ordering
 class DistinguishedName(TextStrAlias):
     """LDAP Distinguished Name."""
+
     listOfRDNs = None
 
     def __init__(self, magic=None, stringValue=None, listOfRDNs=None):
-        assert (magic is not None
-                or stringValue is not None
-                or listOfRDNs is not None)
+        assert magic is not None or stringValue is not None or listOfRDNs is not None
         if magic is not None:
             assert stringValue is None
             assert listOfRDNs is None
@@ -252,8 +258,12 @@ class DistinguishedName(TextStrAlias):
             self.listOfRDNs = tuple(listOfRDNs)
         else:
             assert listOfRDNs is None
-            self.listOfRDNs = tuple([RelativeDistinguishedName(stringValue=x)
-                                     for x in _splitOnNotEscaped(to_unicode(stringValue), ',')])
+            self.listOfRDNs = tuple(
+                [
+                    RelativeDistinguishedName(stringValue=x)
+                    for x in _splitOnNotEscaped(to_unicode(stringValue), ",")
+                ]
+            )
 
     def split(self):
         return self.listOfRDNs
@@ -262,20 +272,17 @@ class DistinguishedName(TextStrAlias):
         return DistinguishedName(listOfRDNs=self.listOfRDNs[1:])
 
     def getText(self):
-        return ','.join([x.getText() for x in self.listOfRDNs])
+        return ",".join([x.getText() for x in self.listOfRDNs])
 
     def __repr__(self):
-        return (self.__class__.__name__
-                + '(listOfRDNs='
-                + repr(self.listOfRDNs)
-                + ')')
+        return self.__class__.__name__ + "(listOfRDNs=" + repr(self.listOfRDNs) + ")"
 
     def __hash__(self):
         return hash(self.getText())
 
     def __eq__(self, other):
         if isinstance(other, bytes):
-            return self.getText().encode('utf-8') == other
+            return self.getText().encode("utf-8") == other
         if isinstance(other, str):
             return self.getText() == other
         if not isinstance(other, DistinguishedName):
@@ -296,7 +303,6 @@ class DistinguishedName(TextStrAlias):
         # See https://github.com/twisted/ldaptor/issues/94
         return self.split() < other.split()
 
-
     def getDomainName(self):
         domainParts = []
         l = list(self.listOfRDNs)
@@ -305,11 +311,11 @@ class DistinguishedName(TextStrAlias):
             if rdn.count() != 1:
                 break
             attributeTypeAndValue = rdn.split()[0]
-            if attributeTypeAndValue.attributeType.upper() != 'DC':
+            if attributeTypeAndValue.attributeType.upper() != "DC":
                 break
             domainParts.insert(0, attributeTypeAndValue.value)
         if domainParts:
-            return '.'.join(domainParts)
+            return ".".join(domainParts)
         else:
             return None
 
