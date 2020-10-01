@@ -4,7 +4,9 @@ Changelog
 20.1.1 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Updated the object representations of pureber and pureldap containers to
+  directly pass on their contained item object representations. Previously
+  they always passed on the repr after decoding to str with utf-8.
 
 
 20.1.0 (2020-09-30)
