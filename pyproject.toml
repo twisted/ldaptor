@@ -63,7 +63,8 @@ commands =
     dev: coverage xml -o {toxinidir}/build/coverage.xml
     dev: coverage html -d build/coverage-html
     dev: diff-cover --fail-under 100 --html-report {toxinidir}/build/coverage-diff.html {toxinidir}/build/coverage.xml
-    {dev,linters}: pre-commit run --all-files --show-diff-on-failure {posargs}
+    dev: pre-commit run --all-files --show-diff-on-failure
+    linters: pre-commit {posargs:run --all-files --show-diff-on-failure}
 
 [testenv:build]
 # empty environment to build universal wheel once per tox invocation
