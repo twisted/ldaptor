@@ -240,9 +240,8 @@ def parseFilter(s):
     """
     Converting source string to pureldap.LDAPFilter
 
-    Source string is converted to unicode for Python 3
-    as pyparsing cannot parse Python 3 byte strings with
-    the rules declared in this module.
+    Source string is converted to unicode as pyparsing cannot parse bytes
+    objects with the rules declared in this module.
     """
     s = to_unicode(s)
     try:
