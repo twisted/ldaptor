@@ -73,10 +73,12 @@ commands =
 [testenv:documentation]
 deps = sphinx
 basepython=python3.8
+changedir = {envtmpdir}
+whitelist_externals = cp
 commands =
-    mkdir -p docs/build
-    sphinx-build -b html -Ean -j 2 -w build/sphinx-errors \
-        docs/source docs/build
+    sphinx-build -b html -Ean -j 2 -w sphinx-errors \
+        {toxinidir}/docs/source ./docs/
+    cp -r . {toxinidir}/build
 
 [testenv:release]
 deps = pep517
