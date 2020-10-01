@@ -19,78 +19,44 @@ userPrincipalName: bob@ad.example.org
 
 from ldaptor import interfaces
 from ldaptor.protocols import pureldap
-from ldaptor.protocols.ldap import distinguishedname, ldaperrors
 from twisted.internet import defer
 from ldaptor.protocols.ldap.ldapserver import LDAPServer
 
 
-class LDAPServerWithUPNBind(LDAPServer):
+class LDAPServerWithUPNBind(LDAPServer, object):
     """
     An LDAP server which support BIND using UPN similar to AD.
     """
-    _loginAttribute = b'userPrincipalName'
 
-    def handle_LDAPBindRequest(self, request, controls, reply):
-        if request.version != 3:
-            raise ldaperrors.LDAPProtocolError(
-                'Version %u not supported' % request.version)
+    _loginAttribute = b"userPrincipalName"
 
-        self.checkControls(controls)
-
-        if request.dn == b'':
-            # anonymous bind
-            self.boundUser = None
-            return pureldap.LDAPBindResponse(resultCode=0)
-
-        root = interfaces.IConnectedLDAPEntry(self.factory)
-
-        def _gotUPNResult(results):
-            if len(results) != 1:
-                # Not exactly one result, so this might not be an UNP.
-                return distinguishedname.DistinguishedName(request.dn)
-
-            # A single result, so the UPN might exist.
-            return results[0].dn
-
-        if b'@' in request.dn and b',' not in request.dn:
+    @defer.inlineCallbacks
+    def handle_LDAPBindRequest(self, request, *args, **kwargs):
+        @defer.inlineCallbacks
+        def _request():
+            if not (b"@" in request.dn and b"," not in request.dn):
+                defer.returnValue(request)
+            root = interfaces.IConnectedLDAPEntry(self.factory)
             # This might be an UPN request.
-            filterText = b'(' + self._loginAttribute + b'=' + request.dn + b')'
-            d = root.search(filterText=filterText)
-            d.addCallback(_gotUPNResult)
-        else:
-            d = defer.succeed(distinguishedname.DistinguishedName(request.dn))
+            filter_text = b"(" + self._loginAttribute + b"=" + request.dn + b")"
+            results = yield root.search(filterText=filter_text)
+            if len(results) != 1:
+                defer.returnValue(request)
 
-        # Once the BIND DN is known, search for the LDAP entry.
-        d.addCallback(lambda dn: root.lookup(dn))
+            defer.returnValue(
+                pureldap.LDAPBindRequest(
+                    version=request.version,
+                    dn=results[0].dn.getText(),
+                    auth=request.auth,
+                    tag=request.tag,
+                    sasl=request.sasl,
+                )
+            )
 
-        def _noEntry(fail):
-            """
-            Called when the requested BIND DN was not found.
-            """
-            fail.trap(ldaperrors.LDAPNoSuchObject)
-            return None
-        d.addErrback(_noEntry)
-
-        def _gotEntry(entry, auth):
-            """
-            Called when the requested BIND DN was found.
-            """
-            if entry is None:
-                raise ldaperrors.LDAPInvalidCredentials()
-
-            d = entry.bind(auth)
-
-            def _cb(entry):
-                """
-                Called when BIND operation was successful.
-                """
-                self.boundUser = entry
-                msg = pureldap.LDAPBindResponse(
-                    resultCode=ldaperrors.Success.resultCode,
-                    matchedDN=entry.dn.getText())
-                return msg
-            d.addCallback(_cb)
-            return d
-        d.addCallback(_gotEntry, request.auth)
-
-        return d
+        defer.returnValue(
+            (
+                yield super(LDAPServerWithUPNBind, self).handle_LDAPBindRequest(
+                    (yield _request()), *args, **kwargs
+                )
+            )
+        )
