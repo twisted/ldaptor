@@ -4,6 +4,7 @@ from twisted.internet import reactor, defer
 from ldaptor.protocols.ldap import ldapserver, ldapconnector, ldapclient
 from ldaptor.protocols import pureldap
 
+
 class Proxy(ldapserver.BaseLDAPServer):
     protocol = ldapclient.LDAPClient
 
@@ -48,21 +49,23 @@ class Proxy(ldapserver.BaseLDAPServer):
         reply(response)
 
         # TODO this is ugly
-        return isinstance(response, (
-            pureldap.LDAPSearchResultDone,
-            pureldap.LDAPBindResponse,
-            ))
+        return isinstance(
+            response,
+            (
+                pureldap.LDAPSearchResultDone,
+                pureldap.LDAPBindResponse,
+            ),
+        )
 
     def _failConnection(self, reason):
-        #TODO self.loseConnection()
-        return reason # TODO
+        # TODO self.loseConnection()
+        return reason  # TODO
 
     def connectionMade(self):
-        clientCreator = ldapconnector.LDAPClientCreator(
-            reactor, self.protocol)
+        clientCreator = ldapconnector.LDAPClientCreator(reactor, self.protocol)
         d = clientCreator.connect(
-            dn='',
-            overrides=self.config.getServiceLocationOverrides())
+            dn="", overrides=self.config.getServiceLocationOverrides()
+        )
         d.addCallback(self._cbConnectionMade)
         d.addErrback(self._failConnection)
 
@@ -92,18 +95,22 @@ class Proxy(ldapserver.BaseLDAPServer):
         self.unbound = True
         self.handleUnknown(request, controls, reply)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     """
     Demonstration LDAP proxy; passes all requests to localhost:389.
     """
     from twisted.internet import protocol
     from twisted.python import log
     import sys
+
     log.startLogging(sys.stderr)
 
     factory = protocol.ServerFactory()
-    factory.protocol = lambda : Proxy(overrides={
-        '': ('localhost', 389),
-        })
+    factory.protocol = lambda: Proxy(
+        overrides={
+            "": ("localhost", 389),
+        }
+    )
     reactor.listenTCP(10389, factory)
     reactor.run()

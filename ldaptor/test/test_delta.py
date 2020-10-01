@@ -6,145 +6,149 @@ from twisted.trial import unittest
 from ldaptor import delta, entry, attributeset, inmemory
 from ldaptor.protocols.ldap import ldapsyntax, distinguishedname, ldaperrors
 
+
 class TestModifications(unittest.TestCase):
     def setUp(self):
         self.foo = ldapsyntax.LDAPEntry(
             None,
-            dn='cn=foo,dc=example,dc=com',
+            dn="cn=foo,dc=example,dc=com",
             attributes={
-            'objectClass': ['person'],
-            'cn': ['foo', 'thud'],
-            'sn': ['bar'],
-            'more': ['junk'],
-            })
+                "objectClass": ["person"],
+                "cn": ["foo", "thud"],
+                "sn": ["bar"],
+                "more": ["junk"],
+            },
+        )
 
     def testAddOld(self):
-        mod = delta.Add('cn', ['quux'])
+        mod = delta.Add("cn", ["quux"])
         mod.patch(self.foo)
 
-        self.failIf('stuff' in self.foo)
-        self.failUnlessEqual(self.foo['cn'], ['foo', 'thud', 'quux'])
+        self.failIf("stuff" in self.foo)
+        self.failUnlessEqual(self.foo["cn"], ["foo", "thud", "quux"])
 
     def testAddNew(self):
-        mod = delta.Add('stuff', ['val1', 'val2'])
+        mod = delta.Add("stuff", ["val1", "val2"])
         mod.patch(self.foo)
 
-        self.failUnlessEqual(self.foo['stuff'], ['val1', 'val2'])
-        self.failUnlessEqual(self.foo['cn'], ['foo', 'thud'])
+        self.failUnlessEqual(self.foo["stuff"], ["val1", "val2"])
+        self.failUnlessEqual(self.foo["cn"], ["foo", "thud"])
 
     def testDelete(self):
-        mod = delta.Delete('cn', ['thud'])
+        mod = delta.Delete("cn", ["thud"])
         mod.patch(self.foo)
 
-        self.failIf('stuff' in self.foo)
-        self.failUnlessEqual(self.foo['cn'], ['foo'])
+        self.failIf("stuff" in self.foo)
+        self.failUnlessEqual(self.foo["cn"], ["foo"])
 
     def testDeleteAll(self):
-        mod = delta.Delete('more')
+        mod = delta.Delete("more")
         mod.patch(self.foo)
 
-        self.failIf('stuff' in self.foo)
-        self.failUnlessEqual(self.foo['cn'], ['foo', 'thud'])
+        self.failIf("stuff" in self.foo)
+        self.failUnlessEqual(self.foo["cn"], ["foo", "thud"])
 
     def testDelete_FailOnNonExistingAttributeType_All(self):
-        mod = delta.Delete('notexist', [])
-        self.assertRaises(KeyError,
-                          mod.patch,
-                          self.foo)
+        mod = delta.Delete("notexist", [])
+        self.assertRaises(KeyError, mod.patch, self.foo)
 
     def testDelete_FailOnNonExistingAttributeType_OneValue(self):
-        mod = delta.Delete('notexist', ['a'])
-        self.assertRaises(KeyError,
-                          mod.patch,
-                          self.foo)
+        mod = delta.Delete("notexist", ["a"])
+        self.assertRaises(KeyError, mod.patch, self.foo)
 
     def testDelete_FailOnNonExistingAttributeValue(self):
-        mod = delta.Delete('cn', ['notexist'])
-        self.assertRaises(LookupError,
-                          mod.patch,
-                          self.foo)
-
+        mod = delta.Delete("cn", ["notexist"])
+        self.assertRaises(LookupError, mod.patch, self.foo)
 
     def testReplace_Add(self):
-        mod = delta.Replace('stuff', ['val1', 'val2'])
+        mod = delta.Replace("stuff", ["val1", "val2"])
         mod.patch(self.foo)
 
-        self.failUnlessEqual(self.foo['stuff'], ['val1', 'val2'])
-        self.failUnlessEqual(self.foo['sn'], ['bar'])
-        self.failUnlessEqual(self.foo['more'], ['junk'])
+        self.failUnlessEqual(self.foo["stuff"], ["val1", "val2"])
+        self.failUnlessEqual(self.foo["sn"], ["bar"])
+        self.failUnlessEqual(self.foo["more"], ["junk"])
 
     def testReplace_Modify(self):
-        mod = delta.Replace('sn', ['baz'])
+        mod = delta.Replace("sn", ["baz"])
         mod.patch(self.foo)
 
-        self.failIf('stuff' in self.foo)
-        self.failUnlessEqual(self.foo['sn'], ['baz'])
-        self.failUnlessEqual(self.foo['more'], ['junk'])
+        self.failIf("stuff" in self.foo)
+        self.failUnlessEqual(self.foo["sn"], ["baz"])
+        self.failUnlessEqual(self.foo["more"], ["junk"])
 
     def testReplace_Delete_Existing(self):
-        mod = delta.Replace('more', [])
+        mod = delta.Replace("more", [])
         mod.patch(self.foo)
 
-        self.failIf('stuff' in self.foo)
-        self.failUnlessEqual(self.foo['sn'], ['bar'])
-        self.failIf('more' in self.foo)
+        self.failIf("stuff" in self.foo)
+        self.failUnlessEqual(self.foo["sn"], ["bar"])
+        self.failIf("more" in self.foo)
 
     def testReplace_Delete_NonExisting(self):
-        mod = delta.Replace('nonExisting', [])
+        mod = delta.Replace("nonExisting", [])
         mod.patch(self.foo)
 
-        self.failIf('stuff' in self.foo)
-        self.failUnlessEqual(self.foo['sn'], ['bar'])
-        self.failUnlessEqual(self.foo['more'], ['junk'])
-
+        self.failIf("stuff" in self.foo)
+        self.failUnlessEqual(self.foo["sn"], ["bar"])
+        self.failUnlessEqual(self.foo["more"], ["junk"])
 
 
 class TestModificationOpLDIF(unittest.TestCase):
     def testAdd(self):
-        m=delta.Add('foo', ['bar', 'baz'])
-        self.assertEqual(m.asLDIF(),
-                         b"""\
+        m = delta.Add("foo", ["bar", "baz"])
+        self.assertEqual(
+            m.asLDIF(),
+            b"""\
 add: foo
 foo: bar
 foo: baz
 -
-""")
+""",
+        )
 
     def testDelete(self):
-        m=delta.Delete('foo', ['bar', 'baz'])
-        self.assertEqual(m.asLDIF(),
-                         b"""\
+        m = delta.Delete("foo", ["bar", "baz"])
+        self.assertEqual(
+            m.asLDIF(),
+            b"""\
 delete: foo
 foo: bar
 foo: baz
 -
-""")
+""",
+        )
 
     def testDeleteAll(self):
-        m=delta.Delete('foo')
-        self.assertEqual(m.asLDIF(),
-                         b"""\
+        m = delta.Delete("foo")
+        self.assertEqual(
+            m.asLDIF(),
+            b"""\
 delete: foo
 -
-""")
+""",
+        )
 
     def testReplace(self):
-        m=delta.Replace('foo', ['bar', 'baz'])
-        self.assertEqual(m.asLDIF(),
-                         b"""\
+        m = delta.Replace("foo", ["bar", "baz"])
+        self.assertEqual(
+            m.asLDIF(),
+            b"""\
 replace: foo
 foo: bar
 foo: baz
 -
-""")
+""",
+        )
 
     def testReplaceAll(self):
-        m=delta.Replace('thud')
-        self.assertEqual(m.asLDIF(),
-                         b"""\
+        m = delta.Replace("thud")
+        self.assertEqual(
+            m.asLDIF(),
+            b"""\
 replace: thud
 -
-""")
+""",
+        )
 
     def testAddBase64(self):
         """
@@ -152,65 +156,76 @@ replace: thud
         if attribute value contains nonprintable characters
         or starts with reserved characters
         """
-        m = delta.Add('attr', [':value1', 'value\n\r2'])
-        self.assertEqual(m.asLDIF(),
-                         b"""\
+        m = delta.Add("attr", [":value1", "value\n\r2"])
+        self.assertEqual(
+            m.asLDIF(),
+            b"""\
 add: attr
 attr:: OnZhbHVlMQ==
 attr:: dmFsdWUKDTI=
 -
-""")
+""",
+        )
 
 
 class OperationTestCase(unittest.TestCase):
     """
     Test case for operations on a LDAP tree.
     """
+
     def getRoot(self):
         """
         Returns a new LDAP root for dc=example,dc=com.
         """
         return inmemory.ReadOnlyInMemoryLDAPEntry(
-            dn=distinguishedname.DistinguishedName('dc=example,dc=com'))
+            dn=distinguishedname.DistinguishedName("dc=example,dc=com")
+        )
 
 
 class TestAddOpLDIF(OperationTestCase):
     """
     Unit tests for `AddOp`.
     """
+
     def testAsLDIF(self):
         """
         It will return the LDIF representation of the operation.
         """
-        sut =delta.AddOp(entry.BaseLDAPEntry(
-            dn='dc=example,dc=com',
-            attributes={
-                'foo': ['bar', 'baz'],
-                'quux': ['thud'],
+        sut = delta.AddOp(
+            entry.BaseLDAPEntry(
+                dn="dc=example,dc=com",
+                attributes={
+                    "foo": ["bar", "baz"],
+                    "quux": ["thud"],
                 },
-            ))
+            )
+        )
 
         result = sut.asLDIF()
 
-        self.assertEqual(b"""dn: dc=example,dc=com
+        self.assertEqual(
+            b"""dn: dc=example,dc=com
 changetype: add
 foo: bar
 foo: baz
 quux: thud
 
 """,
-        result)
+            result,
+        )
 
     def testAddOpEqualitySameEntry(self):
         """
         Objects are equal when the have the same LDAP entry.
         """
         first_entry = entry.BaseLDAPEntry(
-            dn='ou=Duplicate Team, dc=example,dc=com',
-            attributes={'foo': ['same', 'attributes']})
+            dn="ou=Duplicate Team, dc=example,dc=com",
+            attributes={"foo": ["same", "attributes"]},
+        )
         second_entry = entry.BaseLDAPEntry(
-            dn='ou=Duplicate Team, dc=example,dc=com',
-            attributes={'foo': ['same', 'attributes']})
+            dn="ou=Duplicate Team, dc=example,dc=com",
+            attributes={"foo": ["same", "attributes"]},
+        )
 
         first = delta.AddOp(first_entry)
         second = delta.AddOp(second_entry)
@@ -222,11 +237,13 @@ quux: thud
         Objects are not equal when the have different LDAP entries.
         """
         first_entry = entry.BaseLDAPEntry(
-            dn='ou=First Team, dc=example,dc=com',
-            attributes={'foo': ['same', 'attributes']})
+            dn="ou=First Team, dc=example,dc=com",
+            attributes={"foo": ["same", "attributes"]},
+        )
         second_entry = entry.BaseLDAPEntry(
-            dn='ou=First Team, dc=example,dc=com',
-            attributes={'foo': ['other', 'attributes']})
+            dn="ou=First Team, dc=example,dc=com",
+            attributes={"foo": ["other", "attributes"]},
+        )
 
         first = delta.AddOp(first_entry)
         second = delta.AddOp(second_entry)
@@ -238,22 +255,25 @@ quux: thud
         Objects is not equal with random objects.
         """
         team_entry = entry.BaseLDAPEntry(
-            dn='ou=Duplicate Team, dc=example,dc=com',
-            attributes={'foo': ['same', 'attributes']})
+            dn="ou=Duplicate Team, dc=example,dc=com",
+            attributes={"foo": ["same", "attributes"]},
+        )
         sut = delta.AddOp(team_entry)
 
-        self.assertNotEqual(sut, {'foo': ['same', 'attributes']})
+        self.assertNotEqual(sut, {"foo": ["same", "attributes"]})
 
     def testAddOpHashSimilar(self):
         """
         Objects which are equal have the same hash.
         """
         first_entry = entry.BaseLDAPEntry(
-            dn='ou=Duplicate Team, dc=example,dc=com',
-            attributes={'foo': ['same', 'attributes']})
+            dn="ou=Duplicate Team, dc=example,dc=com",
+            attributes={"foo": ["same", "attributes"]},
+        )
         second_entry = entry.BaseLDAPEntry(
-            dn='ou=Duplicate Team, dc=example,dc=com',
-            attributes={'foo': ['same', 'attributes']})
+            dn="ou=Duplicate Team, dc=example,dc=com",
+            attributes={"foo": ["same", "attributes"]},
+        )
 
         first = delta.AddOp(first_entry)
         second = delta.AddOp(second_entry)
@@ -265,11 +285,13 @@ quux: thud
         Objects which are not equal have different hash.
         """
         first_entry = entry.BaseLDAPEntry(
-            dn='ou=Duplicate Team, dc=example,dc=com',
-            attributes={'foo': ['one', 'attributes']})
+            dn="ou=Duplicate Team, dc=example,dc=com",
+            attributes={"foo": ["one", "attributes"]},
+        )
         second_entry = entry.BaseLDAPEntry(
-            dn='ou=Duplicate Team, dc=example,dc=com',
-            attributes={'foo': ['other', 'attributes']})
+            dn="ou=Duplicate Team, dc=example,dc=com",
+            attributes={"foo": ["other", "attributes"]},
+        )
 
         first = delta.AddOp(first_entry)
         second = delta.AddOp(second_entry)
@@ -282,15 +304,17 @@ quux: thud
         """
         root = self.getRoot()
         root.addChild(
-            rdn='ou=Existing Team',
+            rdn="ou=Existing Team",
             attributes={
-            'objectClass': ['a', 'b'],
-            'ou': ['HR'],
-            })
+                "objectClass": ["a", "b"],
+                "ou": ["HR"],
+            },
+        )
 
         hr_entry = entry.BaseLDAPEntry(
-            dn='ou=Existing Team, dc=example,dc=com',
-            attributes={'foo': ['dont', 'care']})
+            dn="ou=Existing Team, dc=example,dc=com",
+            attributes={"foo": ["dont", "care"]},
+        )
         sut = delta.AddOp(hr_entry)
 
         deferred = sut.patch(root)
@@ -302,41 +326,49 @@ quux: thud
         """
         Getting string representation
         """
-        sut = delta.AddOp(entry.BaseLDAPEntry(
-            dn='dc=example,dc=com',
-            attributes={
-                'bar': ['foo'],
-                'foo': ['bar'],
-            },
-        ))
+        sut = delta.AddOp(
+            entry.BaseLDAPEntry(
+                dn="dc=example,dc=com",
+                attributes={
+                    "bar": ["foo"],
+                    "foo": ["bar"],
+                },
+            )
+        )
 
-        self.assertEqual(repr(sut), "AddOp(BaseLDAPEntry('dc=example,dc=com', "
-                                    "{'bar': ['foo'], 'foo': ['bar']}))")
+        self.assertEqual(
+            repr(sut),
+            "AddOp(BaseLDAPEntry('dc=example,dc=com', "
+            "{'bar': ['foo'], 'foo': ['bar']}))",
+        )
 
 
 class TestDeleteOpLDIF(OperationTestCase):
     """
     Unit tests for DeleteOp.
     """
+
     def testAsLDIF(self):
         """
         It return the LDIF representation of the delete operation.
         """
-        sut = delta.DeleteOp('dc=example,dc=com')
+        sut = delta.DeleteOp("dc=example,dc=com")
 
         result = sut.asLDIF()
-        self.assertEqual(b"""dn: dc=example,dc=com
+        self.assertEqual(
+            b"""dn: dc=example,dc=com
 changetype: delete
 
 """,
-        result)
+            result,
+        )
 
     def testDeleteOpEqualitySameDN(self):
         """
         Objects are equal when the have the same DN.
         """
-        first_entry = entry.BaseLDAPEntry(dn='ou=Team, dc=example,dc=com')
-        second_entry = entry.BaseLDAPEntry(dn='ou=Team, dc=example,dc=com')
+        first_entry = entry.BaseLDAPEntry(dn="ou=Team, dc=example,dc=com")
+        second_entry = entry.BaseLDAPEntry(dn="ou=Team, dc=example,dc=com")
 
         first = delta.DeleteOp(first_entry)
         second = delta.DeleteOp(second_entry)
@@ -347,13 +379,15 @@ changetype: delete
         """
         DeleteOp objects are equal if their DNs are equal.
         """
-        first_dn = distinguishedname.DistinguishedName(stringValue='ou=Team,dc=example,dc=com')
+        first_dn = distinguishedname.DistinguishedName(
+            stringValue="ou=Team,dc=example,dc=com"
+        )
         first = delta.DeleteOp(first_dn)
 
-        second_entry = entry.BaseLDAPEntry(dn='ou=Team, dc=example, dc=com')
+        second_entry = entry.BaseLDAPEntry(dn="ou=Team, dc=example, dc=com")
         second = delta.DeleteOp(second_entry)
 
-        third = delta.DeleteOp('ou=Team, dc=example,dc=com')
+        third = delta.DeleteOp("ou=Team, dc=example,dc=com")
 
         self.assertEqual(first, second)
         self.assertEqual(first, third)
@@ -362,8 +396,8 @@ changetype: delete
         """
         DeleteOp objects are not equal when the have different LDAP entries.
         """
-        first_entry = entry.BaseLDAPEntry(dn='ou=Team, dc=example,dc=com')
-        second_entry = entry.BaseLDAPEntry(dn='ou=Cowboys, dc=example,dc=com')
+        first_entry = entry.BaseLDAPEntry(dn="ou=Team, dc=example,dc=com")
+        second_entry = entry.BaseLDAPEntry(dn="ou=Cowboys, dc=example,dc=com")
 
         first = delta.DeleteOp(first_entry)
         second = delta.DeleteOp(second_entry)
@@ -374,18 +408,18 @@ changetype: delete
         """
         DeleteOp objects is not equal with random objects.
         """
-        team_entry = entry.BaseLDAPEntry(dn='ou=Team, dc=example,dc=com')
+        team_entry = entry.BaseLDAPEntry(dn="ou=Team, dc=example,dc=com")
 
         sut = delta.DeleteOp(team_entry)
 
-        self.assertNotEqual(sut, 'ou=Team, dc=example,dc=com')
+        self.assertNotEqual(sut, "ou=Team, dc=example,dc=com")
 
     def testDeleteOpHashSimilar(self):
         """
         Objects which are equal have the same hash.
         """
-        first_entry = entry.BaseLDAPEntry(dn='ou=Team, dc=example,dc=com')
-        second_entry = entry.BaseLDAPEntry(dn='ou=Team, dc=example,dc=com')
+        first_entry = entry.BaseLDAPEntry(dn="ou=Team, dc=example,dc=com")
+        second_entry = entry.BaseLDAPEntry(dn="ou=Team, dc=example,dc=com")
 
         first = delta.DeleteOp(first_entry)
         second = delta.DeleteOp(second_entry)
@@ -396,8 +430,8 @@ changetype: delete
         """
         Objects which are not equal have different hash.
         """
-        first_entry = entry.BaseLDAPEntry(dn='ou=Team, dc=example,dc=com')
-        second_entry = entry.BaseLDAPEntry(dn='ou=Cowboys, dc=example,dc=com')
+        first_entry = entry.BaseLDAPEntry(dn="ou=Team, dc=example,dc=com")
+        second_entry = entry.BaseLDAPEntry(dn="ou=Cowboys, dc=example,dc=com")
 
         first = delta.DeleteOp(first_entry)
         second = delta.DeleteOp(second_entry)
@@ -409,7 +443,7 @@ changetype: delete
         If fail to delete when the RDN does not exists.
         """
         root = self.getRoot()
-        sut = delta.DeleteOp('cn=nope,dc=example,dc=com')
+        sut = delta.DeleteOp("cn=nope,dc=example,dc=com")
 
         deferred = sut.patch(root)
 
@@ -426,7 +460,7 @@ changetype: delete
         """
         Getting string representation
         """
-        sut = delta.DeleteOp('dc=example,dc=com')
+        sut = delta.DeleteOp("dc=example,dc=com")
 
         self.assertEqual(repr(sut), "DeleteOp('dc=example,dc=com')")
 
@@ -441,25 +475,25 @@ class TestModifyOp(OperationTestCase):
         It will return a LDIF representation of the contained operations.
         """
         sut = delta.ModifyOp(
-            'cn=Paula Jensen, ou=Dev Ops, dc=airius, dc=com',
+            "cn=Paula Jensen, ou=Dev Ops, dc=airius, dc=com",
             [
                 delta.Add(
-                    'postaladdress',
-                    ['123 Anystreet $ Sunnyvale, CA $ 94086'],
-                    ),
-                delta.Delete('description'),
+                    "postaladdress",
+                    ["123 Anystreet $ Sunnyvale, CA $ 94086"],
+                ),
+                delta.Delete("description"),
                 delta.Replace(
-                    'telephonenumber',
-                    ['+1 408 555 1234', '+1 408 555 5678'],
-                    ),
-                delta.Delete(
-                    'facsimiletelephonenumber', ['+1 408 555 9876']),
-                ]
-            )
+                    "telephonenumber",
+                    ["+1 408 555 1234", "+1 408 555 5678"],
+                ),
+                delta.Delete("facsimiletelephonenumber", ["+1 408 555 9876"]),
+            ],
+        )
 
         result = sut.asLDIF()
 
-        self.assertEqual(b"""dn: cn=Paula Jensen,ou=Dev Ops,dc=airius,dc=com
+        self.assertEqual(
+            b"""dn: cn=Paula Jensen,ou=Dev Ops,dc=airius,dc=com
 changetype: modify
 add: postaladdress
 postaladdress: 123 Anystreet $ Sunnyvale, CA $ 94086
@@ -475,7 +509,7 @@ facsimiletelephonenumber: +1 408 555 9876
 -
 
 """,
-        result,
+            result,
         )
 
     def testInequalityDiffertnDN(self):
@@ -483,14 +517,12 @@ facsimiletelephonenumber: +1 408 555 9876
         Modify operations for different DN are not equal.
         """
         first = delta.ModifyOp(
-            'cn=john,dc=example,dc=com',
-            [delta.Delete('description')]
-            )
+            "cn=john,dc=example,dc=com", [delta.Delete("description")]
+        )
 
         second = delta.ModifyOp(
-            'cn=doe,dc=example,dc=com',
-            [delta.Delete('description')]
-            )
+            "cn=doe,dc=example,dc=com", [delta.Delete("description")]
+        )
 
         self.assertNotEqual(first, second)
 
@@ -498,14 +530,10 @@ facsimiletelephonenumber: +1 408 555 9876
         """
         Modify operations with different modifications are not equal
         """
-        first = delta.ModifyOp(
-            'cn=john,dc=example,dc=com',
-            [delta.Add('description')]
-        )
+        first = delta.ModifyOp("cn=john,dc=example,dc=com", [delta.Add("description")])
 
         second = delta.ModifyOp(
-            'cn=john,dc=example,dc=com',
-            [delta.Delete('description')]
+            "cn=john,dc=example,dc=com", [delta.Delete("description")]
         )
 
         self.assertNotEqual(first, second)
@@ -514,25 +542,20 @@ facsimiletelephonenumber: +1 408 555 9876
         """
         Modify operations are not equal with other object types.
         """
-        sut = delta.ModifyOp(
-            'cn=john,dc=example,dc=com',
-            [delta.Delete('description')]
-            )
+        sut = delta.ModifyOp("cn=john,dc=example,dc=com", [delta.Delete("description")])
 
-        self.assertNotEqual('cn=john,dc=example,dc=com', sut)
+        self.assertNotEqual("cn=john,dc=example,dc=com", sut)
 
     def testInequalityDiffertnOperations(self):
         """
         Modify operations for same DN but different operations are not equal.
         """
         first = delta.ModifyOp(
-            'cn=john,dc=example,dc=com',
-            [delta.Delete('description')]
-            )
+            "cn=john,dc=example,dc=com", [delta.Delete("description")]
+        )
         second = delta.ModifyOp(
-            'cn=doe,dc=example,dc=com',
-            [delta.Delete('homeDirectory')]
-            )
+            "cn=doe,dc=example,dc=com", [delta.Delete("homeDirectory")]
+        )
 
         self.assertNotEqual(first, second)
 
@@ -542,20 +565,19 @@ facsimiletelephonenumber: +1 408 555 9876
         hash.
         """
         first = delta.ModifyOp(
-            'cn=john,dc=example,dc=com',
-            [delta.Delete('description')]
-            )
+            "cn=john,dc=example,dc=com", [delta.Delete("description")]
+        )
 
         second = delta.ModifyOp(
-            'cn=john,dc=example,dc=com',
-            [delta.Delete('description')]
-            )
+            "cn=john,dc=example,dc=com", [delta.Delete("description")]
+        )
 
         self.assertEqual(first, second)
         self.assertEqual(
-            first.asLDIF(), second.asLDIF(),
-            'LDIF equality is a precondition for valid hash values',
-            )
+            first.asLDIF(),
+            second.asLDIF(),
+            "LDIF equality is a precondition for valid hash values",
+        )
         self.assertEqual(hash(first), hash(second))
 
     def testHashInequality(self):
@@ -563,14 +585,12 @@ facsimiletelephonenumber: +1 408 555 9876
         Different modify operations have different hash values.
         """
         first = delta.ModifyOp(
-            'cn=john,dc=example,dc=com',
-            [delta.Delete('description')]
-            )
+            "cn=john,dc=example,dc=com", [delta.Delete("description")]
+        )
 
         second = delta.ModifyOp(
-            'cn=john,dc=example,dc=com',
-            [delta.Delete('homeDirectory')]
-            )
+            "cn=john,dc=example,dc=com", [delta.Delete("homeDirectory")]
+        )
 
         self.assertNotEqual(first.asLDIF(), second.asLDIF())
         self.assertNotEqual(hash(first), hash(second))
@@ -581,9 +601,9 @@ facsimiletelephonenumber: +1 408 555 9876
         """
         root = self.getRoot()
         sut = delta.ModifyOp(
-            'cn=nope,dc=example,dc=com',
-            [delta.Add('foo', ['bar'])],
-            )
+            "cn=nope,dc=example,dc=com",
+            [delta.Add("foo", ["bar"])],
+        )
 
         deferred = sut.patch(root)
 
@@ -594,33 +614,32 @@ facsimiletelephonenumber: +1 408 555 9876
         """
         Getting string representation
         """
-        sut = delta.ModifyOp(
-            'cn=john,dc=example,dc=com',
-            [delta.Delete('description')]
-        )
+        sut = delta.ModifyOp("cn=john,dc=example,dc=com", [delta.Delete("description")])
 
-        self.assertEqual(repr(sut), "ModifyOp(dn='cn=john,dc=example,dc=com', "
-                                    "modifications=[Delete('description', [])])")
+        self.assertEqual(
+            repr(sut),
+            "ModifyOp(dn='cn=john,dc=example,dc=com', "
+            "modifications=[Delete('description', [])])",
+        )
 
 
 class TestModificationComparison(unittest.TestCase):
     def testEquality_Add_True(self):
-        a = delta.Add('k', ['b', 'c', 'd'])
-        b = delta.Add('k', ['b', 'c', 'd'])
+        a = delta.Add("k", ["b", "c", "d"])
+        b = delta.Add("k", ["b", "c", "d"])
         self.assertEqual(a, b)
 
     def testEquality_AddVsDelete_False(self):
-        a = delta.Add('k', ['b', 'c', 'd'])
-        b = delta.Delete('k', ['b', 'c', 'd'])
+        a = delta.Add("k", ["b", "c", "d"])
+        b = delta.Delete("k", ["b", "c", "d"])
         self.assertNotEquals(a, b)
 
     def testEquality_AttributeSet_False(self):
-        a = delta.Add('k', ['b', 'c', 'd'])
-        b = attributeset.LDAPAttributeSet('k', ['b', 'c', 'd'])
+        a = delta.Add("k", ["b", "c", "d"])
+        b = attributeset.LDAPAttributeSet("k", ["b", "c", "d"])
         self.assertNotEquals(a, b)
 
     def testEquality_List_False(self):
-        a = delta.Add('k', ['b', 'c', 'd'])
-        b = ['b', 'c', 'd']
+        a = delta.Add("k", ["b", "c", "d"])
+        b = ["b", "c", "d"]
         self.assertNotEquals(a, b)
-

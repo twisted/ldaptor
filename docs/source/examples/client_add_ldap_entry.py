@@ -20,7 +20,7 @@ def entry_to_attributes(entry):
     attributes = {}
     dn = None
     for prop, value in entry.items():
-        if prop == 'dn':
+        if prop == "dn":
             dn = value
             continue
         attributes.setdefault(prop, set()).add(value)
@@ -43,8 +43,11 @@ def onConnect(client, entry):
     op = pureldap.LDAPAddRequest(entry=dn, attributes=attributes)
     response = yield client.send(op)
     if response.resultCode != 0:
-        log.err("DIT reported error code {}: {}".format(
-            response.resultCode, response.errorMessage))
+        log.err(
+            "DIT reported error code {}: {}".format(
+                response.resultCode, response.errorMessage
+            )
+        )
 
 
 def onError(err, reactor):

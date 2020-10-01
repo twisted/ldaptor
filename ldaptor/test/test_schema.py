@@ -8,12 +8,11 @@ from ldaptor._encoder import to_bytes
 
 
 OBJECTCLASSES = {
-    'top': b"""( 2.5.6.0 NAME 'top'
+    "top": b"""( 2.5.6.0 NAME 'top'
     DESC 'top of the superclass chain'
     ABSTRACT
     MUST objectClass )""",
-
-    'organization': b"""( 2.5.6.4 NAME 'organization'
+    "organization": b"""( 2.5.6.4 NAME 'organization'
     DESC 'RFC2256: an organization'
     SUP top STRUCTURAL
     MUST o
@@ -23,8 +22,7 @@ OBJECTCLASSES = {
         telephoneNumber $ internationaliSDNNumber $
         facsimileTelephoneNumber $ street $ postOfficeBox $ postalCode $
         postalAddress $ physicalDeliveryOfficeName $ st $ l $ description ) )""",
-
-    'organizationalUnit': b"""( 2.5.6.5 NAME 'organizationalUnit'
+    "organizationalUnit": b"""( 2.5.6.5 NAME 'organizationalUnit'
     DESC 'RFC2256: an organizational unit'
     SUP top STRUCTURAL
     MUST ou
@@ -34,71 +32,64 @@ OBJECTCLASSES = {
         telephoneNumber $ internationaliSDNNumber $
         facsimileTelephoneNumber $ street $ postOfficeBox $ postalCode $
         postalAddress $ physicalDeliveryOfficeName $ st $ l $ description ) )""",
-
-    'country': b"""( 2.5.6.2 NAME 'country'
+    "country": b"""( 2.5.6.2 NAME 'country'
     DESC 'RFC2256: a country'
     SUP top STRUCTURAL
     MUST c
     MAY ( searchGuide $ description ) )""",
-
-    'dse': b"""( 1.3.6.1.4.1.4203.1.4.1 NAME ( 'OpenLDAProotDSE' 'LDAProotDSE' )
+    "dse": b"""( 1.3.6.1.4.1.4203.1.4.1 NAME ( 'OpenLDAProotDSE' 'LDAProotDSE' )
     DESC 'OpenLDAP Root DSE object'
     SUP top STRUCTURAL
     MAY cn )""",
-
-    'person': b"""( 2.5.6.6 NAME 'person'
+    "person": b"""( 2.5.6.6 NAME 'person'
     DESC 'RFC2256: a person'
     SUP top STRUCTURAL
     MUST ( sn $ cn )
     MAY ( userPassword $ telephoneNumber $ seeAlso $ description ) )""",
-
-    'obsolete': b"""( 1.3.6.1.4.1.000.1.1 NAME 'obsolete'
+    "obsolete": b"""( 1.3.6.1.4.1.000.1.1 NAME 'obsolete'
     DESC 'Obsolete object class'
     OBSOLETE
     SUP top STRUCTURAL )""",
-
-    'multiple_superiors': b"""( 1.3.6.1.4.1.000.1.2 NAME 'multiple_superiors'
+    "multiple_superiors": b"""( 1.3.6.1.4.1.000.1.2 NAME 'multiple_superiors'
     DESC 'Object class with multiple superiors'
     SUP ( sup1 $ sup2 ) STRUCTURAL )""",
-
-    'no_name': b"""( 1.3.6.1.4.1.000.1.3
+    "no_name": b"""( 1.3.6.1.4.1.000.1.3
     DESC 'Object class with no name'
     SUP top STRUCTURAL )""",
-
-    'no_description': b"""( 1.3.6.1.4.1.000.1.4 NAME 'no_description'
+    "no_description": b"""( 1.3.6.1.4.1.000.1.4 NAME 'no_description'
     SUP top STRUCTURAL )""",
 }
 
 
 class AttributeType_KnownValues(unittest.TestCase):
     knownValues = [
-
         (
             b"""( 2.5.4.4 NAME ( 'sn' 'surname' )
             DESC 'RFC2256: last (family) name(s) for which the entity is known by'
             SUP name )""",
             {
-                'oid': b'2.5.4.4',
-                'name': (b'sn', b'surname',),
-                'desc': b'RFC2256: last (family) name(s) for which the entity is known by',
-                'sup': b'name',
-            }
+                "oid": b"2.5.4.4",
+                "name": (
+                    b"sn",
+                    b"surname",
+                ),
+                "desc": b"RFC2256: last (family) name(s) for which the entity is known by",
+                "sup": b"name",
+            },
         ),
-
         (
             b"""( 2.5.4.2 NAME 'knowledgeInformation'
             DESC 'RFC2256: knowledge information'
             EQUALITY caseIgnoreMatch
             SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{32768} )""",
             {
-                'oid': b'2.5.4.2',
-                'name': (b'knowledgeInformation',),
-                'desc': b'RFC2256: knowledge information',
-                'equality': b'caseIgnoreMatch',
-                'syntax': b'1.3.6.1.4.1.1466.115.121.1.15{32768}',
-            }
+                "oid": b"2.5.4.2",
+                "name": (b"knowledgeInformation",),
+                "desc": b"RFC2256: knowledge information",
+                "equality": b"caseIgnoreMatch",
+                "syntax": b"1.3.6.1.4.1.1466.115.121.1.15{32768}",
+            },
         ),
-
         (
             b"""( 2.5.4.5 NAME 'serialNumber'
             DESC 'RFC2256: serial number of the entity'
@@ -106,29 +97,29 @@ class AttributeType_KnownValues(unittest.TestCase):
             SUBSTR caseIgnoreSubstringsMatch
             SYNTAX 1.3.6.1.4.1.1466.115.121.1.44{64} )""",
             {
-                'oid': b'2.5.4.5',
-                'name': (b'serialNumber',),
-                'desc': b'RFC2256: serial number of the entity',
-                'equality': b'caseIgnoreMatch',
-                'substr': b'caseIgnoreSubstringsMatch',
-                'syntax': b'1.3.6.1.4.1.1466.115.121.1.44{64}',
-            }
+                "oid": b"2.5.4.5",
+                "name": (b"serialNumber",),
+                "desc": b"RFC2256: serial number of the entity",
+                "equality": b"caseIgnoreMatch",
+                "substr": b"caseIgnoreSubstringsMatch",
+                "syntax": b"1.3.6.1.4.1.1466.115.121.1.44{64}",
+            },
         ),
-
-
         (
             b"""( 2.5.4.6 NAME ( 'c' 'countryName' )
             DESC 'RFC2256: ISO-3166 country 2-letter code'
             SUP name SINGLE-VALUE )""",
             {
-                'oid': b'2.5.4.6',
-                'name': (b'c', b'countryName',),
-                'desc': b'RFC2256: ISO-3166 country 2-letter code',
-                'sup': b'name',
-                'single_value': 1,
-            }
+                "oid": b"2.5.4.6",
+                "name": (
+                    b"c",
+                    b"countryName",
+                ),
+                "desc": b"RFC2256: ISO-3166 country 2-letter code",
+                "sup": b"name",
+                "single_value": 1,
+            },
         ),
-
         (
             b"""( 1.2.840.113549.1.9.1
             NAME ( 'email' 'emailAddress' 'pkcs9email' )
@@ -137,15 +128,18 @@ class AttributeType_KnownValues(unittest.TestCase):
             SUBSTR caseIgnoreIA5SubstringsMatch
             SYNTAX 1.3.6.1.4.1.1466.115.121.1.26{128} )""",
             {
-                'oid': b'1.2.840.113549.1.9.1',
-                'name': (b'email', b'emailAddress', b'pkcs9email', ),
-                'desc': b'RFC2459: legacy attribute for email addresses in DNs',
-                'equality': b'caseIgnoreIA5Match',
-                'substr': b'caseIgnoreIA5SubstringsMatch',
-                'syntax': b'1.3.6.1.4.1.1466.115.121.1.26{128}',
-            }
+                "oid": b"1.2.840.113549.1.9.1",
+                "name": (
+                    b"email",
+                    b"emailAddress",
+                    b"pkcs9email",
+                ),
+                "desc": b"RFC2459: legacy attribute for email addresses in DNs",
+                "equality": b"caseIgnoreIA5Match",
+                "substr": b"caseIgnoreIA5SubstringsMatch",
+                "syntax": b"1.3.6.1.4.1.1466.115.121.1.26{128}",
+            },
         ),
-
         (
             b"""( 1.2.840.113549.1.9.1
             NAME ( 'email' 'emailAddress' 'pkcs9email' )
@@ -155,31 +149,35 @@ class AttributeType_KnownValues(unittest.TestCase):
             SYNTAX 1.3.6.1.4.1.1466.115.121.1.26{128}
             X-ORDERED 'VALUES' )""",
             {
-                'oid': b'1.2.840.113549.1.9.1',
-                'name': (b'email', b'emailAddress', b'pkcs9email', ),
-                'desc': b'RFC2459: legacy attribute for email addresses in DNs',
-                'equality': b'caseIgnoreIA5Match',
-                'substr': b'caseIgnoreIA5SubstringsMatch',
-                'syntax': b'1.3.6.1.4.1.1466.115.121.1.26{128}',
-                'x_attrs': [(b'X-ORDERED', b'VALUES'),],
-            }
+                "oid": b"1.2.840.113549.1.9.1",
+                "name": (
+                    b"email",
+                    b"emailAddress",
+                    b"pkcs9email",
+                ),
+                "desc": b"RFC2459: legacy attribute for email addresses in DNs",
+                "equality": b"caseIgnoreIA5Match",
+                "substr": b"caseIgnoreIA5SubstringsMatch",
+                "syntax": b"1.3.6.1.4.1.1466.115.121.1.26{128}",
+                "x_attrs": [
+                    (b"X-ORDERED", b"VALUES"),
+                ],
+            },
         ),
-
         (
             b"""( 1.3.6.1.3.42.1 NAME 'olcDatabase'
             EQUALITY caseIgnoreMatch
             SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
             SINGLE-VALUE X-ORDERED 'SIBLINGS' )""",
             {
-                'oid': b'1.3.6.1.3.42.1',
-                'name': (b'olcDatabase',),
-                'equality': b'caseIgnoreMatch',
-                'syntax': b'1.3.6.1.4.1.1466.115.121.1.15',
-                'single_value': 1,
-                'x_attrs': [(b'X-ORDERED', b'SIBLINGS')],
-            }
+                "oid": b"1.3.6.1.3.42.1",
+                "name": (b"olcDatabase",),
+                "equality": b"caseIgnoreMatch",
+                "syntax": b"1.3.6.1.4.1.1466.115.121.1.15",
+                "single_value": 1,
+                "x_attrs": [(b"X-ORDERED", b"SIBLINGS")],
+            },
         ),
-
         (
             b"""( 1.3.6.1.3.42.2
             NAME 'olcSuffix'
@@ -187,25 +185,23 @@ class AttributeType_KnownValues(unittest.TestCase):
             SYNTAX 1.3.6.1.4.1.1466.115.121.1.12
             X-ORDERED 'VALUES' )""",
             {
-                'oid': b'1.3.6.1.3.42.2',
-                'name': (b'olcSuffix',),
-                'equality': b'distinguishedNameMatch',
-                'syntax': b'1.3.6.1.4.1.1466.115.121.1.12',
-                'x_attrs': [(b'X-ORDERED', b'VALUES')],
-            }
+                "oid": b"1.3.6.1.3.42.2",
+                "name": (b"olcSuffix",),
+                "equality": b"distinguishedNameMatch",
+                "syntax": b"1.3.6.1.4.1.1466.115.121.1.12",
+                "x_attrs": [(b"X-ORDERED", b"VALUES")],
+            },
         ),
-
         (
             b"""( 1.3.6.1.3.42.3
             NAME 'experimentalWithQdstrings'
             X-FOO ( 'one' 'two' ) )""",
             {
-                'oid': b'1.3.6.1.3.42.3',
-                'name': (b'experimentalWithQdstrings',),
-                'x_attrs': [(b'X-FOO', (b'one', b'two'))],
-            }
+                "oid": b"1.3.6.1.3.42.3",
+                "name": (b"experimentalWithQdstrings",),
+                "x_attrs": [(b"X-FOO", (b"one", b"two"))],
+            },
         ),
-
         (
             b"""( 2.5.18.2 NAME 'modifyTimestamp'
             DESC 'RFC4512: time which object was last modified'
@@ -216,68 +212,64 @@ class AttributeType_KnownValues(unittest.TestCase):
             NO-USER-MODIFICATION
             USAGE directoryOperation )""",
             {
-                'oid': b'2.5.18.2',
-                'name': (b'modifyTimestamp',),
-                'desc': b'RFC4512: time which object was last modified',
-                'equality': b'generalizedTimeMatch',
-                'ordering': b'generalizedTimeOrderingMatch',
-                'syntax': b'1.3.6.1.4.1.1466.115.121.1.24',
-                'single_value': 1,
-                'no_user_modification': 1,
-                'usage': b'directoryOperation',
-            }
+                "oid": b"2.5.18.2",
+                "name": (b"modifyTimestamp",),
+                "desc": b"RFC4512: time which object was last modified",
+                "equality": b"generalizedTimeMatch",
+                "ordering": b"generalizedTimeOrderingMatch",
+                "syntax": b"1.3.6.1.4.1.1466.115.121.1.24",
+                "single_value": 1,
+                "no_user_modification": 1,
+                "usage": b"directoryOperation",
+            },
         ),
-
         (
             b"""( 1.3.6.1.4.1.000.2.1
             NAME 'obsolete'
             OBSOLETE )""",
             {
-                'oid': b'1.3.6.1.4.1.000.2.1',
-                'name': (b'obsolete',),
-                'obsolete': 1,
-            }
+                "oid": b"1.3.6.1.4.1.000.2.1",
+                "name": (b"obsolete",),
+                "obsolete": 1,
+            },
         ),
-
         (
             b"""( 1.3.6.1.4.1.000.2.2
             NAME 'collective'
             COLLECTIVE )""",
             {
-                'oid': b'1.3.6.1.4.1.000.2.2',
-                'name': (b'collective',),
-                'collective': 1,
-            }
+                "oid": b"1.3.6.1.4.1.000.2.2",
+                "name": (b"collective",),
+                "collective": 1,
+            },
         ),
-
         (
             b"""( 1.3.6.1.4.1.000.2.3
             DESC 'Attribute type without name' )""",
             {
-                'oid': b'1.3.6.1.4.1.000.2.3',
-                'desc': b'Attribute type without name',
-            }
-        )
-
+                "oid": b"1.3.6.1.4.1.000.2.3",
+                "desc": b"Attribute type without name",
+            },
+        ),
     ]
 
     def testParse(self):
         defaults = {
-            'name': None,
-            'desc': None,
-            'obsolete': 0,
-            'sup': [],
-            'equality': None,
-            'ordering': None,
-            'substr': None,
-            'syntax': None,
-            'single_value': 0,
-            'collective': 0,
-            'no_user_modification': 0,
-            'usage': None,
-            }
+            "name": None,
+            "desc": None,
+            "obsolete": 0,
+            "sup": [],
+            "equality": None,
+            "ordering": None,
+            "substr": None,
+            "syntax": None,
+            "single_value": 0,
+            "collective": 0,
+            "no_user_modification": 0,
+            "usage": None,
+        }
         for text, expected in self.knownValues:
-            a=schema.AttributeTypeDescription(text)
+            a = schema.AttributeTypeDescription(text)
             self.failIfEqual(a.oid, None)
             for key, want in expected.items():
                 if key in defaults:
@@ -291,149 +283,177 @@ class AttributeType_KnownValues(unittest.TestCase):
 
     def testStringification(self):
         for want, values in self.knownValues:
-            a=schema.AttributeTypeDescription(None)
+            a = schema.AttributeTypeDescription(None)
             for key, val in values.items():
                 setattr(a, key, val)
 
-            want = b' '.join(want.split(None))
-            got = b' '.join(to_bytes(a).split(None))
+            want = b" ".join(want.split(None))
+            got = b" ".join(to_bytes(a).split(None))
             self.assertEqual(got, want)
 
 
 class ObjectClass_KnownValues(unittest.TestCase):
     knownValues = [
-
         (
-            OBJECTCLASSES['top'],
+            OBJECTCLASSES["top"],
             {
-                'oid': b'2.5.6.0',
-                'name': (b'top',),
-                'desc': b'top of the superclass chain',
-                'sup': [],
-                'type': b'ABSTRACT',
-                'must': [b'objectClass'],
-            }
+                "oid": b"2.5.6.0",
+                "name": (b"top",),
+                "desc": b"top of the superclass chain",
+                "sup": [],
+                "type": b"ABSTRACT",
+                "must": [b"objectClass"],
+            },
         ),
         (
-            OBJECTCLASSES['organization'],
+            OBJECTCLASSES["organization"],
             {
-                'oid': b'2.5.6.4',
-                'name': (b'organization',),
-                'desc': b'RFC2256: an organization',
-                'sup': [b'top'],
-                'type': b'STRUCTURAL',
-                'must': [b'o'],
-                'may': [
-                    b'userPassword', b'searchGuide', b'seeAlso',
-                    b'businessCategory', b'x121Address', b'registeredAddress',
-                    b'destinationIndicator', b'preferredDeliveryMethod',
-                    b'telexNumber', b'teletexTerminalIdentifier',
-                    b'telephoneNumber', b'internationaliSDNNumber',
-                    b'facsimileTelephoneNumber', b'street', b'postOfficeBox',
-                    b'postalCode', b'postalAddress',
-                    b'physicalDeliveryOfficeName', b'st', b'l', b'description',
+                "oid": b"2.5.6.4",
+                "name": (b"organization",),
+                "desc": b"RFC2256: an organization",
+                "sup": [b"top"],
+                "type": b"STRUCTURAL",
+                "must": [b"o"],
+                "may": [
+                    b"userPassword",
+                    b"searchGuide",
+                    b"seeAlso",
+                    b"businessCategory",
+                    b"x121Address",
+                    b"registeredAddress",
+                    b"destinationIndicator",
+                    b"preferredDeliveryMethod",
+                    b"telexNumber",
+                    b"teletexTerminalIdentifier",
+                    b"telephoneNumber",
+                    b"internationaliSDNNumber",
+                    b"facsimileTelephoneNumber",
+                    b"street",
+                    b"postOfficeBox",
+                    b"postalCode",
+                    b"postalAddress",
+                    b"physicalDeliveryOfficeName",
+                    b"st",
+                    b"l",
+                    b"description",
                 ],
-           }
+            },
         ),
-
         (
-            OBJECTCLASSES['organizationalUnit'],
+            OBJECTCLASSES["organizationalUnit"],
             {
-                'oid': b'2.5.6.5',
-                'name': (b'organizationalUnit',),
-                'desc': b'RFC2256: an organizational unit',
-                'sup': [b'top'],
-                'type': b'STRUCTURAL',
-                'must': [b'ou'],
-                'may': [
-                    b'userPassword', b'searchGuide', b'seeAlso',
-                    b'businessCategory', b'x121Address', b'registeredAddress',
-                    b'destinationIndicator', b'preferredDeliveryMethod',
-                    b'telexNumber', b'teletexTerminalIdentifier',
-                    b'telephoneNumber', b'internationaliSDNNumber',
-                    b'facsimileTelephoneNumber', b'street', b'postOfficeBox',
-                    b'postalCode', b'postalAddress', b'physicalDeliveryOfficeName',
-                    b'st', b'l', b'description',
+                "oid": b"2.5.6.5",
+                "name": (b"organizationalUnit",),
+                "desc": b"RFC2256: an organizational unit",
+                "sup": [b"top"],
+                "type": b"STRUCTURAL",
+                "must": [b"ou"],
+                "may": [
+                    b"userPassword",
+                    b"searchGuide",
+                    b"seeAlso",
+                    b"businessCategory",
+                    b"x121Address",
+                    b"registeredAddress",
+                    b"destinationIndicator",
+                    b"preferredDeliveryMethod",
+                    b"telexNumber",
+                    b"teletexTerminalIdentifier",
+                    b"telephoneNumber",
+                    b"internationaliSDNNumber",
+                    b"facsimileTelephoneNumber",
+                    b"street",
+                    b"postOfficeBox",
+                    b"postalCode",
+                    b"postalAddress",
+                    b"physicalDeliveryOfficeName",
+                    b"st",
+                    b"l",
+                    b"description",
                 ],
-            }
+            },
         ),
         (
-            OBJECTCLASSES['dse'],
+            OBJECTCLASSES["dse"],
             {
-                'oid': b'1.3.6.1.4.1.4203.1.4.1',
-                'name': (b'OpenLDAProotDSE', b'LDAProotDSE'),
-                'desc': b'OpenLDAP Root DSE object',
-                'type': b'STRUCTURAL',
-                'sup': [b'top'],
-                'may': [b'cn'],
-            }
+                "oid": b"1.3.6.1.4.1.4203.1.4.1",
+                "name": (b"OpenLDAProotDSE", b"LDAProotDSE"),
+                "desc": b"OpenLDAP Root DSE object",
+                "type": b"STRUCTURAL",
+                "sup": [b"top"],
+                "may": [b"cn"],
+            },
         ),
         (
-            OBJECTCLASSES['person'],
+            OBJECTCLASSES["person"],
             {
-                'oid': b'2.5.6.6',
-                'name': (b'person',),
-                'desc': b'RFC2256: a person',
-                'type': b'STRUCTURAL',
-                'sup': [b'top'],
-                'must': [b'sn', b'cn'],
-                'may': [b'userPassword', b'telephoneNumber', b'seeAlso', b'description'],
-            }
+                "oid": b"2.5.6.6",
+                "name": (b"person",),
+                "desc": b"RFC2256: a person",
+                "type": b"STRUCTURAL",
+                "sup": [b"top"],
+                "must": [b"sn", b"cn"],
+                "may": [
+                    b"userPassword",
+                    b"telephoneNumber",
+                    b"seeAlso",
+                    b"description",
+                ],
+            },
         ),
         (
-            OBJECTCLASSES['obsolete'],
+            OBJECTCLASSES["obsolete"],
             {
-                'oid': b'1.3.6.1.4.1.000.1.1',
-                'name': (b'obsolete',),
-                'desc': b'Obsolete object class',
-                'obsolete': 1,
-                'type': b'STRUCTURAL',
-                'sup': [b'top'],
-            }
+                "oid": b"1.3.6.1.4.1.000.1.1",
+                "name": (b"obsolete",),
+                "desc": b"Obsolete object class",
+                "obsolete": 1,
+                "type": b"STRUCTURAL",
+                "sup": [b"top"],
+            },
         ),
         (
-            OBJECTCLASSES['multiple_superiors'],
+            OBJECTCLASSES["multiple_superiors"],
             {
-                'oid': b'1.3.6.1.4.1.000.1.2',
-                'name': (b'multiple_superiors',),
-                'desc': b'Object class with multiple superiors',
-                'type': b'STRUCTURAL',
-                'sup': (b'sup1', b'sup2'),
-            }
+                "oid": b"1.3.6.1.4.1.000.1.2",
+                "name": (b"multiple_superiors",),
+                "desc": b"Object class with multiple superiors",
+                "type": b"STRUCTURAL",
+                "sup": (b"sup1", b"sup2"),
+            },
         ),
         (
-            OBJECTCLASSES['no_name'],
+            OBJECTCLASSES["no_name"],
             {
-                'oid': b'1.3.6.1.4.1.000.1.3',
-                'desc': b'Object class with no name',
-                'type': b'STRUCTURAL',
-                'sup': [b'top'],
-            }
+                "oid": b"1.3.6.1.4.1.000.1.3",
+                "desc": b"Object class with no name",
+                "type": b"STRUCTURAL",
+                "sup": [b"top"],
+            },
         ),
         (
-            OBJECTCLASSES['no_description'],
+            OBJECTCLASSES["no_description"],
             {
-                'oid': b'1.3.6.1.4.1.000.1.4',
-                'name': (b'no_description',),
-                'type': b'STRUCTURAL',
-                'sup': [b'top'],
-            }
+                "oid": b"1.3.6.1.4.1.000.1.4",
+                "name": (b"no_description",),
+                "type": b"STRUCTURAL",
+                "sup": [b"top"],
+            },
         ),
-
     ]
 
     def testParse(self):
         defaults = {
-            'name': None,
-            'desc': None,
-            'obsolete': 0,
-            'sup': None,
-            'type': 'STRUCTURAL',
-            'must': [],
-            'may': [],
-            }
+            "name": None,
+            "desc": None,
+            "obsolete": 0,
+            "sup": None,
+            "type": "STRUCTURAL",
+            "must": [],
+            "may": [],
+        }
         for text, expected in self.knownValues:
-            a=schema.ObjectClassDescription(text)
+            a = schema.ObjectClassDescription(text)
             self.failIfEqual(a.oid, None)
             for key, want in expected.items():
                 if key in defaults:
@@ -447,12 +467,12 @@ class ObjectClass_KnownValues(unittest.TestCase):
 
     def testStringification(self):
         for want, values in self.knownValues:
-            a=schema.ObjectClassDescription(None)
+            a = schema.ObjectClassDescription(None)
             for key, val in values.items():
                 setattr(a, key, val)
 
-            want = b' '.join(want.split(None))
-            got = b' '.join(to_bytes(a).split(None))
+            want = b" ".join(want.split(None))
+            got = b" ".join(to_bytes(a).split(None))
             self.assertEqual(got, want)
 
 
@@ -461,39 +481,39 @@ class SyntaxDescription_KnownValues(unittest.TestCase):
         (
             b"( 1.3.6.1.4.1.1466.115.121.1.3 DESC 'Attribute Type Description' )",
             {
-                'oid': b'1.3.6.1.4.1.1466.115.121.1.3',
-                'desc': b'Attribute Type Description',
-                'human_readable': True,
-                'binary_transfer_required': False,
-            }
+                "oid": b"1.3.6.1.4.1.1466.115.121.1.3",
+                "desc": b"Attribute Type Description",
+                "human_readable": True,
+                "binary_transfer_required": False,
+            },
         ),
         (
             b"( 1.3.6.1.4.1.1466.115.121.1.5 DESC 'Binary' X-NOT-HUMAN-READABLE 'TRUE' )",
             {
-                'oid': b'1.3.6.1.4.1.1466.115.121.1.5',
-                'desc': b'Binary',
-                'human_readable': False,
-                'binary_transfer_required': False,
-            }
+                "oid": b"1.3.6.1.4.1.1466.115.121.1.5",
+                "desc": b"Binary",
+                "human_readable": False,
+                "binary_transfer_required": False,
+            },
         ),
         (
             b"( 1.3.6.1.4.1.1466.115.121.1.8 DESC 'Certificate' "
             b"X-BINARY-TRANSFER-REQUIRED 'TRUE' X-NOT-HUMAN-READABLE 'TRUE' )",
             {
-                'oid': b'1.3.6.1.4.1.1466.115.121.1.8',
-                'desc': b'Certificate',
-                'human_readable': False,
-                'binary_transfer_required': True,
-            }
+                "oid": b"1.3.6.1.4.1.1466.115.121.1.8",
+                "desc": b"Certificate",
+                "human_readable": False,
+                "binary_transfer_required": True,
+            },
         ),
         (
             b"( 1.3.6.1.4.1.000.4.1 )",
             {
-                'oid': b'1.3.6.1.4.1.000.4.1',
-                'desc': None,
-                'human_readable': True,
-                'binary_transfer_required': False,
-            }
+                "oid": b"1.3.6.1.4.1.000.4.1",
+                "desc": None,
+                "human_readable": True,
+                "binary_transfer_required": False,
+            },
         ),
     ]
 
@@ -511,8 +531,8 @@ class SyntaxDescription_KnownValues(unittest.TestCase):
             for key, val in values.items():
                 setattr(a, key, val)
 
-            want = b' '.join(want.split())
-            got = b' '.join(to_bytes(a).split())
+            want = b" ".join(want.split())
+            got = b" ".join(to_bytes(a).split())
             self.assertEqual(got, want)
 
 
@@ -521,53 +541,53 @@ class MatchingRuleDescription_KnownValues(unittest.TestCase):
         (
             b"( 2.5.13.16 NAME 'bitStringMatch' SYNTAX 1.3.6.1.4.1.1466.115.121.1.6 )",
             {
-                'oid': b'2.5.13.16',
-                'name': (b'bitStringMatch',),
-                'desc': None,
-                'obsolete': 0,
-                'syntax': b'1.3.6.1.4.1.1466.115.121.1.6',
-            }
+                "oid": b"2.5.13.16",
+                "name": (b"bitStringMatch",),
+                "desc": None,
+                "obsolete": 0,
+                "syntax": b"1.3.6.1.4.1.1466.115.121.1.6",
+            },
         ),
         (
             b"( 1.3.6.1.4.1.000.3.1 NAME ( 'name1' 'name2' ) SYNTAX 1.3.6.1.4.1.000.4.1 )",
             {
-                'oid': b'1.3.6.1.4.1.000.3.1',
-                'name': (b'name1', b'name2'),
-                'desc': None,
-                'obsolete': 0,
-                'syntax': b'1.3.6.1.4.1.000.4.1',
-            }
+                "oid": b"1.3.6.1.4.1.000.3.1",
+                "name": (b"name1", b"name2"),
+                "desc": None,
+                "obsolete": 0,
+                "syntax": b"1.3.6.1.4.1.000.4.1",
+            },
         ),
         (
             b"( 1.3.6.1.4.1.000.3.2 NAME 'with_description' "
             b"DESC 'Matching rule with description' SYNTAX 1.3.6.1.4.1.000.4.2 )",
             {
-                'oid': b'1.3.6.1.4.1.000.3.2',
-                'name': (b'with_description',),
-                'desc': b'Matching rule with description',
-                'obsolete': 0,
-                'syntax': b'1.3.6.1.4.1.000.4.2',
-            }
+                "oid": b"1.3.6.1.4.1.000.3.2",
+                "name": (b"with_description",),
+                "desc": b"Matching rule with description",
+                "obsolete": 0,
+                "syntax": b"1.3.6.1.4.1.000.4.2",
+            },
         ),
         (
             b"( 1.3.6.1.4.1.000.3.3 NAME 'obsolete' OBSOLETE SYNTAX 1.3.6.1.4.1.000.4.3 )",
             {
-                'oid': b'1.3.6.1.4.1.000.3.3',
-                'name': (b'obsolete',),
-                'desc': None,
-                'obsolete': 1,
-                'syntax': b'1.3.6.1.4.1.000.4.3',
-            }
+                "oid": b"1.3.6.1.4.1.000.3.3",
+                "name": (b"obsolete",),
+                "desc": None,
+                "obsolete": 1,
+                "syntax": b"1.3.6.1.4.1.000.4.3",
+            },
         ),
         (
             b"( 1.3.6.1.4.1.000.3.4 DESC 'Matching rule without name' SYNTAX 1.3.6.1.4.1.000.4.4 )",
             {
-                'oid': b'1.3.6.1.4.1.000.3.4',
-                'name': None,
-                'desc': b'Matching rule without name',
-                'obsolete': 0,
-                'syntax': b'1.3.6.1.4.1.000.4.4',
-            }
+                "oid": b"1.3.6.1.4.1.000.3.4",
+                "name": None,
+                "desc": b"Matching rule without name",
+                "obsolete": 0,
+                "syntax": b"1.3.6.1.4.1.000.4.4",
+            },
         ),
     ]
 
@@ -585,21 +605,22 @@ class MatchingRuleDescription_KnownValues(unittest.TestCase):
             for key, val in values.items():
                 setattr(a, key, val)
 
-            want = b' '.join(want.split())
-            got = b' '.join(to_bytes(a).split())
+            want = b" ".join(want.split())
+            got = b" ".join(to_bytes(a).split())
             self.assertEqual(got, want)
 
 
 class TestComparison(unittest.TestCase):
     ORDER = [
-        'no_name',
-        'country',
-        'organization',
-        'organizationalUnit',
-        ]
+        "no_name",
+        "country",
+        "organization",
+        "organizationalUnit",
+    ]
+
     def setUp(self):
         data = {}
-        for oc,text in OBJECTCLASSES.items():
+        for oc, text in OBJECTCLASSES.items():
             data[oc] = schema.ObjectClassDescription(text)
         self.data = data
 
@@ -613,9 +634,9 @@ class TestComparison(unittest.TestCase):
 
     def test_invalid_eq(self):
         """Object class object can be compared only to the same class object"""
-        obj = schema.ObjectClassDescription(OBJECTCLASSES['top'])
+        obj = schema.ObjectClassDescription(OBJECTCLASSES["top"])
         for method in (obj.__eq__, obj.__lt__, obj.__gt__):
-            self.assertRaises(NotImplementedError, method, b'')
+            self.assertRaises(NotImplementedError, method, b"")
 
     def test_ne(self):
         for k1 in self.data:
@@ -626,7 +647,7 @@ class TestComparison(unittest.TestCase):
                     self.failUnless(self.data[k1] != self.data[k2])
 
     def test_order(self):
-        for i,base in enumerate(self.ORDER):
+        for i, base in enumerate(self.ORDER):
             self.failUnless(self.data[base] <= self.data[base])
             self.failUnless(self.data[base] >= self.data[base])
             self.failIf(self.data[base] < self.data[base])
@@ -636,7 +657,7 @@ class TestComparison(unittest.TestCase):
                 self.failUnless(self.data[lower] <= self.data[base])
                 self.failIf(self.data[base] < self.data[lower])
                 self.failIf(self.data[base] <= self.data[lower])
-            for higher in self.ORDER[i+1:]:
+            for higher in self.ORDER[i + 1 :]:
                 self.failUnless(self.data[higher] > self.data[base])
                 self.failUnless(self.data[higher] >= self.data[base])
                 self.failIf(self.data[base] > self.data[higher])
@@ -662,15 +683,15 @@ class TestInvalidObjectClass(unittest.TestCase):
     """Invalid object class definitions"""
 
     def test_invalid_name(self):
-        text = b'( 1.1.1 NAME invalid )'
+        text = b"( 1.1.1 NAME invalid )"
         self.assertRaises(AssertionError, schema.ObjectClassDescription, text)
 
     def test_invalid_multiple_name(self):
-        text = b'( 1.1.1 NAME () )'
+        text = b"( 1.1.1 NAME () )"
         self.assertRaises(AssertionError, schema.ObjectClassDescription, text)
 
     def test_empty(self):
-        text = b'()'
+        text = b"()"
         self.assertRaises(AssertionError, schema.ObjectClassDescription, text)
 
 
@@ -678,11 +699,11 @@ class TestInvalidAttributeType(unittest.TestCase):
     """Invalid attribute type definitions"""
 
     def test_invalid_name(self):
-        text = b'( 1.1.1 NAME invalid )'
+        text = b"( 1.1.1 NAME invalid )"
         self.assertRaises(AssertionError, schema.AttributeTypeDescription, text)
 
     def test_invalid_x_attribute(self):
-        text = b'( 1.1.1 X-INVALID invalid )'
+        text = b"( 1.1.1 X-INVALID invalid )"
         self.assertRaises(AssertionError, schema.AttributeTypeDescription, text)
 
     def test_unknown_attribute(self):
@@ -694,7 +715,7 @@ class TestInvalidMatchingRuleDescription(unittest.TestCase):
     """Invalid matching rule description definition"""
 
     def test_invalid_name(self):
-        text = b'( 1.1.1 NAME invalid )'
+        text = b"( 1.1.1 NAME invalid )"
         self.assertRaises(AssertionError, schema.MatchingRuleDescription, text)
 
     def test_no_syntax(self):

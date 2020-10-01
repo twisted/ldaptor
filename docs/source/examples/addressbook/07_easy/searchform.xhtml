@@ -1,9 +1,7 @@
 <?xml version="1.0"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:nevow="http://nevow.com/ns/nevow/0.1">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:nevow="http://nevow.com/ns/nevow/0.1">
   <head>
     <title>Address book search</title>
     <link href="/form_css" rel="stylesheet" />
@@ -18,25 +16,25 @@
     <div nevow:render="haveSearch" nevow:data="search">
       <p nevow:pattern="False">No search given.</p>
       <div nevow:pattern="True">
-	<ol nevow:render="sequence" nevow:data="results">
-	  <p nevow:pattern="empty">No entries found.</p>
-	  <li nevow:pattern="item" style="margin-bottom: 2em;">
-	    <dl nevow:render="iterateMapping">
-	      <dt nevow:pattern="key" nevow:render="string">
-		Attribute type goes here
-	      </dt>
-	      <nevow:invisible nevow:pattern="value" nevow:render="sequence">
-		<dd nevow:pattern="item" nevow:render="string">
-		  Attribute value goes here
-		</dd>
-	      </nevow:invisible>
-	    </dl>
-	  </li>
-	</ol>
-	<p>
-	  Used search filter:
-	  <span nevow:render="searchFilter" nevow:data="searchFilter"/>
-	</p>
+        <ol nevow:render="sequence" nevow:data="results">
+          <p nevow:pattern="empty">No entries found.</p>
+          <li nevow:pattern="item" style="margin-bottom: 2em">
+            <dl nevow:render="iterateMapping">
+              <dt nevow:pattern="key" nevow:render="string">
+                Attribute type goes here
+              </dt>
+              <nevow:invisible nevow:pattern="value" nevow:render="sequence">
+                <dd nevow:pattern="item" nevow:render="string">
+                  Attribute value goes here
+                </dd>
+              </nevow:invisible>
+            </dl>
+          </li>
+        </ol>
+        <p>
+          Used search filter:
+          <span nevow:render="searchFilter" nevow:data="searchFilter" />
+        </p>
       </div>
     </div>
   </body>

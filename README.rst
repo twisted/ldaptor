@@ -1,9 +1,6 @@
 Ldaptor
 =======
 
-.. image:: https://img.shields.io/travis/com/twisted/ldaptor?label=TravisCI&logo=travis
-    :alt: Travis (.com)
-    :target: https://travis-ci.org/twisted/ldaptor
 .. image:: https://img.shields.io/codecov/c/github/twisted/ldaptor?label=codecov&logo=codecov
     :alt: Codecov
     :target: https://codecov.io/gh/twisted/ldaptor

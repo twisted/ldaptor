@@ -28,16 +28,18 @@ class LDAPServerWithUPNBind(LDAPServer):
     """
     An LDAP server which support BIND using UPN similar to AD.
     """
-    _loginAttribute = b'userPrincipalName'
+
+    _loginAttribute = b"userPrincipalName"
 
     def handle_LDAPBindRequest(self, request, controls, reply):
         if request.version != 3:
             raise ldaperrors.LDAPProtocolError(
-                'Version %u not supported' % request.version)
+                "Version %u not supported" % request.version
+            )
 
         self.checkControls(controls)
 
-        if request.dn == b'':
+        if request.dn == b"":
             # anonymous bind
             self.boundUser = None
             return pureldap.LDAPBindResponse(resultCode=0)
@@ -52,9 +54,9 @@ class LDAPServerWithUPNBind(LDAPServer):
             # A single result, so the UPN might exist.
             return results[0].dn
 
-        if b'@' in request.dn and b',' not in request.dn:
+        if b"@" in request.dn and b"," not in request.dn:
             # This might be an UPN request.
-            filterText = b'(' + self._loginAttribute + b'=' + request.dn + b')'
+            filterText = b"(" + self._loginAttribute + b"=" + request.dn + b")"
             d = root.search(filterText=filterText)
             d.addCallback(_gotUPNResult)
         else:
@@ -69,6 +71,7 @@ class LDAPServerWithUPNBind(LDAPServer):
             """
             fail.trap(ldaperrors.LDAPNoSuchObject)
             return None
+
         d.addErrback(_noEntry)
 
         def _gotEntry(entry, auth):
@@ -87,10 +90,13 @@ class LDAPServerWithUPNBind(LDAPServer):
                 self.boundUser = entry
                 msg = pureldap.LDAPBindResponse(
                     resultCode=ldaperrors.Success.resultCode,
-                    matchedDN=entry.dn.getText())
+                    matchedDN=entry.dn.getText(),
+                )
                 return msg
+
             d.addCallback(_cb)
             return d
+
         d.addCallback(_gotEntry, request.auth)
 
         return d

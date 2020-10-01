@@ -40,29 +40,26 @@ class FasterIOPump(testutils.IOPump):
 class IOPump(FasterIOPump):
     active = []
 
-    def __init__(self,
-                 client, server,
-                 clientTransport, serverTransport):
+    def __init__(self, client, server, clientTransport, serverTransport):
         self.clientTransport = clientTransport
         self.serverTransport = serverTransport
-        testutils.IOPump.__init__(self,
-                                  client=client,
-                                  server=server,
-                                  clientIO=clientTransport.data,
-                                  serverIO=serverTransport.data)
+        testutils.IOPump.__init__(
+            self,
+            client=client,
+            server=server,
+            clientIO=clientTransport.data,
+            serverIO=serverTransport.data,
+        )
         self.active.append(self)
 
 
 def returnConnected(server, client):
-    """Take two Protocol instances and connect them.
-    """
+    """Take two Protocol instances and connect them."""
     clientTransport = FakeTransport()
     client.makeConnection(clientTransport)
     serverTransport = FakeTransport()
     server.makeConnection(serverTransport)
-    pump = IOPump(client, server,
-                  clientTransport,
-                  serverTransport)
+    pump = IOPump(client, server, clientTransport, serverTransport)
     # Challenge-response authentication:
     pump.flush()
     # Uh...
@@ -82,11 +79,7 @@ def _getDeferredResult(d):
 
 def pumpingDeferredResult(d):
     result = _getDeferredResult(d)
-    return (
-        result.raiseException()
-        if isinstance(result, failure.Failure)
-        else result
-    )
+    return result.raiseException() if isinstance(result, failure.Failure) else result
 
 
 def fromCoroutineFunction(corofn):

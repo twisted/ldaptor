@@ -5,10 +5,10 @@ build-backend = "setuptools.build_meta"
 
 [tool.tox]
 legacy_tox_ini = """
-; tox configuration file for running tests on local dev env and Travis CI.
+; tox configuration file for running tests on local dev env and CI.
 ;
 ; The local dev environment will be executed against latest released Twisted.
-; The coverage is reported only and local dev and not on Travis-CI as there
+; The coverage is reported only and local dev and not on CI as there
 ; we have separate reported (ex codecov.io)
 
 [tox]
@@ -45,8 +45,7 @@ deps =
     dev: Twisted[tls]
     dev: diff_cover
     ; Linters are installed both on local dev and the dedicated env.
-    {dev,linters}: pyflakes
-    {dev,linters}: check-manifest
+    {dev,linters}: pre-commit
 
 ; All environment variables are passed.
 passenv = *
@@ -64,8 +63,8 @@ commands =
     dev: coverage xml -o {toxinidir}/build/coverage.xml
     dev: coverage html -d build/coverage-html
     dev: diff-cover --fail-under 100 --html-report {toxinidir}/build/coverage-diff.html {toxinidir}/build/coverage.xml
-    {dev,linters}: pyflakes ldaptor
-    {dev,linters}: check-manifest
+    dev: pre-commit run --all-files --show-diff-on-failure
+    linters: pre-commit {posargs:run --all-files --show-diff-on-failure}
 
 [testenv:build]
 # empty environment to build universal wheel once per tox invocation
@@ -74,10 +73,12 @@ commands =
 [testenv:documentation]
 deps = sphinx
 basepython=python3.8
+changedir = {envtmpdir}
+whitelist_externals = cp
 commands =
-    mkdir -p docs/build
-    sphinx-build -b html -Ean -j 2 -w build/sphinx-errors \
-        docs/source docs/build
+    sphinx-build -b html -Ean -j 2 -w sphinx-errors \
+        {toxinidir}/docs/source ./docs/
+    cp -r . {toxinidir}/build
 
 [testenv:release]
 deps = pep517
@@ -90,7 +91,7 @@ commands =
     {envpython} -m pep517.build --source --out-dir={toxinidir}/dist {toxinidir}
 
 [testenv:publishcov]
-passenv = CI GITHUB_* TRAVIS TRAVIS_* CODECOV_*
+passenv = GITHUB_*
 deps =
   codecov
   coverage>=5.3

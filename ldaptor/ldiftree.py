@@ -55,10 +55,9 @@ def _get(path, dn):
 
     parser = StoreParsedLDIF()
 
-    entry = os.path.join(path,
-                         *['%s.dir' % rdn.getText() for rdn in l[:-1]])
-    entry = os.path.join(entry, '%s.ldif' % l[-1].getText())
-    f = open(entry, 'rb')
+    entry = os.path.join(path, *["%s.dir" % rdn.getText() for rdn in l[:-1]])
+    entry = os.path.join(entry, "%s.ldif" % l[-1].getText())
+    f = open(entry, "rb")
     while 1:
         data = f.read(8192)
         if not data:
@@ -78,11 +77,11 @@ def _get(path, dn):
 
 def _putEntry(fileName, entry):
     """fileName is without extension."""
-    tmp = '{}.{}.tmp'.format(fileName, str(uuid.uuid4()))
-    f = open(tmp, 'wb')
+    tmp = "{}.{}.tmp".format(fileName, str(uuid.uuid4()))
+    f = open(tmp, "wb")
     f.write(entry.toWire())
     f.close()
-    os.rename(tmp, fileName + '.ldif')
+    os.rename(tmp, fileName + ".ldif")
     return True
 
 
@@ -94,10 +93,9 @@ def _put(path, entry):
 
     entryRDN = l.pop()
     if l:
-        grandParent = os.path.join(path,
-                                   *['%s.dir' % rdn.getText() for rdn in l[:-1]])
-        parentEntry = os.path.join(grandParent, '%s.ldif' % l[-1].getText())
-        parentDir = os.path.join(grandParent, '%s.dir' % l[-1].getText())
+        grandParent = os.path.join(path, *["%s.dir" % rdn.getText() for rdn in l[:-1]])
+        parentEntry = os.path.join(grandParent, "%s.ldif" % l[-1].getText())
+        parentDir = os.path.join(grandParent, "%s.dir" % l[-1].getText())
         if not os.path.exists(parentDir):
             if not os.path.exists(parentEntry):
                 raise LDIFTreeNoSuchObject(entry.dn.up())
@@ -111,7 +109,7 @@ def _put(path, entry):
                     raise
     else:
         parentDir = path
-    return _putEntry(os.path.join(parentDir, '%s' % entryRDN.getText()), entry)
+    return _putEntry(os.path.join(parentDir, "%s" % entryRDN.getText()), entry)
 
 
 def put(path, entry):
@@ -119,29 +117,29 @@ def put(path, entry):
 
 
 @implementer(interfaces.IConnectedLDAPEntry)
-class LDIFTreeEntry(entry.EditableLDAPEntry,
-                    entryhelpers.DiffTreeMixin,
-                    entryhelpers.SubtreeFromChildrenMixin,
-                    entryhelpers.MatchMixin,
-                    entryhelpers.SearchByTreeWalkingMixin,
-                    ):
-
+class LDIFTreeEntry(
+    entry.EditableLDAPEntry,
+    entryhelpers.DiffTreeMixin,
+    entryhelpers.SubtreeFromChildrenMixin,
+    entryhelpers.MatchMixin,
+    entryhelpers.SearchByTreeWalkingMixin,
+):
     def __init__(self, path, dn=None, *a, **kw):
         if dn is None:
-            dn = ''
+            dn = ""
         entry.BaseLDAPEntry.__init__(self, dn, *a, **kw)
         self.path = to_unicode(path)
-        if self.dn != '':
+        if self.dn != "":
             self._load()
 
     def _load(self):
-        assert self.path.endswith('.dir')
-        entryPath = '%s.ldif' % self.path[:-len('.dir')]
+        assert self.path.endswith(".dir")
+        entryPath = "%s.ldif" % self.path[: -len(".dir")]
 
         parser = StoreParsedLDIF()
 
         try:
-            f = open(entryPath, 'rb')
+            f = open(entryPath, "rb")
         except OSError as e:
             if e.errno == errno.ENOENT:
                 return
@@ -165,7 +163,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
                 self._attributes[k] = attributeset.LDAPAttributeSet(k, v)
 
     def parent(self):
-        if self.dn == '':
+        if self.dn == "":
             # root
             return None
         else:
@@ -185,16 +183,19 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
             seen = set()
             for fn in filenames:
                 base, ext = os.path.splitext(fn)
-                if ext not in ['.dir', '.ldif']:
+                if ext not in [".dir", ".ldif"]:
                     continue
                 if base in seen:
                     continue
                 seen.add(base)
 
                 dn = distinguishedname.DistinguishedName(
-                    listOfRDNs=((distinguishedname.RelativeDistinguishedName(base),)
-                                + self.dn.split()))
-                e = self.__class__(os.path.join(self.path, base + '.dir'), dn)
+                    listOfRDNs=(
+                        (distinguishedname.RelativeDistinguishedName(base),)
+                        + self.dn.split()
+                    )
+                )
+                e = self.__class__(os.path.join(self.path, base + ".dir"), dn)
                 children.append(e)
         return children
 
@@ -220,14 +221,14 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
         it = dn.split()
         me = self.dn.split()
         assert len(it) > len(me)
-        assert ((len(me) == 0) or (it[-len(me):] == me))
-        rdn = it[-len(me)-1]
-        path = os.path.join(self.path, '%s.dir' % rdn.getText())
-        entry = os.path.join(self.path, '%s.ldif' % rdn.getText())
+        assert (len(me) == 0) or (it[-len(me) :] == me)
+        rdn = it[-len(me) - 1]
+        path = os.path.join(self.path, "%s.dir" % rdn.getText())
+        entry = os.path.join(self.path, "%s.ldif" % rdn.getText())
         if not os.path.isdir(path) and not os.path.isfile(entry):
             return defer.fail(ldaperrors.LDAPNoSuchObject(dn.getText()))
         else:
-            childDN = distinguishedname.DistinguishedName(listOfRDNs=(rdn,)+me)
+            childDN = distinguishedname.DistinguishedName(listOfRDNs=(rdn,) + me)
             c = self.__class__(path, childDN)
             return c.lookup(dn)
 
@@ -237,18 +238,17 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
             if c.dn.split()[0] == rdn:
                 raise ldaperrors.LDAPEntryAlreadyExists(c.dn.getText())
 
-        dn = distinguishedname.DistinguishedName(
-            listOfRDNs=(rdn,) + self.dn.split())
+        dn = distinguishedname.DistinguishedName(listOfRDNs=(rdn,) + self.dn.split())
         e = entry.BaseLDAPEntry(dn, attributes)
         if not os.path.exists(self.path):
             os.mkdir(self.path)
-        fileName = os.path.join(self.path, '%s' % rdn.getText())
-        tmp = '{}.{}.tmp'.format(fileName, str(uuid.uuid4()))
-        f = open(tmp, 'wb')
+        fileName = os.path.join(self.path, "%s" % rdn.getText())
+        tmp = "{}.{}.tmp".format(fileName, str(uuid.uuid4()))
+        f = open(tmp, "wb")
         f.write(e.toWire())
         f.close()
-        os.rename(tmp, fileName + '.ldif')
-        dirName = os.path.join(self.path, '%s.dir' % rdn.getText())
+        os.rename(tmp, fileName + ".ldif")
+        dirName = os.path.join(self.path, "%s.dir" % rdn.getText())
         e = self.__class__(dirName, dn)
         return e
 
@@ -257,13 +257,14 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
         return d
 
     def _delete(self):
-        if self.dn == '':
+        if self.dn == "":
             raise LDAPCannotRemoveRootError()
         if self._sync_children():
             raise ldaperrors.LDAPNotAllowedOnNonLeaf(
-                'Cannot remove entry with children: %s' % self.dn.getText())
-        assert self.path.endswith('.dir')
-        entryPath = '%s.ldif' % self.path[:-len('.dir')]
+                "Cannot remove entry with children: %s" % self.dn.getText()
+            )
+        assert self.path.endswith(".dir")
+        entryPath = "%s.ldif" % self.path[: -len(".dir")]
         os.remove(entryPath)
         return self
 
@@ -282,29 +283,30 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
         return defer.maybeDeferred(self._deleteChild, rdn)
 
     def __repr__(self):
-        return '{}({!r}, {!r})'.format(self.__class__.__name__,
-                               self.path,
-                               self.dn.getText())
+        return "{}({!r}, {!r})".format(
+            self.__class__.__name__, self.path, self.dn.getText()
+        )
 
     def __lt__(self, other):
         if not isinstance(other, LDIFTreeEntry):
             # We don't return NotImplemented so that we get the same
             # result in Python2 and Python3.
-            raise(TypeError, 'unorderable types: {!r} > {!r}'.format(self, other))
+            raise (TypeError, "unorderable types: {!r} > {!r}".format(self, other))
         return self.dn < other.dn
 
     def __gt__(self, other):
         if not isinstance(other, LDIFTreeEntry):
-            raise(TypeError, 'unorderable types: {!r} < {!r}'.format(self, other))
+            raise (TypeError, "unorderable types: {!r} < {!r}".format(self, other))
         return self.dn > other.dn
 
     def commit(self):
-        assert self.path.endswith('.dir')
-        entryPath = self.path[:-len('.dir')]
+        assert self.path.endswith(".dir")
+        entryPath = self.path[: -len(".dir")]
         d = defer.maybeDeferred(_putEntry, entryPath, self)
 
         def eb_(err):
             from twisted.python import log
+
             log.msg("[ERROR] Could not commit entry: {}.".format(self.dn))
             return False
 
@@ -321,7 +323,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
             # climb up the tree to root
             rootDN = self.dn
             rootPath = self.path
-            while rootDN != '':
+            while rootDN != "":
                 rootDN = rootDN.up()
                 rootPath = os.path.dirname(rootPath)
             root = self.__class__(path=rootPath, dn=rootDN)
@@ -345,7 +347,7 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
         else:
             dstdir = newParent.path
 
-        newpath = os.path.join(dstdir, '%s.dir' % newRDN.getText())
+        newpath = os.path.join(dstdir, "%s.dir" % newRDN.getText())
         try:
             os.rename(self.path, newpath)
         except OSError as e:
@@ -354,14 +356,16 @@ class LDIFTreeEntry(entry.EditableLDAPEntry,
             else:
                 raise
         basename, ext = os.path.splitext(self.path)
-        assert ext == '.dir'
-        os.rename('%s.ldif' % basename,
-                  os.path.join(dstdir, '%s.ldif' % newRDN.getText()))
+        assert ext == ".dir"
+        os.rename(
+            "%s.ldif" % basename, os.path.join(dstdir, "%s.ldif" % newRDN.getText())
+        )
         self.dn = newDN
         self.path = newpath
         return self.commit()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     """
     Demonstration LDAP server; serves an LDIFTree from given directory
     over LDAP on port 10389.
@@ -370,6 +374,7 @@ if __name__ == '__main__':
     from twisted.internet import reactor, protocol
     from twisted.python import log
     import sys
+
     log.startLogging(sys.stderr)
 
     from twisted.python import components
@@ -385,9 +390,9 @@ if __name__ == '__main__':
     class MyLDAPServer(ldapserver.LDAPServer):
         debug = True
 
-    components.registerAdapter(lambda x: x.root,
-                               LDAPServerFactory,
-                               interfaces.IConnectedLDAPEntry)
+    components.registerAdapter(
+        lambda x: x.root, LDAPServerFactory, interfaces.IConnectedLDAPEntry
+    )
 
     factory = LDAPServerFactory(db)
     factory.protocol = MyLDAPServer
