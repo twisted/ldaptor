@@ -289,14 +289,12 @@ class LDIFTreeEntry(
 
     def __lt__(self, other):
         if not isinstance(other, LDIFTreeEntry):
-            # We don't return NotImplemented so that we get the same
-            # result in Python2 and Python3.
-            raise (TypeError, "unorderable types: {!r} > {!r}".format(self, other))
+            return NotImplemented
         return self.dn < other.dn
 
     def __gt__(self, other):
         if not isinstance(other, LDIFTreeEntry):
-            raise (TypeError, "unorderable types: {!r} < {!r}".format(self, other))
+            return NotImplemented
         return self.dn > other.dn
 
     def commit(self):

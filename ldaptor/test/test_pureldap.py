@@ -1243,58 +1243,94 @@ class TestRepresentations(unittest.TestCase):
 
     def test_bind_request_repr(self):
         """LDAPBindRequest.__repr__"""
-        dns = [
-            b"uid=user,ou=users,dc=example,dc=org",
-            "uid=user,ou=users,dc=example,dc=org",
-        ]
-        for dn in dns:
-            req = pureldap.LDAPBindRequest(dn=dn)
-            req_repr = "LDAPBindRequest(version=3, dn='uid=user,ou=users,dc=example,dc=org', auth='', sasl=False)"
-            self.assertEqual(repr(req), req_repr)
+        self.assertEqual(
+            repr(pureldap.LDAPBindRequest(dn=b"uid=user,ou=users,dc=example,dc=org")),
+            (
+                "LDAPBindRequest(version=3, dn=b'uid=user,ou=users,dc=example,dc=org', "
+                "auth='', sasl=False)"
+            ),
+        )
+        self.assertEqual(
+            repr(pureldap.LDAPBindRequest(dn="uid=user,ou=users,dc=example,dc=org")),
+            (
+                "LDAPBindRequest(version=3, dn='uid=user,ou=users,dc=example,dc=org', "
+                "auth='', sasl=False)"
+            ),
+        )
 
     def test_bind_request_with_tag_repr(self):
         """LDAPBindRequest.__repr__ with custom tag attribute"""
-        dns = [
-            b"uid=user,ou=users,dc=example,dc=org",
-            "uid=user,ou=users,dc=example,dc=org",
-        ]
-        for dn in dns:
-            req = pureldap.LDAPBindRequest(dn=dn, auth="pass", tag=42)
-            req_repr = (
+        self.assertEqual(
+            repr(
+                pureldap.LDAPBindRequest(
+                    dn=b"uid=user,ou=users,dc=example,dc=org", auth=b"pass", tag=42
+                )
+            ),
+            (
+                "LDAPBindRequest(version=3, dn=b'uid=user,ou=users,dc=example,dc=org', "
+                "auth='****', tag=42, sasl=False)"
+            ),
+        )
+        self.assertEqual(
+            repr(
+                pureldap.LDAPBindRequest(
+                    dn="uid=user,ou=users,dc=example,dc=org", auth="pass", tag=42
+                )
+            ),
+            (
                 "LDAPBindRequest(version=3, dn='uid=user,ou=users,dc=example,dc=org', "
                 "auth='****', tag=42, sasl=False)"
-            )
-            self.assertEqual(repr(req), req_repr)
+            ),
+        )
 
     def test_bind_response_repr(self):
         """LDAPBindResponse.__repr__"""
-        matched_dns = [
-            b"uid=user,ou=users,dc=example,dc=org",
-            "uid=user,ou=users,dc=example,dc=org",
-        ]
-        for matched_dn in matched_dns:
-            res = pureldap.LDAPBindResponse(resultCode=0, matchedDN=matched_dn)
-            res_repr = "LDAPBindResponse(resultCode=0, matchedDN='uid=user,ou=users,dc=example,dc=org')"
-            self.assertEqual(repr(res), res_repr)
+        self.assertEqual(
+            repr(
+                pureldap.LDAPBindResponse(
+                    resultCode=0, matchedDN=b"uid=user,ou=users,dc=example,dc=org"
+                )
+            ),
+            "LDAPBindResponse(resultCode=0, matchedDN=b'uid=user,ou=users,dc=example,dc=org')",
+        )
+        self.assertEqual(
+            repr(
+                pureldap.LDAPBindResponse(
+                    resultCode=0, matchedDN="uid=user,ou=users,dc=example,dc=org"
+                )
+            ),
+            "LDAPBindResponse(resultCode=0, matchedDN='uid=user,ou=users,dc=example,dc=org')",
+        )
 
     def test_result_with_matched_dn_repr(self):
         """LDAPResult.__repr__ with matchedDN attribute"""
-        matched_dns = [
-            b"uid=user,ou=users,dc=example,dc=org",
-            "uid=user,ou=users,dc=example,dc=org",
-        ]
-        for matched_dn in matched_dns:
-            res = pureldap.LDAPResult(resultCode=0, matchedDN=matched_dn)
-            res_repr = "LDAPResult(resultCode=0, matchedDN='uid=user,ou=users,dc=example,dc=org')"
-            self.assertEqual(repr(res), res_repr)
+        self.assertEqual(
+            repr(
+                pureldap.LDAPResult(
+                    resultCode=0, matchedDN=b"uid=user,ou=users,dc=example,dc=org"
+                )
+            ),
+            "LDAPResult(resultCode=0, matchedDN=b'uid=user,ou=users,dc=example,dc=org')",
+        )
+        self.assertEqual(
+            repr(
+                pureldap.LDAPResult(
+                    resultCode=0, matchedDN="uid=user,ou=users,dc=example,dc=org"
+                )
+            ),
+            "LDAPResult(resultCode=0, matchedDN='uid=user,ou=users,dc=example,dc=org')",
+        )
 
     def test_result_with_error_message_repr(self):
         """LDAPResult.__repr__ with errorMessage attribute"""
-        error_messages = [b"error_message", "error_message"]
-        for error_message in error_messages:
-            res = pureldap.LDAPResult(resultCode=1, errorMessage=error_message)
-            res_repr = "LDAPResult(resultCode=1, errorMessage='error_message')"
-            self.assertEqual(repr(res), res_repr)
+        self.assertEqual(
+            repr(pureldap.LDAPResult(resultCode=1, errorMessage=b"error_message")),
+            "LDAPResult(resultCode=1, errorMessage=b'error_message')",
+        )
+        self.assertEqual(
+            repr(pureldap.LDAPResult(resultCode=1, errorMessage="error_message")),
+            "LDAPResult(resultCode=1, errorMessage='error_message')",
+        )
 
     def test_result_with_tag_repr(self):
         """LDAPResult.__repr__ with custom tag attribute"""
@@ -1304,340 +1340,533 @@ class TestRepresentations(unittest.TestCase):
 
     def test_search_request_repr(self):
         """LDAPSearchRequest.__repr__"""
-        base_objects = [b"ou=users,dc=example,dc=org", "ou=users,dc=example,dc=org"]
-        for base_object in base_objects:
-            req = pureldap.LDAPSearchRequest(
-                baseObject=base_object,
-                filter=pureldap.LDAPFilter_equalityMatch(
-                    attributeDesc=pureber.BEROctetString("key"),
-                    assertionValue=pureber.BEROctetString("value"),
-                ),
-            )
-            req_repr = (
+        self.assertEqual(
+            repr(
+                pureldap.LDAPSearchRequest(
+                    baseObject=b"ou=users,dc=example,dc=org",
+                    filter=pureldap.LDAPFilter_equalityMatch(
+                        attributeDesc=pureber.BEROctetString(b"key"),
+                        assertionValue=pureber.BEROctetString(b"value"),
+                    ),
+                )
+            ),
+            (
+                "LDAPSearchRequest(baseObject=b'ou=users,dc=example,dc=org', scope=2, derefAliases=0, "
+                "sizeLimit=0, timeLimit=0, typesOnly=0, filter=LDAPFilter_equalityMatch("
+                "attributeDesc=BEROctetString(value=b'key'), assertionValue=BEROctetString(value=b'value')), "
+                "attributes=[])"
+            ),
+        )
+        self.assertEqual(
+            repr(
+                pureldap.LDAPSearchRequest(
+                    baseObject="ou=users,dc=example,dc=org",
+                    filter=pureldap.LDAPFilter_equalityMatch(
+                        attributeDesc=pureber.BEROctetString("key"),
+                        assertionValue=pureber.BEROctetString("value"),
+                    ),
+                )
+            ),
+            (
                 "LDAPSearchRequest(baseObject='ou=users,dc=example,dc=org', scope=2, derefAliases=0, "
                 "sizeLimit=0, timeLimit=0, typesOnly=0, filter=LDAPFilter_equalityMatch("
                 "attributeDesc=BEROctetString(value='key'), assertionValue=BEROctetString(value='value')), "
                 "attributes=[])"
-            )
-            self.assertEqual(repr(req), req_repr)
+            ),
+        )
 
     def test_search_request_with_tag_repr(self):
         """LDAPSearchRequest.__repr__ with custom tag attribute"""
-        base_objects = [b"ou=users,dc=example,dc=org", "ou=users,dc=example,dc=org"]
-        for base_object in base_objects:
-            req = pureldap.LDAPSearchRequest(
-                baseObject=base_object,
-                filter=pureldap.LDAPFilter_equalityMatch(
-                    attributeDesc=pureber.BEROctetString("key"),
-                    assertionValue=pureber.BEROctetString("value"),
-                ),
-                tag=42,
-            )
-            req_repr = (
+        self.assertEqual(
+            repr(
+                pureldap.LDAPSearchRequest(
+                    baseObject=b"ou=users,dc=example,dc=org",
+                    filter=pureldap.LDAPFilter_equalityMatch(
+                        attributeDesc=pureber.BEROctetString(b"key"),
+                        assertionValue=pureber.BEROctetString(b"value"),
+                    ),
+                    tag=42,
+                )
+            ),
+            (
+                "LDAPSearchRequest(baseObject=b'ou=users,dc=example,dc=org', scope=2, derefAliases=0, "
+                "sizeLimit=0, timeLimit=0, typesOnly=0, filter=LDAPFilter_equalityMatch("
+                "attributeDesc=BEROctetString(value=b'key'), assertionValue=BEROctetString(value=b'value')), "
+                "attributes=[], tag=42)"
+            ),
+        )
+        self.assertEqual(
+            repr(
+                pureldap.LDAPSearchRequest(
+                    baseObject="ou=users,dc=example,dc=org",
+                    filter=pureldap.LDAPFilter_equalityMatch(
+                        attributeDesc=pureber.BEROctetString("key"),
+                        assertionValue=pureber.BEROctetString("value"),
+                    ),
+                    tag=42,
+                )
+            ),
+            (
                 "LDAPSearchRequest(baseObject='ou=users,dc=example,dc=org', scope=2, derefAliases=0, "
                 "sizeLimit=0, timeLimit=0, typesOnly=0, filter=LDAPFilter_equalityMatch("
                 "attributeDesc=BEROctetString(value='key'), assertionValue=BEROctetString(value='value')), "
                 "attributes=[], tag=42)"
-            )
-            self.assertEqual(repr(req), req_repr)
+            ),
+        )
 
     def test_search_result_entry_repr(self):
         """LDAPSearchResultEntry.__repr__"""
-        object_names = [
-            b"uid=mohamed,ou=people,dc=example,dc=fr",
-            "uid=mohamed,ou=people,dc=example,dc=fr",
-        ]
-        attributes_list = [(b"uid", [b"mohamed"]), ("uid", ["mohamed"])]
-        for object_name in object_names:
-            for attributes in attributes_list:
-                resp = pureldap.LDAPSearchResultEntry(
-                    objectName=object_name,
-                    attributes=[attributes],
+        self.assertEqual(
+            repr(
+                pureldap.LDAPSearchResultEntry(
+                    objectName=b"uid=mohamed,ou=people,dc=example,dc=fr",
+                    attributes=[(b"uid", [b"mohamed"])],
                 )
-                resp_repr = (
-                    "LDAPSearchResultEntry(objectName='uid=mohamed,ou=people,dc=example,dc=fr', "
-                    "attributes=[('uid', ['mohamed'])])"
+            ),
+            (
+                "LDAPSearchResultEntry(objectName=b'uid=mohamed,ou=people,dc=example,dc=fr', "
+                "attributes=[(b'uid', [b'mohamed'])])"
+            ),
+        )
+        self.assertEqual(
+            repr(
+                pureldap.LDAPSearchResultEntry(
+                    objectName="uid=mohamed,ou=people,dc=example,dc=fr",
+                    attributes=[("uid", ["mohamed"])],
                 )
-                self.assertEqual(repr(resp), resp_repr)
+            ),
+            (
+                "LDAPSearchResultEntry(objectName='uid=mohamed,ou=people,dc=example,dc=fr', "
+                "attributes=[('uid', ['mohamed'])])"
+            ),
+        )
 
     def test_search_result_entry_with_tag_repr(self):
         """LDAPSearchResultEntry.__repr__ with custom tag attribute"""
-        object_names = [
-            b"uid=mohamed,ou=people,dc=example,dc=fr",
-            "uid=mohamed,ou=people,dc=example,dc=fr",
-        ]
-        attributes_list = [(b"uid", [b"mohamed"]), ("uid", ["mohamed"])]
-        for object_name in object_names:
-            for attributes in attributes_list:
-                resp = pureldap.LDAPSearchResultEntry(
-                    objectName=object_name,
-                    attributes=[attributes],
+        self.assertEqual(
+            repr(
+                pureldap.LDAPSearchResultEntry(
+                    objectName=b"uid=mohamed,ou=people,dc=example,dc=fr",
+                    attributes=[(b"uid", [b"mohamed"])],
                     tag=42,
                 )
-                resp_repr = (
-                    "LDAPSearchResultEntry(objectName='uid=mohamed,ou=people,dc=example,dc=fr', "
-                    "attributes=[('uid', ['mohamed'])], tag=42)"
+            ),
+            (
+                "LDAPSearchResultEntry(objectName=b'uid=mohamed,ou=people,dc=example,dc=fr', "
+                "attributes=[(b'uid', [b'mohamed'])], tag=42)"
+            ),
+        )
+        self.assertEqual(
+            repr(
+                pureldap.LDAPSearchResultEntry(
+                    objectName="uid=mohamed,ou=people,dc=example,dc=fr",
+                    attributes=[("uid", ["mohamed"])],
+                    tag=42,
                 )
-                self.assertEqual(repr(resp), resp_repr)
+            ),
+            (
+                "LDAPSearchResultEntry(objectName='uid=mohamed,ou=people,dc=example,dc=fr', "
+                "attributes=[('uid', ['mohamed'])], tag=42)"
+            ),
+        )
 
     def test_search_result_reference_repr(self):
         """LDAPSearchResultReference.__repr__"""
-        uris_list = [
-            [
-                b"ldap://example.com/dc=foo,dc=example,dc=com",
-                b"ldap://example.com/dc=foo,dc=example,dc=com",
-            ],
-            [
-                "ldap://example.com/dc=foo,dc=example,dc=com",
-                "ldap://example.com/dc=foo,dc=example,dc=com",
-            ],
-        ]
-        for uris in uris_list:
-            resp = pureldap.LDAPSearchResultReference(uris=uris)
-            resp_repr = (
-                "LDAPSearchResultReference(uris=['ldap://example.com/dc=foo,dc=example,dc=com', "
-                "'ldap://example.com/dc=foo,dc=example,dc=com'])"
-            )
-            self.assertEqual(repr(resp), resp_repr)
+        self.assertEqual(
+            repr(
+                pureldap.LDAPSearchResultReference(
+                    uris=[
+                        b"ldap://example.com/dc=foo,dc=example,dc=com",
+                        b"ldap://example.com/dc=foo,dc=example,dc=com",
+                    ]
+                )
+            ),
+            "LDAPSearchResultReference(uris=[b'ldap://example.com/dc=foo,dc=example,dc=com', "
+            "b'ldap://example.com/dc=foo,dc=example,dc=com'])",
+        )
+        self.assertEqual(
+            repr(
+                pureldap.LDAPSearchResultReference(
+                    uris=[
+                        "ldap://example.com/dc=foo,dc=example,dc=com",
+                        "ldap://example.com/dc=foo,dc=example,dc=com",
+                    ]
+                )
+            ),
+            "LDAPSearchResultReference(uris=['ldap://example.com/dc=foo,dc=example,dc=com', "
+            "'ldap://example.com/dc=foo,dc=example,dc=com'])",
+        )
 
     def test_search_result_reference_with_tag_repr(self):
         """LDAPSearchResultReference.__repr__ with custom tag attribute"""
-        uris_list = [
-            [
-                b"ldap://example.com/dc=foo,dc=example,dc=com",
-                b"ldap://example.com/dc=foo,dc=example,dc=com",
-            ],
-            [
-                "ldap://example.com/dc=foo,dc=example,dc=com",
-                "ldap://example.com/dc=foo,dc=example,dc=com",
-            ],
-        ]
-        for uris in uris_list:
-            resp = pureldap.LDAPSearchResultReference(uris=uris, tag=42)
-            resp_repr = (
-                "LDAPSearchResultReference(uris=['ldap://example.com/dc=foo,dc=example,dc=com', "
-                "'ldap://example.com/dc=foo,dc=example,dc=com'], tag=42)"
-            )
-            self.assertEqual(repr(resp), resp_repr)
+        self.assertEqual(
+            repr(
+                pureldap.LDAPSearchResultReference(
+                    uris=[
+                        b"ldap://example.com/dc=foo,dc=example,dc=com",
+                        b"ldap://example.com/dc=foo,dc=example,dc=com",
+                    ],
+                    tag=42,
+                )
+            ),
+            "LDAPSearchResultReference(uris=[b'ldap://example.com/dc=foo,dc=example,dc=com', "
+            "b'ldap://example.com/dc=foo,dc=example,dc=com'], tag=42)",
+        )
+        self.assertEqual(
+            repr(
+                pureldap.LDAPSearchResultReference(
+                    uris=[
+                        "ldap://example.com/dc=foo,dc=example,dc=com",
+                        "ldap://example.com/dc=foo,dc=example,dc=com",
+                    ],
+                    tag=42,
+                )
+            ),
+            "LDAPSearchResultReference(uris=['ldap://example.com/dc=foo,dc=example,dc=com', "
+            "'ldap://example.com/dc=foo,dc=example,dc=com'], tag=42)",
+        )
 
     def test_modify_request_repr(self):
         """LDAPModifyRequest.__repr__"""
-        object_names = [
-            b"uid=user,ou=users,dc=example,dc=org",
-            "uid=user,ou=users,dc=example,dc=org",
-        ]
-        for object_name in object_names:
-            mr = pureldap.LDAPModifyRequest(
-                object=object_name,
-                modification=pureber.BERSequence(
-                    [
-                        pureber.BEREnumerated(0),
-                        pureber.BERSequence(
-                            [
-                                pureldap.LDAPAttributeDescription("key"),
-                                pureber.BERSet([pureldap.LDAPString("value")]),
-                            ]
-                        ),
-                    ]
-                ),
-            )
-            mr_repr = (
+        self.assertEqual(
+            repr(
+                pureldap.LDAPModifyRequest(
+                    object=b"uid=user,ou=users,dc=example,dc=org",
+                    modification=pureber.BERSequence(
+                        [
+                            pureber.BEREnumerated(0),
+                            pureber.BERSequence(
+                                [
+                                    pureldap.LDAPAttributeDescription(b"key"),
+                                    pureber.BERSet([pureldap.LDAPString(b"value")]),
+                                ]
+                            ),
+                        ]
+                    ),
+                )
+            ),
+            (
+                "LDAPModifyRequest(object=b'uid=user,ou=users,dc=example,dc=org', "
+                "modification=BERSequence(value=[BEREnumerated(value=0), "
+                "BERSequence(value=[LDAPAttributeDescription(value=b'key'), "
+                "BERSet(value=[LDAPString(value=b'value')])])]))"
+            ),
+        )
+        self.assertEqual(
+            repr(
+                pureldap.LDAPModifyRequest(
+                    object="uid=user,ou=users,dc=example,dc=org",
+                    modification=pureber.BERSequence(
+                        [
+                            pureber.BEREnumerated(0),
+                            pureber.BERSequence(
+                                [
+                                    pureldap.LDAPAttributeDescription("key"),
+                                    pureber.BERSet([pureldap.LDAPString("value")]),
+                                ]
+                            ),
+                        ]
+                    ),
+                )
+            ),
+            (
                 "LDAPModifyRequest(object='uid=user,ou=users,dc=example,dc=org', "
                 "modification=BERSequence(value=[BEREnumerated(value=0), "
                 "BERSequence(value=[LDAPAttributeDescription(value='key'), "
                 "BERSet(value=[LDAPString(value='value')])])]))"
-            )
-            self.assertEqual(repr(mr), mr_repr)
+            ),
+        )
 
     def test_modify_request_with_tag_repr(self):
         """LDAPModifyRequest.__repr__ with custom tag attribute"""
-        object_names = [
-            b"uid=user,ou=users,dc=example,dc=org",
-            "uid=user,ou=users,dc=example,dc=org",
-        ]
-        for object_name in object_names:
-            mr = pureldap.LDAPModifyRequest(
-                object=object_name,
-                modification=pureber.BERSequence(
-                    [
-                        pureber.BEREnumerated(0),
-                        pureber.BERSequence(
-                            [
-                                pureldap.LDAPAttributeDescription("key"),
-                                pureber.BERSet([pureldap.LDAPString("value")]),
-                            ]
-                        ),
-                    ]
-                ),
-                tag=42,
-            )
-            mr_repr = (
+        self.assertEqual(
+            repr(
+                pureldap.LDAPModifyRequest(
+                    object=b"uid=user,ou=users,dc=example,dc=org",
+                    modification=pureber.BERSequence(
+                        [
+                            pureber.BEREnumerated(0),
+                            pureber.BERSequence(
+                                [
+                                    pureldap.LDAPAttributeDescription(b"key"),
+                                    pureber.BERSet([pureldap.LDAPString(b"value")]),
+                                ]
+                            ),
+                        ]
+                    ),
+                    tag=42,
+                )
+            ),
+            (
+                "LDAPModifyRequest(object=b'uid=user,ou=users,dc=example,dc=org', "
+                "modification=BERSequence(value=[BEREnumerated(value=0), "
+                "BERSequence(value=[LDAPAttributeDescription(value=b'key'), "
+                "BERSet(value=[LDAPString(value=b'value')])])]), tag=42)"
+            ),
+        )
+        self.assertEqual(
+            repr(
+                pureldap.LDAPModifyRequest(
+                    object="uid=user,ou=users,dc=example,dc=org",
+                    modification=pureber.BERSequence(
+                        [
+                            pureber.BEREnumerated(0),
+                            pureber.BERSequence(
+                                [
+                                    pureldap.LDAPAttributeDescription("key"),
+                                    pureber.BERSet([pureldap.LDAPString("value")]),
+                                ]
+                            ),
+                        ]
+                    ),
+                    tag=42,
+                )
+            ),
+            (
                 "LDAPModifyRequest(object='uid=user,ou=users,dc=example,dc=org', "
                 "modification=BERSequence(value=[BEREnumerated(value=0), "
                 "BERSequence(value=[LDAPAttributeDescription(value='key'), "
                 "BERSet(value=[LDAPString(value='value')])])]), tag=42)"
-            )
-            self.assertEqual(repr(mr), mr_repr)
+            ),
+        )
 
     def test_add_request_repr(self):
         """LDAPAddRequest.__repr__"""
-        entries = [
-            b"uid=user,ou=users,dc=example,dc=org",
-            "uid=user,ou=users,dc=example,dc=org",
-        ]
-        for entry in entries:
-            ar = pureldap.LDAPAddRequest(
-                entry=entry,
-                attributes=[
-                    (
-                        pureldap.LDAPAttributeDescription("key"),
-                        pureber.BERSet([pureldap.LDAPAttributeValue("value")]),
-                    ),
-                ],
-            )
-            ar_repr = (
+        self.assertEqual(
+            repr(
+                pureldap.LDAPAddRequest(
+                    entry=b"uid=user,ou=users,dc=example,dc=org",
+                    attributes=[
+                        (
+                            pureldap.LDAPAttributeDescription(b"key"),
+                            pureber.BERSet([pureldap.LDAPAttributeValue(b"value")]),
+                        ),
+                    ],
+                )
+            ),
+            (
+                "LDAPAddRequest(entry=b'uid=user,ou=users,dc=example,dc=org', "
+                "attributes=[(LDAPAttributeDescription(value=b'key'), "
+                "BERSet(value=[LDAPAttributeValue(value=b'value')]))])"
+            ),
+        )
+        self.assertEqual(
+            repr(
+                pureldap.LDAPAddRequest(
+                    entry="uid=user,ou=users,dc=example,dc=org",
+                    attributes=[
+                        (
+                            pureldap.LDAPAttributeDescription("key"),
+                            pureber.BERSet([pureldap.LDAPAttributeValue("value")]),
+                        ),
+                    ],
+                )
+            ),
+            (
                 "LDAPAddRequest(entry='uid=user,ou=users,dc=example,dc=org', "
                 "attributes=[(LDAPAttributeDescription(value='key'), "
                 "BERSet(value=[LDAPAttributeValue(value='value')]))])"
-            )
-            self.assertEqual(repr(ar), ar_repr)
+            ),
+        )
 
     def test_add_request_with_tag_repr(self):
         """LDAPAddRequest.__repr__ with custom tag attribute"""
-        entries = [
-            b"uid=user,ou=users,dc=example,dc=org",
-            "uid=user,ou=users,dc=example,dc=org",
-        ]
-        for entry in entries:
-            ar = pureldap.LDAPAddRequest(
-                entry=entry,
-                attributes=[
-                    (
-                        pureldap.LDAPAttributeDescription("key"),
-                        pureber.BERSet([pureldap.LDAPAttributeValue("value")]),
-                    ),
-                ],
-                tag=42,
-            )
-            ar_repr = (
+        self.assertEqual(
+            repr(
+                pureldap.LDAPAddRequest(
+                    entry=b"uid=user,ou=users,dc=example,dc=org",
+                    attributes=[
+                        (
+                            pureldap.LDAPAttributeDescription(b"key"),
+                            pureber.BERSet([pureldap.LDAPAttributeValue(b"value")]),
+                        ),
+                    ],
+                    tag=42,
+                )
+            ),
+            (
+                "LDAPAddRequest(entry=b'uid=user,ou=users,dc=example,dc=org', "
+                "attributes=[(LDAPAttributeDescription(value=b'key'), "
+                "BERSet(value=[LDAPAttributeValue(value=b'value')]))], tag=42)"
+            ),
+        )
+        self.assertEqual(
+            repr(
+                pureldap.LDAPAddRequest(
+                    entry="uid=user,ou=users,dc=example,dc=org",
+                    attributes=[
+                        (
+                            pureldap.LDAPAttributeDescription("key"),
+                            pureber.BERSet([pureldap.LDAPAttributeValue("value")]),
+                        ),
+                    ],
+                    tag=42,
+                )
+            ),
+            (
                 "LDAPAddRequest(entry='uid=user,ou=users,dc=example,dc=org', "
                 "attributes=[(LDAPAttributeDescription(value='key'), "
                 "BERSet(value=[LDAPAttributeValue(value='value')]))], tag=42)"
-            )
-            self.assertEqual(repr(ar), ar_repr)
+            ),
+        )
 
     def test_del_request_repr(self):
         """LDAPDelRequest.__repr__"""
-        entries = [
-            b"uid=user,ou=users,dc=example,dc=org",
-            "uid=user,ou=users,dc=example,dc=org",
-        ]
-        for entry in entries:
-            dr = pureldap.LDAPDelRequest(entry=entry)
-            dr_repr = "LDAPDelRequest(entry='uid=user,ou=users,dc=example,dc=org')"
-            self.assertEqual(repr(dr), dr_repr)
+        self.assertEqual(
+            repr(pureldap.LDAPDelRequest(entry=b"uid=user,ou=users,dc=example,dc=org")),
+            "LDAPDelRequest(entry=b'uid=user,ou=users,dc=example,dc=org')",
+        )
+        self.assertEqual(
+            repr(pureldap.LDAPDelRequest(entry="uid=user,ou=users,dc=example,dc=org")),
+            "LDAPDelRequest(entry='uid=user,ou=users,dc=example,dc=org')",
+        )
 
     def test_del_request_with_tag_repr(self):
         """LDAPDelRequest.__repr__ with custom tag attribute"""
-        entries = [
-            b"uid=user,ou=users,dc=example,dc=org",
-            "uid=user,ou=users,dc=example,dc=org",
-        ]
-        for entry in entries:
-            dr = pureldap.LDAPDelRequest(entry=entry, tag=42)
-            dr_repr = (
-                "LDAPDelRequest(entry='uid=user,ou=users,dc=example,dc=org', tag=42)"
-            )
-            self.assertEqual(repr(dr), dr_repr)
+        self.assertEqual(
+            repr(
+                pureldap.LDAPDelRequest(
+                    entry=b"uid=user,ou=users,dc=example,dc=org", tag=42
+                )
+            ),
+            "LDAPDelRequest(entry=b'uid=user,ou=users,dc=example,dc=org', tag=42)",
+        )
+        self.assertEqual(
+            repr(
+                pureldap.LDAPDelRequest(
+                    entry="uid=user,ou=users,dc=example,dc=org", tag=42
+                )
+            ),
+            "LDAPDelRequest(entry='uid=user,ou=users,dc=example,dc=org', tag=42)",
+        )
 
     def test_modify_dn_request_repr(self):
         """LDAPModifyDNRequest.__repr__"""
-        entries = [
-            b"uid=user,ou=users,dc=example,dc=org",
-            "uid=user,ou=users,dc=example,dc=org",
-        ]
-        rdns = [b"uid=newuser", "uid=newuser"]
-        for entry in entries:
-            for rdn in rdns:
-                mdnr = pureldap.LDAPModifyDNRequest(
-                    entry=entry,
-                    newrdn=rdn,
+        self.assertEqual(
+            repr(
+                pureldap.LDAPModifyDNRequest(
+                    entry=b"uid=user,ou=users,dc=example,dc=org",
+                    newrdn=b"uid=newuser",
                     deleteoldrdn=True,
                 )
-                mdnr_repr = (
-                    "LDAPModifyDNRequest(entry='uid=user,ou=users,dc=example,dc=org', "
-                    "newrdn='uid=newuser', deleteoldrdn=True)"
+            ),
+            (
+                "LDAPModifyDNRequest(entry=b'uid=user,ou=users,dc=example,dc=org', "
+                "newrdn=b'uid=newuser', deleteoldrdn=True)"
+            ),
+        )
+        self.assertEqual(
+            repr(
+                pureldap.LDAPModifyDNRequest(
+                    entry="uid=user,ou=users,dc=example,dc=org",
+                    newrdn="uid=newuser",
+                    deleteoldrdn=True,
                 )
-                self.assertEqual(repr(mdnr), mdnr_repr)
+            ),
+            (
+                "LDAPModifyDNRequest(entry='uid=user,ou=users,dc=example,dc=org', "
+                "newrdn='uid=newuser', deleteoldrdn=True)"
+            ),
+        )
 
     def test_modify_dn_request_with_new_superior_repr(self):
         """LDAPModifyDNRequest.__repr__ with newSuperior attribute"""
-        entries = [
-            b"uid=user,ou=users,dc=example,dc=org",
-            "uid=user,ou=users,dc=example,dc=org",
-        ]
-        rdns = [b"uid=newuser", "uid=newuser"]
-        new_superiors = [
-            b"ou=newusers,dc=example,dc=org",
-            "ou=newusers,dc=example,dc=org",
-        ]
-        for entry in entries:
-            for rdn in rdns:
-                for new_superior in new_superiors:
-                    mdnr = pureldap.LDAPModifyDNRequest(
-                        entry=entry,
-                        newrdn=rdn,
-                        deleteoldrdn=False,
-                        newSuperior=new_superior,
-                    )
-                    mdnr_repr = (
-                        "LDAPModifyDNRequest(entry='uid=user,ou=users,dc=example,dc=org', "
-                        "newrdn='uid=newuser', deleteoldrdn=False, "
-                        "newSuperior='ou=newusers,dc=example,dc=org')"
-                    )
-                    self.assertEqual(repr(mdnr), mdnr_repr)
+        self.assertEqual(
+            repr(
+                pureldap.LDAPModifyDNRequest(
+                    entry=b"uid=user,ou=users,dc=example,dc=org",
+                    newrdn=b"uid=newuser",
+                    deleteoldrdn=False,
+                    newSuperior=b"ou=newusers,dc=example,dc=org",
+                )
+            ),
+            (
+                "LDAPModifyDNRequest(entry=b'uid=user,ou=users,dc=example,dc=org', "
+                "newrdn=b'uid=newuser', deleteoldrdn=False, "
+                "newSuperior=b'ou=newusers,dc=example,dc=org')"
+            ),
+        )
+        self.assertEqual(
+            repr(
+                pureldap.LDAPModifyDNRequest(
+                    entry="uid=user,ou=users,dc=example,dc=org",
+                    newrdn="uid=newuser",
+                    deleteoldrdn=False,
+                    newSuperior="ou=newusers,dc=example,dc=org",
+                )
+            ),
+            (
+                "LDAPModifyDNRequest(entry='uid=user,ou=users,dc=example,dc=org', "
+                "newrdn='uid=newuser', deleteoldrdn=False, "
+                "newSuperior='ou=newusers,dc=example,dc=org')"
+            ),
+        )
 
     def test_modify_dn_request_with_tag_repr(self):
         """LDAPModifyDNRequest.__repr__ with custom tag attribute"""
-        entries = [
-            b"uid=user,ou=users,dc=example,dc=org",
-            "uid=user,ou=users,dc=example,dc=org",
-        ]
-        rdns = [b"uid=newuser", "uid=newuser"]
-        for entry in entries:
-            for rdn in rdns:
-                mdnr = pureldap.LDAPModifyDNRequest(
-                    entry=entry,
-                    newrdn=rdn,
+        self.assertEqual(
+            repr(
+                pureldap.LDAPModifyDNRequest(
+                    entry=b"uid=user,ou=users,dc=example,dc=org",
+                    newrdn=b"uid=newuser",
                     deleteoldrdn=True,
                     tag=42,
                 )
-                mdnr_repr = (
-                    "LDAPModifyDNRequest(entry='uid=user,ou=users,dc=example,dc=org', "
-                    "newrdn='uid=newuser', deleteoldrdn=True, tag=42)"
+            ),
+            (
+                "LDAPModifyDNRequest(entry=b'uid=user,ou=users,dc=example,dc=org', "
+                "newrdn=b'uid=newuser', deleteoldrdn=True, tag=42)"
+            ),
+        )
+        self.assertEqual(
+            repr(
+                pureldap.LDAPModifyDNRequest(
+                    entry="uid=user,ou=users,dc=example,dc=org",
+                    newrdn="uid=newuser",
+                    deleteoldrdn=True,
+                    tag=42,
                 )
-                self.assertEqual(repr(mdnr), mdnr_repr)
+            ),
+            (
+                "LDAPModifyDNRequest(entry='uid=user,ou=users,dc=example,dc=org', "
+                "newrdn='uid=newuser', deleteoldrdn=True, tag=42)"
+            ),
+        )
 
     def test_compare_request_repr(self):
         """LDAPCompareRequest.__repr__"""
-        entries = [
-            b"uid=user,ou=users,dc=example,dc=org",
-            "uid=user,ou=users,dc=example,dc=org",
-        ]
-        for entry in entries:
-            cr = pureldap.LDAPCompareRequest(
-                entry=entry,
-                ava=pureldap.LDAPAttributeValueAssertion(
-                    pureber.BEROctetString("key"),
-                    pureber.BEROctetString("value"),
-                ),
-            )
-            cr_repr = (
+        self.assertEqual(
+            repr(
+                pureldap.LDAPCompareRequest(
+                    entry=b"uid=user,ou=users,dc=example,dc=org",
+                    ava=pureldap.LDAPAttributeValueAssertion(
+                        pureber.BEROctetString(b"key"),
+                        pureber.BEROctetString(b"value"),
+                    ),
+                )
+            ),
+            (
+                "LDAPCompareRequest(entry=b'uid=user,ou=users,dc=example,dc=org', "
+                "ava=LDAPAttributeValueAssertion(attributeDesc=BEROctetString(value=b'key'), "
+                "assertionValue=BEROctetString(value=b'value')))"
+            ),
+        )
+        self.assertEqual(
+            repr(
+                pureldap.LDAPCompareRequest(
+                    entry="uid=user,ou=users,dc=example,dc=org",
+                    ava=pureldap.LDAPAttributeValueAssertion(
+                        pureber.BEROctetString("key"),
+                        pureber.BEROctetString("value"),
+                    ),
+                )
+            ),
+            (
                 "LDAPCompareRequest(entry='uid=user,ou=users,dc=example,dc=org', "
                 "ava=LDAPAttributeValueAssertion(attributeDesc=BEROctetString(value='key'), "
                 "assertionValue=BEROctetString(value='value')))"
-            )
-            self.assertEqual(repr(cr), cr_repr)
+            ),
+        )
 
     def test_abandon_request_repr(self):
         """LDAPAbandonRequest.__repr__"""
@@ -1653,52 +1882,71 @@ class TestRepresentations(unittest.TestCase):
 
     def test_password_modify_request_repr(self):
         """LDAPPasswordModifyRequest.__repr__"""
-        user_identities = [
-            b"uid=user,ou=users,dc=example,dc=org",
-            "uid=user,ou=users,dc=example,dc=org",
-        ]
-        old_passwords = [b"qwerty", "qwerty"]
-        new_passwords = [b"asdfgh", "asdfgh"]
-        for user_identity in user_identities:
-            for old_password in old_passwords:
-                for new_password in new_passwords:
-                    pmr = pureldap.LDAPPasswordModifyRequest(
-                        userIdentity=user_identity,
-                        oldPasswd=old_password,
-                        newPasswd=new_password,
-                    )
-                    pmr_repr = (
-                        "LDAPPasswordModifyRequest(userIdentity=LDAPPasswordModifyRequest_userIdentity("
-                        "value='uid=user,ou=users,dc=example,dc=org'), "
-                        "oldPasswd=LDAPPasswordModifyRequest_oldPasswd(value='******'), "
-                        "newPasswd=LDAPPasswordModifyRequest_newPasswd(value='******'))"
-                    )
-                    self.assertEqual(repr(pmr), pmr_repr)
+        self.assertEqual(
+            repr(
+                pureldap.LDAPPasswordModifyRequest(
+                    userIdentity=b"uid=user,ou=users,dc=example,dc=org",
+                    oldPasswd=b"qwerty",
+                    newPasswd=b"asdfgh",
+                )
+            ),
+            (
+                "LDAPPasswordModifyRequest(userIdentity=LDAPPasswordModifyRequest_userIdentity("
+                "value=b'uid=user,ou=users,dc=example,dc=org'), "
+                "oldPasswd=LDAPPasswordModifyRequest_oldPasswd(value='******'), "
+                "newPasswd=LDAPPasswordModifyRequest_newPasswd(value='******'))"
+            ),
+        )
+        self.assertEqual(
+            repr(
+                pureldap.LDAPPasswordModifyRequest(
+                    userIdentity="uid=user,ou=users,dc=example,dc=org",
+                    oldPasswd="qwerty",
+                    newPasswd="asdfgh",
+                )
+            ),
+            (
+                "LDAPPasswordModifyRequest(userIdentity=LDAPPasswordModifyRequest_userIdentity("
+                "value='uid=user,ou=users,dc=example,dc=org'), "
+                "oldPasswd=LDAPPasswordModifyRequest_oldPasswd(value='******'), "
+                "newPasswd=LDAPPasswordModifyRequest_newPasswd(value='******'))"
+            ),
+        )
 
     def test_password_modify_request_with_tag_repr(self):
         """LDAPPasswordModifyRequest.__repr__ with custom tag attribute"""
-        user_identities = [
-            b"uid=user,ou=users,dc=example,dc=org",
-            "uid=user,ou=users,dc=example,dc=org",
-        ]
-        old_passwords = [b"qwerty", "qwerty"]
-        new_passwords = [b"asdfgh", "asdfgh"]
-        for user_identity in user_identities:
-            for old_password in old_passwords:
-                for new_password in new_passwords:
-                    pmr = pureldap.LDAPPasswordModifyRequest(
-                        userIdentity=user_identity,
-                        oldPasswd=old_password,
-                        newPasswd=new_password,
-                        tag=42,
-                    )
-                    pmr_repr = (
-                        "LDAPPasswordModifyRequest(userIdentity=LDAPPasswordModifyRequest_userIdentity("
-                        "value='uid=user,ou=users,dc=example,dc=org'), "
-                        "oldPasswd=LDAPPasswordModifyRequest_oldPasswd(value='******'), "
-                        "newPasswd=LDAPPasswordModifyRequest_newPasswd(value='******'), tag=42)"
-                    )
-                    self.assertEqual(repr(pmr), pmr_repr)
+        self.assertEqual(
+            repr(
+                pureldap.LDAPPasswordModifyRequest(
+                    userIdentity=b"uid=user,ou=users,dc=example,dc=org",
+                    oldPasswd=b"qwerty",
+                    newPasswd=b"asdfgh",
+                    tag=42,
+                )
+            ),
+            (
+                "LDAPPasswordModifyRequest(userIdentity=LDAPPasswordModifyRequest_userIdentity("
+                "value=b'uid=user,ou=users,dc=example,dc=org'), "
+                "oldPasswd=LDAPPasswordModifyRequest_oldPasswd(value='******'), "
+                "newPasswd=LDAPPasswordModifyRequest_newPasswd(value='******'), tag=42)"
+            ),
+        )
+        self.assertEqual(
+            repr(
+                pureldap.LDAPPasswordModifyRequest(
+                    userIdentity="uid=user,ou=users,dc=example,dc=org",
+                    oldPasswd="qwerty",
+                    newPasswd="asdfgh",
+                    tag=42,
+                )
+            ),
+            (
+                "LDAPPasswordModifyRequest(userIdentity=LDAPPasswordModifyRequest_userIdentity("
+                "value='uid=user,ou=users,dc=example,dc=org'), "
+                "oldPasswd=LDAPPasswordModifyRequest_oldPasswd(value='******'), "
+                "newPasswd=LDAPPasswordModifyRequest_newPasswd(value='******'), tag=42)"
+            ),
+        )
 
     def test_starttls_request_repr(self):
         """LDAPStartTLSRequest.__repr__"""
@@ -1726,113 +1974,177 @@ class TestRepresentations(unittest.TestCase):
 
     def test_attribute_value_assertion_repr(self):
         """LDAPAttributeValueAssertion.__repr__"""
-        attributes = [(b"key", b"value"), ("key", "value")]
-        for key, value in attributes:
-            ava = pureldap.LDAPAttributeValueAssertion(
-                pureber.BEROctetString(key),
-                pureber.BEROctetString(value),
-            )
-            ava_repr = (
+        self.assertEqual(
+            repr(
+                pureldap.LDAPAttributeValueAssertion(
+                    pureber.BEROctetString(b"key"),
+                    pureber.BEROctetString(b"value"),
+                )
+            ),
+            (
+                "LDAPAttributeValueAssertion(attributeDesc=BEROctetString(value=b'key'), "
+                "assertionValue=BEROctetString(value=b'value'))"
+            ),
+        )
+        self.assertEqual(
+            repr(
+                pureldap.LDAPAttributeValueAssertion(
+                    pureber.BEROctetString("key"),
+                    pureber.BEROctetString("value"),
+                )
+            ),
+            (
                 "LDAPAttributeValueAssertion(attributeDesc=BEROctetString(value='key'), "
                 "assertionValue=BEROctetString(value='value'))"
-            )
-            self.assertEqual(repr(ava), ava_repr)
+            ),
+        )
 
     def test_attribute_value_assertion_with_tag_repr(self):
         """LDAPAttributeValueAssertion.__repr__ with custom tag attribute"""
-        attributes = [(b"key", b"value"), ("key", "value")]
-        for key, value in attributes:
-            ava = pureldap.LDAPAttributeValueAssertion(
-                pureber.BEROctetString(key),
-                pureber.BEROctetString(value),
-                tag=42,
-            )
-            ava_repr = (
+        self.assertEqual(
+            repr(
+                pureldap.LDAPAttributeValueAssertion(
+                    pureber.BEROctetString(b"key"),
+                    pureber.BEROctetString(b"value"),
+                    tag=42,
+                )
+            ),
+            (
+                "LDAPAttributeValueAssertion(attributeDesc=BEROctetString(value=b'key'), "
+                "assertionValue=BEROctetString(value=b'value'), tag=42)"
+            ),
+        )
+        self.assertEqual(
+            repr(
+                pureldap.LDAPAttributeValueAssertion(
+                    pureber.BEROctetString("key"),
+                    pureber.BEROctetString("value"),
+                    tag=42,
+                )
+            ),
+            (
                 "LDAPAttributeValueAssertion(attributeDesc=BEROctetString(value='key'), "
                 "assertionValue=BEROctetString(value='value'), tag=42)"
-            )
-            self.assertEqual(repr(ava), ava_repr)
+            ),
+        )
 
     def test_ldapfilter_not_repr(self):
         """LDAPFilter_not.__repr__"""
-        values = [b"value", "value"]
-        for value in values:
-            lf = pureldap.LDAPFilter_not(pureber.BEROctetString(value))
-            lf_repr = "LDAPFilter_not(value=BEROctetString(value='value'))"
-            self.assertEqual(repr(lf), lf_repr)
+        self.assertEqual(
+            repr(pureldap.LDAPFilter_not(pureber.BEROctetString(b"value"))),
+            "LDAPFilter_not(value=BEROctetString(value=b'value'))",
+        )
+        self.assertEqual(
+            repr(pureldap.LDAPFilter_not(pureber.BEROctetString("value"))),
+            "LDAPFilter_not(value=BEROctetString(value='value'))",
+        )
 
     def test_ldapfilter_not_with_tag_repr(self):
         """LDAPFilter_not.__repr__ with custom tag attribute"""
-        values = [b"value", "value"]
-        for value in values:
-            lf = pureldap.LDAPFilter_not(pureber.BEROctetString(value), tag=42)
-            lf_repr = "LDAPFilter_not(value=BEROctetString(value='value'), tag=42)"
-            self.assertEqual(repr(lf), lf_repr)
+        self.assertEqual(
+            repr(pureldap.LDAPFilter_not(pureber.BEROctetString(b"value"), tag=42)),
+            "LDAPFilter_not(value=BEROctetString(value=b'value'), tag=42)",
+        )
+        self.assertEqual(
+            repr(pureldap.LDAPFilter_not(pureber.BEROctetString("value"), tag=42)),
+            "LDAPFilter_not(value=BEROctetString(value='value'), tag=42)",
+        )
 
     def test_ldapfilter_substrings_repr(self):
         """LDAPFilter_substrings.__repr__"""
-        types = [b"cn", "cn"]
-        values = [b"value", "value"]
-        for tp in types:
-            for value in values:
-                lf = pureldap.LDAPFilter_substrings(
-                    type=tp,
-                    substrings=[pureldap.LDAPFilter_substrings_initial(value=value)],
+        self.assertEqual(
+            repr(
+                pureldap.LDAPFilter_substrings(
+                    type=b"cn",
+                    substrings=[pureldap.LDAPFilter_substrings_initial(value=b"value")],
                 )
-                lf_repr = (
-                    "LDAPFilter_substrings(type='cn', "
-                    "substrings=[LDAPFilter_substrings_initial(value='value')])"
+            ),
+            (
+                "LDAPFilter_substrings(type=b'cn', "
+                "substrings=[LDAPFilter_substrings_initial(value=b'value')])"
+            ),
+        )
+        self.assertEqual(
+            repr(
+                pureldap.LDAPFilter_substrings(
+                    type="cn",
+                    substrings=[pureldap.LDAPFilter_substrings_initial(value="value")],
                 )
-                self.assertEqual(repr(lf), lf_repr)
+            ),
+            (
+                "LDAPFilter_substrings(type='cn', "
+                "substrings=[LDAPFilter_substrings_initial(value='value')])"
+            ),
+        )
 
     def test_ldapfilter_substrings_with_tag_repr(self):
         """LDAPFilter_substrings.__repr__ with custom tag attribute"""
-        types = [b"cn", "cn"]
-        values = [b"value", "value"]
-        for tp in types:
-            for value in values:
-                lf = pureldap.LDAPFilter_substrings(
-                    type=tp,
-                    substrings=[pureldap.LDAPFilter_substrings_initial(value=value)],
+        self.assertEqual(
+            repr(
+                pureldap.LDAPFilter_substrings(
+                    type=b"cn",
+                    substrings=[pureldap.LDAPFilter_substrings_initial(value=b"value")],
                     tag=42,
                 )
-                lf_repr = (
-                    "LDAPFilter_substrings(type='cn', "
-                    "substrings=[LDAPFilter_substrings_initial(value='value')], tag=42)"
+            ),
+            (
+                "LDAPFilter_substrings(type=b'cn', "
+                "substrings=[LDAPFilter_substrings_initial(value=b'value')], tag=42)"
+            ),
+        )
+        self.assertEqual(
+            repr(
+                pureldap.LDAPFilter_substrings(
+                    type="cn",
+                    substrings=[pureldap.LDAPFilter_substrings_initial(value="value")],
+                    tag=42,
                 )
-                self.assertEqual(repr(lf), lf_repr)
+            ),
+            (
+                "LDAPFilter_substrings(type='cn', "
+                "substrings=[LDAPFilter_substrings_initial(value='value')], tag=42)"
+            ),
+        )
 
     def test_matching_rule_assertion_repr(self):
         """LDAPMatchingRuleAssertion.__repr__"""
-        rules = [b"rule", "rule"]
-        types = [b"type", "type"]
-        values = [b"value", "value"]
-        for rule in rules:
-            for tp in types:
-                for value in values:
-                    mra = pureldap.LDAPMatchingRuleAssertion(rule, tp, value)
-                    mra_repr = (
-                        "LDAPMatchingRuleAssertion(matchingRule=LDAPMatchingRuleAssertion_matchingRule("
-                        "value='rule'), type=LDAPMatchingRuleAssertion_type(value='type'), matchValue="
-                        "LDAPMatchingRuleAssertion_matchValue(value='value'), dnAttributes=None)"
-                    )
-                    self.assertEqual(repr(mra), mra_repr)
+        self.assertEqual(
+            repr(pureldap.LDAPMatchingRuleAssertion(b"rule", b"type", b"value")),
+            (
+                "LDAPMatchingRuleAssertion(matchingRule=LDAPMatchingRuleAssertion_matchingRule("
+                "value=b'rule'), type=LDAPMatchingRuleAssertion_type(value=b'type'), matchValue="
+                "LDAPMatchingRuleAssertion_matchValue(value=b'value'), dnAttributes=None)"
+            ),
+        )
+        self.assertEqual(
+            repr(pureldap.LDAPMatchingRuleAssertion("rule", "type", "value")),
+            (
+                "LDAPMatchingRuleAssertion(matchingRule=LDAPMatchingRuleAssertion_matchingRule("
+                "value='rule'), type=LDAPMatchingRuleAssertion_type(value='type'), matchValue="
+                "LDAPMatchingRuleAssertion_matchValue(value='value'), dnAttributes=None)"
+            ),
+        )
 
     def test_matching_rule_assertion_with_tag_repr(self):
         """LDAPMatchingRuleAssertion.__repr__ with custom tag attribute"""
-        rules = [b"rule", "rule"]
-        types = [b"type", "type"]
-        values = [b"value", "value"]
-        for rule in rules:
-            for tp in types:
-                for value in values:
-                    mra = pureldap.LDAPMatchingRuleAssertion(rule, tp, value, tag=42)
-                    mra_repr = (
-                        "LDAPMatchingRuleAssertion(matchingRule=LDAPMatchingRuleAssertion_matchingRule("
-                        "value='rule'), type=LDAPMatchingRuleAssertion_type(value='type'), matchValue="
-                        "LDAPMatchingRuleAssertion_matchValue(value='value'), dnAttributes=None, tag=42)"
-                    )
-                    self.assertEqual(repr(mra), mra_repr)
+        self.assertEqual(
+            repr(
+                pureldap.LDAPMatchingRuleAssertion(b"rule", b"type", b"value", tag=42)
+            ),
+            (
+                "LDAPMatchingRuleAssertion(matchingRule=LDAPMatchingRuleAssertion_matchingRule("
+                "value=b'rule'), type=LDAPMatchingRuleAssertion_type(value=b'type'), matchValue="
+                "LDAPMatchingRuleAssertion_matchValue(value=b'value'), dnAttributes=None, tag=42)"
+            ),
+        )
+        self.assertEqual(
+            repr(pureldap.LDAPMatchingRuleAssertion("rule", "type", "value", tag=42)),
+            (
+                "LDAPMatchingRuleAssertion(matchingRule=LDAPMatchingRuleAssertion_matchingRule("
+                "value='rule'), type=LDAPMatchingRuleAssertion_type(value='type'), matchValue="
+                "LDAPMatchingRuleAssertion_matchValue(value='value'), dnAttributes=None, tag=42)"
+            ),
+        )
 
     def test_ldap_bind_response_server_sasl_creds_repr(self):
         """ServerSaslCreds will often have binary data. A custom repr is needed because
