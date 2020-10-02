@@ -10,11 +10,7 @@ from ldaptor import interfaces, attributeset, delta
 from ldaptor._encoder import WireStrAlias, to_bytes, get_strings
 from ldaptor.protocols.ldap import distinguishedname, ldif, ldaperrors
 
-
-try:
-    from hashlib import sha1
-except ImportError:
-    from sha import sha as sha1
+from hashlib import sha1
 
 
 def sshaDigest(passphrase, salt=None):

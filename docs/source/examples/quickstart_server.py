@@ -1,9 +1,5 @@
 import sys
-
-try:
-    from cStringIO import StringIO as BytesIO
-except ImportError:
-    from io import BytesIO
+import io
 
 from twisted.application import service
 from twisted.internet.endpoints import serverFromString
@@ -68,7 +64,7 @@ userPassword: eekretsay
 class Tree:
     def __init__(self):
         global LDIF
-        self.f = BytesIO(LDIF)
+        self.f = io.BytesIO(LDIF)
         d = fromLDIFFile(self.f)
         d.addCallback(self.ldifRead)
 
