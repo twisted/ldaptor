@@ -37,7 +37,7 @@ class MergedLDAPServer(ldapserver.BaseLDAPServer):
 
     def _failConnection(self, reason):
         self.transport.loseConnection()
-        raise ldaperrors.LDAPOther("Cannot connect to server.{}".format(reason))
+        raise ldaperrors.LDAPOther(f"Cannot connect to server.{reason}")
 
     def _cbConnectionMade(self, proto):
         self.clients.append(proto)

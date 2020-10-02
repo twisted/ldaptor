@@ -53,9 +53,7 @@ class LDAPSearchFilter(annotate.String):
         try:
             f = ldapfilter.parseFilter(val)
         except ldapfilter.InvalidLDAPFilter as e:
-            raise annotate.InputError(
-                "{!r} is not a valid LDAP search filter: {}".format(val, e)
-            )
+            raise annotate.InputError(f"{val!r} is not a valid LDAP search filter: {e}")
         return f
 
 

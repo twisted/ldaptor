@@ -15,7 +15,7 @@ def onConnect(clientProtocol):
     o = LDAPEntry(clientProtocol, "dc=fr")
     results = yield o.search()
     data = "".join([result.getLDIF() for result in results])
-    log.msg("LDIF formatted results:\n{}".format(data))
+    log.msg(f"LDIF formatted results:\n{data}")
 
 
 def onError(err, reactor):

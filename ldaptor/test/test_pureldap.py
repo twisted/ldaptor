@@ -903,40 +903,40 @@ class TestEscaping(unittest.TestCase):
                     attributeDesc=pureldap.LDAPAttributeDescription("key"),
                     assertionValue=pureldap.LDAPAttributeValue(chars),
                 ),
-                "(key={})".format(escaped_chars),
+                f"(key={escaped_chars})",
             ),
             (
                 pureldap.LDAPFilter_substrings_initial(value=chars),
-                "{}".format(escaped_chars),
+                f"{escaped_chars}",
             ),
             (
                 pureldap.LDAPFilter_substrings_any(value=chars),
-                "{}".format(escaped_chars),
+                f"{escaped_chars}",
             ),
             (
                 pureldap.LDAPFilter_substrings_final(value=chars),
-                "{}".format(escaped_chars),
+                f"{escaped_chars}",
             ),
             (
                 pureldap.LDAPFilter_greaterOrEqual(
                     attributeDesc=pureldap.LDAPString("key"),
                     assertionValue=pureldap.LDAPString(chars),
                 ),
-                "(key>={})".format(escaped_chars),
+                f"(key>={escaped_chars})",
             ),
             (
                 pureldap.LDAPFilter_lessOrEqual(
                     attributeDesc=pureldap.LDAPString("key"),
                     assertionValue=pureldap.LDAPString(chars),
                 ),
-                "(key<={})".format(escaped_chars),
+                f"(key<={escaped_chars})",
             ),
             (
                 pureldap.LDAPFilter_approxMatch(
                     attributeDesc=pureldap.LDAPString("key"),
                     assertionValue=pureldap.LDAPString(chars),
                 ),
-                "(key~={})".format(escaped_chars),
+                f"(key~={escaped_chars})",
             ),
         ]
 
@@ -958,23 +958,23 @@ class TestEscaping(unittest.TestCase):
                     assertionValue=pureldap.LDAPAttributeValue(chars),
                     escaper=custom_escaper,
                 ),
-                "(key={})".format(escaped_chars),
+                f"(key={escaped_chars})",
             ),
             (
                 pureldap.LDAPFilter_substrings_initial(
                     value=chars, escaper=custom_escaper
                 ),
-                "{}".format(escaped_chars),
+                f"{escaped_chars}",
             ),
             (
                 pureldap.LDAPFilter_substrings_any(value=chars, escaper=custom_escaper),
-                "{}".format(escaped_chars),
+                f"{escaped_chars}",
             ),
             (
                 pureldap.LDAPFilter_substrings_final(
                     value=chars, escaper=custom_escaper
                 ),
-                "{}".format(escaped_chars),
+                f"{escaped_chars}",
             ),
             (
                 pureldap.LDAPFilter_greaterOrEqual(
@@ -982,7 +982,7 @@ class TestEscaping(unittest.TestCase):
                     assertionValue=pureldap.LDAPString(chars),
                     escaper=custom_escaper,
                 ),
-                "(key>={})".format(escaped_chars),
+                f"(key>={escaped_chars})",
             ),
             (
                 pureldap.LDAPFilter_lessOrEqual(
@@ -990,7 +990,7 @@ class TestEscaping(unittest.TestCase):
                     assertionValue=pureldap.LDAPString(chars),
                     escaper=custom_escaper,
                 ),
-                "(key<={})".format(escaped_chars),
+                f"(key<={escaped_chars})",
             ),
             (
                 pureldap.LDAPFilter_approxMatch(
@@ -998,7 +998,7 @@ class TestEscaping(unittest.TestCase):
                     assertionValue=pureldap.LDAPString(chars),
                     escaper=custom_escaper,
                 ),
-                "(key~={})".format(escaped_chars),
+                f"(key~={escaped_chars})",
             ),
         ]
 

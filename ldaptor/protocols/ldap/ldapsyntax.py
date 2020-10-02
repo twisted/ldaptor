@@ -24,7 +24,7 @@ class PasswordSetAggregateError(Exception):
             self.__doc__,
             "; ".join(
                 [
-                    "{} failed with {}".format(name, fail.getErrorMessage())
+                    f"{name} failed with {fail.getErrorMessage()}"
                     for name, fail in self.errors
                 ]
             ),
@@ -88,7 +88,7 @@ class MatchNotImplemented(NotImplementedError):
         self.op = op
 
     def __str__(self):
-        return "{}: {!r}".format(self.__doc__, self.op)
+        return f"{self.__doc__}: {self.op!r}"
 
 
 class JournaledLDAPAttributeSet(attributeset.LDAPAttributeSet):

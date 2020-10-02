@@ -58,7 +58,7 @@ class HostIPAddress:
     def printDHCP(self, domain, prefix=""):
         def output():
             yield "# %s" % self.host.dn
-            yield "host {}.{} {{".format(self.host.name, domain)
+            yield f"host {self.host.name}.{domain} {{"
             for mac in self.host.macAddresses:
                 yield "\thardware ethernet %s;" % mac
             yield "\tfixed-address %s;" % self.ipAddress
@@ -181,8 +181,8 @@ class Net:
         nm = my_ntoa(nm)
         r = [
             "# %s" % self.dn,
-            "subnet {} netmask {} {{".format(self.address, nm),
-            '\toption domain-name "{}.{}";'.format(self.name, domain),
+            f"subnet {self.address} netmask {nm} {{",
+            f'\toption domain-name "{self.name}.{domain}";',
         ]
         if self.routers:
             r.append("\toption routers %s;" % (", ".join(self.routers)))
@@ -322,9 +322,7 @@ def only(e, attr, default=_NO_DEFAULT):
         if default is not _NO_DEFAULT:
             return default
         else:
-            raise RuntimeError(
-                "object {} does not have attribute {!r}.".format(e.dn, attr)
-            )
+            raise RuntimeError(f"object {e.dn} does not have attribute {attr!r}.")
     else:
         if len(val) != 1:
             raise RuntimeError(
