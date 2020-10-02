@@ -35,7 +35,7 @@ from ldaptor.protocols.pureber import (
     berDecodeObject,
     int2berlen,
 )
-from ldaptor._encoder import to_bytes, repr_converter
+from ldaptor._encoder import to_bytes
 
 next_ldap_message_id = 1
 
@@ -238,8 +238,8 @@ class LDAPBindRequest(LDAPProtocolRequest, BERSequence):
         auth = "*" * len(self.auth)
         l = []
         l.append("version=%d" % self.version)
-        l.append("dn=%s" % repr(repr_converter(self.dn)))
-        l.append("auth=%s" % repr(repr_converter(auth)))
+        l.append("dn=%s" % repr(self.dn))
+        l.append("auth=%s" % repr(auth))
         if self.tag != self.__class__.tag:
             l.append("tag=%d" % self.tag)
         l.append("sasl=%s" % repr(self.sasl))
@@ -280,7 +280,7 @@ class LDAPSearchResultReference(LDAPProtocolResponse, BERSequence):
     def __repr__(self):
         return "{}(uris={}{})".format(
             self.__class__.__name__,
-            repr([repr_converter(uri) for uri in self.uris]),
+            repr([uri for uri in self.uris]),
             ", tag={}".format(self.tag) if self.tag != self.__class__.tag else "",
         )
 
@@ -356,9 +356,9 @@ class LDAPResult(LDAPProtocolResponse, BERSequence):
         l = []
         l.append("resultCode=%r" % self.resultCode)
         if self.matchedDN:
-            l.append("matchedDN=%r" % repr_converter(self.matchedDN))
+            l.append("matchedDN=%r" % self.matchedDN)
         if self.errorMessage:
-            l.append("errorMessage=%r" % repr_converter(self.errorMessage))
+            l.append("errorMessage=%r" % self.errorMessage)
         if self.referral:
             l.append("referral=%r" % self.referral)
         if self.tag != self.__class__.tag:
@@ -649,7 +649,7 @@ class LDAPFilter_substrings(BERSequence):
         ).toWire()
 
     def __repr__(self):
-        tp = repr_converter(self.type)
+        tp = self.type
         if self.tag == self.__class__.tag:
             return self.__class__.__name__ + "(type={}, substrings={})".format(
                 repr(tp),
@@ -990,7 +990,7 @@ class LDAPSearchRequest(LDAPProtocolRequest, BERSequence):
         ).toWire()
 
     def __repr__(self):
-        base = repr_converter(self.baseObject)
+        base = self.baseObject
         if self.tag == self.__class__.tag:
             return self.__class__.__name__ + (
                 "(baseObject=%s, scope=%s, derefAliases=%s, "
@@ -1070,11 +1070,8 @@ class LDAPSearchResultEntry(LDAPProtocolResponse, BERSequence):
         ).toWire()
 
     def __repr__(self):
-        name = repr_converter(self.objectName)
-        attributes = [
-            (repr_converter(key), [repr_converter(v) for v in value])
-            for (key, value) in self.attributes
-        ]
+        name = self.objectName
+        attributes = [(key, [v for v in value]) for (key, value) in self.attributes]
         return "{}(objectName={}, attributes={}{})".format(
             self.__class__.__name__,
             repr(name),
@@ -1224,7 +1221,7 @@ class LDAPModifyRequest(LDAPProtocolRequest, BERSequence):
         return BERSequence(l, tag=self.tag).toWire()
 
     def __repr__(self):
-        name = repr_converter(self.object)
+        name = self.object
         if self.tag == self.__class__.tag:
             return self.__class__.__name__ + "(object={}, modification={})".format(
                 repr(name),
@@ -1286,7 +1283,7 @@ class LDAPAddRequest(LDAPProtocolRequest, BERSequence):
         ).toWire()
 
     def __repr__(self):
-        entry = repr_converter(self.entry)
+        entry = self.entry
         if self.tag == self.__class__.tag:
             return self.__class__.__name__ + "(entry={}, attributes={})".format(
                 repr(entry),
@@ -1322,7 +1319,7 @@ class LDAPDelRequest(LDAPProtocolRequest, LDAPString):
         return LDAPString.toWire(self)
 
     def __repr__(self):
-        entry = repr_converter(self.value)
+        entry = self.value
         if self.tag == self.__class__.tag:
             return self.__class__.__name__ + "(entry=%s)" % repr(entry)
         else:
@@ -1408,12 +1405,12 @@ class LDAPModifyDNRequest(LDAPProtocolRequest, BERSequence):
 
     def __repr__(self):
         l = [
-            "entry=%s" % repr(repr_converter(self.entry)),
-            "newrdn=%s" % repr(repr_converter(self.newrdn)),
+            "entry=%s" % repr(self.entry),
+            "newrdn=%s" % repr(self.newrdn),
             "deleteoldrdn=%s" % repr(self.deleteoldrdn),
         ]
         if self.newSuperior is not None:
-            l.append("newSuperior=%s" % repr(repr_converter(self.newSuperior)))
+            l.append("newSuperior=%s" % repr(self.newSuperior))
         if self.tag != self.__class__.tag:
             l.append("tag=%d" % self.tag)
         return self.__class__.__name__ + "(" + ", ".join(l) + ")"
@@ -1458,7 +1455,7 @@ class LDAPCompareRequest(LDAPProtocolRequest, BERSequence):
 
     def __repr__(self):
         l = [
-            "entry={}".format(repr(repr_converter(self.entry))),
+            "entry={}".format(repr(self.entry)),
             "ava={}".format(repr(self.ava)),
         ]
         return "{}({})".format(self.__class__.__name__, ", ".join(l))

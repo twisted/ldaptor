@@ -34,16 +34,6 @@ def to_unicode(value):
     return value
 
 
-def repr_converter(value):
-    """
-    Converts value to its string representation:
-
-    * Byte string for Python 2
-    * Unicode string for Python 3
-    """
-    return to_unicode(value)
-
-
 def get_strings(value):
     """
     Getting tuple of available string values
