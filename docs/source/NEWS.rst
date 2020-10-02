@@ -1,7 +1,7 @@
 Changelog
 =========
 
-20.1.1 (unreleased)
+20.1.1 (2020-10-02)
 -------------------
 
 - Updated the object representations of pureber and pureldap containers to
