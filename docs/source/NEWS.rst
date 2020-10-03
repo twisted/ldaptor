@@ -4,7 +4,7 @@ Changelog
 20.1.2 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- fix ``ModuleNotFoundError: No module named 'cStringIO'`` in ldaptor-ldap2pdns.
 
 
 20.1.1 (2020-10-02)
