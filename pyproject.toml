@@ -16,6 +16,7 @@ minversion=3.20.0
 requires=
     virtualenv >= 20.0.31
     tox-wheel >= 0.5.0
+    tox-gh-actions >= 2.0.0
 ;
 ; Tags explanation:
 ; * test - run trial tests
