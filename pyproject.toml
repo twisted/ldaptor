@@ -2,6 +2,18 @@
 requires = [ "setuptools >= 35.0.2", "wheel >= 0.29.0"]
 build-backend = "setuptools.build_meta"
 
+[tool.coverage.run]
+branch = true
+source_pkgs = ["ldaptor"]
+parallel = true
+
+[tool.coverage.paths]
+source = [
+    "ldaptor",
+    "*/site-packages/ldaptor",
+    '*\site-packages\ldaptor',
+]
+
 
 [tool.tox]
 legacy_tox_ini = """
@@ -32,7 +44,7 @@ wheel = True
 wheel_pep517 = True
 wheel_build_env = build
 deps = 
-    coverage >= 5.3
+    coverage[toml] >= 5.3
     pyparsing
     passlib
     twlatest: Twisted[tls]
@@ -57,7 +69,7 @@ passenv = *
 commands =
     {envpython} --version
     test: trial --version
-    test: coverage run --rcfile={toxinidir}/.coveragerc -m twisted.trial --temp-directory={envtmpdir}/_trial_temp {posargs:ldaptor}
+    test: coverage run --rcfile={toxinidir}/pyproject.toml -m twisted.trial --temp-directory={envtmpdir}/_trial_temp {posargs:ldaptor}
 
     ; Only run on local dev env.
     dev: coverage report --show-missing
@@ -95,7 +107,7 @@ commands =
 passenv = GITHUB_*
 deps =
   codecov
-  coverage>=5.3
+  coverage[toml]>=5.3
 commands =
     codecov --required
 depends = py{,38,34,35,36,37,py3}-test-{twlatest,twtrunk,dev}

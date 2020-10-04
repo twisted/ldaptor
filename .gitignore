@@ -7,6 +7,7 @@ docs/*.png
 ldaptor.egg-info
 .idea
 .coverage
+.coverage.*
 venv/
 build/
 dist/
