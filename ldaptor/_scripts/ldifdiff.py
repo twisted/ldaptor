@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import sys
 from ldaptor.protocols.ldap import ldif
 from ldaptor import usage, inmemory
@@ -51,7 +49,7 @@ class MyOptions(usage.Options, usage.Options_service_location, usage.Options_bin
         self.opts["file2"] = file2
 
 
-if __name__ == "__main__":
+def console_script():
     try:
         config = MyOptions()
         config.parseOptions()
@@ -60,3 +58,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     main(config.opts["file1"], config.opts["file2"], sys.stdout)
+
+
+if __name__ == "__main__":
+    sys.exit(console_script())

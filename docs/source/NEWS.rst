@@ -5,6 +5,7 @@ Changelog
 -------------------
 
 - fix ``ModuleNotFoundError: No module named 'cStringIO'`` in ldaptor-ldap2pdns.
+- move scripts to console_scripts entry_points
 
 
 20.1.1 (2020-10-02)

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 from ldaptor.protocols.ldap import ldapclient, ldapconnector, ldapsyntax
 from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage, ldapfilter, config, dns
@@ -338,7 +336,7 @@ class MyOptions(
         self.opts["filter"] = filter
 
 
-if __name__ == "__main__":
+def console_script():
     import sys
 
     try:
@@ -352,3 +350,7 @@ if __name__ == "__main__":
         baseDN=opts["base"], serviceLocationOverrides=opts["service-location"]
     )
     main(cfg, opts["domain"], opts["forward"], opts["reverse"], opts["filter"])
+
+
+if __name__ == "__main__":
+    sys.exit(console_script())

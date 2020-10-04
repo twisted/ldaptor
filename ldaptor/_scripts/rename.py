@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import sys, os, getpass
 from ldaptor.protocols.ldap import (
     distinguishedname,
@@ -62,7 +60,7 @@ class MyOptions(usage.Options, usage.Options_service_location, usage.Options_bin
         self.opts["to"] = toDN
 
 
-if __name__ == "__main__":
+def console_script():
     try:
         opts = MyOptions()
         opts.parseOptions()
@@ -85,3 +83,7 @@ if __name__ == "__main__":
         f.close()
 
     main(cfg, opts["from"], opts["to"], opts["binddn"], bindPassword)
+
+
+if __name__ == "__main__":
+    sys.exit(console_script())

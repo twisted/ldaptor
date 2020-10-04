@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import sys
 from ldaptor.protocols.ldap import ldif, ldifdelta
 from ldaptor import usage, inmemory
@@ -52,7 +50,7 @@ class MyOptions(usage.Options):
         self["data"] = data
 
 
-if __name__ == "__main__":
+def console_script():
     try:
         config = MyOptions()
         config.parseOptions()
@@ -62,3 +60,7 @@ if __name__ == "__main__":
 
     data = open(config["data"])
     main(data, sys.stdin, sys.stdout)
+
+
+if __name__ == "__main__":
+    sys.exit(console_script())
