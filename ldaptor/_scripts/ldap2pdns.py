@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import sys
 from twisted.internet.defer import succeed, fail
 from twisted.internet import defer, reactor
@@ -286,7 +284,7 @@ class MyOptions(
     optParameters = (("dns-domain", None, "example.com", "DNS domain name"),)
 
 
-if __name__ == "__main__":
+def console_script():
     try:
         opts = MyOptions()
         opts.parseOptions()
@@ -301,3 +299,9 @@ if __name__ == "__main__":
     )
 
     main(cfg, opts["dns-domain"])
+
+
+if __name__ == "__main__":
+    sys.exit(console_script())
+if __name__ == "__main__":
+    sys.exit(console_script())

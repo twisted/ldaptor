@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import sys
 from ldaptor.protocols.ldap import ldapclient, ldapsyntax
 from ldaptor.protocols import pureldap
@@ -62,9 +60,13 @@ def main(servers):
     sys.exit(exitStatus)
 
 
-if __name__ == "__main__":
+def console_script():
     if not sys.argv[1:]:
         print("%s: usage:" % sys.argv[0], file=sys.stderr)
         print("  %s HOST.." % sys.argv[0], file=sys.stderr)
     else:
         main(sys.argv[1:])
+
+
+if __name__ == "__main__":
+    sys.exit(console_script())

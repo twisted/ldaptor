@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import sys
 from ldaptor.protocols.ldap import ldapclient, ldapconnector, fetchschema
 from ldaptor import usage, config
@@ -59,7 +57,7 @@ class MyOptions(
     """LDAPtor command line schema fetching utility"""
 
 
-if __name__ == "__main__":
+def console_script():
     from twisted.python import log
 
     log.startLogging(sys.stderr, setStdout=0)
@@ -75,3 +73,7 @@ if __name__ == "__main__":
         baseDN=opts["base"], serviceLocationOverrides=opts["service-location"]
     )
     main(cfg)
+
+
+if __name__ == "__main__":
+    sys.exit(console_script())

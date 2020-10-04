@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import sys
 from ldaptor.protocols.ldap import ldapclient, ldapconnector, ldapsyntax
 from ldaptor import config, usage
@@ -52,7 +50,7 @@ class MyOptions(
         self.opts["attributes"] = attributes
 
 
-if __name__ == "__main__":
+def console_script():
     try:
         opts = MyOptions()
         opts.parseOptions()
@@ -64,3 +62,7 @@ if __name__ == "__main__":
         baseDN=opts["base"], serviceLocationOverrides=opts["service-location"]
     )
     main(cfg, opts["filter"], opts["attributes"])
+
+
+if __name__ == "__main__":
+    sys.exit(console_script())

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import sys, getpass
 from ldaptor.protocols.ldap import (
     ldapclient,
@@ -107,7 +105,7 @@ class MyOptions(
         self.opts["dnlist"] = dnlist
 
 
-if __name__ == "__main__":
+def console_script():
     import sys, os
     from twisted.python import log
 
@@ -141,3 +139,7 @@ if __name__ == "__main__":
     c.connect()
     reactor.run()
     sys.exit(exitStatus)
+
+
+if __name__ == "__main__":
+    sys.exit(console_script())
