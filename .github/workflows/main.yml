@@ -56,7 +56,9 @@ jobs:
       - name: tox
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: tox -e py-test-twlatest,py-test-twtrunk,publishcov,release
+        run:
+          tox --parallel --parallel-live -e
+          py-test-twlatest,py-test-twtrunk,publishcov,release
 
       - name: upload dist
         uses: actions/upload-artifact@v2

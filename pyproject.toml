@@ -98,4 +98,5 @@ deps =
   coverage>=5.3
 commands =
     codecov
+depends = py
 """
