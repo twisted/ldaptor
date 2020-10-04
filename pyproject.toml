@@ -105,11 +105,13 @@ commands =
     {envpython} -m pep517.build --source --out-dir={toxinidir}/dist {toxinidir}
 
 [testenv:publishcov]
-passenv = GITHUB_*
+passenv = GITHUB_* COVERALLS_*
+setenv = COVERALLS_PARALLEL=true
 deps =
   codecov
   coverage[toml]>=5.3
 commands =
+    coveralls
     codecov --required
 depends = py{,38,34,35,36,37,py3}-test-{twlatest,twtrunk,dev}
 """
