@@ -67,8 +67,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run:
-          tox --parallel=all --parallel-live -e
-          py{35,36,37,38,py3}-test-{twlatest,twtrunk},publishcov,py38-linters,publishcov
+          tox --parallel=all --parallel-live
+          -e'py{35,36,37,38,py3}-test-{twlatest,twtrunk},publishcov,py38-linters,publishcov'
 
       - name: upload dist
         uses: actions/upload-artifact@v2
