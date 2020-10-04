@@ -97,6 +97,6 @@ deps =
   codecov
   coverage>=5.3
 commands =
-    codecov
+    codecov --required
 depends = py{,38,34,35,36,37,py3}-test-{twlatest,twtrunk,dev}
 """
