@@ -19,4 +19,5 @@ Contributors
 - Michael Schlenker
 - Sergey Shubin
 - Stefan Andersson
+- Thomas Grainger
 - Tommi Virtanen
