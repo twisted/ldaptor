@@ -75,6 +75,7 @@ jobs:
       - name: tox
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TOX_PARALLEL_NO_SPINNER: 1
         run:
           tox --parallel=all
           -e'py{35,36,37,38,py3}-test-{twlatest,twtrunk},publishcov,py38-linters,release'
