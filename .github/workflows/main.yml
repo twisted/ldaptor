@@ -67,6 +67,11 @@ jobs:
         if: startsWith(matrix.os, 'windows-') || startsWith(matrix.os, 'macOS-')
         run: echo '::set-env name=TOX_SKIP_ENV::pypy3.*'
 
+      - name: build coverage # coverage doesn't like being built in parallel
+        if: "!startsWith(matrix.os , 'windows-') || startsWith(matrix.os, 'macOS-')"
+        run: |
+          pypy3 -m pip install coverage>=5.3
+
       - name: tox
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
