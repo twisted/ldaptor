@@ -63,6 +63,10 @@ jobs:
         run: |
           pip install tox
 
+      - name: Disable pypy3
+        if: startsWith(matrix.os, 'windows-') || startsWith(matrix.os, 'macOS-')
+        run: echo '::set-env name=TOX_SKIP_ENV::pypy3.*'
+
       - name: tox
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
