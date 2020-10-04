@@ -43,6 +43,7 @@ envlist =
 wheel = True
 wheel_pep517 = True
 wheel_build_env = build
+parallel_show_output = True
 deps = 
     coverage[toml] >= 5.3
     pyparsing

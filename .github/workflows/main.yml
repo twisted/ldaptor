@@ -76,7 +76,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run:
-          tox --parallel=all --parallel-live
+          tox --parallel=all
           -e'py{35,36,37,38,py3}-test-{twlatest,twtrunk},publishcov,py38-linters,release'
 
       - name: upload dist
