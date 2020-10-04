@@ -77,12 +77,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run:
           tox --parallel=all --parallel-live
-          -e'py{35,36,37,38,py3}-test-{twlatest,twtrunk},publishcov,py38-linters,publishcov'
+          -e'py{35,36,37,38,py3}-test-{twlatest,twtrunk},publishcov,py38-linters,release'
 
       - name: upload dist
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ matrix.os }}_${{ matrix.python-version}}_dist
+          name: ${{ matrix.os }}_dist
           path: dist
 
   all-successful:
@@ -93,7 +93,7 @@ jobs:
       - name: Download dists for PyPI
         uses: actions/download-artifact@v2
         with:
-          name: ubuntu-latest_3.8_dist
+          name: ubuntu-latest_dist
           path: dist
 
       - name: Display structure of downloaded files
