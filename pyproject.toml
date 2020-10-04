@@ -22,8 +22,8 @@ requires=
 ; * test - run trial tests
 ; * dev - run things in local dev mode
 envlist =
-    {py38,py34,py35,py36,py37,pypy,pypy3}-test-{twlatest,twtrunk,dev},
-    {py38,py37}-linters,
+    py{38,34,35,36,37,py3}-test-{twlatest,twtrunk,dev}
+    py{38,37}-linters,
     documentation,
 
 
@@ -98,5 +98,5 @@ deps =
   coverage>=5.3
 commands =
     codecov
-depends = py
+depends = py{,38,34,35,36,37,py3}-test-{twlatest,twtrunk,dev}
 """
