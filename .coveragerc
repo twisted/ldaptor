@@ -1,9 +1,0 @@
-[run]
-branch = True
-source_pkgs = ldaptor
-
-[paths]
-source =
-    ldaptor
-    */site-packages/ldaptor
-    *\site-packages\ldaptor

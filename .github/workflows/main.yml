@@ -13,22 +13,36 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.5, 3.6, 3.7, pypy3, 3.8]
         os: [macOS-latest, ubuntu-latest, windows-latest]
-        exclude:
-          - os: windows-latest
-            python-version: pypy3
-          - os: macOS-latest
-            python-version: pypy3
 
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Set Up Python ${{ matrix.python-version }}
+      - name: Set Up Python pypy3
         uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: pypy3
+
+      - name: Set Up Python 3.5
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.5
+
+      - name: Set Up Python 3.6
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.6
+
+      - name: Set Up Python 3.7
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+
+      - name: Set Up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
 
       - name: Get pip cache dir
         id: pip-cache
@@ -49,19 +63,27 @@ jobs:
         run: |
           pip install tox
 
-      - name: tox linters
-        if: matrix.python-version != 3.5 && matrix.python-version != 'pypy3'
-        run: tox -e py-linters
+      - name: Disable pypy3
+        if: startsWith(matrix.os, 'windows-') || startsWith(matrix.os, 'macOS-')
+        run: echo '::set-env name=TOX_SKIP_ENV::pypy3.*'
+
+      - name: build coverage for pypy3 # coverage doesn't like being built in parallel
+        if: "!startsWith(matrix.os , 'windows-') || startsWith(matrix.os, 'macOS-')"
+        run: |
+          pypy3 -m pip install coverage>=5.3
 
       - name: tox
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: tox -e py-test-twlatest,py-test-twtrunk,publishcov,release
+          TOX_PARALLEL_NO_SPINNER: 1
+        run:
+          tox --parallel=all
+          -e'py{35,36,37,38,py3}-test-{twlatest,twtrunk},publishcov,py38-linters,release'
 
       - name: upload dist
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ matrix.os }}_${{ matrix.python-version}}_dist
+          name: ${{ matrix.os }}_dist
           path: dist
 
   all-successful:
@@ -72,7 +94,7 @@ jobs:
       - name: Download dists for PyPI
         uses: actions/download-artifact@v2
         with:
-          name: ubuntu-latest_3.8_dist
+          name: ubuntu-latest_dist
           path: dist
 
       - name: Display structure of downloaded files
