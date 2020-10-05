@@ -108,6 +108,7 @@ commands =
 passenv = GITHUB_* COVERALLS_*
 setenv = COVERALLS_PARALLEL=true
 deps =
+  coveralls
   codecov
   coverage[toml]>=5.3
 commands =
