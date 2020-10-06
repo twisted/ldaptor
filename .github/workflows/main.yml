@@ -47,7 +47,7 @@ jobs:
       - name: Set Up Python 3.9
         uses: actions/setup-python@v2
         with:
-          python-version: 3.9
+          python-version: 3.9.0-rc.2
 
       - name: Get pip cache dir
         id: pip-cache
