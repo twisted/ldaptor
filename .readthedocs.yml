@@ -7,6 +7,9 @@ formats:
   - pdf
   - epub
 
+build:
+  image: testing
+
 python:
   version: 3.9
   system_packages: False
