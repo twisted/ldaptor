@@ -10,7 +10,7 @@ from ldaptor.protocols.ldap.ldif import attributeAsLDIF, asLDIF, manyAsLDIF
 
 
 def encode(value):
-    return b"".join(base64.encodestring(value).split(b"\n"))
+    return b"".join(base64.encodebytes(value).split(b"\n"))
 
 
 class WireableObject:
