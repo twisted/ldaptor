@@ -7,11 +7,8 @@ formats:
   - pdf
   - epub
 
-build:
-  image: testing
-
 python:
-  version: 3.9
+  version: 3.8
   system_packages: False
   install:
     - method: pip
