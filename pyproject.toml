@@ -49,7 +49,7 @@ deps =
     pyparsing
     passlib
     twlatest: Twisted[tls]
-    twtrunk: https://github.com/twisted/twisted/archive/trunk.tar.gz#egg=Twisted[tls]
+    twtrunk: Twisted[tls] @ https://github.com/twisted/twisted/archive/trunk.tar.gz
     tw162: Twisted[tls]==16.2
     tw160: Twisted[tls]==16.0
     tw154: Twisted[tls]==15.4
