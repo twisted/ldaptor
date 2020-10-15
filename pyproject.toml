@@ -50,11 +50,6 @@ deps =
     passlib
     twlatest: Twisted[tls]
     twtrunk: Twisted[tls] @ https://github.com/twisted/twisted/archive/trunk.tar.gz
-    tw162: Twisted[tls]==16.2
-    tw160: Twisted[tls]==16.0
-    tw154: Twisted[tls]==15.4
-    tw150: Twisted[tls]==15.0
-    tw140: Twisted[tls]==14.0
     ; Dependecies for local dev environment.
     dev: Twisted[tls]
     dev: diff_cover
