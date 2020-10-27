@@ -1,6 +1,6 @@
 include *.rst
 include *.txt
-exclude .readthedocs.yml
+exclude .readthedocs.yaml
 exclude .pre-commit-config.yaml
 exclude .git-blame-ignore-revs
 include LICENSE
