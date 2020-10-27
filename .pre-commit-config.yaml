@@ -30,7 +30,7 @@ repos:
       - id: mixed-line-ending
 
   - repo: https://github.com/prettier/pre-commit
-    rev: 2.1.2
+    rev: v2.1.2
     hooks:
       - id: prettier
         args: [--prose-wrap=always, --print-width=88]
