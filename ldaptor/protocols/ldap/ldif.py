@@ -17,11 +17,9 @@ import base64
 
 from ldaptor._encoder import to_bytes
 
-encodestring = base64.encodebytes
-
 
 def base64_encode(s):
-    return b"".join(encodestring(s).split(b"\n")) + b"\n"
+    return b"".join(base64.encodebytes(s).split(b"\n")) + b"\n"
 
 
 def attributeAsLDIF_base64(attribute, value):

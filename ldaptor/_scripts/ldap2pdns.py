@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import sys
 from twisted.internet.defer import succeed, fail
 from twisted.internet import defer, reactor
@@ -10,7 +8,6 @@ from twisted.python import log
 from ldaptor.protocols.ldap import ldapclient, ldapconnector
 from ldaptor.protocols.ldap.ldapsyntax import LDAPEntry
 from ldaptor import usage, config
-from cStringIO import StringIO
 
 
 class ExitSentinel:
@@ -94,9 +91,9 @@ class PdnsPipeProtocol(LineReceiver):
         self._doWork()
 
     def failed(self, result, who):
-        io = StringIO()
-        result.printTraceback(file=io)
-        who[:] = ["LOG\t%s" % line for line in io.getvalue().splitlines()] + ["FAIL"]
+        who[:] = ["LOG\t%s" % line for line in result.getTraceback().splitlines()] + [
+            "FAIL"
+        ]
         self._doWork()
 
     def do_start_HELO(self, rest):
@@ -287,7 +284,7 @@ class MyOptions(
     optParameters = (("dns-domain", None, "example.com", "DNS domain name"),)
 
 
-if __name__ == "__main__":
+def console_script():
     try:
         opts = MyOptions()
         opts.parseOptions()
@@ -302,3 +299,9 @@ if __name__ == "__main__":
     )
 
     main(cfg, opts["dns-domain"])
+
+
+if __name__ == "__main__":
+    sys.exit(console_script())
+if __name__ == "__main__":
+    sys.exit(console_script())

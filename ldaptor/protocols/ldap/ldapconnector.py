@@ -1,30 +1,8 @@
-from twisted.internet import protocol, defer
-from twisted.internet.endpoints import clientFromString
-
-try:
-    from twisted.internet import endpoints
-
-    connectProtocol = endpoints.connectProtocol
-except AttributeError:
-    # Twisted >= 13.1
-    from twisted.internet.protocol import Factory
-
-    def connectProtocol(endpoint, protocol):
-        class OneShotFactory(Factory):
-            def buildProtocol(self, addr):
-                return protocol
-
-        return endpoint.connect(OneShotFactory())
-
+from twisted.internet import defer, protocol
+from twisted.internet.endpoints import clientFromString, connectProtocol
+from twisted.names.srvconnect import SRVConnector
 
 from ldaptor.protocols.ldap import distinguishedname
-
-try:
-    from twisted.internet import utils
-
-    SRVConnector = utils.SRVConnector
-except AttributeError:
-    from twisted.names.srvconnect import SRVConnector
 from ldaptor._encoder import get_strings
 
 

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # host fantasia {
 #  dhcp-client-identifier
 #  hardware ethernet 08:00:07:26:c0:a5;
@@ -14,7 +12,7 @@
 
 # shared-network "foo" {
 # }
-
+import sys
 from ldaptor.protocols.ldap import ldapclient, ldapconnector, ldapsyntax
 from ldaptor.protocols import pureber, pureldap
 from ldaptor import usage, ldapfilter, config
@@ -494,9 +492,7 @@ class MyOptions(
         self.opts["filter"] = filter
 
 
-if __name__ == "__main__":
-    import sys
-
+def console_script():
     try:
         opts = MyOptions()
         opts.parseOptions()
@@ -512,3 +508,7 @@ if __name__ == "__main__":
         opts["filter"],
         opts["dns-domain"],
     )
+
+
+if __name__ == "__main__":
+    sys.exit(console_script())

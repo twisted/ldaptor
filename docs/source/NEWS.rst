@@ -1,7 +1,15 @@
 Changelog
 =========
 
-20.1.1 (unreleased)
+20.1.2 (unreleased)
+-------------------
+
+- fix ``ModuleNotFoundError: No module named 'cStringIO'`` in ldaptor-ldap2pdns.
+- move scripts to console_scripts entry_points
+- replace deprecated calls to ``base64.decodestring`` and ``base64.encodestring``.
+
+
+20.1.1 (2020-10-02)
 -------------------
 
 - Updated the object representations of pureber and pureldap containers to

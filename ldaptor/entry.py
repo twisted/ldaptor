@@ -10,11 +10,7 @@ from ldaptor import interfaces, attributeset, delta
 from ldaptor._encoder import WireStrAlias, to_bytes, get_strings
 from ldaptor.protocols.ldap import distinguishedname, ldif, ldaperrors
 
-
-try:
-    from hashlib import sha1
-except ImportError:
-    from sha import sha as sha1
+from hashlib import sha1
 
 
 def sshaDigest(passphrase, salt=None):
@@ -30,7 +26,7 @@ def sshaDigest(passphrase, salt=None):
     s = sha1()
     s.update(passphrase)
     s.update(salt)
-    encoded = base64.encodestring(s.digest() + salt).rstrip()
+    encoded = base64.encodebytes(s.digest() + salt).rstrip()
     crypt = b"{SSHA}" + encoded
     return crypt
 
@@ -233,7 +229,7 @@ class BaseLDAPEntry(WireStrAlias):
             for digest in self.get(key, ()):
                 digest = to_bytes(digest)
                 if digest.startswith(b"{SSHA}"):
-                    raw = base64.decodestring(digest[len(b"{SSHA}") :])
+                    raw = base64.decodebytes(digest[len(b"{SSHA}") :])
                     salt = raw[20:]
                     got = sshaDigest(password, salt)
                     if got == digest:
