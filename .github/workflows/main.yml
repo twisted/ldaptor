@@ -9,11 +9,17 @@ on:
 
 jobs:
   tox:
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.cfg.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [macOS-latest, ubuntu-latest, windows-latest]
+        cfg:
+          - os: ubuntu-latest
+            tox-skip-env: $^
+          - os: macOS-latest
+            tox-skip-env: pypy3.*
+          - os: windows-latest
+            tox-skip-env: pypy3.*
 
     steps:
       - name: Checkout
@@ -63,14 +69,11 @@ jobs:
         run: |
           pip install tox
 
-      - name: Disable pypy3
-        if: startsWith(matrix.os, 'windows-') || startsWith(matrix.os, 'macOS-')
-        run: echo '::set-env name=TOX_SKIP_ENV::pypy3.*'
-
       - name: tox
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TOX_PARALLEL_NO_SPINNER: 1
+          TOX_SKIP_ENV: ${{ matrix.cfg.tox-skip-env }}
         run:
           tox --parallel=all
           -e'py{35,36,37,38,py3}-test-{twlatest,twtrunk},publishcov,py38-linters,release'
@@ -78,7 +81,7 @@ jobs:
       - name: upload dist
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ matrix.os }}_dist
+          name: ${{ matrix.cfg.os }}_dist
           path: dist
 
   all-successful:
