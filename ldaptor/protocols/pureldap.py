@@ -33,6 +33,8 @@ def alloc_ldap_message_id():
 
 
 def escape(s):
+    if isinstance(s, (bytes, bytearray)):
+        s = s.decode()
     s = s.replace("\\", r"\5c")
     s = s.replace("*", r"\2a")
     s = s.replace("(", r"\28")
@@ -570,11 +572,9 @@ class LDAPFilter_equalityMatch(LDAPAttributeValueAssertion):
 
     def asText(self):
         return (
-            "("
-            + self.attributeDesc.value
-            + "="
-            + self.escaper(self.assertionValue.value)
-            + ")"
+            "({}={})".format(self.attributeDesc.value,
+                             self.escaper(self.assertionValue.value))
+            
         )
 
 
@@ -673,7 +673,9 @@ class LDAPFilter_substrings(BERSequence):
         if final is None:
             final = ""
 
-        return "(" + self.type + "=" + "*".join([initial] + any + [final]) + ")"
+        return "({}={})".format(
+            self.type,
+            "*".join([initial] + any + [final]))
 
 
 class LDAPFilter_greaterOrEqual(LDAPAttributeValueAssertion):
@@ -681,11 +683,10 @@ class LDAPFilter_greaterOrEqual(LDAPAttributeValueAssertion):
 
     def asText(self):
         return (
-            "("
-            + self.attributeDesc.value
-            + ">="
-            + self.escaper(self.assertionValue.value)
-            + ")"
+            "({}>={})".format(
+                self.attributeDesc.value,
+                self.escaper(self.assertionValue.value)
+                )
         )
 
 
@@ -694,11 +695,10 @@ class LDAPFilter_lessOrEqual(LDAPAttributeValueAssertion):
 
     def asText(self):
         return (
-            "("
-            + self.attributeDesc.value
-            + "<="
-            + self.escaper(self.assertionValue.value)
-            + ")"
+            "({}<={})".format(
+                self.attributeDesc.value,
+                self.escaper(self.assertionValue.value)
+            )
         )
 
 
@@ -706,7 +706,7 @@ class LDAPFilter_present(LDAPAttributeDescription):
     tag = CLASS_CONTEXT | 0x07
 
     def asText(self):
-        return "(%s=*)" % self.value
+        return "({}=*)".format(self.value)
 
 
 class LDAPFilter_approxMatch(LDAPAttributeValueAssertion):
@@ -714,11 +714,10 @@ class LDAPFilter_approxMatch(LDAPAttributeValueAssertion):
 
     def asText(self):
         return (
-            "("
-            + self.attributeDesc.value
-            + "~="
-            + self.escaper(self.assertionValue.value)
-            + ")"
+            "({}~={})".format(
+                self.attributeDesc.value,
+                self.escaper(self.assertionValue.value)
+            )
         )
 
 
@@ -855,13 +854,12 @@ class LDAPFilter_extensibleMatch(LDAPMatchingRuleAssertion):
 
     def asText(self):
         return (
-            "("
-            + (self.type.value if self.type else "")
-            + (":dn" if self.dnAttributes and self.dnAttributes.value else "")
-            + ((":" + self.matchingRule.value) if self.matchingRule else "")
-            + ":="
-            + self.escaper(self.matchValue.value)
-            + ")"
+            "({}{}{}:={})".format(
+                (self.type.value if self.type else ""),
+                (":dn" if self.dnAttributes and self.dnAttributes.value else ""),
+                ((":" + self.matchingRule.value) if self.matchingRule else ""),
+                self.escaper(self.matchValue.value)
+            )
         )
 
 
