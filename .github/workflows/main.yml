@@ -81,7 +81,7 @@ jobs:
           TOX_SKIP_ENV: ${{ matrix.cfg.tox-skip-env }}
         run:
           tox --parallel=all
-          -e'py39-test-twtrunk,py{35,36,37,38,py3}-test-{twlatest,twtrunk},publishcov,py39-linters,release'
+          -e'py{35,36,37,38,39,py3}-test-{twlatest,twtrunk},publishcov,py39-linters,release'
 
       - name: upload dist
         uses: actions/upload-artifact@v2
