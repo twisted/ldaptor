@@ -26,7 +26,7 @@ legacy_tox_ini = """
 [tox]
 minversion=3.20.0
 requires=
-    virtualenv >= 20.0.31
+    virtualenv >= 20.1.0
     tox-wheel >= 0.5.0
     tox-gh-actions >= 2.0.0
 ;
@@ -49,12 +49,7 @@ deps =
     pyparsing
     passlib
     twlatest: Twisted[tls]
-    twtrunk: https://github.com/twisted/twisted/archive/trunk.tar.gz#egg=Twisted[tls]
-    tw162: Twisted[tls]==16.2
-    tw160: Twisted[tls]==16.0
-    tw154: Twisted[tls]==15.4
-    tw150: Twisted[tls]==15.0
-    tw140: Twisted[tls]==14.0
+    twtrunk: Twisted[tls] @ https://github.com/twisted/twisted/archive/trunk.tar.gz
     ; Dependecies for local dev environment.
     dev: Twisted[tls]
     dev: diff_cover
