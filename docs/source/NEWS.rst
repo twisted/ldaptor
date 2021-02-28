@@ -1,12 +1,19 @@
 Changelog
 =========
 
-20.1.2 (unreleased)
+21.2.1 (unreleased)
+-------------------
+
+- Nothing changed yet.
+
+
+21.2.0 (2021-02-28)
 -------------------
 
 - fix ``ModuleNotFoundError: No module named 'cStringIO'`` in ldaptor-ldap2pdns.
 - move scripts to console_scripts entry_points
 - replace deprecated calls to ``base64.decodestring`` and ``base64.encodestring``.
+- *This will be the last Ldaptor release to support Python 3.5*.
 
 
 20.1.1 (2020-10-02)
