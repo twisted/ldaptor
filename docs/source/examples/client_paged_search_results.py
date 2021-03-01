@@ -31,12 +31,12 @@ def onConnect(client, args):
             client, args, args.filter, page_size=page_size, cookie=cookie
         )
         count += len(results)
-        print("Page {}".format(page))
+        print(f"Page {page}")
         display_results(results)
         if len(cookie) == 0:
             break
         page += 1
-    print("There were {} results returned in total.".format(count))
+    print(f"There were {count} results returned in total.")
 
 
 @defer.inlineCallbacks

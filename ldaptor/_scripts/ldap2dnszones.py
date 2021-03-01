@@ -7,7 +7,7 @@ from twisted.internet import reactor
 
 
 def formatIPAddress(name, ip):
-    return "{}\tIN A\t{}\n".format(name, ip)
+    return f"{name}\tIN A\t{ip}\n"
 
 
 def formatPTR(name, ip):

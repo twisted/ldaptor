@@ -25,23 +25,23 @@ legacy_tox_ini = """
 
 [tox]
 minversion=3.20.0
+isolated_build=true
 requires=
     virtualenv >= 20.1.0
-    tox-wheel >= 0.5.0
-    tox-gh-actions >= 2.0.0
+    tox-wheel >= 0.6.0
+    tox-gh-actions >= 2.1.0
 ;
 ; Tags explanation:
 ; * test - run trial tests
 ; * dev - run things in local dev mode
 envlist =
-    py{38,35,36,37,py3}-test-{twlatest,twtrunk,dev}
-    py38-linters,
+    py{36,37,38,39,py3}-test-{twlatest,twtrunk,dev}
+    py39-linters,
     documentation,
 
 
 [testenv]
 wheel = True
-wheel_pep517 = True
 wheel_build_env = build
 parallel_show_output = True
 deps = 
@@ -81,7 +81,7 @@ commands =
 
 [testenv:documentation]
 deps = sphinx
-basepython=python3.8
+basepython=python3.9
 changedir = {envtmpdir}
 whitelist_externals = cp
 commands =
@@ -106,5 +106,5 @@ deps =
   coverage[toml]>=5.3
 commands =
     codecov --required
-depends = py{,38,34,35,36,37,py3}-test-{twlatest,twtrunk,dev}
+depends = py{,35,36,37,38,39,py3}-test-{twlatest,twtrunk,dev}
 """

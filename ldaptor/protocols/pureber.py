@@ -15,7 +15,6 @@
 #     Only some BOOLEAN and INTEGER types have default values in
 #     this protocol definition.
 
-import sys
 from collections import UserList
 
 from ldaptor._encoder import to_bytes, WireStrAlias
@@ -347,9 +346,7 @@ class BERDecoderContext:
     def __repr__(self):
         identities = []
         for tag, class_ in self.Identities.items():
-            identities.append("0x{:02x}: {}".format(tag, class_.__name__))
-
-        sys.version_info < (3, 6) and identities.sort()
+            identities.append(f"0x{tag:02x}: {class_.__name__}")
 
         return (
             "<"

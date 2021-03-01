@@ -305,7 +305,7 @@ class LDIFTreeEntry(
         def eb_(err):
             from twisted.python import log
 
-            log.msg("[ERROR] Could not commit entry: {}.".format(self.dn))
+            log.msg(f"[ERROR] Could not commit entry: {self.dn}.")
             return False
 
         d.addErrback(eb_)
