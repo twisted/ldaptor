@@ -4,7 +4,7 @@ Changelog
 21.2.1 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Dropped support for Python 3.5
 
 
 21.2.0 (2021-02-28)

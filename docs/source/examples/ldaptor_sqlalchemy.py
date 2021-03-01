@@ -48,7 +48,7 @@ class LDAPServerFactory(ServerFactory):
 
         for employee in db_session.query(Employee):
             users_tree.addChild(
-                "uid={}".format(employee.uid),
+                f"uid={employee.uid}",
                 {
                     "uid": [employee.uid],
                     "givenName": [employee.first_name],

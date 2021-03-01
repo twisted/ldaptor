@@ -266,7 +266,7 @@ class LDAPSearchResultReference(LDAPProtocolResponse, BERSequence):
         return "{}(uris={}{})".format(
             self.__class__.__name__,
             repr([uri for uri in self.uris]),
-            ", tag={}".format(self.tag) if self.tag != self.__class__.tag else "",
+            f", tag={self.tag}" if self.tag != self.__class__.tag else "",
         )
 
 
@@ -1061,7 +1061,7 @@ class LDAPSearchResultEntry(LDAPProtocolResponse, BERSequence):
             self.__class__.__name__,
             repr(name),
             repr(attributes),
-            ", tag={}".format(self.tag) if self.tag != self.__class__.tag else "",
+            f", tag={self.tag}" if self.tag != self.__class__.tag else "",
         )
 
 
@@ -1545,7 +1545,7 @@ class LDAPPasswordModifyRequest_passwd(BEROctetString):
         return "{}(value={}{})".format(
             self.__class__.__name__,
             repr(value),
-            ", tag={}".format(self.tag) if self.tag != self.__class__.tag else "",
+            f", tag={self.tag}" if self.tag != self.__class__.tag else "",
         )
 
 
@@ -1725,7 +1725,7 @@ class LDAPStartTLSRequest(LDAPExtendedRequest):
     def __repr__(self):
         l = []
         if self.tag != self.__class__.tag:
-            l.append("tag={}".format(self.tag))
+            l.append(f"tag={self.tag}")
         return self.__class__.__name__ + "(" + ", ".join(l) + ")"
 
 
@@ -1763,7 +1763,7 @@ class LDAPStartTLSResponse(LDAPExtendedResponse):
     def __repr__(self):
         l = []
         if self.tag != self.__class__.tag:
-            l.append("tag={}".format(self.tag))
+            l.append(f"tag={self.tag}")
         return self.__class__.__name__ + "(" + ", ".join(l) + ")"
 
 
