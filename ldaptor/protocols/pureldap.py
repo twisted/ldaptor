@@ -1,9 +1,9 @@
 """LDAP protocol message conversion; no application logic here."""
 
 from __future__ import unicode_literals
+from ldaptor._encoder import to_unicode
 
 import string
-
 
 from ldaptor.protocols.pureber import (
     BERBoolean,
