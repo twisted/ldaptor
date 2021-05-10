@@ -21,7 +21,6 @@ from ldaptor.protocols.pureber import (
     int2berlen,
 )
 from ldaptor._encoder import to_bytes
-from ldaptor._encoder import to_unicode
 
 next_ldap_message_id = 1
 
@@ -856,11 +855,11 @@ class LDAPFilter_extensibleMatch(LDAPMatchingRuleAssertion):
 
     def asText(self):
         return '(' + \
-               (to_unicode(self.type.value) if self.type else '') + \
+               (self.type.value.decode() if self.type else '') + \
                (':dn' if self.dnAttributes and self.dnAttributes.value else '') + \
-               ((':' + to_unicode(self.matchingRule.value)) if self.matchingRule else '') + \
+               ((':' + self.matchingRule.value.decode()) if self.matchingRule else '') + \
                ':=' + \
-               self.escaper(to_unicode(self.matchValue.value)) + \
+               self.escaper(self.matchValue.value.decode()) + \
                ')'
 
 
