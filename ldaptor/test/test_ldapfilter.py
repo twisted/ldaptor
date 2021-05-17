@@ -75,10 +75,10 @@ class RFC2254Examples(unittest.TestCase):
     def test_extensible_1(self):
         text = "(cn:1.2.3.4.5:=Fred Flintstone)"
         filt = pureldap.LDAPFilter_extensibleMatch(
-            type="cn",
+            type=b"cn",
             dnAttributes=False,
-            matchingRule="1.2.3.4.5",
-            matchValue="Fred Flintstone",
+            matchingRule=b"1.2.3.4.5",
+            matchValue=b"Fred Flintstone",
         )
         self.assertEqual(ldapfilter.parseFilter(text), filt)
         self.assertEqual(filt.asText(), text)
@@ -86,10 +86,10 @@ class RFC2254Examples(unittest.TestCase):
     def test_extensible_2(self):
         text = "(sn:dn:2.4.6.8.10:=Barney Rubble)"
         filt = pureldap.LDAPFilter_extensibleMatch(
-            type="sn",
+            type=b"sn",
             dnAttributes=True,
-            matchingRule="2.4.6.8.10",
-            matchValue="Barney Rubble",
+            matchingRule=b"2.4.6.8.10",
+            matchValue=b"Barney Rubble",
         )
         self.assertEqual(ldapfilter.parseFilter(text), filt)
         self.assertEqual(filt.asText(), text)
@@ -97,10 +97,10 @@ class RFC2254Examples(unittest.TestCase):
     def test_extensible_3(self):
         text = "(o:dn:=Ace Industry)"
         filt = pureldap.LDAPFilter_extensibleMatch(
-            type="o",
+            type=b"o",
             dnAttributes=True,
             matchingRule=None,
-            matchValue="Ace Industry",
+            matchValue=b"Ace Industry",
         )
         self.assertEqual(ldapfilter.parseFilter(text), filt)
         self.assertEqual(filt.asText(), text)
@@ -110,8 +110,8 @@ class RFC2254Examples(unittest.TestCase):
         filt = pureldap.LDAPFilter_extensibleMatch(
             type=None,
             dnAttributes=True,
-            matchingRule="2.4.6.8.10",
-            matchValue="Dino",
+            matchingRule=b"2.4.6.8.10",
+            matchValue=b"Dino",
         )
         self.assertEqual(ldapfilter.parseFilter(text), filt)
         self.assertEqual(filt.asText(), text)
@@ -119,10 +119,10 @@ class RFC2254Examples(unittest.TestCase):
     def test_extensible_5(self):
         text = "(cn:1.2.3.4.5:=Fred Flintstone)"
         filt = pureldap.LDAPFilter_extensibleMatch(
-            type="cn",
+            type=b"cn",
             dnAttributes=None,
-            matchingRule="1.2.3.4.5",
-            matchValue="Fred Flintstone",
+            matchingRule=b"1.2.3.4.5",
+            matchValue=b"Fred Flintstone",
         )
         self.assertEqual(filt.asText(), text)
 
