@@ -117,7 +117,7 @@ A simple LDAP file with two entries::
     telephonenumber: +1 408 555 1212
 
 
-A file containing an entry with a folded ``description`` attribute value, from `RFC 2849 <https://www.ietf.org/rfc/rfc2849.txt>`_::
+A file containing an entry with a folded ``description`` attribute value, from `RFC 2849 <https://www.ietf.org/rfc/rfc2849.html#page-8>`_::
 
     version: 1
     dn:cn=Barbara Jensen, ou=Product Development, dc=airius, dc=com
