@@ -171,10 +171,10 @@ class BaseLDAPEntry(WireStrAlias):
         keys = sorted((key for key in self), key=to_bytes)
         a = []
         for key in keys:
-            a.append("{}: {}".format(repr(key), repr(list(self[key]))))
+            a.append(f"{repr(key)}: {repr(list(self[key]))}")
         attributes = ", ".join(a)
         dn = self.dn.getText()
-        return "{}({}, {{{}}})".format(self.__class__.__name__, repr(dn), attributes)
+        return f"{self.__class__.__name__}({repr(dn)}, {{{attributes}}})"
 
     def diff(self, other):
         """

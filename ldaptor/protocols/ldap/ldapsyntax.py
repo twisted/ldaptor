@@ -73,7 +73,7 @@ class CannotRemoveRDNError(Exception):
         if self.val is None:
             r = repr(self.key)
         else:
-            r = "{}={}".format(repr(self.key), repr(self.val))
+            r = f"{repr(self.key)}={repr(self.val)}"
         return (
             """The attribute to be removed, %s, is the RDN for the object and cannot be removed."""
             % r
@@ -765,7 +765,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         keys.sort()
         a = []
         for key in keys:
-            a.append("{}: {}".format(repr(key), repr(self[key])))
+            a.append(f"{repr(key)}: {repr(self[key])}")
         attributes = ", ".join(a)
         return "{}(dn={}, attributes={{{}}})".format(
             self.__class__.__name__, repr(self.dn), attributes

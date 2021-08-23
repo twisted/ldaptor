@@ -31,10 +31,10 @@ class LDAPEntryTests(unittest.TestCase):
                 "bValue": ["b"],
             },
         )
-        self.failUnlessEqual(o.dn.getText(), "cn=foo,dc=example,dc=com")
-        self.failUnlessEqual(o["objectClass"], ["a", "b"])
-        self.failUnlessEqual(o["aValue"], ["a"])
-        self.failUnlessEqual(o["bValue"], ["b"])
+        self.assertEqual(o.dn.getText(), "cn=foo,dc=example,dc=com")
+        self.assertEqual(o["objectClass"], ["a", "b"])
+        self.assertEqual(o["aValue"], ["a"])
+        self.assertEqual(o["bValue"], ["b"])
         client.assertNothingSent()
 
     def testKeys(self):
@@ -249,14 +249,14 @@ class LDAPSyntaxAttributes(unittest.TestCase):
             },
         )
         o["aValue"] = ["foo", "bar"]
-        self.failUnlessEqual(o["aValue"], ["foo", "bar"])
+        self.assertEqual(o["aValue"], ["foo", "bar"])
         o["aValue"] = ["quux"]
-        self.failUnlessEqual(o["aValue"], ["quux"])
-        self.failUnlessEqual(o["bValue"], ["b"])
+        self.assertEqual(o["aValue"], ["quux"])
+        self.assertEqual(o["bValue"], ["b"])
         o["cValue"] = ["thud"]
-        self.failUnlessEqual(o["aValue"], ["quux"])
-        self.failUnlessEqual(o["bValue"], ["b"])
-        self.failUnlessEqual(o["cValue"], ["thud"])
+        self.assertEqual(o["aValue"], ["quux"])
+        self.assertEqual(o["bValue"], ["b"])
+        self.assertEqual(o["cValue"], ["thud"])
 
     def testAttributeDelete(self):
         client = LDAPClientTestDriver()
@@ -272,8 +272,8 @@ class LDAPSyntaxAttributes(unittest.TestCase):
         o["aValue"] = ["quux"]
         del o["aValue"]
         del o["bValue"]
-        self.failIf("aValue" in o)
-        self.failIf("bValue" in o)
+        self.assertFalse("aValue" in o)
+        self.assertFalse("bValue" in o)
 
     def testAttributeAdd(self):
         client = LDAPClientTestDriver()
@@ -287,7 +287,7 @@ class LDAPSyntaxAttributes(unittest.TestCase):
             },
         )
         o["aValue"].add("foo")
-        self.failUnlessEqual(o["aValue"], ["a", "foo"])
+        self.assertEqual(o["aValue"], ["a", "foo"])
 
     def testAttributeItemDelete(self):
         client = LDAPClientTestDriver()
@@ -301,7 +301,7 @@ class LDAPSyntaxAttributes(unittest.TestCase):
             },
         )
         o["aValue"].remove("b")
-        self.failUnlessEqual(o["aValue"], ["a", "c"])
+        self.assertEqual(o["aValue"], ["a", "c"])
 
     def testUndo(self):
         """Undo should forget the modifications."""
@@ -320,9 +320,9 @@ class LDAPSyntaxAttributes(unittest.TestCase):
         o["aValue"] = ["quux"]
         del o["cValue"]
         o.undo()
-        self.failUnlessEqual(o["aValue"], ["a"])
-        self.failUnlessEqual(o["bValue"], ["b"])
-        self.failUnlessEqual(o["cValue"], ["c"])
+        self.assertEqual(o["aValue"], ["a"])
+        self.assertEqual(o["bValue"], ["b"])
+        self.assertEqual(o["cValue"], ["c"])
 
     def testUndoJournaling(self):
         """Journaling should still work after undo."""
@@ -351,9 +351,9 @@ class LDAPSyntaxAttributes(unittest.TestCase):
         d = o.commit()
 
         def cb(dummy):
-            self.failUnlessEqual(o["aValue"], ["a", "newValue", "anotherNewValue"])
-            self.failUnlessEqual(o["bValue"], ["b"])
-            self.failUnlessEqual(o["cValue"], ["c"])
+            self.assertEqual(o["aValue"], ["a", "newValue", "anotherNewValue"])
+            self.assertEqual(o["bValue"], ["b"])
+            self.assertEqual(o["cValue"], ["c"])
             client.assertSent(
                 delta.ModifyOp(
                     "cn=foo,dc=example,dc=com",
@@ -394,9 +394,9 @@ class LDAPSyntaxAttributes(unittest.TestCase):
 
         def cb(dummy):
             o.undo()
-            self.failUnlessEqual(o["aValue"], ["foo", "bar"])
-            self.failUnlessEqual(o["bValue"], ["quux"])
-            self.failIf("cValue" in o)
+            self.assertEqual(o["aValue"], ["foo", "bar"])
+            self.assertEqual(o["bValue"], ["quux"])
+            self.assertFalse("cValue" in o)
 
         d.addCallback(cb)
         return d
@@ -641,8 +641,8 @@ class LDAPSyntaxSearch(unittest.TestCase):
                     attributes=["foo", "bar"],
                 )
             )
-            self.failUnlessEqual(len(val), 2)
-            self.failUnlessEqual(
+            self.assertEqual(len(val), 2)
+            self.assertEqual(
                 val[0],
                 ldapsyntax.LDAPEntry(
                     client=client,
@@ -653,7 +653,7 @@ class LDAPSyntaxSearch(unittest.TestCase):
                     },
                 ),
             )
-            self.failUnlessEqual(
+            self.assertEqual(
                 val[1],
                 ldapsyntax.LDAPEntry(
                     client=client,
@@ -726,7 +726,7 @@ class LDAPSyntaxSearch(unittest.TestCase):
         )
 
         def cb_(thing):
-            self.failUnlessEqual(len(thing), 1)
+            self.assertEqual(len(thing), 1)
 
         d.addCallback(cb_)
         d.addErrback(cb_)
@@ -783,9 +783,9 @@ class LDAPSyntaxSearch(unittest.TestCase):
                     attributes=[],
                 )
             )
-            self.failUnlessEqual(len(val), 2)
+            self.assertEqual(len(val), 2)
 
-            self.failUnlessEqual(
+            self.assertEqual(
                 val[0],
                 ldapsyntax.LDAPEntry(
                     client=client,
@@ -796,9 +796,9 @@ class LDAPSyntaxSearch(unittest.TestCase):
                     },
                 ),
             )
-            self.failUnless(val[0].complete)
+            self.assertTrue(val[0].complete)
 
-            self.failUnlessEqual(
+            self.assertEqual(
                 val[1],
                 ldapsyntax.LDAPEntry(
                     client=client,
@@ -809,7 +809,7 @@ class LDAPSyntaxSearch(unittest.TestCase):
                     },
                 ),
             )
-            self.failUnless(val[1].complete)
+            self.assertTrue(val[1].complete)
 
         d.addCallback(cb)
         return d
@@ -857,19 +857,19 @@ class LDAPSyntaxSearch(unittest.TestCase):
                     attributes=["1.1"],
                 )
             )
-            self.failUnlessEqual(len(val), 2)
+            self.assertEqual(len(val), 2)
 
-            self.failUnlessEqual(
+            self.assertEqual(
                 val[0],
                 ldapsyntax.LDAPEntry(client=client, dn="cn=foo,dc=example,dc=com"),
             )
-            self.failIf(val[0].complete)
+            self.assertFalse(val[0].complete)
 
-            self.failUnlessEqual(
+            self.assertEqual(
                 val[1],
                 ldapsyntax.LDAPEntry(client=client, dn="cn=bar,dc=example,dc=com"),
             )
-            self.failIf(val[1].complete)
+            self.assertFalse(val[1].complete)
 
         d.addCallback(cb)
         return d
@@ -927,7 +927,7 @@ class LDAPSyntaxSearch(unittest.TestCase):
                 )
             )
 
-            self.failUnlessEqual(
+            self.assertEqual(
                 seen,
                 [
                     ldapsyntax.LDAPEntry(
@@ -1022,7 +1022,7 @@ class LDAPSyntaxLDIF(unittest.TestCase):
                 "bValue": ["c"],
             },
         )
-        self.failUnlessEqual(
+        self.assertEqual(
             o.toWire(),
             b"""dn: cn=foo,dc=example,dc=com
 objectClass: a
@@ -1053,10 +1053,10 @@ class LDAPSyntaxDelete(unittest.TestCase):
         d = o.delete()
 
         def cb(dummy):
-            self.failUnlessRaises(
+            self.assertRaises(
                 ldapsyntax.ObjectDeletedError, o.search, filterText="(foo=a)"
             )
-            self.failUnlessRaises(ldapsyntax.ObjectDeletedError, o.get, "objectClass")
+            self.assertRaises(ldapsyntax.ObjectDeletedError, o.get, "objectClass")
 
         d.addCallback(cb)
         return d
@@ -1804,7 +1804,7 @@ class LDAPSyntaxFetch(unittest.TestCase):
         o = ldapsyntax.LDAPEntry(client=client, dn="cn=foo,dc=example,dc=com")
         o["x"] = ["foo"]
 
-        self.failUnlessRaises(ldapsyntax.ObjectDirtyError, o.fetch)
+        self.assertRaises(ldapsyntax.ObjectDirtyError, o.fetch)
 
     def testFetch_Empty(self):
         """Fetching attributes for a newly-created object works."""
