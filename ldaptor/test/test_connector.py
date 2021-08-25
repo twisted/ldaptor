@@ -30,7 +30,7 @@ class TestCallableOverride(unittest.TestCase):
         )
 
         def cb(r):
-            self.failUnless(isinstance(r, FakeProto))
+            self.assertTrue(isinstance(r, FakeProto))
 
         d.addCallback(cb)
         return d

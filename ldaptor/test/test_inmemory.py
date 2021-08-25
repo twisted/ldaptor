@@ -341,7 +341,7 @@ class TestInMemoryDatabase(unittest.TestCase):
 
     def test_setPassword_noSalt(self):
         self.foo.setPassword(b"s3krit")
-        self.failUnless("userPassword" in self.foo)
+        self.assertTrue("userPassword" in self.foo)
         d = self.foo.bind(b"s3krit")
         d.addCallback(self.assertIdentical, self.foo)
         d.addCallback(lambda _: self.foo.bind(b"s4krit"))
@@ -511,7 +511,7 @@ class TestInMemoryDatabase(unittest.TestCase):
         """ReadOnlyInMemoryLDAPEntry.commit() succeeds immediately."""
         self.meta["foo"] = ["bar"]
         d = self.meta.commit()
-        self.failUnless(d.called)
+        self.assertTrue(d.called)
 
 
 class FromLDIF(unittest.TestCase):
@@ -591,7 +591,7 @@ cn: foo
 
         def eb(fail):
             fail.trap(ldaperrors.LDAPNoSuchObject)
-            self.failUnlessEqual(
+            self.assertEqual(
                 fail.value.toWire(), b"noSuchObject: ou=nonexisting,dc=example,dc=com"
             )
 

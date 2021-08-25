@@ -49,8 +49,8 @@ class LDAPAutoFill_Simple(unittest.TestCase):
             o["a"] = ["1"]
             o["b"] = ["2", "3"]
 
-            self.failUnless("sum" in o)
-            self.failUnlessEqual(o["sum"], ["6"])
+            self.assertTrue("sum" in o)
+            self.assertEqual(o["sum"], ["6"])
 
         d.addCallback(cb)
         return d

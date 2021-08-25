@@ -230,8 +230,8 @@ objectClass: organizationalUnit
 
     def _cb_testSimpleWrite(self, entry):
         path = os.path.join(self.tree, "dc=com.dir", "dc=example.dir", "cn=foo.ldif")
-        self.failUnless(os.path.isfile(path))
-        self.failUnlessEqual(
+        self.assertTrue(os.path.isfile(path))
+        self.assertEqual(
             open(path, "rb").read(),
             b"""\
 dn: cn=foo,dc=example,dc=com
@@ -261,8 +261,8 @@ cn: foo
             "ou=OrgUnit.dir",
             "cn=create-me.ldif",
         )
-        self.failUnless(os.path.isfile(path))
-        self.failUnlessEqual(
+        self.assertTrue(os.path.isfile(path))
+        self.assertEqual(
             open(path, "rb").read(),
             b"""\
 dn: cn=create-me,ou=OrgUnit,dc=example,dc=com
@@ -290,8 +290,8 @@ cn: create-me
 
     def _cb_testDirExists(self, entry, dirpath):
         path = os.path.join(dirpath, "cn=create-me.ldif")
-        self.failUnless(os.path.isfile(path))
-        self.failUnlessEqual(
+        self.assertTrue(os.path.isfile(path))
+        self.assertEqual(
             open(path, "rb").read(),
             b"""\
 dn: cn=create-me,ou=OrgUnit,dc=example,dc=com
@@ -329,8 +329,8 @@ cn: create-me
 
     def _cb_testAddTopLevel(self, entry):
         path = os.path.join(self.tree, "dc=org.ldif")
-        self.failUnless(os.path.isfile(path))
-        self.failUnlessEqual(
+        self.assertTrue(os.path.isfile(path))
+        self.assertEqual(
             open(path, "rb").read(),
             b"""\
 dn: dc=org
@@ -790,14 +790,14 @@ objectClass: top
 
     def test_setPassword(self):
         self.foo.setPassword(b"s3krit", salt=b"\xf2\x4a")
-        self.failUnless("userPassword" in self.foo)
+        self.assertTrue("userPassword" in self.foo)
         self.assertEqual(
             self.foo["userPassword"], [b"{SSHA}0n/Iw1NhUOKyaI9gm9v5YsO3ZInySg=="]
         )
 
     def test_setPassword_noSalt(self):
         self.foo.setPassword(b"s3krit")
-        self.failUnless("userPassword" in self.foo)
+        self.assertTrue("userPassword" in self.foo)
         d = self.foo.bind("s3krit")
         d.addCallback(self.assertIdentical, self.foo)
         d.addCallback(lambda _: self.foo.bind("s4krit"))

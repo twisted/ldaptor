@@ -182,10 +182,8 @@ class RelativeDistinguishedName(TextStrAlias):
         else:
             assert attributeTypesAndValues is None
             self.attributeTypesAndValues = tuple(
-                [
-                    LDAPAttributeTypeAndValue(stringValue=unescape(x))
-                    for x in _splitOnNotEscaped(to_unicode(stringValue), "+")
-                ]
+                LDAPAttributeTypeAndValue(stringValue=unescape(x))
+                for x in _splitOnNotEscaped(to_unicode(stringValue), "+")
             )
 
     def split(self):
@@ -259,10 +257,8 @@ class DistinguishedName(TextStrAlias):
         else:
             assert listOfRDNs is None
             self.listOfRDNs = tuple(
-                [
-                    RelativeDistinguishedName(stringValue=x)
-                    for x in _splitOnNotEscaped(to_unicode(stringValue), ",")
-                ]
+                RelativeDistinguishedName(stringValue=x)
+                for x in _splitOnNotEscaped(to_unicode(stringValue), ",")
             )
 
     def split(self):

@@ -69,13 +69,13 @@ class OnWire(unittest.TestCase):
                 attributes=["attributeTypes", "objectClasses"],
             ),
         )
-        self.failUnlessEqual(len(val), 2)
+        self.assertEqual(len(val), 2)
 
-        self.failUnlessEqual(
+        self.assertEqual(
             [to_bytes(x) for x in val[0]],
             [to_bytes(schema.AttributeTypeDescription(self.cn))],
         )
-        self.failUnlessEqual(
+        self.assertEqual(
             [to_bytes(x) for x in val[1]],
             [to_bytes(schema.ObjectClassDescription(self.dcObject))],
         )

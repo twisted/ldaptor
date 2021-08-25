@@ -189,10 +189,10 @@ class LDAPAutoFill_Posix(unittest.TestCase):
             ]
         )
 
-        self.failUnless("loginShell" in o)
-        self.failUnlessEqual(o["loginShell"], ["/bin/sh"])
+        self.assertTrue("loginShell" in o)
+        self.assertEqual(o["loginShell"], ["/bin/sh"])
 
-        self.failUnless("uidNumber" in o)
-        self.failUnlessEqual(o["uidNumber"], ["1000"])
-        self.failUnless("gidNumber" in o)
-        self.failUnlessEqual(o["gidNumber"], ["1042"])
+        self.assertTrue("uidNumber" in o)
+        self.assertEqual(o["uidNumber"], ["1000"])
+        self.assertTrue("gidNumber" in o)
+        self.assertEqual(o["gidNumber"], ["1042"])
