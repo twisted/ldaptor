@@ -55,7 +55,7 @@ def _get(path, dn):
 
     parser = StoreParsedLDIF()
 
-    entry = os.path.join(path, *["%s.dir" % rdn.getText() for rdn in l[:-1]])
+    entry = os.path.join(path, *("%s.dir" % rdn.getText() for rdn in l[:-1]))
     entry = os.path.join(entry, "%s.ldif" % l[-1].getText())
     f = open(entry, "rb")
     while 1:
@@ -77,7 +77,7 @@ def _get(path, dn):
 
 def _putEntry(fileName, entry):
     """fileName is without extension."""
-    tmp = "{}.{}.tmp".format(fileName, str(uuid.uuid4()))
+    tmp = f"{fileName}.{str(uuid.uuid4())}.tmp"
     f = open(tmp, "wb")
     f.write(entry.toWire())
     f.close()
@@ -93,7 +93,7 @@ def _put(path, entry):
 
     entryRDN = l.pop()
     if l:
-        grandParent = os.path.join(path, *["%s.dir" % rdn.getText() for rdn in l[:-1]])
+        grandParent = os.path.join(path, *("%s.dir" % rdn.getText() for rdn in l[:-1]))
         parentEntry = os.path.join(grandParent, "%s.ldif" % l[-1].getText())
         parentDir = os.path.join(grandParent, "%s.dir" % l[-1].getText())
         if not os.path.exists(parentDir):
@@ -243,7 +243,7 @@ class LDIFTreeEntry(
         if not os.path.exists(self.path):
             os.mkdir(self.path)
         fileName = os.path.join(self.path, "%s" % rdn.getText())
-        tmp = "{}.{}.tmp".format(fileName, str(uuid.uuid4()))
+        tmp = f"{fileName}.{str(uuid.uuid4())}.tmp"
         f = open(tmp, "wb")
         f.write(e.toWire())
         f.close()

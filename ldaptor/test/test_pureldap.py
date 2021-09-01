@@ -833,7 +833,7 @@ class TestEquality(unittest.TestCase):
                     j_class, j_args = self.valuesToTest[j]
                     x = i_class(*i_args)
                     y = j_class(*j_args)
-                    self.assertNotEquals(x, y)
+                    self.assertNotEqual(x, y)
 
 
 class Substrings(unittest.TestCase):

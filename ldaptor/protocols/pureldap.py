@@ -42,7 +42,7 @@ def escape(s):
 
 
 def binary_escape(s):
-    return "".join("\\{:02x}".format(ord(c)) for c in s)
+    return "".join(f"\\{ord(c):02x}" for c in s)
 
 
 def smart_escape(s, threshold=0.30):
@@ -1438,8 +1438,8 @@ class LDAPCompareRequest(LDAPProtocolRequest, BERSequence):
 
     def __repr__(self):
         l = [
-            "entry={}".format(repr(self.entry)),
-            "ava={}".format(repr(self.ava)),
+            f"entry={repr(self.entry)}",
+            f"ava={repr(self.ava)}",
         ]
         return "{}({})".format(self.__class__.__name__, ", ".join(l))
 
@@ -1606,11 +1606,11 @@ class LDAPPasswordModifyRequest(LDAPExtendedRequest):
     def __repr__(self):
         l = []
         if self.userIdentity is not None:
-            l.append("userIdentity={}".format(repr(self.userIdentity)))
+            l.append(f"userIdentity={repr(self.userIdentity)}")
         if self.oldPasswd is not None:
-            l.append("oldPasswd={}".format(repr(self.oldPasswd)))
+            l.append(f"oldPasswd={repr(self.oldPasswd)}")
         if self.newPasswd is not None:
-            l.append("newPasswd={}".format(repr(self.newPasswd)))
+            l.append(f"newPasswd={repr(self.newPasswd)}")
         if self.tag != self.__class__.tag:
             l.append("tag=%d" % self.tag)
         return self.__class__.__name__ + "(" + ", ".join(l) + ")"

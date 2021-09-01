@@ -44,19 +44,19 @@ class LDAPAutoFill_sambaAccount(unittest.TestCase):
         def cb(dummy):
             client.assertNothingSent()
 
-            self.failUnless("acctFlags" in o)
-            self.failUnlessEqual(o["acctFlags"], ["[UX         ]"])
+            self.assertTrue("acctFlags" in o)
+            self.assertEqual(o["acctFlags"], ["[UX         ]"])
 
-            self.failUnless("pwdLastSet" in o)
-            self.failUnlessEqual(o["pwdLastSet"], ["0"])
-            self.failUnless("logonTime" in o)
-            self.failUnlessEqual(o["logonTime"], ["0"])
-            self.failUnless("logoffTime" in o)
-            self.failUnlessEqual(o["logoffTime"], ["0"])
-            self.failUnless("pwdCanChange" in o)
-            self.failUnlessEqual(o["pwdCanChange"], ["0"])
-            self.failUnless("pwdMustChange" in o)
-            self.failUnlessEqual(o["pwdMustChange"], ["0"])
+            self.assertTrue("pwdLastSet" in o)
+            self.assertEqual(o["pwdLastSet"], ["0"])
+            self.assertTrue("logonTime" in o)
+            self.assertEqual(o["logonTime"], ["0"])
+            self.assertTrue("logoffTime" in o)
+            self.assertEqual(o["logoffTime"], ["0"])
+            self.assertTrue("pwdCanChange" in o)
+            self.assertEqual(o["pwdCanChange"], ["0"])
+            self.assertTrue("pwdMustChange" in o)
+            self.assertEqual(o["pwdMustChange"], ["0"])
 
         d.addCallback(cb)
         return d
@@ -77,20 +77,20 @@ class LDAPAutoFill_sambaAccount(unittest.TestCase):
             client.assertNothingSent()
 
             o["uidNumber"] = ["1000"]
-            self.failUnless("rid" in o)
-            self.failUnlessEqual(o["rid"], [str(2 * 1000 + 1000)])
+            self.assertTrue("rid" in o)
+            self.assertEqual(o["rid"], [str(2 * 1000 + 1000)])
             o["uidNumber"] = ["1001"]
-            self.failUnlessEqual(o["rid"], [str(2 * 1001 + 1000)])
+            self.assertEqual(o["rid"], [str(2 * 1001 + 1000)])
             o["uidNumber"] = ["1002"]
-            self.failUnlessEqual(o["rid"], [str(2 * 1002 + 1000)])
+            self.assertEqual(o["rid"], [str(2 * 1002 + 1000)])
             o["uidNumber"] = ["2000"]
-            self.failUnlessEqual(o["rid"], [str(2 * 2000 + 1000)])
+            self.assertEqual(o["rid"], [str(2 * 2000 + 1000)])
             o["uidNumber"] = ["3000"]
-            self.failUnlessEqual(o["rid"], [str(2 * 3000 + 1000)])
+            self.assertEqual(o["rid"], [str(2 * 3000 + 1000)])
             o["uidNumber"] = ["0"]
-            self.failUnlessEqual(o["rid"], [str(2 * 0 + 1000)])
+            self.assertEqual(o["rid"], [str(2 * 0 + 1000)])
             o["uidNumber"] = ["16000"]
-            self.failUnlessEqual(o["rid"], [str(2 * 16000 + 1000)])
+            self.assertEqual(o["rid"], [str(2 * 16000 + 1000)])
 
         d.addCallback(cb)
         return d
@@ -111,20 +111,20 @@ class LDAPAutoFill_sambaAccount(unittest.TestCase):
             client.assertNothingSent()
 
             o["gidNumber"] = ["1000"]
-            self.failUnless("primaryGroupID" in o)
-            self.failUnlessEqual(o["primaryGroupID"], [str(2 * 1000 + 1001)])
+            self.assertTrue("primaryGroupID" in o)
+            self.assertEqual(o["primaryGroupID"], [str(2 * 1000 + 1001)])
             o["gidNumber"] = ["1001"]
-            self.failUnlessEqual(o["primaryGroupID"], [str(2 * 1001 + 1001)])
+            self.assertEqual(o["primaryGroupID"], [str(2 * 1001 + 1001)])
             o["gidNumber"] = ["1002"]
-            self.failUnlessEqual(o["primaryGroupID"], [str(2 * 1002 + 1001)])
+            self.assertEqual(o["primaryGroupID"], [str(2 * 1002 + 1001)])
             o["gidNumber"] = ["2000"]
-            self.failUnlessEqual(o["primaryGroupID"], [str(2 * 2000 + 1001)])
+            self.assertEqual(o["primaryGroupID"], [str(2 * 2000 + 1001)])
             o["gidNumber"] = ["3000"]
-            self.failUnlessEqual(o["primaryGroupID"], [str(2 * 3000 + 1001)])
+            self.assertEqual(o["primaryGroupID"], [str(2 * 3000 + 1001)])
             o["gidNumber"] = ["0"]
-            self.failUnlessEqual(o["primaryGroupID"], [str(2 * 0 + 1001)])
+            self.assertEqual(o["primaryGroupID"], [str(2 * 0 + 1001)])
             o["gidNumber"] = ["16000"]
-            self.failUnlessEqual(o["primaryGroupID"], [str(2 * 16000 + 1001)])
+            self.assertEqual(o["primaryGroupID"], [str(2 * 16000 + 1001)])
 
         d.addCallback(cb)
         return d
@@ -166,7 +166,7 @@ class LDAPAutoFill_sambaSamAccount(unittest.TestCase):
         def cb(dummy):
             client.assertNothingSent()
 
-            self.failUnlessEqual(
+            self.assertEqual(
                 set(o.keys()),
                 {
                     "objectClass",
@@ -179,12 +179,12 @@ class LDAPAutoFill_sambaSamAccount(unittest.TestCase):
                 },
             )
 
-            self.failUnlessEqual(o["sambaAcctFlags"], ["[UX         ]"])
-            self.failUnlessEqual(o["sambaPwdLastSet"], ["1"])
-            self.failUnlessEqual(o["sambaLogonTime"], ["0"])
-            self.failUnlessEqual(o["sambaLogoffTime"], ["0"])
-            self.failUnlessEqual(o["sambaPwdCanChange"], ["0"])
-            self.failUnlessEqual(o["sambaPwdMustChange"], ["0"])
+            self.assertEqual(o["sambaAcctFlags"], ["[UX         ]"])
+            self.assertEqual(o["sambaPwdLastSet"], ["1"])
+            self.assertEqual(o["sambaLogonTime"], ["0"])
+            self.assertEqual(o["sambaLogoffTime"], ["0"])
+            self.assertEqual(o["sambaPwdCanChange"], ["0"])
+            self.assertEqual(o["sambaPwdMustChange"], ["0"])
 
         d.addCallback(cb)
         return d
@@ -208,7 +208,7 @@ class LDAPAutoFill_sambaSamAccount(unittest.TestCase):
         def cb(dummy):
             client.assertNothingSent()
 
-            self.failUnlessEqual(
+            self.assertEqual(
                 set(o.keys()),
                 {
                     "objectClass",
@@ -222,13 +222,13 @@ class LDAPAutoFill_sambaSamAccount(unittest.TestCase):
                 },
             )
 
-            self.failUnlessEqual(o["sambaPrimaryGroupSID"], ["foo-4131312"])
-            self.failUnlessEqual(o["sambaAcctFlags"], ["[UX         ]"])
-            self.failUnlessEqual(o["sambaPwdLastSet"], ["1"])
-            self.failUnlessEqual(o["sambaLogonTime"], ["0"])
-            self.failUnlessEqual(o["sambaLogoffTime"], ["0"])
-            self.failUnlessEqual(o["sambaPwdCanChange"], ["0"])
-            self.failUnlessEqual(o["sambaPwdMustChange"], ["0"])
+            self.assertEqual(o["sambaPrimaryGroupSID"], ["foo-4131312"])
+            self.assertEqual(o["sambaAcctFlags"], ["[UX         ]"])
+            self.assertEqual(o["sambaPwdLastSet"], ["1"])
+            self.assertEqual(o["sambaLogonTime"], ["0"])
+            self.assertEqual(o["sambaLogoffTime"], ["0"])
+            self.assertEqual(o["sambaPwdCanChange"], ["0"])
+            self.assertEqual(o["sambaPwdMustChange"], ["0"])
 
         d.addCallback(cb)
         return d
@@ -249,20 +249,20 @@ class LDAPAutoFill_sambaSamAccount(unittest.TestCase):
             client.assertNothingSent()
 
             o["uidNumber"] = ["1000"]
-            self.failUnless("sambaSID" in o)
-            self.failUnlessEqual(o["sambaSID"], ["foo-%s" % (2 * 1000 + 1000)])
+            self.assertTrue("sambaSID" in o)
+            self.assertEqual(o["sambaSID"], ["foo-%s" % (2 * 1000 + 1000)])
             o["uidNumber"] = ["1001"]
-            self.failUnlessEqual(o["sambaSID"], ["foo-%s" % (2 * 1001 + 1000)])
+            self.assertEqual(o["sambaSID"], ["foo-%s" % (2 * 1001 + 1000)])
             o["uidNumber"] = ["1002"]
-            self.failUnlessEqual(o["sambaSID"], ["foo-%s" % (2 * 1002 + 1000)])
+            self.assertEqual(o["sambaSID"], ["foo-%s" % (2 * 1002 + 1000)])
             o["uidNumber"] = ["2000"]
-            self.failUnlessEqual(o["sambaSID"], ["foo-%s" % (2 * 2000 + 1000)])
+            self.assertEqual(o["sambaSID"], ["foo-%s" % (2 * 2000 + 1000)])
             o["uidNumber"] = ["3000"]
-            self.failUnlessEqual(o["sambaSID"], ["foo-%s" % (2 * 3000 + 1000)])
+            self.assertEqual(o["sambaSID"], ["foo-%s" % (2 * 3000 + 1000)])
             o["uidNumber"] = ["0"]
-            self.failUnlessEqual(o["sambaSID"], ["foo-%s" % (2 * 0 + 1000)])
+            self.assertEqual(o["sambaSID"], ["foo-%s" % (2 * 0 + 1000)])
             o["uidNumber"] = ["16000"]
-            self.failUnlessEqual(o["sambaSID"], ["foo-%s" % (2 * 16000 + 1000)])
+            self.assertEqual(o["sambaSID"], ["foo-%s" % (2 * 16000 + 1000)])
 
         d.addCallback(cb)
         return d
@@ -283,8 +283,8 @@ class LDAPAutoFill_sambaSamAccount(unittest.TestCase):
         def cb(dummy):
             client.assertNothingSent()
 
-            self.failUnless("sambaSID" in o)
-            self.failUnlessEqual(o["sambaSID"], ["foo-%s" % (2 * 1000 + 1000)])
+            self.assertTrue("sambaSID" in o)
+            self.assertEqual(o["sambaSID"], ["foo-%s" % (2 * 1000 + 1000)])
 
         d.addCallback(cb)
         return d
@@ -305,32 +305,20 @@ class LDAPAutoFill_sambaSamAccount(unittest.TestCase):
             client.assertNothingSent()
 
             o["gidNumber"] = ["1000"]
-            self.failUnless("sambaPrimaryGroupSID" in o)
-            self.failUnlessEqual(
-                o["sambaPrimaryGroupSID"], ["foo-%s" % (2 * 1000 + 1001)]
-            )
+            self.assertTrue("sambaPrimaryGroupSID" in o)
+            self.assertEqual(o["sambaPrimaryGroupSID"], ["foo-%s" % (2 * 1000 + 1001)])
             o["gidNumber"] = ["1001"]
-            self.failUnlessEqual(
-                o["sambaPrimaryGroupSID"], ["foo-%s" % (2 * 1001 + 1001)]
-            )
+            self.assertEqual(o["sambaPrimaryGroupSID"], ["foo-%s" % (2 * 1001 + 1001)])
             o["gidNumber"] = ["1002"]
-            self.failUnlessEqual(
-                o["sambaPrimaryGroupSID"], ["foo-%s" % (2 * 1002 + 1001)]
-            )
+            self.assertEqual(o["sambaPrimaryGroupSID"], ["foo-%s" % (2 * 1002 + 1001)])
             o["gidNumber"] = ["2000"]
-            self.failUnlessEqual(
-                o["sambaPrimaryGroupSID"], ["foo-%s" % (2 * 2000 + 1001)]
-            )
+            self.assertEqual(o["sambaPrimaryGroupSID"], ["foo-%s" % (2 * 2000 + 1001)])
             o["gidNumber"] = ["3000"]
-            self.failUnlessEqual(
-                o["sambaPrimaryGroupSID"], ["foo-%s" % (2 * 3000 + 1001)]
-            )
+            self.assertEqual(o["sambaPrimaryGroupSID"], ["foo-%s" % (2 * 3000 + 1001)])
             o["gidNumber"] = ["0"]
-            self.failUnlessEqual(o["sambaPrimaryGroupSID"], ["foo-%s" % (2 * 0 + 1001)])
+            self.assertEqual(o["sambaPrimaryGroupSID"], ["foo-%s" % (2 * 0 + 1001)])
             o["gidNumber"] = ["16000"]
-            self.failUnlessEqual(
-                o["sambaPrimaryGroupSID"], ["foo-%s" % (2 * 16000 + 1001)]
-            )
+            self.assertEqual(o["sambaPrimaryGroupSID"], ["foo-%s" % (2 * 16000 + 1001)])
 
         d.addCallback(cb)
         return d
@@ -351,10 +339,8 @@ class LDAPAutoFill_sambaSamAccount(unittest.TestCase):
         def cb(dummy):
             client.assertNothingSent()
 
-            self.failUnless("sambaPrimaryGroupSID" in o)
-            self.failUnlessEqual(
-                o["sambaPrimaryGroupSID"], ["foo-%s" % (2 * 1000 + 1001)]
-            )
+            self.assertTrue("sambaPrimaryGroupSID" in o)
+            self.assertEqual(o["sambaPrimaryGroupSID"], ["foo-%s" % (2 * 1000 + 1001)])
 
         d.addCallback(cb)
         return d
@@ -376,11 +362,11 @@ class LDAPAutoFill_sambaSamAccount(unittest.TestCase):
         def cb(dummy):
             client.assertNothingSent()
 
-            self.failUnless("sambaPrimaryGroupSID" in o)
-            self.failUnlessEqual(o["sambaPrimaryGroupSID"], ["foo-4242"])
+            self.assertTrue("sambaPrimaryGroupSID" in o)
+            self.assertEqual(o["sambaPrimaryGroupSID"], ["foo-4242"])
             o["gidNumber"] = ["1000"]
-            self.failUnless("sambaPrimaryGroupSID" in o)
-            self.failUnlessEqual(o["sambaPrimaryGroupSID"], ["foo-4242"])
+            self.assertTrue("sambaPrimaryGroupSID" in o)
+            self.assertEqual(o["sambaPrimaryGroupSID"], ["foo-4242"])
 
         d.addCallback(cb)
         return d

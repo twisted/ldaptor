@@ -24,29 +24,29 @@ class TestModifications(unittest.TestCase):
         mod = delta.Add("cn", ["quux"])
         mod.patch(self.foo)
 
-        self.failIf("stuff" in self.foo)
-        self.failUnlessEqual(self.foo["cn"], ["foo", "thud", "quux"])
+        self.assertFalse("stuff" in self.foo)
+        self.assertEqual(self.foo["cn"], ["foo", "thud", "quux"])
 
     def testAddNew(self):
         mod = delta.Add("stuff", ["val1", "val2"])
         mod.patch(self.foo)
 
-        self.failUnlessEqual(self.foo["stuff"], ["val1", "val2"])
-        self.failUnlessEqual(self.foo["cn"], ["foo", "thud"])
+        self.assertEqual(self.foo["stuff"], ["val1", "val2"])
+        self.assertEqual(self.foo["cn"], ["foo", "thud"])
 
     def testDelete(self):
         mod = delta.Delete("cn", ["thud"])
         mod.patch(self.foo)
 
-        self.failIf("stuff" in self.foo)
-        self.failUnlessEqual(self.foo["cn"], ["foo"])
+        self.assertFalse("stuff" in self.foo)
+        self.assertEqual(self.foo["cn"], ["foo"])
 
     def testDeleteAll(self):
         mod = delta.Delete("more")
         mod.patch(self.foo)
 
-        self.failIf("stuff" in self.foo)
-        self.failUnlessEqual(self.foo["cn"], ["foo", "thud"])
+        self.assertFalse("stuff" in self.foo)
+        self.assertEqual(self.foo["cn"], ["foo", "thud"])
 
     def testDelete_FailOnNonExistingAttributeType_All(self):
         mod = delta.Delete("notexist", [])
@@ -64,33 +64,33 @@ class TestModifications(unittest.TestCase):
         mod = delta.Replace("stuff", ["val1", "val2"])
         mod.patch(self.foo)
 
-        self.failUnlessEqual(self.foo["stuff"], ["val1", "val2"])
-        self.failUnlessEqual(self.foo["sn"], ["bar"])
-        self.failUnlessEqual(self.foo["more"], ["junk"])
+        self.assertEqual(self.foo["stuff"], ["val1", "val2"])
+        self.assertEqual(self.foo["sn"], ["bar"])
+        self.assertEqual(self.foo["more"], ["junk"])
 
     def testReplace_Modify(self):
         mod = delta.Replace("sn", ["baz"])
         mod.patch(self.foo)
 
-        self.failIf("stuff" in self.foo)
-        self.failUnlessEqual(self.foo["sn"], ["baz"])
-        self.failUnlessEqual(self.foo["more"], ["junk"])
+        self.assertFalse("stuff" in self.foo)
+        self.assertEqual(self.foo["sn"], ["baz"])
+        self.assertEqual(self.foo["more"], ["junk"])
 
     def testReplace_Delete_Existing(self):
         mod = delta.Replace("more", [])
         mod.patch(self.foo)
 
-        self.failIf("stuff" in self.foo)
-        self.failUnlessEqual(self.foo["sn"], ["bar"])
-        self.failIf("more" in self.foo)
+        self.assertFalse("stuff" in self.foo)
+        self.assertEqual(self.foo["sn"], ["bar"])
+        self.assertFalse("more" in self.foo)
 
     def testReplace_Delete_NonExisting(self):
         mod = delta.Replace("nonExisting", [])
         mod.patch(self.foo)
 
-        self.failIf("stuff" in self.foo)
-        self.failUnlessEqual(self.foo["sn"], ["bar"])
-        self.failUnlessEqual(self.foo["more"], ["junk"])
+        self.assertFalse("stuff" in self.foo)
+        self.assertEqual(self.foo["sn"], ["bar"])
+        self.assertEqual(self.foo["more"], ["junk"])
 
 
 class TestModificationOpLDIF(unittest.TestCase):
@@ -632,14 +632,14 @@ class TestModificationComparison(unittest.TestCase):
     def testEquality_AddVsDelete_False(self):
         a = delta.Add("k", ["b", "c", "d"])
         b = delta.Delete("k", ["b", "c", "d"])
-        self.assertNotEquals(a, b)
+        self.assertNotEqual(a, b)
 
     def testEquality_AttributeSet_False(self):
         a = delta.Add("k", ["b", "c", "d"])
         b = attributeset.LDAPAttributeSet("k", ["b", "c", "d"])
-        self.assertNotEquals(a, b)
+        self.assertNotEqual(a, b)
 
     def testEquality_List_False(self):
         a = delta.Add("k", ["b", "c", "d"])
         b = ["b", "c", "d"]
-        self.assertNotEquals(a, b)
+        self.assertNotEqual(a, b)
