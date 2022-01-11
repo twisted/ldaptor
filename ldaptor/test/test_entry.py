@@ -8,7 +8,6 @@ from ldaptor import delta, entry
 from ldaptor.protocols.ldap.ldaperrors import LDAPInvalidCredentials
 
 
-
 class TestBaseLDAPEntry(unittest.TestCase):
     """
     Tests for ldaptor.entry.BaseLDAPEntry.
@@ -20,15 +19,17 @@ class TestBaseLDAPEntry(unittest.TestCase):
         and same attributes and values.
         """
         a = entry.BaseLDAPEntry(
-            dn='dc=foo',
+            dn="dc=foo",
             attributes={
-                'foo': ['bar'],
-            })
+                "foo": ["bar"],
+            },
+        )
         b = entry.BaseLDAPEntry(
-            dn='Dc=Foo',
+            dn="Dc=Foo",
             attributes={
-                'foo': ['bar'],
-            })
+                "foo": ["bar"],
+            },
+        )
 
         self.assertEqual(a, b)
 
@@ -36,15 +37,15 @@ class TestBaseLDAPEntry(unittest.TestCase):
         """
         It is not equal with objects of different types.
         """
-        a = entry.BaseLDAPEntry(dn='dc=foo', attributes={})
+        a = entry.BaseLDAPEntry(dn="dc=foo", attributes={})
         self.assertFalse(a == object())
 
     def testInequalityDifferentDN(self):
         """
         Entries are not equal if their DNs are not equal
         """
-        a = entry.BaseLDAPEntry(dn='dn=foo', attributes={'foo': ['bar']})
-        b = entry.BaseLDAPEntry(dn='dn=bar', attributes={'foo': ['bar']})
+        a = entry.BaseLDAPEntry(dn="dn=foo", attributes={"foo": ["bar"]})
+        b = entry.BaseLDAPEntry(dn="dn=bar", attributes={"foo": ["bar"]})
         self.assertNotEqual(a, b)
 
     def testBindPlainText(self):
@@ -53,49 +54,48 @@ class TestBaseLDAPEntry(unittest.TestCase):
         and will return a deferred which has itself as callback.
         """
         sut = entry.BaseLDAPEntry(
-            dn='dc=foo',
+            dn="dc=foo",
             attributes={
-                'userPassword': [b'some-plain-text'],
-            })
+                "userPassword": [b"some-plain-text"],
+            },
+        )
 
-        deferred = sut.bind(b'some-plain-text')
+        deferred = sut.bind(b"some-plain-text")
         result = self.successResultOf(deferred)
 
         self.assertIs(sut, result)
-
 
     def testBindSeededSHA(self):
         """
         It can bind with password stored in seeded SHA.
         """
         sut = entry.BaseLDAPEntry(
-            dn='dc=foo',
+            dn="dc=foo",
             attributes={
-                'userPassword': [b'{SSHA}yVLLj62rFf3kDAbzwEU0zYAVvbWrze8='],
-            })
+                "userPassword": [b"{SSHA}yVLLj62rFf3kDAbzwEU0zYAVvbWrze8="],
+            },
+        )
 
-        deferred = sut.bind(b'secret')
+        deferred = sut.bind(b"secret")
         result = self.successResultOf(deferred)
 
         self.assertIs(sut, result)
-
 
     def testBindPlainTextError(self):
         """
         Return a LDAPInvalidCredentials failure when password don't match.
         """
         sut = entry.BaseLDAPEntry(
-            dn='dc=foo',
+            dn="dc=foo",
             attributes={
-                'userPassword': [b'some-plain-text'],
-            })
+                "userPassword": [b"some-plain-text"],
+            },
+        )
 
-        deferred = sut.bind(b'other-password')
+        deferred = sut.bind(b"other-password")
         failure = self.failureResultOf(deferred)
 
         self.assertTrue(failure.check(LDAPInvalidCredentials))
-
-
 
     def testBindSHAError(self):
         """
@@ -103,12 +103,13 @@ class TestBaseLDAPEntry(unittest.TestCase):
         match.
         """
         sut = entry.BaseLDAPEntry(
-            dn='dc=foo',
+            dn="dc=foo",
             attributes={
-                'userPassword': [b'{SSHA}anythinghere'],
-            })
+                "userPassword": [b"{SSHA}anythinghere"],
+            },
+        )
 
-        deferred = sut.bind(b'other-password')
+        deferred = sut.bind(b"other-password")
         failure = self.failureResultOf(deferred)
 
         self.assertTrue(failure.check(LDAPInvalidCredentials))
@@ -118,17 +119,17 @@ class TestBaseLDAPEntry(unittest.TestCase):
         Getting human readable representation of an entry
         """
         sut = entry.BaseLDAPEntry(
-            dn='dc=foo',
+            dn="dc=foo",
             attributes={
-                'foo': ['bar'],
-                'bar': ['foo'],
-            }
+                "foo": ["bar"],
+                "bar": ["foo"],
+            },
         )
-        self.assertEqual(sut.getLDIF(), u'dn: dc=foo\nbar: foo\nfoo: bar\n\n')
+        self.assertEqual(sut.getLDIF(), "dn: dc=foo\nbar: foo\nfoo: bar\n\n")
 
     def testNonzero(self):
         """Entry is always non-zero"""
-        sut = entry.BaseLDAPEntry(dn='')
+        sut = entry.BaseLDAPEntry(dn="")
         self.assertTrue(bool(sut))
 
     def testRepr(self):
@@ -136,192 +137,274 @@ class TestBaseLDAPEntry(unittest.TestCase):
         Getting string representation of an entry
         """
         sut = entry.BaseLDAPEntry(
-            dn='dc=foo',
+            dn="dc=foo",
             attributes={
-                'foo': ['bar'],
-                'bar': ['foo'],
-            }
+                "foo": ["bar"],
+                "bar": ["foo"],
+            },
         )
-        self.assertEqual(repr(sut), "BaseLDAPEntry('dc=foo', {'bar': ['foo'], 'foo': ['bar']})")
-
+        self.assertEqual(
+            repr(sut), "BaseLDAPEntry('dc=foo', {'bar': ['foo'], 'foo': ['bar']})"
+        )
 
 
 class TestDiffEntry(unittest.TestCase):
     """
     Tests for ldaptor.entry.BaseLDAPEntry.diff()
     """
+
     def testEqual(self):
-        a = entry.BaseLDAPEntry(dn='dc=foo',
-                                attributes={
-            'foo': ['bar'],
-            })
-        b = entry.BaseLDAPEntry(dn='dc=foo',
-                                attributes={
-            'foo': ['bar'],
-            })
+        a = entry.BaseLDAPEntry(
+            dn="dc=foo",
+            attributes={
+                "foo": ["bar"],
+            },
+        )
+        b = entry.BaseLDAPEntry(
+            dn="dc=foo",
+            attributes={
+                "foo": ["bar"],
+            },
+        )
         result = a.diff(b)
         self.assertEqual(result, None)
 
     def testAdd_New_OneType_OneValue(self):
-        a = entry.BaseLDAPEntry(dn='dc=foo',
-                                attributes={
-            'foo': ['bar'],
-            })
-        b = entry.BaseLDAPEntry(dn='dc=foo',
-                                attributes={
-            'foo': ['bar'],
-            'baz': ['quux'],
-            })
+        a = entry.BaseLDAPEntry(
+            dn="dc=foo",
+            attributes={
+                "foo": ["bar"],
+            },
+        )
+        b = entry.BaseLDAPEntry(
+            dn="dc=foo",
+            attributes={
+                "foo": ["bar"],
+                "baz": ["quux"],
+            },
+        )
         result = a.diff(b)
-        self.assertEqual(result,
-                          delta.ModifyOp('dc=foo',
-                                         [
-            delta.Add('baz', ['quux']),
-            ]))
+        self.assertEqual(
+            result,
+            delta.ModifyOp(
+                "dc=foo",
+                [
+                    delta.Add("baz", ["quux"]),
+                ],
+            ),
+        )
 
     def testAdd_New_OneType_ManyValues(self):
-        a = entry.BaseLDAPEntry(dn='dc=foo',
-                                attributes={
-            'foo': ['bar'],
-            })
-        b = entry.BaseLDAPEntry(dn='dc=foo',
-                                attributes={
-            'foo': ['bar'],
-            'baz': ['quux', 'thud', 'foo'],
-            })
+        a = entry.BaseLDAPEntry(
+            dn="dc=foo",
+            attributes={
+                "foo": ["bar"],
+            },
+        )
+        b = entry.BaseLDAPEntry(
+            dn="dc=foo",
+            attributes={
+                "foo": ["bar"],
+                "baz": ["quux", "thud", "foo"],
+            },
+        )
         result = a.diff(b)
-        self.assertEqual(result,
-                          delta.ModifyOp('dc=foo',
-                                         [
-            delta.Add('baz', ['quux', 'thud', 'foo']),
-            ]))
+        self.assertEqual(
+            result,
+            delta.ModifyOp(
+                "dc=foo",
+                [
+                    delta.Add("baz", ["quux", "thud", "foo"]),
+                ],
+            ),
+        )
 
     def testAdd_New_ManyTypes(self):
-        a = entry.BaseLDAPEntry(dn='dc=foo',
-                                attributes={
-            'foo': ['bar'],
-            })
-        b = entry.BaseLDAPEntry(dn='dc=foo',
-                                attributes={
-            'foo': ['bar'],
-            'baz': ['quux'],
-            'bang': ['thud'],
-            })
+        a = entry.BaseLDAPEntry(
+            dn="dc=foo",
+            attributes={
+                "foo": ["bar"],
+            },
+        )
+        b = entry.BaseLDAPEntry(
+            dn="dc=foo",
+            attributes={
+                "foo": ["bar"],
+                "baz": ["quux"],
+                "bang": ["thud"],
+            },
+        )
         result = a.diff(b)
-        self.assertEqual(result,
-                          delta.ModifyOp('dc=foo',
-                                         [
-            delta.Add('bang', ['thud']),
-            delta.Add('baz', ['quux']),
-            ]))
+        self.assertEqual(
+            result,
+            delta.ModifyOp(
+                "dc=foo",
+                [
+                    delta.Add("bang", ["thud"]),
+                    delta.Add("baz", ["quux"]),
+                ],
+            ),
+        )
 
     def testAdd_Existing_OneType_OneValue(self):
-        a = entry.BaseLDAPEntry(dn='dc=foo',
-                                attributes={
-            'foo': ['bar'],
-            })
-        b = entry.BaseLDAPEntry(dn='dc=foo',
-                                attributes={
-            'foo': ['bar', 'quux'],
-            })
+        a = entry.BaseLDAPEntry(
+            dn="dc=foo",
+            attributes={
+                "foo": ["bar"],
+            },
+        )
+        b = entry.BaseLDAPEntry(
+            dn="dc=foo",
+            attributes={
+                "foo": ["bar", "quux"],
+            },
+        )
         result = a.diff(b)
-        self.assertEqual(result,
-                          delta.ModifyOp('dc=foo',
-                                         [
-            delta.Add('foo', ['quux']),
-            ]))
+        self.assertEqual(
+            result,
+            delta.ModifyOp(
+                "dc=foo",
+                [
+                    delta.Add("foo", ["quux"]),
+                ],
+            ),
+        )
 
     def testAdd_Existing_OneType_ManyValues(self):
-        a = entry.BaseLDAPEntry(dn='dc=foo',
-                                attributes={
-            'foo': ['bar'],
-            })
-        b = entry.BaseLDAPEntry(dn='dc=foo',
-                                attributes={
-            'foo': ['bar', 'quux', 'thud', 'foo'],
-            })
+        a = entry.BaseLDAPEntry(
+            dn="dc=foo",
+            attributes={
+                "foo": ["bar"],
+            },
+        )
+        b = entry.BaseLDAPEntry(
+            dn="dc=foo",
+            attributes={
+                "foo": ["bar", "quux", "thud", "foo"],
+            },
+        )
         result = a.diff(b)
-        self.assertEqual(result,
-                          delta.ModifyOp('dc=foo',
-                                         [
-            delta.Add('foo', ['quux', 'thud', 'foo']),
-            ]))
+        self.assertEqual(
+            result,
+            delta.ModifyOp(
+                "dc=foo",
+                [
+                    delta.Add("foo", ["quux", "thud", "foo"]),
+                ],
+            ),
+        )
 
     def testAdd_NewAndExisting_ManyTypes(self):
-        a = entry.BaseLDAPEntry(dn='dc=foo',
-                                attributes={
-            'foo': ['bar'],
-            'baz': ['quux'],
-            })
-        b = entry.BaseLDAPEntry(dn='dc=foo',
-                                attributes={
-            'foo': ['bar', 'thud', 'bang'],
-            'baz': ['quux', 'bar', 'stump'],
-            'bang': ['thud', 'barble'],
-            })
+        a = entry.BaseLDAPEntry(
+            dn="dc=foo",
+            attributes={
+                "foo": ["bar"],
+                "baz": ["quux"],
+            },
+        )
+        b = entry.BaseLDAPEntry(
+            dn="dc=foo",
+            attributes={
+                "foo": ["bar", "thud", "bang"],
+                "baz": ["quux", "bar", "stump"],
+                "bang": ["thud", "barble"],
+            },
+        )
         result = a.diff(b)
-        self.assertEqual(result,
-                          delta.ModifyOp('dc=foo',
-                                         [
-            delta.Add('bang', ['thud', 'barble']),
-            delta.Add('baz', ['bar', 'stump']),
-            delta.Add('foo', ['thud', 'bang']),
-            ]))
+        self.assertEqual(
+            result,
+            delta.ModifyOp(
+                "dc=foo",
+                [
+                    delta.Add("bang", ["thud", "barble"]),
+                    delta.Add("baz", ["bar", "stump"]),
+                    delta.Add("foo", ["thud", "bang"]),
+                ],
+            ),
+        )
 
     def testDelete_All_OneType(self):
-        a = entry.BaseLDAPEntry(dn='dc=foo',
-                                attributes={
-            'foo': ['bar'],
-            'baz': ['quux', 'thud'],
-            })
-        b = entry.BaseLDAPEntry(dn='dc=foo',
-                                attributes={
-            'foo': ['bar'],
-            })
+        a = entry.BaseLDAPEntry(
+            dn="dc=foo",
+            attributes={
+                "foo": ["bar"],
+                "baz": ["quux", "thud"],
+            },
+        )
+        b = entry.BaseLDAPEntry(
+            dn="dc=foo",
+            attributes={
+                "foo": ["bar"],
+            },
+        )
         result = a.diff(b)
-        self.assertEqual(result,
-                          delta.ModifyOp('dc=foo',
-                                         [
-            delta.Delete('baz', ['quux', 'thud']),
-            ]))
+        self.assertEqual(
+            result,
+            delta.ModifyOp(
+                "dc=foo",
+                [
+                    delta.Delete("baz", ["quux", "thud"]),
+                ],
+            ),
+        )
 
     def testDelete_Some_OneType(self):
-        a = entry.BaseLDAPEntry(dn='dc=foo',
-                                attributes={
-            'foo': ['bar'],
-            'baz': ['quux', 'thud'],
-            })
-        b = entry.BaseLDAPEntry(dn='dc=foo',
-                                attributes={
-            'foo': ['bar'],
-            'baz': ['thud'],
-            })
+        a = entry.BaseLDAPEntry(
+            dn="dc=foo",
+            attributes={
+                "foo": ["bar"],
+                "baz": ["quux", "thud"],
+            },
+        )
+        b = entry.BaseLDAPEntry(
+            dn="dc=foo",
+            attributes={
+                "foo": ["bar"],
+                "baz": ["thud"],
+            },
+        )
         result = a.diff(b)
-        self.assertEqual(result,
-                          delta.ModifyOp('dc=foo',
-                                         [
-            delta.Delete('baz', ['quux']),
-            ]))
+        self.assertEqual(
+            result,
+            delta.ModifyOp(
+                "dc=foo",
+                [
+                    delta.Delete("baz", ["quux"]),
+                ],
+            ),
+        )
 
     def testComplex(self):
-        a = entry.BaseLDAPEntry(dn='cn=Paula Jensen,ou=Product Development,dc=airius,dc=com',
-                                attributes={
-            'description': ['Something'],
-            'telephonenumber': ['+123 456'],
-            'facsimiletelephonenumber': ['+1 408 555 9876'],
-            })
-        b = entry.BaseLDAPEntry(dn='cn=Paula Jensen,ou=Product Development,dc=airius,dc=com',
-                                attributes={
-            'postalAddress': ['123 Anystreet $ Sunnyvale, CA $ 94086'],
-            'telephonenumber': ['+1 408 555 1234', '+1 408 555 5678'],
-            })
+        a = entry.BaseLDAPEntry(
+            dn="cn=Paula Jensen,ou=Product Development,dc=airius,dc=com",
+            attributes={
+                "description": ["Something"],
+                "telephonenumber": ["+123 456"],
+                "facsimiletelephonenumber": ["+1 408 555 9876"],
+            },
+        )
+        b = entry.BaseLDAPEntry(
+            dn="cn=Paula Jensen,ou=Product Development,dc=airius,dc=com",
+            attributes={
+                "postalAddress": ["123 Anystreet $ Sunnyvale, CA $ 94086"],
+                "telephonenumber": ["+1 408 555 1234", "+1 408 555 5678"],
+            },
+        )
         result = a.diff(b)
-        self.assertEqual(result,
-                          delta.ModifyOp('cn=Paula Jensen,ou=Product Development,dc=airius,dc=com',
-                                         [
-            delta.Add('postalAddress', ['123 Anystreet $ Sunnyvale, CA $ 94086']),
-            delta.Delete('description', ['Something']),
-            delta.Delete('facsimiletelephonenumber', ['+1 408 555 9876']),
-            delta.Add('telephonenumber', ['+1 408 555 1234', '+1 408 555 5678']),
-            delta.Delete('telephonenumber', ['+123 456']),
-            ]))
+        self.assertEqual(
+            result,
+            delta.ModifyOp(
+                "cn=Paula Jensen,ou=Product Development,dc=airius,dc=com",
+                [
+                    delta.Add(
+                        "postalAddress", ["123 Anystreet $ Sunnyvale, CA $ 94086"]
+                    ),
+                    delta.Delete("description", ["Something"]),
+                    delta.Delete("facsimiletelephonenumber", ["+1 408 555 9876"]),
+                    delta.Add(
+                        "telephonenumber", ["+1 408 555 1234", "+1 408 555 5678"]
+                    ),
+                    delta.Delete("telephonenumber", ["+123 456"]),
+                ],
+            ),
+        )

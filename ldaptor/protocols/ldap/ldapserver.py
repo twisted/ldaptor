@@ -1,19 +1,3 @@
-# Ldaptor, a Pure-Python library for LDAP
-# Copyright (C) 2003 Tommi Virtanen
-#
-# This library is free software; you can redistribute it and/or
-# modify it under the terms of version 2.1 of the GNU Lesser General Public
-# License as published by the Free Software Foundation.
-#
-# This library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# Lesser General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public
-# License along with this library; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """LDAP protocol server"""
 
 from ldaptor import interfaces, delta
@@ -31,22 +15,25 @@ class BaseLDAPServer(protocol.Protocol):
     debug = False
 
     def __init__(self):
-        self.buffer = b''
+        self.buffer = b""
         self.connected = None
 
     berdecoder = pureldap.LDAPBERDecoderContext_TopLevel(
         inherit=pureldap.LDAPBERDecoderContext_LDAPMessage(
             fallback=pureldap.LDAPBERDecoderContext(
-                fallback=pureber.BERDecoderContext()),
+                fallback=pureber.BERDecoderContext()
+            ),
             inherit=pureldap.LDAPBERDecoderContext(
-                fallback=pureber.BERDecoderContext())))
+                fallback=pureber.BERDecoderContext()
+            ),
+        )
+    )
 
     def dataReceived(self, recd):
         self.buffer += recd
         while 1:
             try:
-                o, bytes = pureber.berDecodeObject(
-                    self.berdecoder, self.buffer)
+                o, bytes = pureber.berDecodeObject(self.berdecoder, self.buffer)
             except pureber.BERExceptionInsufficientData:
                 o, bytes = None, 0
             self.buffer = self.buffer[bytes:]
@@ -67,7 +54,7 @@ class BaseLDAPServer(protocol.Protocol):
             raise LDAPServerConnectionLostException()
         msg = pureldap.LDAPMessage(op, id=id)
         if self.debug:
-            log.msg('S->C %s' % repr(msg), debug=True)
+            log.msg("S->C %s" % repr(msg), debug=True)
         self.transport.write(msg.toWire())
 
     def unsolicitedNotification(self, msg):
@@ -78,21 +65,25 @@ class BaseLDAPServer(protocol.Protocol):
             for controlType, criticality, controlValue in controls:
                 if criticality:
                     raise ldaperrors.LDAPUnavailableCriticalExtension(
-                        b'Unknown control %s' % controlType)
+                        b"Unknown control %s" % controlType
+                    )
 
     def handleUnknown(self, request, controls, callback):
-        log.msg('Unknown request: %r' % request)
+        log.msg("Unknown request: %r" % request)
         msg = pureldap.LDAPExtendedResponse(
             resultCode=ldaperrors.LDAPProtocolError.resultCode,
-            responseName='1.3.6.1.4.1.1466.20036',
-            errorMessage='Unknown request')
+            responseName="1.3.6.1.4.1.1466.20036",
+            errorMessage="Unknown request",
+        )
         return msg
 
     def _cbLDAPError(self, reason, name):
         reason.trap(ldaperrors.LDAPException)
-        return self._callErrorHandler(name=name,
-                                      resultCode=reason.value.resultCode,
-                                      errorMessage=reason.value.message)
+        return self._callErrorHandler(
+            name=name,
+            resultCode=reason.value.resultCode,
+            errorMessage=reason.value.message,
+        )
 
     def _cbHandle(self, response, id):
         if response is not None:
@@ -101,34 +92,37 @@ class BaseLDAPServer(protocol.Protocol):
     def failDefault(self, resultCode, errorMessage):
         return pureldap.LDAPExtendedResponse(
             resultCode=resultCode,
-            responseName='1.3.6.1.4.1.1466.20036',
-            errorMessage=errorMessage)
+            responseName="1.3.6.1.4.1.1466.20036",
+            errorMessage=errorMessage,
+        )
 
     def _callErrorHandler(self, name, resultCode, errorMessage):
-        errh = getattr(self, 'fail_'+name, self.failDefault)
+        errh = getattr(self, "fail_" + name, self.failDefault)
         return errh(resultCode=resultCode, errorMessage=errorMessage)
 
     def _cbOtherError(self, reason, name):
         return self._callErrorHandler(
             name=name,
             resultCode=ldaperrors.LDAPProtocolError.resultCode,
-            errorMessage=reason.getErrorMessage())
+            errorMessage=reason.getErrorMessage(),
+        )
 
     def handle(self, msg):
         assert isinstance(msg.value, pureldap.LDAPProtocolRequest)
         if self.debug:
-            log.msg('S<-C %s' % repr(msg), debug=True)
+            log.msg("S<-C %s" % repr(msg), debug=True)
 
         if msg.id == 0:
             self.unsolicitedNotification(msg.value)
         else:
             name = msg.value.__class__.__name__
-            handler = getattr(self, 'handle_'+name, self.handleUnknown)
-            d = defer.maybeDeferred(handler,
-                                    msg.value,
-                                    msg.controls,
-                                    lambda response: self._cbHandle(
-                                        response, msg.id))
+            handler = getattr(self, "handle_" + name, self.handleUnknown)
+            d = defer.maybeDeferred(
+                handler,
+                msg.value,
+                msg.controls,
+                lambda response: self._cbHandle(response, msg.id),
+            )
             d.addErrback(self._cbLDAPError, name)
             d.addErrback(defer.logError)
             d.addErrback(self._cbOtherError, name)
@@ -137,6 +131,7 @@ class BaseLDAPServer(protocol.Protocol):
 
 class LDAPServer(BaseLDAPServer):
     """An LDAP server"""
+
     boundUser = None
 
     fail_LDAPBindRequest = pureldap.LDAPBindResponse
@@ -144,11 +139,12 @@ class LDAPServer(BaseLDAPServer):
     def handle_LDAPBindRequest(self, request, controls, reply):
         if request.version != 3:
             raise ldaperrors.LDAPProtocolError(
-                'Version %u not supported' % request.version)
+                "Version %u not supported" % request.version
+            )
 
         self.checkControls(controls)
 
-        if request.dn == b'':
+        if request.dn == b"":
             # anonymous bind
             self.boundUser = None
             return pureldap.LDAPBindResponse(resultCode=0)
@@ -160,6 +156,7 @@ class LDAPServer(BaseLDAPServer):
             def _noEntry(fail):
                 fail.trap(ldaperrors.LDAPNoSuchObject)
                 return None
+
             d.addErrback(_noEntry)
 
             def _gotEntry(entry, auth):
@@ -172,10 +169,13 @@ class LDAPServer(BaseLDAPServer):
                     self.boundUser = entry
                     msg = pureldap.LDAPBindResponse(
                         resultCode=ldaperrors.Success.resultCode,
-                        matchedDN=entry.dn.getText())
+                        matchedDN=entry.dn.getText(),
+                    )
                     return msg
+
                 d.addCallback(_cb)
                 return d
+
             d.addCallback(_gotEntry, request.auth)
 
             return d
@@ -187,14 +187,22 @@ class LDAPServer(BaseLDAPServer):
 
     def getRootDSE(self, request, reply):
         root = interfaces.IConnectedLDAPEntry(self.factory)
-        reply(pureldap.LDAPSearchResultEntry(
-            objectName='',
-            attributes=[('supportedLDAPVersion', ['3']),
-                        ('namingContexts', [root.dn.getText()]),
-                        ('supportedExtension', [
-                            pureldap.LDAPPasswordModifyRequest.oid, ]), ], ))
-        return pureldap.LDAPSearchResultDone(
-            resultCode=ldaperrors.Success.resultCode)
+        reply(
+            pureldap.LDAPSearchResultEntry(
+                objectName="",
+                attributes=[
+                    ("supportedLDAPVersion", ["3"]),
+                    ("namingContexts", [root.dn.getText()]),
+                    (
+                        "supportedExtension",
+                        [
+                            pureldap.LDAPPasswordModifyRequest.oid,
+                        ],
+                    ),
+                ],
+            )
+        )
+        return pureldap.LDAPSearchResultDone(resultCode=ldaperrors.Success.resultCode)
 
     fail_LDAPCompareRequest = pureldap.LDAPCompareResponse
 
@@ -212,15 +220,14 @@ class LDAPServer(BaseLDAPServer):
             # equivalent Filter so we can re-use the existing search
             # functionality we require.
             search_filter = pureldap.LDAPFilter_equalityMatch(
-                attributeDesc=ava.attributeDesc,
-                assertionValue=ava.assertionValue
+                attributeDesc=ava.attributeDesc, assertionValue=ava.assertionValue
             )
 
             d = base.search(
-                    filterObject=search_filter,
-                    scope=pureldap.LDAP_SCOPE_baseObject,
-                    derefAliases=pureldap.LDAP_DEREF_neverDerefAliases
-                    )
+                filterObject=search_filter,
+                scope=pureldap.LDAP_SCOPE_baseObject,
+                derefAliases=pureldap.LDAP_DEREF_neverDerefAliases,
+            )
 
             d.addCallback(_done)
 
@@ -228,13 +235,12 @@ class LDAPServer(BaseLDAPServer):
 
         def _cbCompareLDAPError(reason):
             reason.trap(ldaperrors.LDAPException)
-            return pureldap.LDAPCompareResponse(
-                resultCode=reason.value.resultCode)
+            return pureldap.LDAPCompareResponse(resultCode=reason.value.resultCode)
 
         def _cbCompareOtherError(reason):
             return pureldap.LDAPCompareResponse(
-                resultCode=ldaperrors.other,
-                errorMessage=reason.getErrorMessage())
+                resultCode=ldaperrors.other, errorMessage=reason.getErrorMessage()
+            )
 
         self.checkControls(controls)
         dn = distinguishedname.DistinguishedName(request.entry)
@@ -250,9 +256,10 @@ class LDAPServer(BaseLDAPServer):
     def _cbSearchGotBase(self, base, dn, request, reply):
         def _sendEntryToClient(entry):
             requested_attribs = request.attributes
-            if len(requested_attribs) > 0 and b'*' not in requested_attribs:
+            if len(requested_attribs) > 0 and b"*" not in requested_attribs:
                 filtered_attribs = [
-                    (k, entry.get(k)) for k in requested_attribs if k in entry]
+                    (k, entry.get(k)) for k in requested_attribs if k in entry
+                ]
             else:
                 filtered_attribs = entry.items()
             reply(
@@ -261,39 +268,45 @@ class LDAPServer(BaseLDAPServer):
                     attributes=filtered_attribs,
                 )
             )
-        d = base.search(filterObject=request.filter,
-                        attributes=request.attributes,
-                        scope=request.scope,
-                        derefAliases=request.derefAliases,
-                        sizeLimit=request.sizeLimit,
-                        timeLimit=request.timeLimit,
-                        typesOnly=request.typesOnly,
-                        callback=_sendEntryToClient)
+
+        d = base.search(
+            filterObject=request.filter,
+            attributes=request.attributes,
+            scope=request.scope,
+            derefAliases=request.derefAliases,
+            sizeLimit=request.sizeLimit,
+            timeLimit=request.timeLimit,
+            typesOnly=request.typesOnly,
+            callback=_sendEntryToClient,
+        )
 
         def _done(_):
             return pureldap.LDAPSearchResultDone(
-                resultCode=ldaperrors.Success.resultCode)
+                resultCode=ldaperrors.Success.resultCode
+            )
+
         d.addCallback(_done)
         return d
 
     def _cbSearchLDAPError(self, reason):
         reason.trap(ldaperrors.LDAPException)
-        return pureldap.LDAPSearchResultDone(
-            resultCode=reason.value.resultCode)
+        return pureldap.LDAPSearchResultDone(resultCode=reason.value.resultCode)
 
     def _cbSearchOtherError(self, reason):
         return pureldap.LDAPSearchResultDone(
-            resultCode=ldaperrors.other,
-            errorMessage=reason.getErrorMessage())
+            resultCode=ldaperrors.other, errorMessage=reason.getErrorMessage()
+        )
 
     fail_LDAPSearchRequest = pureldap.LDAPSearchResultDone
 
     def handle_LDAPSearchRequest(self, request, controls, reply):
         self.checkControls(controls)
 
-        if (request.baseObject == b''
-                and request.scope == pureldap.LDAP_SCOPE_baseObject
-                and request.filter == pureldap.LDAPFilter_present('objectClass')):
+        if (
+            request.baseObject == b""
+            and request.scope == pureldap.LDAP_SCOPE_baseObject
+            and request.filter == pureldap.LDAPFilter_present("objectClass")
+        ):
             return self.getRootDSE(request, reply)
         dn = distinguishedname.DistinguishedName(request.baseObject)
         root = interfaces.IConnectedLDAPEntry(self.factory)
@@ -359,14 +372,16 @@ class LDAPServer(BaseLDAPServer):
         deleteoldrdn = bool(request.deleteoldrdn)
         if not deleteoldrdn:
             raise ldaperrors.LDAPUnwillingToPerform(
-                "Cannot handle preserving old RDN yet.")
+                "Cannot handle preserving old RDN yet."
+            )
         newSuperior = request.newSuperior
         if newSuperior is None:
             newSuperior = dn.up()
         else:
             newSuperior = distinguishedname.DistinguishedName(newSuperior)
         newdn = distinguishedname.DistinguishedName(
-            listOfRDNs=(newrdn,)+newSuperior.split())
+            listOfRDNs=(newrdn,) + newSuperior.split()
+        )
         root = interfaces.IConnectedLDAPEntry(self.factory)
         d = root.lookup(dn)
 
@@ -405,19 +420,20 @@ class LDAPServer(BaseLDAPServer):
     def handle_LDAPExtendedRequest(self, request, controls, reply):
         self.checkControls(controls)
 
-        for handler in [getattr(self, attr)
-                        for attr in dir(self)
-                        if attr.startswith('extendedRequest_')]:
-            if getattr(handler, 'oid', None) == request.requestName:
-                berdecoder = getattr(handler, 'berdecoder', None)
+        for handler in [
+            getattr(self, attr)
+            for attr in dir(self)
+            if attr.startswith("extendedRequest_")
+        ]:
+            if getattr(handler, "oid", None) == request.requestName:
+                berdecoder = getattr(handler, "berdecoder", None)
 
                 if berdecoder is None:
                     values = [request.requestValue]
                 else:
-                    values = pureber.berDecodeMultiple(
-                        request.requestValue, berdecoder)
+                    values = pureber.berDecodeMultiple(request.requestValue, berdecoder)
 
-                d = defer.maybeDeferred(handler, *values, **{'reply': reply})
+                d = defer.maybeDeferred(handler, *values, **{"reply": reply})
 
                 def eb(fail, oid):
                     fail.trap(ldaperrors.LDAPException)
@@ -425,65 +441,63 @@ class LDAPServer(BaseLDAPServer):
                         resultCode=fail.value.resultCode,
                         errorMessage=fail.value.message,
                         responseName=oid,
-                        )
+                    )
 
                 d.addErrback(eb, request.requestName)
                 return d
 
         raise ldaperrors.LDAPProtocolError(
-            b'Unknown extended request: %s' % request.requestName)
+            b"Unknown extended request: %s" % request.requestName
+        )
 
     def extendedRequest_LDAPPasswordModifyRequest(self, data, reply):
         if not isinstance(data, pureber.BERSequence):
             raise ldaperrors.LDAPProtocolError(
-                'Extended request PasswordModify expected a BERSequence.')
+                "Extended request PasswordModify expected a BERSequence."
+            )
 
         userIdentity = None
         oldPasswd = None
         newPasswd = None
 
         for value in data:
-            if isinstance(
-                    value,
-                    pureldap.LDAPPasswordModifyRequest_userIdentity):
+            if isinstance(value, pureldap.LDAPPasswordModifyRequest_userIdentity):
                 if userIdentity is not None:
                     raise ldaperrors.LDAPProtocolError(
-                        'Extended request '
-                        'PasswordModify received userIdentity twice.')
+                        "Extended request "
+                        "PasswordModify received userIdentity twice."
+                    )
                 userIdentity = value.value
-            elif isinstance(
-                    value,
-                    pureldap.LDAPPasswordModifyRequest_oldPasswd):
+            elif isinstance(value, pureldap.LDAPPasswordModifyRequest_oldPasswd):
                 if oldPasswd is not None:
                     raise ldaperrors.LDAPProtocolError(
-                        'Extended request PasswordModify '
-                        'received oldPasswd twice.')
+                        "Extended request PasswordModify " "received oldPasswd twice."
+                    )
                 oldPasswd = value.value
             elif isinstance(value, pureldap.LDAPPasswordModifyRequest_newPasswd):
                 if newPasswd is not None:
                     raise ldaperrors.LDAPProtocolError(
-                        'Extended request PasswordModify '
-                        'received newPasswd twice.')
+                        "Extended request PasswordModify " "received newPasswd twice."
+                    )
                 newPasswd = value.value
             else:
                 raise ldaperrors.LDAPProtocolError(
-                    'Extended request PasswordModify '
-                    'received unexpected item.')
+                    "Extended request PasswordModify " "received unexpected item."
+                )
 
         if self.boundUser is None:
             raise ldaperrors.LDAPStrongAuthRequired()
 
-        if (userIdentity is not None
-                and userIdentity != self.boundUser.dn):
-            log.msg('User %(actor)s tried to change password of %(target)s' % {
-                'actor': self.boundUser.dn.getText(),
-                'target': userIdentity,
-                })
+        if userIdentity is not None and userIdentity != self.boundUser.dn:
+            log.msg(
+                "User {actor} tried to change password of {target}".format(
+                    actor=self.boundUser.dn.getText(),
+                    target=userIdentity,
+                )
+            )
             raise ldaperrors.LDAPInsufficientAccessRights()
-        if (oldPasswd is not None
-                or newPasswd is None):
-            raise ldaperrors.LDAPOperationsError(
-                'Password does not support this case.')
+        if oldPasswd is not None or newPasswd is None:
+            raise ldaperrors.LDAPOperationsError("Password does not support this case.")
         self.boundUser.setPassword(newPasswd)
         d = self.boundUser.commit()
 
@@ -491,26 +505,32 @@ class LDAPServer(BaseLDAPServer):
             if result:
                 return pureldap.LDAPExtendedResponse(
                     resultCode=ldaperrors.Success.resultCode,
-                    responseName=self.extendedRequest_LDAPPasswordModifyRequest.oid)
+                    responseName=self.extendedRequest_LDAPPasswordModifyRequest.oid,
+                )
             else:
-                raise ldaperrors.LDAPOperationsError('Internal error.')
+                raise ldaperrors.LDAPOperationsError("Internal error.")
 
         d.addCallback(cb_)
         return d
 
-    extendedRequest_LDAPPasswordModifyRequest.oid = pureldap.LDAPPasswordModifyRequest.oid
-    extendedRequest_LDAPPasswordModifyRequest.berdecoder = (
-        pureber.BERDecoderContext(
-            inherit=pureldap.LDAPBERDecoderContext_LDAPPasswordModifyRequest(
-                inherit=pureber.BERDecoderContext())))
+    extendedRequest_LDAPPasswordModifyRequest.oid = (
+        pureldap.LDAPPasswordModifyRequest.oid
+    )
+    extendedRequest_LDAPPasswordModifyRequest.berdecoder = pureber.BERDecoderContext(
+        inherit=pureldap.LDAPBERDecoderContext_LDAPPasswordModifyRequest(
+            inherit=pureber.BERDecoderContext()
+        )
+    )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     """
     Demonstration LDAP server; reads LDIF from stdin and
     serves that over LDAP on port 10389.
     """
     from twisted.internet import reactor
     import sys
+
     log.startLogging(sys.stderr)
 
     from twisted.python import components
@@ -519,9 +539,10 @@ if __name__ == '__main__':
     class LDAPServerFactory(protocol.ServerFactory):
         def __init__(self, root):
             self.root = root
-    components.registerAdapter(lambda x: x.root,
-                               LDAPServerFactory,
-                               interfaces.IConnectedLDAPEntry)
+
+    components.registerAdapter(
+        lambda x: x.root, LDAPServerFactory, interfaces.IConnectedLDAPEntry
+    )
 
     def start(db):
         factory = LDAPServerFactory(db)

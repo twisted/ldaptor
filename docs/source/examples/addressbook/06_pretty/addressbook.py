@@ -2,14 +2,18 @@ import os
 from zope.interface import Interface, implements
 from twisted.internet import reactor, defer
 from twisted.cred import portal, checkers
-from nevow import rend, appserver, inevow, \
-     stan, guard, loaders, flat
+from nevow import rend, appserver, inevow, stan, guard, loaders, flat
 from formless import annotate, webform
 
-from ldaptor.protocols.ldap import ldapclient, ldapsyntax, ldapconnector, \
-     distinguishedname
+from ldaptor.protocols.ldap import (
+    ldapclient,
+    ldapsyntax,
+    ldapconnector,
+    distinguishedname,
+)
 from ldaptor import ldapfilter
 from ldaptor.protocols import pureldap
+
 
 class ILDAPConfig(Interface):
     """Addressbook configuration retrieval."""
@@ -23,18 +27,17 @@ class ILDAPConfig(Interface):
         DistinguishedName to (host, port) tuples.
         """
 
-class LDAPConfig(object):
+
+class LDAPConfig:
     implements(ILDAPConfig)
 
-    def __init__(self,
-                 baseDN,
-                 serviceLocationOverrides=None):
+    def __init__(self, baseDN, serviceLocationOverrides=None):
         self.baseDN = distinguishedname.DistinguishedName(baseDN)
         self.serviceLocationOverrides = {}
         if serviceLocationOverrides is not None:
-            for k,v in serviceLocationOverrides.items():
+            for k, v in serviceLocationOverrides.items():
                 dn = distinguishedname.DistinguishedName(k)
-                self.serviceLocationOverrides[dn]=v
+                self.serviceLocationOverrides[dn] = v
 
     def getBaseDN(self):
         return self.baseDN
@@ -42,44 +45,49 @@ class LDAPConfig(object):
     def getServiceLocationOverrides(self):
         return self.serviceLocationOverrides
 
+
 class LDAPSearchFilter(annotate.String):
     def coerce(self, *a, **kw):
-        val = super(LDAPSearchFilter, self).coerce(*a, **kw)
+        val = super().coerce(*a, **kw)
         try:
             f = ldapfilter.parseFilter(val)
-        except ldapfilter.InvalidLDAPFilter, e:
-            raise annotate.InputError, \
-                  "%r is not a valid LDAP search filter: %s" % (val, e)
+        except ldapfilter.InvalidLDAPFilter as e:
+            raise annotate.InputError(f"{val!r} is not a valid LDAP search filter: {e}")
         return f
+
 
 class IAddressBookSearch(annotate.TypedInterface):
     search = LDAPSearchFilter(label="Search filter")
 
-class CurrentSearch(object):
+
+class CurrentSearch:
     implements(IAddressBookSearch, inevow.IContainer)
     search = None
 
     def child(self, context, name):
-        if name == 'searchFilter':
+        if name == "searchFilter":
             return self.search
-        if name != 'results':
+        if name != "results":
             return None
         config = context.locate(ILDAPConfig)
 
-        c=ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
-        d=c.connectAnonymously(config.getBaseDN(),
-                               config.getServiceLocationOverrides())
+        c = ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
+        d = c.connectAnonymously(
+            config.getBaseDN(), config.getServiceLocationOverrides()
+        )
 
         def _search(proto, base, searchFilter):
             baseEntry = ldapsyntax.LDAPEntry(client=proto, dn=base)
-            d=baseEntry.search(filterObject=searchFilter)
+            d = baseEntry.search(filterObject=searchFilter)
             return d
 
         d.addCallback(_search, config.getBaseDN(), self.search)
         return d
 
+
 def LDAPFilterSerializer(original, context):
     return original.asText()
+
 
 # TODO need to make this pretty some day.
 for c in [
@@ -93,15 +101,16 @@ for c in [
     pureldap.LDAPFilter_approxMatch,
     pureldap.LDAPFilter_present,
     pureldap.LDAPFilter_extensibleMatch,
-    ]:
+]:
     flat.registerFlattener(LDAPFilterSerializer, c)
+
 
 class AddressBookResource(rend.Page):
     addSlash = True
 
     docFactory = loaders.xmlfile(
-        'searchform.xhtml',
-        templateDir=os.path.split(os.path.abspath(__file__))[0])
+        "searchform.xhtml", templateDir=os.path.split(os.path.abspath(__file__))[0]
+    )
 
     def configurable_(self, context):
         request = context.locate(inevow.IRequest)
@@ -112,9 +121,11 @@ class AddressBookResource(rend.Page):
         return i
 
     def data_search(self, context, data):
-        d = defer.maybeDeferred(self.locateConfigurable, context, '')
+        d = defer.maybeDeferred(self.locateConfigurable, context, "")
+
         def cb(configurable):
             return configurable.original
+
         d.addCallback(cb)
         return d
 
@@ -125,29 +136,30 @@ class AddressBookResource(rend.Page):
         return webform.renderForms()
 
     def render_haveSearch(self, context, data):
-        r=context.tag.allPatterns(str(data.search is not None))
+        r = context.tag.allPatterns(str(data.search is not None))
         return context.tag.clear()[r]
 
     def render_searchFilter(self, context, data):
         return data.asText()
 
     def render_iterateMapping(self, context, data):
-        headers = context.tag.allPatterns('header')
-        keyPattern = context.patternGenerator('key')
-        valuePattern = context.patternGenerator('value')
-        divider = context.patternGenerator('divider', default=stan.invisible)
-        content = [(keyPattern(data=key),
-                    valuePattern(data=value),
-                    divider())
-                   for key, value in data.items()]
+        headers = context.tag.allPatterns("header")
+        keyPattern = context.patternGenerator("key")
+        valuePattern = context.patternGenerator("value")
+        divider = context.patternGenerator("divider", default=stan.invisible)
+        content = [
+            (keyPattern(data=key), valuePattern(data=value), divider())
+            for key, value in data.items()
+        ]
         if not content:
-            content = context.tag.allPatterns('empty')
+            content = context.tag.allPatterns("empty")
         else:
             # No divider after the last thing.
             content[-1] = content[-1][:-1]
-        footers = context.tag.allPatterns('footer')
+        footers = context.tag.allPatterns("footer")
 
-        return context.tag.clear()[ headers, content, footers ]
+        return context.tag.clear()[headers, content, footers]
+
 
 class AddressBookRealm:
     implements(portal.IRealm)
@@ -157,16 +169,15 @@ class AddressBookRealm:
 
     def requestAvatar(self, avatarId, mind, *interfaces):
         if inevow.IResource not in interfaces:
-            raise NotImplementedError, "no interface"
-        return (inevow.IResource,
-                self.resource,
-                lambda: None)
+            raise NotImplementedError("no interface")
+        return (inevow.IResource, self.resource, lambda: None)
+
 
 def getSite(config):
     form = AddressBookResource()
     form.remember(config, ILDAPConfig)
     realm = AddressBookRealm(form)
     site = appserver.NevowSite(
-        guard.SessionWrapper(
-        portal.Portal(realm, [checkers.AllowAnonymousAccess()])))
+        guard.SessionWrapper(portal.Portal(realm, [checkers.AllowAnonymousAccess()]))
+    )
     return site

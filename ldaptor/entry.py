@@ -1,7 +1,6 @@
 import base64
 import random
 
-import six
 
 from twisted.internet import defer
 from twisted.python.util import InsensitiveDict
@@ -11,11 +10,7 @@ from ldaptor import interfaces, attributeset, delta
 from ldaptor._encoder import WireStrAlias, to_bytes, get_strings
 from ldaptor.protocols.ldap import distinguishedname, ldif, ldaperrors
 
-
-try:
-    from hashlib import sha1
-except ImportError:
-    from sha import sha as sha1
+from hashlib import sha1
 
 
 def sshaDigest(passphrase, salt=None):
@@ -23,25 +18,25 @@ def sshaDigest(passphrase, salt=None):
     Return the salted SHA for `passphrase` which is passed as bytes.
     """
     if salt is None:
-        salt = ''
+        salt = ""
         for i in range(8):
             salt += chr(random.randint(0, 127))
-        salt = salt.encode('ascii')
+        salt = salt.encode("ascii")
 
     s = sha1()
     s.update(passphrase)
     s.update(salt)
-    encoded = base64.encodestring(s.digest() + salt).rstrip()
-    crypt = b'{SSHA}' + encoded
+    encoded = base64.encodebytes(s.digest() + salt).rstrip()
+    crypt = b"{SSHA}" + encoded
     return crypt
 
 
 @implementer(interfaces.ILDAPEntry)
 class BaseLDAPEntry(WireStrAlias):
     dn = None
-    _object_class_keys = set(get_strings('objectClass'))
-    _object_class_lower_keys = set(get_strings('objectclass'))
-    _user_password_keys = set(get_strings('userPassword'))
+    _object_class_keys = set(get_strings("objectClass"))
+    _object_class_lower_keys = set(get_strings("objectclass"))
+    _user_password_keys = set(get_strings("userPassword"))
 
     def __init__(self, dn, attributes={}):
         """
@@ -90,8 +85,7 @@ class BaseLDAPEntry(WireStrAlias):
         return self.has_key(key)
 
     def __iter__(self):
-        for key in self._attributes.iterkeys():
-            yield key
+        yield from self._attributes.iterkeys()
 
     def keys(self):
         a = []
@@ -142,7 +136,7 @@ class BaseLDAPEntry(WireStrAlias):
         return ldif.asLDIF(self.dn.getText(), a)
 
     def getLDIF(self):
-        return self.toWire().decode('utf-8')
+        return self.toWire().decode("utf-8")
 
     def __eq__(self, other):
         if not isinstance(other, BaseLDAPEntry):
@@ -177,13 +171,10 @@ class BaseLDAPEntry(WireStrAlias):
         keys = sorted((key for key in self), key=to_bytes)
         a = []
         for key in keys:
-            a.append('%s: %s' % (repr(key), repr(list(self[key]))))
-        attributes = ', '.join(a)
-        dn = to_bytes(self.dn.getText()) if six.PY2 else self.dn.getText()
-        return '%s(%s, {%s})' % (
-            self.__class__.__name__,
-            repr(dn),
-            attributes)
+            a.append(f"{repr(key)}: {repr(list(self[key]))}")
+        attributes = ", ".join(a)
+        dn = self.dn.getText()
+        return f"{self.__class__.__name__}({repr(dn)}, {{{attributes}}})"
 
     def diff(self, other):
         """
@@ -200,8 +191,8 @@ class BaseLDAPEntry(WireStrAlias):
 
         r = []
 
-        myKeys = set(key for key in self)
-        otherKeys = set(key for key in other)
+        myKeys = {key for key in self}
+        otherKeys = {key for key in other}
 
         addedKeys = list(otherKeys - myKeys)
         addedKeys.sort(key=to_bytes)  # for reproducability only
@@ -237,8 +228,8 @@ class BaseLDAPEntry(WireStrAlias):
         for key in self._user_password_keys:
             for digest in self.get(key, ()):
                 digest = to_bytes(digest)
-                if digest.startswith(b'{SSHA}'):
-                    raw = base64.decodestring(digest[len(b'{SSHA}'):])
+                if digest.startswith(b"{SSHA}"):
+                    raw = base64.decodebytes(digest[len(b"{SSHA}") :])
                     salt = raw[20:]
                     got = sshaDigest(password, salt)
                     if got == digest:
@@ -250,7 +241,7 @@ class BaseLDAPEntry(WireStrAlias):
         raise ldaperrors.LDAPInvalidCredentials()
 
     def hasMember(self, dn):
-        for memberDN in self.get('member', []):
+        for memberDN in self.get("member", []):
             if memberDN == dn:
                 return True
         return False
@@ -264,7 +255,6 @@ class BaseLDAPEntry(WireStrAlias):
 
 @implementer(interfaces.IEditableLDAPEntry)
 class EditableLDAPEntry(BaseLDAPEntry):
-
     def __setitem__(self, key, value):
         new = self.buildAttributeSet(key, value)
         self._attributes[key] = new
@@ -294,4 +284,4 @@ class EditableLDAPEntry(BaseLDAPEntry):
             if key in self:
                 self[key] = [crypt]
         else:
-            self[b'userPassword'] = [crypt]
+            self[b"userPassword"] = [crypt]

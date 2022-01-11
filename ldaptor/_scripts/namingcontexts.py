@@ -1,56 +1,57 @@
-#!/usr/bin/python
-
-from __future__ import print_function
 import sys
 from ldaptor.protocols.ldap import ldapclient, ldapsyntax
-from ldaptor.protocols import pureber, pureldap
-from ldaptor import ldapfilter
+from ldaptor.protocols import pureldap
 from twisted.internet.defer import Deferred, DeferredList
 from twisted.internet import protocol, reactor
 
+
 class Search(ldapclient.LDAPClient):
     def connectionMade(self):
-        d=self.bind()
+        d = self.bind()
         d.addCallback(self._handle_bind_success)
 
     def _printResults(self, result, host):
-        for context in result['namingContexts']:
-            print('%s\t%s' % (host, context))
+        for context in result["namingContexts"]:
+            print(f"{host}\t{context}")
 
     def _handle_bind_success(self, x):
         matchedDN, serverSaslCreds = x
-        o=ldapsyntax.LDAPEntry(client=self,
-                               dn='')
-        d=o.search(filterText='(objectClass=*)',
-                   scope=pureldap.LDAP_SCOPE_baseObject,
-                   attributes=['namingContexts'],
-                   callback=(lambda x:
-                             self._printResults(x, self.factory.server)))
+        o = ldapsyntax.LDAPEntry(client=self, dn="")
+        d = o.search(
+            filterText="(objectClass=*)",
+            scope=pureldap.LDAP_SCOPE_baseObject,
+            attributes=["namingContexts"],
+            callback=(lambda x: self._printResults(x, self.factory.server)),
+        )
         d.chainDeferred(self.factory.deferred)
+
 
 class SearchFactory(protocol.ClientFactory):
     protocol = Search
 
     def __init__(self, server, deferred):
-        self.server=server
-        self.deferred=deferred
+        self.server = server
+        self.deferred = deferred
 
     def clientConnectionFailed(self, connector, reason):
         self.deferred.errback(None)
 
+
 exitStatus = 0
+
 
 def errback(data):
     print("ERROR:", data.getErrorMessage())
     global exitStatus
-    exitStatus=1
+    exitStatus = 1
+
 
 def main(servers):
     l = []
     for server in servers:
-        d=Deferred()
+        d = Deferred()
         l.append(d)
-        s=SearchFactory(server, d)
+        s = SearchFactory(server, d)
         reactor.connectTCP(server, 389, s)
         d.addErrback(errback)
     dl = DeferredList(l)
@@ -58,9 +59,14 @@ def main(servers):
     reactor.run()
     sys.exit(exitStatus)
 
-if __name__ == "__main__":
+
+def console_script():
     if not sys.argv[1:]:
-        print('%s: usage:' % sys.argv[0], file=sys.stderr)
-        print('  %s HOST..' % sys.argv[0], file=sys.stderr)
+        print("%s: usage:" % sys.argv[0], file=sys.stderr)
+        print("  %s HOST.." % sys.argv[0], file=sys.stderr)
     else:
         main(sys.argv[1:])
+
+
+if __name__ == "__main__":
+    sys.exit(console_script())

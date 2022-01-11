@@ -1,43 +1,48 @@
-#!/usr/bin/python
-
-from __future__ import print_function
 import sys
 from ldaptor.protocols.ldap.distinguishedname import DistinguishedName
 from twisted.internet.defer import DeferredList
 from twisted.internet import reactor
 from twisted.names import client, dns
 
+
 def printAnswer(answers, dn):
     for rrlist in answers:
         for rr in rrlist:
             if isinstance(rr.payload, dns.Record_SRV):
-                print('%s\tpri=%d weight=%d %s:%d' % (dn,
-                                                  rr.payload.priority,
-                                                  rr.payload.weight,
-                                                  rr.payload.target,
-                                                  rr.payload.port,
-                                                  ))
+                print(
+                    "%s\tpri=%d weight=%d %s:%d"
+                    % (
+                        dn,
+                        rr.payload.priority,
+                        rr.payload.weight,
+                        rr.payload.target,
+                        rr.payload.port,
+                    )
+                )
             else:
                 # suppress additional records
                 pass
     return answers
 
+
 exitStatus = 0
+
 
 def errback(data):
     print("ERROR:", data.getErrorMessage())
     global exitStatus
-    exitStatus=1
+    exitStatus = 1
+
 
 def main(dns):
     l = []
-    resolver = client.Resolver('/etc/resolv.conf')
+    resolver = client.Resolver("/etc/resolv.conf")
 
     for dnString in dns:
-        dn=DistinguishedName(stringValue=dnString)
-        domain=dn.getDomainName()
+        dn = DistinguishedName(stringValue=dnString)
+        domain = dn.getDomainName()
 
-        d = resolver.lookupService('_ldap._tcp.%s' % domain)
+        d = resolver.lookupService("_ldap._tcp.%s" % domain)
         l.append(d)
         d.addCallback(printAnswer, dnString)
         d.addErrback(errback)
@@ -46,9 +51,14 @@ def main(dns):
     reactor.run()
     sys.exit(exitStatus)
 
-if __name__ == "__main__":
+
+def console_script():
     if not sys.argv[1:]:
-        print('%s: usage:' % sys.argv[0], file=sys.stderr)
-        print('  %s DN..' % sys.argv[0], file=sys.stderr)
+        print("%s: usage:" % sys.argv[0], file=sys.stderr)
+        print("  %s DN.." % sys.argv[0], file=sys.stderr)
     else:
         main(sys.argv[1:])
+
+
+if __name__ == "__main__":
+    sys.exit(console_script())

@@ -4,46 +4,50 @@ Changes to the content of one single LDAP entry.
 (This means these do not belong here: adding or deleting of entries,
 changing of location in tree)
 """
-import six
 
 from ldaptor import attributeset
-from ldaptor._encoder import to_bytes
 from ldaptor.protocols import pureldap, pureber
 from ldaptor.protocols.ldap import ldif, distinguishedname
 
 
 class Modification(attributeset.LDAPAttributeSet):
     def patch(self, entry):
-        raise NotImplementedError(
-            '%s.patch not implemented' % self.__class__.__name__)
+        raise NotImplementedError("%s.patch not implemented" % self.__class__.__name__)
 
     _LDAP_OP = None
 
     def asLDAP(self):
         if self._LDAP_OP is None:
-            raise NotImplementedError("%s.asLDAP not implemented"
-                                      % self.__class__.__name__)
+            raise NotImplementedError(
+                "%s.asLDAP not implemented" % self.__class__.__name__
+            )
         tmplist = list(self)
         newlist = []
         for x in range(len(tmplist)):
-            if (isinstance(tmplist[x], six.text_type)):
-                value = tmplist[x].encode('utf-8')
+            if isinstance(tmplist[x], str):
+                value = tmplist[x].encode("utf-8")
                 newlist.append(value)
             else:
                 value = tmplist[x]
-                newlist.append(value) 
-        
-        return pureber.BERSequence([
-            pureber.BEREnumerated(self._LDAP_OP),
-            pureber.BERSequence([ pureldap.LDAPAttributeDescription(self.key),
-                                  pureber.BERSet(map(pureldap.LDAPString, newlist)),
-                                  ]),
-            ]).toWire()
+                newlist.append(value)
+
+        return pureber.BERSequence(
+            [
+                pureber.BEREnumerated(self._LDAP_OP),
+                pureber.BERSequence(
+                    [
+                        pureldap.LDAPAttributeDescription(self.key),
+                        pureber.BERSet(map(pureldap.LDAPString, newlist)),
+                    ]
+                ),
+            ]
+        ).toWire()
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return False
-        return super(Modification, self).__eq__(other)
+        return super().__eq__(other)
+
 
 class Add(Modification):
     _LDAP_OP = 0
@@ -55,14 +59,15 @@ class Add(Modification):
             entry[self.key] = self
 
     def asLDIF(self):
-        r=[]
+        r = []
         values = list(self)
         values.sort()
-        r.append(ldif.attributeAsLDIF('add', self.key))
+        r.append(ldif.attributeAsLDIF("add", self.key))
         for v in values:
             r.append(ldif.attributeAsLDIF(self.key, v))
-        r.append(b'-\n')
-        return b''.join(r)
+        r.append(b"-\n")
+        return b"".join(r)
+
 
 class Delete(Modification):
     _LDAP_OP = 1
@@ -75,14 +80,15 @@ class Delete(Modification):
                 entry[self.key].remove(v)
 
     def asLDIF(self):
-        r=[]
+        r = []
         values = list(self)
         values.sort()
-        r.append(ldif.attributeAsLDIF('delete', self.key))
+        r.append(ldif.attributeAsLDIF("delete", self.key))
         for v in values:
             r.append(ldif.attributeAsLDIF(self.key, v))
-        r.append(b'-\n')
-        return b''.join(r)
+        r.append(b"-\n")
+        return b"".join(r)
+
 
 class Replace(Modification):
     _LDAP_OP = 2
@@ -97,17 +103,17 @@ class Replace(Modification):
                 pass
 
     def asLDIF(self):
-        r=[]
+        r = []
         values = list(self)
         values.sort()
-        r.append(ldif.attributeAsLDIF('replace', self.key))
+        r.append(ldif.attributeAsLDIF("replace", self.key))
         for v in values:
             r.append(ldif.attributeAsLDIF(self.key, v))
-        r.append(b'-\n')
-        return b''.join(r)
+        r.append(b"-\n")
+        return b"".join(r)
 
 
-class Operation(object):
+class Operation:
     def patch(self, root):
         """
         Find the correct entry in IConnectedLDAPEntry and patch it.
@@ -117,30 +123,30 @@ class Operation(object):
 
         @returns: Deferred with None or failure.
         """
-        raise NotImplementedError(
-            '%s.patch not implemented' % self.__class__.__name__)
+        raise NotImplementedError("%s.patch not implemented" % self.__class__.__name__)
 
 
 class ModifyOp(Operation):
     def __init__(self, dn, modifications=[]):
         if not isinstance(dn, distinguishedname.DistinguishedName):
-            dn=distinguishedname.DistinguishedName(stringValue=dn)
+            dn = distinguishedname.DistinguishedName(stringValue=dn)
         self.dn = dn
         self.modifications = modifications[:]
 
     def asLDIF(self):
         r = []
-        r.append(ldif.attributeAsLDIF('dn', self.dn.getText()))
-        r.append(ldif.attributeAsLDIF('changetype', 'modify'))
+        r.append(ldif.attributeAsLDIF("dn", self.dn.getText()))
+        r.append(ldif.attributeAsLDIF("changetype", "modify"))
         for m in self.modifications:
             r.append(m.asLDIF())
         r.append(b"\n")
-        return b''.join(r)
+        return b"".join(r)
 
     def asLDAP(self):
         return pureldap.LDAPModifyRequest(
             object=self.dn.getText(),
-            modification=[x.asLDAP() for x in self.modifications])
+            modification=[x.asLDAP() for x in self.modifications],
+        )
 
     @classmethod
     def _getClassFromOp(class_, op):
@@ -152,16 +158,20 @@ class ModifyOp(Operation):
     @classmethod
     def fromLDAP(class_, request):
         if not isinstance(request, pureldap.LDAPModifyRequest):
-            raise RuntimeError("%s.fromLDAP needs an LDAPModifyRequest"
-                               % class_.__name__)
+            raise RuntimeError(
+                "%s.fromLDAP needs an LDAPModifyRequest" % class_.__name__
+            )
         dn = request.object
         result = []
         for op, mods in request.modification:
             op = op.value
             klass = class_._getClassFromOp(op)
             if klass is None:
-                raise RuntimeError("Unknown LDAP op number %r in %s.fromLDAP"
-                                   % (op, class_.__name__))
+                raise RuntimeError(
+                    "Unknown LDAP op number {!r} in {}.fromLDAP".format(
+                        op, class_.__name__
+                    )
+                )
 
             key, vals = mods
             key = key.value
@@ -172,21 +182,25 @@ class ModifyOp(Operation):
 
     def patch(self, root):
         d = root.lookup(self.dn)
+
         def gotEntry(entry, modifications):
             for mod in self.modifications:
                 mod.patch(entry)
             return entry
+
         d.addCallback(gotEntry, self.modifications)
         return d
 
     def __repr__(self):
         dn = self.dn.getText()
-        return (self.__class__.__name__
-                + '('
-                + 'dn=%r' % (to_bytes(dn) if six.PY2 else dn)
-                + ', '
-                + 'modifications=%r' % self.modifications
-                + ')')
+        return (
+            self.__class__.__name__
+            + "("
+            + "dn=%r" % dn
+            + ", "
+            + "modifications=%r" % self.modifications
+            + ")"
+        )
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
@@ -203,7 +217,7 @@ class ModifyOp(Operation):
         return hash(self.asLDIF())
 
     def __ne__(self, other):
-        return not self==other
+        return not self == other
 
 
 class AddOp(Operation):
@@ -212,22 +226,21 @@ class AddOp(Operation):
 
     def asLDIF(self):
         l = self.entry.toWire().splitlines()
-        assert l[0].startswith(b'dn:')
-        l[1:1] = [ldif.attributeAsLDIF('changetype', 'add').rstrip(b'\n')]
-        return b''.join([x + b'\n' for x in l])
+        assert l[0].startswith(b"dn:")
+        l[1:1] = [ldif.attributeAsLDIF("changetype", "add").rstrip(b"\n")]
+        return b"".join([x + b"\n" for x in l])
 
     def patch(self, root):
         d = root.lookup(self.entry.dn.up())
+
         def gotParent(parent, entry):
             parent.addChild(entry.dn.split()[0], entry)
+
         d.addCallback(gotParent, self.entry)
         return d
 
     def __repr__(self):
-        return (self.__class__.__name__
-                + '('
-                + '%r' % self.entry
-                + ')')
+        return self.__class__.__name__ + "(" + "%r" % self.entry + ")"
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
@@ -254,35 +267,34 @@ class DeleteOp(Operation):
         * ldaptor.protocols.ldap.distinguishedname.DistinguishedName instance
         * unicode or byte string
         """
-        if hasattr(dn, 'dn') and isinstance(dn.dn, distinguishedname.DistinguishedName):
+        if hasattr(dn, "dn") and isinstance(dn.dn, distinguishedname.DistinguishedName):
             self.dn = dn.dn
         elif isinstance(dn, distinguishedname.DistinguishedName):
             self.dn = dn
-        elif isinstance(dn, (six.binary_type, six.text_type)):
+        elif isinstance(dn, (bytes, str)):
             self.dn = distinguishedname.DistinguishedName(stringValue=dn)
         else:
-            raise AssertionError('Invalid type of object: %s' % dn.__class__.__name__)
+            raise AssertionError("Invalid type of object: %s" % dn.__class__.__name__)
 
     def asLDIF(self):
         r = []
-        r.append(ldif.attributeAsLDIF('dn', self.dn.getText()))
-        r.append(ldif.attributeAsLDIF('changetype', 'delete'))
+        r.append(ldif.attributeAsLDIF("dn", self.dn.getText()))
+        r.append(ldif.attributeAsLDIF("changetype", "delete"))
         r.append(b"\n")
-        return b''.join(r)
+        return b"".join(r)
 
     def patch(self, root):
         d = root.lookup(self.dn)
+
         def gotEntry(entry):
             return entry.delete()
+
         d.addCallback(gotEntry)
         return d
 
     def __repr__(self):
         dn = self.dn.getText()
-        return (self.__class__.__name__
-                + '('
-                + '%r' % (to_bytes(dn) if six.PY2 else dn)
-                + ')')
+        return self.__class__.__name__ + "(" + "%r" % dn + ")"
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
@@ -292,7 +304,7 @@ class DeleteOp(Operation):
         return True
 
     def __ne__(self, other):
-        return not self==other
+        return not self == other
 
     def __hash__(self):
         return hash(self.dn)

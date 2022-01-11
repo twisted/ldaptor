@@ -1,6 +1,6 @@
 import os.path
 
-from six.moves import configparser
+import configparser
 from zope.interface import implementer
 
 from ldaptor import interfaces
@@ -15,23 +15,25 @@ class MissingBaseDNError(Exception):
 
 
 @implementer(interfaces.ILDAPConfig)
-class LDAPConfig(object):
+class LDAPConfig:
 
     baseDN = None
     identityBaseDN = None
     identitySearch = None
 
-    def __init__(self,
-                 baseDN=None,
-                 serviceLocationOverrides=None,
-                 identityBaseDN=None,
-                 identitySearch=None):
+    def __init__(
+        self,
+        baseDN=None,
+        serviceLocationOverrides=None,
+        identityBaseDN=None,
+        identitySearch=None,
+    ):
         if baseDN is not None:
             baseDN = distinguishedname.DistinguishedName(baseDN)
             self.baseDN = baseDN
         self.serviceLocationOverrides = {}
         if serviceLocationOverrides is not None:
-            for k,v in serviceLocationOverrides.items():
+            for k, v in serviceLocationOverrides.items():
                 dn = distinguishedname.DistinguishedName(k)
                 self.serviceLocationOverrides[dn] = v
         if identityBaseDN is not None:
@@ -46,9 +48,8 @@ class LDAPConfig(object):
 
         cfg = loadConfig()
         try:
-            return cfg.get('ldap', 'base')
-        except (configparser.NoOptionError,
-                configparser.NoSectionError):
+            return cfg.get("ldap", "base")
+        except (configparser.NoOptionError, configparser.NoSectionError):
             raise MissingBaseDNError()
 
     def getServiceLocationOverrides(self):
@@ -60,18 +61,18 @@ class LDAPConfig(object):
         serviceLocationOverride = {}
         cfg = loadConfig()
         for section in cfg.sections():
-            if section.lower().startswith('service-location '):
-                base = section[len('service-location '):].strip()
+            if section.lower().startswith("service-location "):
+                base = section[len("service-location ") :].strip()
 
                 host = None
-                if cfg.has_option(section, 'host'):
-                    host = cfg.get(section, 'host')
+                if cfg.has_option(section, "host"):
+                    host = cfg.get(section, "host")
                     if not host:
                         host = None
 
                 port = None
-                if cfg.has_option(section, 'port'):
-                    port = cfg.get(section, 'port')
+                if cfg.has_option(section, "port"):
+                    port = cfg.get(section, "port")
                     if not port:
                         port = None
 
@@ -80,14 +81,14 @@ class LDAPConfig(object):
         return serviceLocationOverride
 
     def copy(self, **kw):
-        if 'baseDN' not in kw:
-            kw['baseDN'] = self.baseDN
-        if 'serviceLocationOverrides' not in kw:
-            kw['serviceLocationOverrides'] = self.serviceLocationOverrides
-        if 'identityBaseDN' not in kw:
-            kw['identityBaseDN'] = self.identityBaseDN
-        if 'identitySearch' not in kw:
-            kw['identitySearch'] = self.identitySearch
+        if "baseDN" not in kw:
+            kw["baseDN"] = self.baseDN
+        if "serviceLocationOverrides" not in kw:
+            kw["serviceLocationOverrides"] = self.serviceLocationOverrides
+        if "identityBaseDN" not in kw:
+            kw["identityBaseDN"] = self.identityBaseDN
+        if "identitySearch" not in kw:
+            kw["identitySearch"] = self.identitySearch
         r = self.__class__(**kw)
         return r
 
@@ -97,42 +98,39 @@ class LDAPConfig(object):
 
         cfg = loadConfig()
         try:
-            return cfg.get('authentication', 'identity-base')
-        except (configparser.NoOptionError,
-                configparser.NoSectionError):
+            return cfg.get("authentication", "identity-base")
+        except (configparser.NoOptionError, configparser.NoSectionError):
             return self.getBaseDN()
 
     def getIdentitySearch(self, name):
         data = {
-            'name': name,
-            }
+            "name": name,
+        }
 
         if self.identitySearch is not None:
             f = self.identitySearch % data
         else:
             cfg = loadConfig()
             try:
-                f = cfg.get('authentication', 'identity-search', vars=data)
-            except (configparser.NoOptionError,
-                    configparser.NoSectionError):
-                f = '(|(cn=%(name)s)(uid=%(name)s))' % data
+                f = cfg.get("authentication", "identity-search", vars=data)
+            except (configparser.NoOptionError, configparser.NoSectionError):
+                f = "(|(cn=%(name)s)(uid=%(name)s))" % data
         return f
 
 
 DEFAULTS = {
-    'samba': {'use-lmhash': 'no'},
+    "samba": {"use-lmhash": "no"},
 }
 
 CONFIG_FILES = [
-    '/etc/ldaptor/global.cfg',
-    os.path.expanduser('~/.ldaptor/global.cfg'),
-    ]
+    "/etc/ldaptor/global.cfg",
+    os.path.expanduser("~/.ldaptor/global.cfg"),
+]
 
 __config = None
 
 
-def loadConfig(configFiles=None,
-               reload=False):
+def loadConfig(configFiles=None, reload=False):
     """
     Load configuration file.
     """
@@ -158,4 +156,4 @@ def useLMhash():
     to use LanMan hashes or not.
     """
     cfg = loadConfig()
-    return cfg.getboolean('samba', 'use-lmhash')
+    return cfg.getboolean("samba", "use-lmhash")

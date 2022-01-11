@@ -6,10 +6,11 @@ from twisted.trial import unittest
 from ldaptor.protocols.ldap import ldifprotocol, distinguishedname
 
 
-class FixStringRepresentation(object):
+class FixStringRepresentation:
     """
     A simple object which has a fix string representation.
     """
+
     def __str__(self):
         return "Here I am!"
 
@@ -29,33 +30,32 @@ class TestLDIFParseError(unittest.TestCase):
 
         result = str(sut)
 
-        self.assertEqual('Error parsing LDIF.', result)
+        self.assertEqual("Error parsing LDIF.", result)
 
     def testInitWithArgs(self):
         """
         When initialized with arguments it will use the docstring as
         base and include all the arguments.
         """
-        sut = ldifprotocol.LDIFParseError(
-            1, 'test', True, FixStringRepresentation())
+        sut = ldifprotocol.LDIFParseError(1, "test", True, FixStringRepresentation())
 
         result = str(sut)
 
-        self.assertEqual(
-            'Error parsing LDIF: 1: test: True: Here I am!.', result)
+        self.assertEqual("Error parsing LDIF: 1: test: True: Here I am!.", result)
 
 
 class LDIFDriver(ldifprotocol.LDIF):
     def __init__(self):
         self.listOfCompleted = []
+
     def gotEntry(self, obj):
         self.listOfCompleted.append(obj)
+
 
 class TestLDIFParsing(unittest.TestCase):
     def testFromLDIF(self):
         proto = LDIFDriver()
         for line in (
-
             "dn: cn=foo,dc=example,dc=com",
             "objectClass: a",
             "objectClass: b",
@@ -63,32 +63,30 @@ class TestLDIFParsing(unittest.TestCase):
             "aValue: b",
             "bValue: c",
             "",
-
             "dn: cn=bar,dc=example,dc=com",
             "objectClass: c",
             "aValue:: IEZPTyE=",
             "aValue: b",
             "bValue: C",
             "",
+        ):
+            proto.lineReceived(line.encode("ascii"))
 
-            ):
-            proto.lineReceived(line.encode('ascii'))
-
-        self.failUnlessEqual(len(proto.listOfCompleted), 2)
-
-        o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), u'cn=foo,dc=example,dc=com')
-        self.failUnlessEqual(o[b'objectClass'], [b'a', b'b'])
-        self.failUnlessEqual(o[b'aValue'], [b'a', b'b'])
-        self.failUnlessEqual(o[b'bValue'], [b'c'])
+        self.assertEqual(len(proto.listOfCompleted), 2)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), u'cn=bar,dc=example,dc=com')
-        self.failUnlessEqual(o[b'objectClass'], [b'c'])
-        self.failUnlessEqual(o[b'aValue'], [b' FOO!', b'b'])
-        self.failUnlessEqual(o[b'bValue'], [b'C'])
+        self.assertEqual(o.dn.getText(), "cn=foo,dc=example,dc=com")
+        self.assertEqual(o[b"objectClass"], [b"a", b"b"])
+        self.assertEqual(o[b"aValue"], [b"a", b"b"])
+        self.assertEqual(o[b"bValue"], [b"c"])
 
-        self.failUnlessEqual(proto.listOfCompleted, [])
+        o = proto.listOfCompleted.pop(0)
+        self.assertEqual(o.dn.getText(), "cn=bar,dc=example,dc=com")
+        self.assertEqual(o[b"objectClass"], [b"c"])
+        self.assertEqual(o[b"aValue"], [b" FOO!", b"b"])
+        self.assertEqual(o[b"bValue"], [b"C"])
+
+        self.assertEqual(proto.listOfCompleted, [])
 
     def testSplitLines(self):
         """
@@ -103,15 +101,15 @@ class TestLDIFParsing(unittest.TestCase):
             "ob",
             " jectClass: b",
             "",
-            ):
-            proto.lineReceived(line.encode('ascii'))
+        ):
+            proto.lineReceived(line.encode("ascii"))
 
-        self.failUnlessEqual(len(proto.listOfCompleted), 1)
+        self.assertEqual(len(proto.listOfCompleted), 1)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), u'cn=foo,dc=example,dc=com')
-        self.failUnlessEqual(o[b'objectClass'], [b'a', b'b'])
-        self.failUnlessEqual(proto.listOfCompleted, [])
+        self.assertEqual(o.dn.getText(), "cn=foo,dc=example,dc=com")
+        self.assertEqual(o[b"objectClass"], [b"a", b"b"])
+        self.assertEqual(proto.listOfCompleted, [])
 
     def testCaseInsensitiveDN(self):
         """
@@ -119,27 +117,27 @@ class TestLDIFParsing(unittest.TestCase):
         """
         proto = LDIFDriver()
         proto.dataReceived(
-b"""version: 1
+            b"""version: 1
 dN: cn=foo, dc=example, dc=com
 cn: foo
 
 DN: cn=bar, dc=example, dc=com
 cn: bar
 
-""")
+"""
+        )
 
-        self.failUnlessEqual(len(proto.listOfCompleted), 2)
-
-        o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), u'cn=foo,dc=example,dc=com')
-        self.failUnlessEqual(o[b'CN'], [b'foo'])
+        self.assertEqual(len(proto.listOfCompleted), 2)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), u'cn=bar,dc=example,dc=com')
-        self.failUnlessEqual(o[b'CN'], [b'bar'])
+        self.assertEqual(o.dn.getText(), "cn=foo,dc=example,dc=com")
+        self.assertEqual(o[b"CN"], [b"foo"])
 
-        self.failUnlessEqual(proto.listOfCompleted, [])
+        o = proto.listOfCompleted.pop(0)
+        self.assertEqual(o.dn.getText(), "cn=bar,dc=example,dc=com")
+        self.assertEqual(o[b"CN"], [b"bar"])
 
+        self.assertEqual(proto.listOfCompleted, [])
 
     def testCaseInsensitiveAttributeTypes(self):
         """
@@ -147,7 +145,8 @@ cn: bar
         values are case sensitives.
         """
         proto = LDIFDriver()
-        proto.dataReceived(b"""\
+        proto.dataReceived(
+            b"""\
 dn: cn=foo,dc=example,dc=com
 objectClass: a
 obJeCtClass: b
@@ -155,21 +154,23 @@ cn: foo
 avalue: a
 aValUe: B
 
-""")
+"""
+        )
 
-        self.failUnlessEqual(len(proto.listOfCompleted), 1)
+        self.assertEqual(len(proto.listOfCompleted), 1)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), u'cn=foo,dc=example,dc=com')
-        self.failUnlessEqual(o[b'objectClass'], [b'a', b'b'])
-        self.failUnlessEqual(o[b'CN'], [b'foo'])
-        self.failUnlessEqual(o[b'aValue'], [b'a', b'B'])
+        self.assertEqual(o.dn.getText(), "cn=foo,dc=example,dc=com")
+        self.assertEqual(o[b"objectClass"], [b"a", b"b"])
+        self.assertEqual(o[b"CN"], [b"foo"])
+        self.assertEqual(o[b"aValue"], [b"a", b"B"])
 
-        self.failUnlessEqual(proto.listOfCompleted, [])
+        self.assertEqual(proto.listOfCompleted, [])
 
     def testVersion1(self):
         proto = LDIFDriver()
-        proto.dataReceived(b"""\
+        proto.dataReceived(
+            b"""\
 version: 1
 dn: cn=foo,dc=example,dc=com
 objectClass: a
@@ -178,21 +179,23 @@ aValue: a
 aValue: b
 bValue: c
 
-""")
+"""
+        )
 
-        self.failUnlessEqual(len(proto.listOfCompleted), 1)
+        self.assertEqual(len(proto.listOfCompleted), 1)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), u'cn=foo,dc=example,dc=com')
-        self.failUnlessEqual(o[b'objectClass'], [b'a', b'b'])
-        self.failUnlessEqual(o[b'aValue'], [b'a', b'b'])
-        self.failUnlessEqual(o[b'bValue'], [b'c'])
+        self.assertEqual(o.dn.getText(), "cn=foo,dc=example,dc=com")
+        self.assertEqual(o[b"objectClass"], [b"a", b"b"])
+        self.assertEqual(o[b"aValue"], [b"a", b"b"])
+        self.assertEqual(o[b"bValue"], [b"c"])
 
     def testVersionInvalid(self):
         proto = LDIFDriver()
-        self.assertRaises(ldifprotocol.LDIFVersionNotANumberError,
-                          proto.dataReceived,
-                          b"""\
+        self.assertRaises(
+            ldifprotocol.LDIFVersionNotANumberError,
+            proto.dataReceived,
+            b"""\
 version: junk
 dn: cn=foo,dc=example,dc=com
 objectClass: a
@@ -201,13 +204,15 @@ aValue: a
 aValue: b
 bValue: c
 
-""")
+""",
+        )
 
     def testVersion2(self):
         proto = LDIFDriver()
-        self.assertRaises(ldifprotocol.LDIFUnsupportedVersionError,
-                          proto.dataReceived,
-                          b"""\
+        self.assertRaises(
+            ldifprotocol.LDIFUnsupportedVersionError,
+            proto.dataReceived,
+            b"""\
 version: 2
 dn: cn=foo,dc=example,dc=com
 objectClass: a
@@ -216,11 +221,13 @@ aValue: a
 aValue: b
 bValue: c
 
-""")
+""",
+        )
 
     def testNoSpaces(self):
         proto = LDIFDriver()
-        proto.dataReceived(b"""\
+        proto.dataReceived(
+            b"""\
 dn:cn=foo,dc=example,dc=com
 objectClass:a
 obJeCtClass:b
@@ -228,21 +235,23 @@ cn:foo
 avalue:a
 aValUe:b
 
-""")
+"""
+        )
 
-        self.failUnlessEqual(len(proto.listOfCompleted), 1)
+        self.assertEqual(len(proto.listOfCompleted), 1)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), u'cn=foo,dc=example,dc=com')
-        self.failUnlessEqual(o[b'objectClass'], [b'a', b'b'])
-        self.failUnlessEqual(o[b'CN'], [b'foo'])
-        self.failUnlessEqual(o[b'aValue'], [b'a', b'b'])
+        self.assertEqual(o.dn.getText(), "cn=foo,dc=example,dc=com")
+        self.assertEqual(o[b"objectClass"], [b"a", b"b"])
+        self.assertEqual(o[b"CN"], [b"foo"])
+        self.assertEqual(o[b"aValue"], [b"a", b"b"])
 
-        self.failUnlessEqual(proto.listOfCompleted, [])
+        self.assertEqual(proto.listOfCompleted, [])
 
     def testTruncatedFailure(self):
         proto = LDIFDriver()
-        proto.dataReceived(b"""\
+        proto.dataReceived(
+            b"""\
 version: 1
 dn: cn=foo,dc=example,dc=com
 objectClass: a
@@ -250,12 +259,12 @@ objectClass: b
 aValue: a
 aValue: b
 bValue: c
-""")
+"""
+        )
 
-        self.failUnlessEqual(len(proto.listOfCompleted), 0)
+        self.assertEqual(len(proto.listOfCompleted), 0)
 
-        self.assertRaises(ldifprotocol.LDIFTruncatedError,
-                          proto.connectionLost)
+        self.assertRaises(ldifprotocol.LDIFTruncatedError, proto.connectionLost)
 
     def testComments(self):
         """
@@ -263,7 +272,7 @@ bValue: c
         """
         proto = LDIFDriver()
         proto.dataReceived(
-b"""# One comment here.
+            b"""# One comment here.
 version: 1
 # After comment.
 dn: cn=foo, dc=example, dc=com
@@ -274,20 +283,20 @@ cn: foo
 dn: cn=bar, dc=example, dc=com
 cn: bar
 
-""")
+"""
+        )
 
-        self.failUnlessEqual(len(proto.listOfCompleted), 2)
-
-        o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), u'cn=foo,dc=example,dc=com')
-        self.failUnlessEqual(o[b'CN'], [b'foo'])
+        self.assertEqual(len(proto.listOfCompleted), 2)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), u'cn=bar,dc=example,dc=com')
-        self.failUnlessEqual(o[b'CN'], [b'bar'])
+        self.assertEqual(o.dn.getText(), "cn=foo,dc=example,dc=com")
+        self.assertEqual(o[b"CN"], [b"foo"])
 
-        self.failUnlessEqual(proto.listOfCompleted, [])
+        o = proto.listOfCompleted.pop(0)
+        self.assertEqual(o.dn.getText(), "cn=bar,dc=example,dc=com")
+        self.assertEqual(o[b"CN"], [b"bar"])
 
+        self.assertEqual(proto.listOfCompleted, [])
 
     def testMoreEmptyLinesBetweenEntries(self):
         """
@@ -295,7 +304,7 @@ cn: bar
         """
         proto = LDIFDriver()
         proto.dataReceived(
-b"""version: 1
+            b"""version: 1
 dn: cn=foo, dc=example, dc=com
 cn: foo
 
@@ -304,20 +313,20 @@ cn: foo
 dn: cn=bar, dc=example, dc=com
 cn: bar
 
-""")
+"""
+        )
 
-        self.failUnlessEqual(len(proto.listOfCompleted), 2)
-
-        o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), u'cn=foo,dc=example,dc=com')
-        self.failUnlessEqual(o[b'CN'], [b'foo'])
+        self.assertEqual(len(proto.listOfCompleted), 2)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), u'cn=bar,dc=example,dc=com')
-        self.failUnlessEqual(o[b'CN'], [b'bar'])
+        self.assertEqual(o.dn.getText(), "cn=foo,dc=example,dc=com")
+        self.assertEqual(o[b"CN"], [b"foo"])
 
-        self.failUnlessEqual(proto.listOfCompleted, [])
+        o = proto.listOfCompleted.pop(0)
+        self.assertEqual(o.dn.getText(), "cn=bar,dc=example,dc=com")
+        self.assertEqual(o[b"CN"], [b"bar"])
 
+        self.assertEqual(proto.listOfCompleted, [])
 
     def testStartWithSpace(self):
         """
@@ -327,15 +336,15 @@ cn: bar
         proto = LDIFDriver()
         with self.assertRaises(ldifprotocol.LDIFEntryStartsWithSpaceError):
             proto.dataReceived(
-b"""version: 1
+                b"""version: 1
 dn: cn=foo, dc=example, dc=com
 cn: foo
 
  dn: cn=bar, dc=example, dc=com
 cn: bar
 
-""")
-
+"""
+            )
 
     def testEntryStartWithoutDN(self):
         """
@@ -344,12 +353,12 @@ cn: bar
         proto = LDIFDriver()
         with self.assertRaises(ldifprotocol.LDIFEntryStartsWithNonDNError):
             proto.dataReceived(
-b"""version: 1
+                b"""version: 1
 cn: cn=foo, dc=example, dc=com
 other: foo
 
-""")
-
+"""
+            )
 
     def testAttributeValueFromURL(self):
         """
@@ -358,18 +367,19 @@ other: foo
         proto = LDIFDriver()
         with self.assertRaises(NotImplementedError):
             proto.dataReceived(
-b"""version: 1
+                b"""version: 1
 dn: cn=foo, dc=example, dc=com
 cn:< file:///path/to/data 
 
-""")
-
+"""
+            )
 
 
 class RFC2849_Examples(unittest.TestCase):
     examples = [
-        ( b"""Example 1: An simple LDAP file with two entries""",
-          b"""\
+        (
+            b"""Example 1: An simple LDAP file with two entries""",
+            b"""\
 version: 1
 dn: cn=Barbara Jensen, ou=Product Development, dc=airius, dc=com
 objectclass: top
@@ -392,27 +402,32 @@ sn: Jensen
 telephonenumber: +1 408 555 1212
 
 """,
-          [ ( b'cn=Barbara Jensen,ou=Product Development,dc=airius,dc=com',
-              { b'objectClass': [b'top', b'person', b'organizationalPerson'],
-                b'cn': [b'Barbara Jensen',
-                       b'Barbara J Jensen',
-                       b'Babs Jensen'],
-                b'sn': [b'Jensen'],
-                b'uid': [b'bjensen'],
-                b'telephonenumber': [b'+1 408 555 1212'],
-                b'description': [b'A big sailing fan.'],
-                }),
-
-            ( b'cn=Bjorn Jensen,ou=Accounting,dc=airius,dc=com',
-              {  b'objectClass': [b'top', b'person', b'organizationalPerson'],
-                 b'cn': [b'Bjorn Jensen'],
-                 b'sn': [b'Jensen'],
-                 b'telephonenumber': [b'+1 408 555 1212'],
-                 }),
-            ]),
-
-        ( b"""Example 2: A file containing an entry with a folded attribute value""",
-          b"""\
+            [
+                (
+                    b"cn=Barbara Jensen,ou=Product Development,dc=airius,dc=com",
+                    {
+                        b"objectClass": [b"top", b"person", b"organizationalPerson"],
+                        b"cn": [b"Barbara Jensen", b"Barbara J Jensen", b"Babs Jensen"],
+                        b"sn": [b"Jensen"],
+                        b"uid": [b"bjensen"],
+                        b"telephonenumber": [b"+1 408 555 1212"],
+                        b"description": [b"A big sailing fan."],
+                    },
+                ),
+                (
+                    b"cn=Bjorn Jensen,ou=Accounting,dc=airius,dc=com",
+                    {
+                        b"objectClass": [b"top", b"person", b"organizationalPerson"],
+                        b"cn": [b"Bjorn Jensen"],
+                        b"sn": [b"Jensen"],
+                        b"telephonenumber": [b"+1 408 555 1212"],
+                    },
+                ),
+            ],
+        ),
+        (
+            b"""Example 2: A file containing an entry with a folded attribute value""",
+            b"""\
 version: 1
 dn:cn=Barbara Jensen, ou=Product Development, dc=airius, dc=com
 objectclass:top
@@ -429,19 +444,26 @@ description:Babs is a big sailing fan, and travels extensively in sea
 title:Product Manager, Rod and Reel Division
 
 """,
-          [ ( b'cn=Barbara Jensen, ou=Product Development, dc=airius, dc=com',
-              { b'objectclass': [b'top', b'person', b'organizationalPerson'],
-                b'cn': [b'Barbara Jensen', b'Barbara J Jensen', b'Babs Jensen'],
-                b'sn': [b'Jensen'],
-                b'uid': [b'bjensen'],
-                b'telephonenumber': [b'+1 408 555 1212'],
-                b'description': [b'Babs is a big sailing fan, and travels extensively in search of perfect sailing conditions.'],
-                b'title': [b'Product Manager, Rod and Reel Division'],
-                }),
-            ]),
-
-        ( b"""Example 3: A file containing a base-64-encoded value""",
-          b"""\
+            [
+                (
+                    b"cn=Barbara Jensen, ou=Product Development, dc=airius, dc=com",
+                    {
+                        b"objectclass": [b"top", b"person", b"organizationalPerson"],
+                        b"cn": [b"Barbara Jensen", b"Barbara J Jensen", b"Babs Jensen"],
+                        b"sn": [b"Jensen"],
+                        b"uid": [b"bjensen"],
+                        b"telephonenumber": [b"+1 408 555 1212"],
+                        b"description": [
+                            b"Babs is a big sailing fan, and travels extensively in search of perfect sailing conditions."
+                        ],
+                        b"title": [b"Product Manager, Rod and Reel Division"],
+                    },
+                ),
+            ],
+        ),
+        (
+            b"""Example 3: A file containing a base-64-encoded value""",
+            b"""\
 version: 1
 dn: cn=Gern Jensen, ou=Product Testing, dc=airius, dc=com
 objectclass: top
@@ -455,37 +477,44 @@ telephonenumber: +1 408 555 1212
 description:: V2hhdCBhIGNhcmVmdWwgcmVhZGVyIHlvdSBhcmUhICBUaGlzIHZhbHVlIGlzIGJhc2UtNjQtZW5jb2RlZCBiZWNhdXNlIGl0IGhhcyBhIGNvbnRyb2wgY2hhcmFjdGVyIGluIGl0IChhIENSKS4NICBCeSB0aGUgd2F5LCB5b3Ugc2hvdWxkIHJlYWxseSBnZXQgb3V0IG1vcmUu
 
 """,
-          [ ( b'cn=Gern Jensen, ou=Product Testing, dc=airius, dc=com',
-              { b'objectclass': [b'top', b'person', b'organizationalPerson'],
-                b'cn': [b'Gern Jensen', b'Gern O Jensen'],
-                b'sn': [b'Jensen'],
-                b'uid': [b'gernj'],
-                b'telephonenumber': [b'+1 408 555 1212'],
-                b'description': [b'What a careful reader you are!  This value is base-64-encoded because it has a control character in it (a CR).\r  By the way, you should really get out more.'],
-                }),
-            ]),
-
-        ]
+            [
+                (
+                    b"cn=Gern Jensen, ou=Product Testing, dc=airius, dc=com",
+                    {
+                        b"objectclass": [b"top", b"person", b"organizationalPerson"],
+                        b"cn": [b"Gern Jensen", b"Gern O Jensen"],
+                        b"sn": [b"Jensen"],
+                        b"uid": [b"gernj"],
+                        b"telephonenumber": [b"+1 408 555 1212"],
+                        b"description": [
+                            b"What a careful reader you are!  This value is base-64-encoded because it has a control character in it (a CR).\r  By the way, you should really get out more."
+                        ],
+                    },
+                ),
+            ],
+        ),
+    ]
 
     def testExamples(self):
         for name, data, expected in self.examples:
             proto = LDIFDriver()
             proto.dataReceived(data)
 
-            self.failUnlessEqual(len(proto.listOfCompleted), len(expected))
+            self.assertEqual(len(proto.listOfCompleted), len(expected))
 
             for dn, attr in expected:
                 o = proto.listOfCompleted.pop(0)
-                self.failUnlessEqual(o.dn, distinguishedname.DistinguishedName(dn))
+                self.assertEqual(o.dn, distinguishedname.DistinguishedName(dn))
 
-                got = set([x.lower() for x in o.keys()])
-                want = set([x.lower() for x in attr.keys()])
-                self.failUnlessEqual(got, want)
+                got = {x.lower() for x in o.keys()}
+                want = {x.lower() for x in attr.keys()}
+                self.assertEqual(got, want)
 
                 for k, v in attr.items():
-                    self.failUnlessEqual(o[k], v)
+                    self.assertEqual(o[k], v)
 
-            self.failUnlessEqual(proto.listOfCompleted, [])
+            self.assertEqual(proto.listOfCompleted, [])
+
 
 """
 TODO more tests from RFC2849:

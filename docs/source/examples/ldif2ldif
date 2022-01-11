@@ -1,18 +1,21 @@
-#!/usr/bin/python
-import sys
+#!/usr/bin/env python3
 from twisted.internet import stdio, reactor
 from ldaptor.protocols.ldap import ldifprotocol
+
 
 class StandardIOAndShutdown(stdio.StandardIO):
     def connectionLost(self, reason):
         stdio.StandardIO.connectionLost(self, reason)
         reactor.stop()
 
+
 class PrintingLDIF(ldifprotocol.LDIF):
-    l=[]
+    l = []
+
     def gotEntry(self, obj):
         self.l.append(obj)
         self.transport.write(str(obj))
+
 
 proto = PrintingLDIF()
 input = StandardIOAndShutdown(proto)

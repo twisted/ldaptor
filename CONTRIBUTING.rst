@@ -20,7 +20,7 @@ Development environment
 
 Tox is used to manage both local development and CI environment.
 
-The recommended local dev enviroment is `tox -e py27-test-dev`
+The recommended local dev enviroment is `tox -e py38-test-dev`
 
 When running on local dev env, you will get a coverage report for whole
 code as well as for the changes since `master`.
@@ -32,8 +32,8 @@ The reports are also produced in HTML at:
 You can run a subset of the test by passing the dotted path to the test or
 test case, test module or test package::
 
-    tox -e py27-test-dev ldaptor.test.test_delta.TestModifyOp.testAsLDIF
-    tox -e py27-test-dev ldaptor.test.test_usage
+    tox -e py38-test-dev ldaptor.test.test_delta.TestModifyOp.testAsLDIF
+    tox -e py38-test-dev ldaptor.test.test_usage
 
 
 Release notes
@@ -52,6 +52,14 @@ is pushed. A new tag can be pushed with::
 
     pipx run --spec="zest.releaser[recommended]>=6.22.1" fullrelease
 
+You can also run the zest.releaser process manually:
+
+1. pick a new version number!
+2. update the latest version and release date in ``docs/source/NEWS.rst``.
+3. update the ``__version__ = "{version}"`` in ``ldaptor/__init__.py``.
+4. tag the new release ``git tag v{version} -m 'Tagging {version}'``
+5. apply steps 2. through 3. for the development release version.
+
 PyPI access is done via the HTTP API token stored in GitHub Secrets as
 PYPI_GITHUB_PACKAGE_UPLOAD from
 https://github.com/twisted/ldaptor/settings/secrets
@@ -64,7 +72,7 @@ Building the documentation
 --------------------------
 
 The documentation is managed using Python Sphinx and is generated in
-docs/build.
+build/docs.
 
 There is a helper to build the documentation using tox ::
 

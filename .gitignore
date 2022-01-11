@@ -4,10 +4,10 @@ _trial_temp/
 ldaptor.test.*/
 ldaptor/test/ldif/webtests.tmp
 docs/*.png
-docs/build/
 ldaptor.egg-info
 .idea
 .coverage
+.coverage.*
 venv/
 build/
 dist/

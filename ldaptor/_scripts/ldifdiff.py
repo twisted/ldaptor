@@ -1,22 +1,22 @@
-#!/usr/bin/python
-
-from __future__ import print_function
 import sys
 from ldaptor.protocols.ldap import ldif
 from ldaptor import usage, inmemory
-from twisted.internet import protocol, reactor, defer
+from twisted.internet import reactor
 
-exitStatus=0
+exitStatus = 0
+
 
 def error(fail):
-    print('fail:', fail.getErrorMessage(), file=sys.stderr)
+    print("fail:", fail.getErrorMessage(), file=sys.stderr)
     global exitStatus
-    exitStatus=1
+    exitStatus = 1
+
 
 def output(result, outputFile):
     outputFile.write(ldif.header())
     for op in result:
         outputFile.write(op.asLDIF())
+
 
 def main(filename1, filename2, outputFile):
     def _open(filename):
@@ -30,6 +30,7 @@ def main(filename1, filename2, outputFile):
         d = _open(filename2)
         d.addCallback(lambda db2: db1.diffTree(db2))
         return d
+
     d.addCallback(_gotDB1, filename2)
 
     d.addCallback(output, outputFile)
@@ -39,21 +40,25 @@ def main(filename1, filename2, outputFile):
     reactor.run()
     sys.exit(exitStatus)
 
+
 class MyOptions(usage.Options, usage.Options_service_location, usage.Options_bind):
     """LDAPtor object rename utility"""
 
     def parseArgs(self, file1, file2):
-        self.opts['file1'] = file1
-        self.opts['file2'] = file2
+        self.opts["file1"] = file1
+        self.opts["file2"] = file2
 
-if __name__ == "__main__":
+
+def console_script():
     try:
         config = MyOptions()
         config.parseOptions()
     except usage.UsageError as ue:
-        sys.stderr.write('%s: %s\n' % (sys.argv[0], ue))
+        sys.stderr.write(f"{sys.argv[0]}: {ue}\n")
         sys.exit(1)
 
-    main(config.opts['file1'],
-         config.opts['file2'],
-         sys.stdout)
+    main(config.opts["file1"], config.opts["file2"], sys.stdout)
+
+
+if __name__ == "__main__":
+    sys.exit(console_script())

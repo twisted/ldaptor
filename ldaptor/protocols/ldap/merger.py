@@ -5,7 +5,7 @@
 """
 
 from twisted.internet import reactor, defer
-from six.moves.queue import Queue
+from queue import Queue
 
 from ldaptor.protocols.ldap import ldapclient, ldapconnector
 from ldaptor.protocols.ldap import ldapserver
@@ -37,7 +37,7 @@ class MergedLDAPServer(ldapserver.BaseLDAPServer):
 
     def _failConnection(self, reason):
         self.transport.loseConnection()
-        raise ldaperrors.LDAPOther("Cannot connect to server.{}".format(reason))
+        raise ldaperrors.LDAPOther(f"Cannot connect to server.{reason}")
 
     def _cbConnectionMade(self, proto):
         self.clients.append(proto)
@@ -62,8 +62,7 @@ class MergedLDAPServer(ldapserver.BaseLDAPServer):
                 c.send_noResponse(request)
 
     def queue(self, id, op):
-        if isinstance(op, (pureldap.LDAPSearchResultDone,
-                           pureldap.LDAPBindResponse)):
+        if isinstance(op, (pureldap.LDAPSearchResultDone, pureldap.LDAPBindResponse)):
             if id not in self.merge_map:
                 self.merge_map[id] = Queue(len(self.clients))
                 self.merge_map[id].put(op)
@@ -82,11 +81,9 @@ class MergedLDAPServer(ldapserver.BaseLDAPServer):
             ldapserver.BaseLDAPServer.queue(self, id, op)
 
     def connectionMade(self):
-        clientCreator = ldapconnector.LDAPClientCreator(
-            reactor, self.protocol)
+        clientCreator = ldapconnector.LDAPClientCreator(reactor, self.protocol)
         for (c, tls) in zip(self.configs, self.use_tls):
-            d = clientCreator.connect(dn='',
-                                      overrides=c.getServiceLocationOverrides())
+            d = clientCreator.connect(dn="", overrides=c.getServiceLocationOverrides())
             if tls:
                 d.addCallback(lambda x: x.startTLS())
             d.addCallback(self._cbConnectionMade)
@@ -111,10 +108,13 @@ class MergedLDAPServer(ldapserver.BaseLDAPServer):
         reply(response)
 
         # TODO this is ugly
-        return isinstance(response, (
-            pureldap.LDAPSearchResultDone,
-            pureldap.LDAPBindResponse,
-            ))
+        return isinstance(
+            response,
+            (
+                pureldap.LDAPSearchResultDone,
+                pureldap.LDAPBindResponse,
+            ),
+        )
 
     def _handleUnknown(self, request, controls, reply):
         self._whenConnected(self._clientQueue, request, controls, reply)
@@ -138,7 +138,7 @@ class MergedLDAPServer(ldapserver.BaseLDAPServer):
     fail_LDAPDelRequest = pureldap.LDAPDelResponse
 
     def handle_LDAPDelRequest(self, request, controls, reply):
-         raise ldaperrors.LDAPUnwillingToPerform()
+        raise ldaperrors.LDAPUnwillingToPerform()
 
     fail_LDAPAddRequest = pureldap.LDAPAddResponse
 
@@ -148,7 +148,7 @@ class MergedLDAPServer(ldapserver.BaseLDAPServer):
     fail_LDAPModifyDNRequest = pureldap.LDAPModifyDNResponse
 
     def handle_LDAPModifyDNRequest(self, request, controls, reply):
-         raise ldaperrors.LDAPUnwillingToPerform()
+        raise ldaperrors.LDAPUnwillingToPerform()
 
     fail_LDAPModifyRequest = pureldap.LDAPModifyResponse
 
@@ -158,16 +158,20 @@ class MergedLDAPServer(ldapserver.BaseLDAPServer):
     fail_LDAPExtendedRequest = pureldap.LDAPExtendedResponse
 
     def handle_LDAPExtendedRequest(self, request, controls, reply):
-         raise ldaperrors.LDAPUnwillingToPerform()
+        raise ldaperrors.LDAPUnwillingToPerform()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     from twisted.internet import protocol
     from twisted.python import log
     import sys
+
     log.startLogging(sys.stderr)
 
-    configs = [LDAPConfig(serviceLocationOverrides={"": ('localhost', 38942)}),
-               LDAPConfig(serviceLocationOverrides={"": ('localhost', 8080)})]
+    configs = [
+        LDAPConfig(serviceLocationOverrides={"": ("localhost", 38942)}),
+        LDAPConfig(serviceLocationOverrides={"": ("localhost", 8080)}),
+    ]
     use_tls = [True, False]
     factory = protocol.ServerFactory()
     factory.protocol = lambda: MergedLDAPServer(configs, use_tls)

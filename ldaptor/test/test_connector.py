@@ -2,8 +2,10 @@ from twisted.trial import unittest
 from twisted.internet import reactor, protocol, address
 from ldaptor.protocols.ldap import ldapconnector, distinguishedname
 
+
 class FakeProto(protocol.Protocol):
     pass
+
 
 class TestCallableOverride(unittest.TestCase):
     """
@@ -12,36 +14,49 @@ class TestCallableOverride(unittest.TestCase):
     """
 
     def testSimple(self):
-        dn = distinguishedname.DistinguishedName('dc=example,dc=com')
+        dn = distinguishedname.DistinguishedName("dc=example,dc=com")
         c = ldapconnector.LDAPClientCreator(reactor, FakeProto)
+
         def _doConnect(factory):
             factory.doStart()
             factory.startedConnecting(c)
-            factory.buildProtocol(address.IPv4Address('TCP', 'localhost', '1'))
-        d = c.connect(dn, overrides={ dn: _doConnect, })
+            factory.buildProtocol(address.IPv4Address("TCP", "localhost", "1"))
+
+        d = c.connect(
+            dn,
+            overrides={
+                dn: _doConnect,
+            },
+        )
+
         def cb(r):
-            self.failUnless(isinstance(r, FakeProto))
+            self.assertTrue(isinstance(r, FakeProto))
+
         d.addCallback(cb)
         return d
 
     def testFindOverride_plainString(self):
         """Plain strings work as override keys."""
-        c=ldapconnector.LDAPConnector(reactor=None,
-                                      dn='dc=example,dc=com',
-                                      factory=None)
-        o=c._findOverRide(dn=distinguishedname.DistinguishedName('cn=foo,dc=example,dc=com'),
-                          overrides={
-            'dc=example,dc=com': ('server.example.com', 1389),
-            })
-        self.assertEqual(o, ('server.example.com', 1389))
+        c = ldapconnector.LDAPConnector(
+            reactor=None, dn="dc=example,dc=com", factory=None
+        )
+        o = c._findOverRide(
+            dn=distinguishedname.DistinguishedName("cn=foo,dc=example,dc=com"),
+            overrides={
+                "dc=example,dc=com": ("server.example.com", 1389),
+            },
+        )
+        self.assertEqual(o, ("server.example.com", 1389))
 
     def testFindOverride_root(self):
         """Empty dn can be used as override."""
-        c=ldapconnector.LDAPConnector(reactor=None,
-                                      dn='dc=example,dc=com',
-                                      factory=None)
-        o=c._findOverRide(dn=distinguishedname.DistinguishedName('cn=foo,dc=example,dc=com'),
-                          overrides={
-            '': ('server.example.com', 1389),
-            })
-        self.assertEqual(o, ('server.example.com', 1389))
+        c = ldapconnector.LDAPConnector(
+            reactor=None, dn="dc=example,dc=com", factory=None
+        )
+        o = c._findOverRide(
+            dn=distinguishedname.DistinguishedName("cn=foo,dc=example,dc=com"),
+            overrides={
+                "": ("server.example.com", 1389),
+            },
+        )
+        self.assertEqual(o, ("server.example.com", 1389))

@@ -1,23 +1,8 @@
-from twisted.internet import protocol, defer
-from twisted.internet.endpoints import clientFromString
+from twisted.internet import defer, protocol
+from twisted.internet.endpoints import clientFromString, connectProtocol
+from twisted.names.srvconnect import SRVConnector
 
-try:
-    from twisted.internet import endpoints
-    connectProtocol = endpoints.connectProtocol
-except AttributeError:
-    # Twisted >= 13.1
-    from twisted.internet.protocol import Factory
-    def connectProtocol(endpoint, protocol):
-        class OneShotFactory(Factory):
-            def buildProtocol(self, addr):
-                return protocol
-        return endpoint.connect(OneShotFactory())
 from ldaptor.protocols.ldap import distinguishedname
-try:
-    from twisted.internet import utils
-    SRVConnector = utils.SRVConnector
-except AttributeError:
-    from twisted.names.srvconnect import SRVConnector
 from ldaptor._encoder import get_strings
 
 
@@ -28,23 +13,27 @@ def connectToLDAPEndpoint(reactor, endpointStr, clientProtocol):
 
 
 class LDAPConnector(SRVConnector):
-    def __init__(self, reactor, dn, factory,
-                 overrides=None, bindAddress=None):
+    def __init__(self, reactor, dn, factory, overrides=None, bindAddress=None):
         if not isinstance(dn, distinguishedname.DistinguishedName):
             dn = distinguishedname.DistinguishedName(stringValue=dn)
         if overrides is None:
             overrides = {}
         self.override = self._findOverRide(dn, overrides)
 
-        domain = dn.getDomainName() or ''
-        SRVConnector.__init__(self, reactor,
-                  'ldap', domain, factory,
-                  connectFuncKwArgs={'bindAddress': bindAddress})
+        domain = dn.getDomainName() or ""
+        SRVConnector.__init__(
+            self,
+            reactor,
+            "ldap",
+            domain,
+            factory,
+            connectFuncKwArgs={"bindAddress": bindAddress},
+        )
 
     def __getstate__(self):
         r = {}
         r.update(self.__dict__)
-        r['connector'] = None
+        r["connector"] = None
         return r
 
     def _findOverRide(self, dn, overrides):
@@ -52,7 +41,7 @@ class LDAPConnector(SRVConnector):
             for dn_variant in get_strings(dn):
                 if dn_variant in overrides:
                     return overrides[dn]
-            if dn == '':
+            if dn == "":
                 break
             dn = dn.up()
         return None
@@ -89,9 +78,9 @@ class LDAPConnector(SRVConnector):
         else:
             overriddenHost, overriddenPort = self.override
 
-        if (overriddenHost is not None
-            and (overriddenPort is not None
-                 or self.domain is None)):
+        if overriddenHost is not None and (
+            overriddenPort is not None or self.domain is None
+        ):
             host = overriddenHost
             port = overriddenPort
         else:
@@ -116,9 +105,12 @@ class LDAPClientCreator(protocol.ClientCreator):
     def connect(self, dn, overrides=None, bindAddress=None):
         """Connect to remote host, return Deferred of resulting protocol instance."""
         d = defer.Deferred()
-        f = protocol._InstanceFactory(self.reactor, self.protocolClass(*self.args, **self.kwargs), d)
-        c = LDAPConnector(self.reactor, dn, f, overrides=overrides,
-                bindAddress=bindAddress)
+        f = protocol._InstanceFactory(
+            self.reactor, self.protocolClass(*self.args, **self.kwargs), d
+        )
+        c = LDAPConnector(
+            self.reactor, dn, f, overrides=overrides, bindAddress=bindAddress
+        )
         c.connect()
         return d
 

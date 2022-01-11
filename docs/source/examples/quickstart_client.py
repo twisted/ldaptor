@@ -11,10 +11,10 @@ from ldaptor.protocols.ldap.ldapsyntax import LDAPEntry
 def onConnect(client):
     # The following arguments may be also specified as unicode strings
     # but it is recommended to use byte strings for ldaptor objects
-    basedn = b'dc=example,dc=org'
-    binddn = b'cn=bob,ou=people,dc=example,dc=org'
-    bindpw = b'secret'
-    query = b'(cn=bob)'
+    basedn = b"dc=example,dc=org"
+    binddn = b"cn=bob,ou=people,dc=example,dc=org"
+    bindpw = b"secret"
+    query = b"(cn=bob)"
     try:
         yield client.bind(binddn, bindpw)
     except Exception as ex:

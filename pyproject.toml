@@ -2,52 +2,59 @@
 requires = [ "setuptools >= 35.0.2", "wheel >= 0.29.0"]
 build-backend = "setuptools.build_meta"
 
+[tool.coverage.run]
+branch = true
+source_pkgs = ["ldaptor"]
+parallel = true
+
+[tool.coverage.paths]
+source = [
+    "ldaptor",
+    "*/site-packages/ldaptor",
+    '*\site-packages\ldaptor',
+]
+
 
 [tool.tox]
 legacy_tox_ini = """
-; tox configuration file for running tests on local dev env and Travis CI.
+; tox configuration file for running tests on local dev env and CI.
 ;
 ; The local dev environment will be executed against latest released Twisted.
-; The coverage is reported only and local dev and not on Travis-CI as there
+; The coverage is reported only and local dev and not on CI as there
 ; we have separate reported (ex codecov.io)
 
 [tox]
 minversion=3.20.0
+isolated_build=true
 requires=
-    virtualenv >= 20.0.31
-    tox-wheel >= 0.5.0
+    virtualenv >= 20.1.0
+    tox-wheel >= 0.6.0
+    tox-gh-actions >= 2.1.0
 ;
 ; Tags explanation:
 ; * test - run trial tests
 ; * dev - run things in local dev mode
 envlist =
-    {py27,py34,py35,py36,py37,pypy,pypy3}-test-{twlatest,twtrunk,dev},
-    {py27,py37}-linters,
+    py{36,37,38,39,py3}-test-{twlatest,twtrunk,dev}
+    py39-linters,
     documentation,
 
 
 [testenv]
 wheel = True
-wheel_pep517 = True
 wheel_build_env = build
+parallel_show_output = True
 deps = 
-    coverage >= 5.3
+    coverage[toml] >= 5.3
     pyparsing
     passlib
-    six
     twlatest: Twisted[tls]
-    twtrunk: https://github.com/twisted/twisted/archive/trunk.tar.gz#egg=Twisted[tls]
-    tw162: Twisted[tls]==16.2
-    tw160: Twisted[tls]==16.0
-    tw154: Twisted[tls]==15.4
-    tw150: Twisted[tls]==15.0
-    tw140: Twisted[tls]==14.0
+    twtrunk: Twisted[tls] @ https://github.com/twisted/twisted/archive/trunk.tar.gz
     ; Dependecies for local dev environment.
     dev: Twisted[tls]
     dev: diff_cover
     ; Linters are installed both on local dev and the dedicated env.
-    {dev,linters}: pyflakes
-    {dev,linters}: check-manifest
+    {dev,linters}: pre-commit
 
 ; All environment variables are passed.
 passenv = *
@@ -58,15 +65,15 @@ passenv = *
 commands =
     {envpython} --version
     test: trial --version
-    test: coverage run --rcfile={toxinidir}/.coveragerc -m twisted.trial {posargs:ldaptor}
+    test: coverage run --rcfile={toxinidir}/pyproject.toml -m twisted.trial --temp-directory={envtmpdir}/_trial_temp {posargs:ldaptor}
 
     ; Only run on local dev env.
     dev: coverage report --show-missing
     dev: coverage xml -o {toxinidir}/build/coverage.xml
     dev: coverage html -d build/coverage-html
     dev: diff-cover --fail-under 100 --html-report {toxinidir}/build/coverage-diff.html {toxinidir}/build/coverage.xml
-    {dev,linters}: pyflakes ldaptor
-    {dev,linters}: check-manifest
+    dev: pre-commit run --all-files --show-diff-on-failure
+    linters: pre-commit {posargs:run --all-files --show-diff-on-failure}
 
 [testenv:build]
 # empty environment to build universal wheel once per tox invocation
@@ -74,11 +81,13 @@ commands =
 
 [testenv:documentation]
 deps = sphinx
-basepython=python2.7
+basepython=python3.9
+changedir = {envtmpdir}
+whitelist_externals = cp
 commands =
-    mkdir -p docs/build
-    sphinx-build -b html -Ean -j 2 -w build/sphinx-errors \
-        docs/source docs/build
+    sphinx-build -b html -Ean -j 2 -w sphinx-errors \
+        {toxinidir}/docs/source ./docs/
+    cp -r . {toxinidir}/build
 
 [testenv:release]
 deps = pep517
@@ -91,10 +100,11 @@ commands =
     {envpython} -m pep517.build --source --out-dir={toxinidir}/dist {toxinidir}
 
 [testenv:publishcov]
-passenv = CI GITHUB_* TRAVIS TRAVIS_* CODECOV_*
+passenv = GITHUB_*
 deps =
   codecov
-  coverage>=5.3
+  coverage[toml]>=5.3
 commands =
-    codecov
+    codecov --required
+depends = py{,35,36,37,38,39,py3}-test-{twlatest,twtrunk,dev}
 """

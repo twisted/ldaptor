@@ -14,8 +14,8 @@ from twisted.python import log
 def onConnect(clientProtocol):
     o = LDAPEntry(clientProtocol, "dc=fr")
     results = yield o.search()
-    data = u"".join([result.getLDIF() for result in results])
-    log.msg(u"LDIF formatted results:\n{}".format(data))
+    data = "".join([result.getLDIF() for result in results])
+    log.msg(f"LDIF formatted results:\n{data}")
 
 
 def onError(err, reactor):

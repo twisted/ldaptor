@@ -1,18 +1,3 @@
-# Copyright (C) 2001 Tommi Virtanen
-#
-# This library is free software; you can redistribute it and/or
-# modify it under the terms of version 2.1 of the GNU Lesser General Public
-# License as published by the Free Software Foundation.
-#
-# This library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# Lesser General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public
-# License along with this library; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """Pure, simple, BER encoding and decoding"""
 
 # This BER library is currently aimed at supporting LDAP, thus
@@ -30,10 +15,9 @@
 #     Only some BOOLEAN and INTEGER types have default values in
 #     this protocol definition.
 
-import six
-from six.moves import UserList
+from collections import UserList
 
-from ldaptor._encoder import to_bytes, repr_converter, WireStrAlias
+from ldaptor._encoder import to_bytes, WireStrAlias
 
 # xxxxxxxx
 # |/|\.../
@@ -44,23 +28,24 @@ from ldaptor._encoder import to_bytes, repr_converter, WireStrAlias
 # |
 # class
 
-CLASS_MASK = 0xc0
+CLASS_MASK = 0xC0
 CLASS_UNIVERSAL = 0x00
 CLASS_APPLICATION = 0x40
 CLASS_CONTEXT = 0x80
-CLASS_PRIVATE = 0xc0
+CLASS_PRIVATE = 0xC0
 
 STRUCTURED_MASK = 0x20
 STRUCTURED = 0x20
 NOT_STRUCTURED = 0x00
 
-TAG_MASK = 0x1f
+TAG_MASK = 0x1F
 
 
 # LENGTH
 # 0xxxxxxx = 0..127
 # 1xxxxxxx = len is stored in the next 0xxxxxxx octets
 # indefinite form not supported
+
 
 class UnknownBERTag(Exception):
     def __init__(self, tag, context):
@@ -69,8 +54,9 @@ class UnknownBERTag(Exception):
         self.context = context
 
     def __str__(self):
-        return "BERDecoderContext has no tag 0x%02x: %s" \
-               % (self.tag, self.context)
+        return "BERDecoderContext has no tag 0x{:02x}: {}".format(
+            self.tag, self.context
+        )
 
 
 def berDecodeLength(m, offset=0):
@@ -78,12 +64,12 @@ def berDecodeLength(m, offset=0):
     Return a tuple of (length, lengthLength).
     m must be atleast one byte long.
     """
-    l = ber2int(m[offset + 0:offset + 1])
+    l = ber2int(m[offset + 0 : offset + 1])
     ll = 1
     if l & 0x80:
         ll = 1 + (l & 0x7F)
         need(m, offset + ll)
-        l = ber2int(m[offset + 1:offset + ll], signed=0)
+        l = ber2int(m[offset + 1 : offset + ll], signed=0)
     return (l, ll)
 
 
@@ -96,16 +82,15 @@ def int2berlen(i):
         l = len(e)
         assert l > 0
         assert l <= 127
-        return six.int2byte(0x80 | l) + e
+        return bytes((0x80 | l,)) + e
 
 
 def int2ber(i, signed=True):
-    encoded = b''
-    while ((signed and (i > 127 or i < -128))
-           or (not signed and (i > 255))):
-        encoded = six.int2byte(i % 256) + encoded
+    encoded = b""
+    while (signed and (i > 127 or i < -128)) or (not signed and (i > 255)):
+        encoded = bytes((i % 256,)) + encoded
         i = i >> 8
-    encoded = six.int2byte(i % 256) + encoded
+    encoded = bytes((i % 256,)) + encoded
     return encoded
 
 
@@ -115,7 +100,7 @@ def ber2int(e, signed=True):
     if v & 0x80 and signed:
         v = v - 256
     for i in range(1, len(e)):
-        v = (v << 8) | ord(e[i:i + 1])
+        v = (v << 8) | ord(e[i : i + 1])
     return v
 
 
@@ -147,7 +132,7 @@ class BERBase(WireStrAlias):
         return hash(self.toWire())
 
     def toWire(self):
-        return b''
+        return b""
 
 
 class BERStructured(BERBase):
@@ -155,10 +140,12 @@ class BERStructured(BERBase):
         return STRUCTURED | self.tag
 
 
-class BERException(Exception): pass
+class BERException(Exception):
+    pass
 
 
-class BERExceptionInsufficientData(Exception): pass
+class BERExceptionInsufficientData(Exception):
+    pass
 
 
 def need(buf, n):
@@ -188,16 +175,17 @@ class BERInteger(BERBase):
 
     def toWire(self):
         encoded = int2ber(self.value)
-        return six.int2byte(self.identification()) \
-               + int2berlen(len(encoded)) \
-               + encoded
+        return bytes((self.identification(),)) + int2berlen(len(encoded)) + encoded
 
     def __repr__(self):
         if self.tag == self.__class__.tag:
             return self.__class__.__name__ + "(value=%r)" % self.value
         else:
-            return self.__class__.__name__ + "(value=%r, tag=%d)" \
-                   % (self.value, self.tag)
+            return self.__class__.__name__ + "(value=%r, tag=%d)" % (
+                self.value,
+                self.tag,
+            )
+
 
 class BEROctetString(BERBase):
     tag = 0x04
@@ -217,22 +205,18 @@ class BEROctetString(BERBase):
 
     def toWire(self):
         value = to_bytes(self.value)
-        result = (
-            six.int2byte(self.identification()) +
-            int2berlen(len(value)) +
-            value
-            )
+        result = bytes((self.identification(),)) + int2berlen(len(value)) + value
         return result
 
     def __repr__(self):
-        value = repr_converter(self.value)
+        value = self.value
         if self.tag == self.__class__.tag:
-            return self.__class__.__name__ + "(value=%s)" \
-                   % repr(value)
+            return self.__class__.__name__ + "(value=%s)" % repr(value)
         else:
-            return self.__class__.__name__ \
-                   + "(value=%s, tag=%d)" \
-                     % (repr(value), self.tag)
+            return self.__class__.__name__ + "(value=%s, tag=%d)" % (
+                repr(value),
+                self.tag,
+            )
 
 
 class BERNull(BERBase):
@@ -248,7 +232,7 @@ class BERNull(BERBase):
         BERBase.__init__(self, tag)
 
     def toWire(self):
-        return six.int2byte(self.identification()) + six.int2byte(0)
+        return bytes((self.identification(),)) + bytes((0,))
 
     def __repr__(self):
         if self.tag == self.__class__.tag:
@@ -279,20 +263,20 @@ class BERBoolean(BERBase):
 
     def toWire(self):
         assert self.value == 0 or self.value == 0xFF
-        return six.int2byte(self.identification()) \
-               + int2berlen(1) \
-               + six.int2byte(self.value)
+        return bytes((self.identification(),)) + int2berlen(1) + bytes((self.value,))
 
     def __repr__(self):
         if self.tag == self.__class__.tag:
             return self.__class__.__name__ + "(value=%d)" % self.value
         else:
-            return self.__class__.__name__ + "(value=%d, tag=%d)" \
-                   % (self.value, self.tag)
+            return self.__class__.__name__ + "(value=%d, tag=%d)" % (
+                self.value,
+                self.tag,
+            )
 
 
 class BEREnumerated(BERInteger):
-    tag = 0x0a
+    tag = 0x0A
 
 
 class BERSequence(BERStructured, UserList):
@@ -311,15 +295,17 @@ class BERSequence(BERStructured, UserList):
         UserList.__init__(self, value)
 
     def toWire(self):
-        r = b''.join(to_bytes(x) for x in self.data)
-        return six.int2byte(self.identification()) + int2berlen(len(r)) + r
+        r = b"".join(to_bytes(x) for x in self.data)
+        return bytes((self.identification(),)) + int2berlen(len(r)) + r
 
     def __repr__(self):
         if self.tag == self.__class__.tag:
             return self.__class__.__name__ + "(value=%s)" % repr(self.data)
         else:
-            return self.__class__.__name__ + "(value=%s, tag=%d)" \
-                   % (repr(self.data), self.tag)
+            return self.__class__.__name__ + "(value=%s, tag=%d)" % (
+                repr(self.data),
+                self.tag,
+            )
 
 
 class BERSequenceOf(BERSequence):
@@ -328,20 +314,18 @@ class BERSequenceOf(BERSequence):
 
 class BERSet(BERSequence):
     tag = 0x11
-    pass
-
 
 
 class BERDecoderContext:
     Identities = {
+        BERBoolean.tag: BERBoolean,
         BERInteger.tag: BERInteger,
         BEROctetString.tag: BEROctetString,
         BERNull.tag: BERNull,
-        BERBoolean.tag: BERBoolean,
         BEREnumerated.tag: BEREnumerated,
         BERSequence.tag: BERSequence,
         BERSet.tag: BERSet,
-        }
+    }
 
     def __init__(self, fallback=None, inherit=None):
         self.fallback = fallback
@@ -362,12 +346,19 @@ class BERDecoderContext:
     def __repr__(self):
         identities = []
         for tag, class_ in self.Identities.items():
-            identities.append('0x%02x: %s' % (tag, class_.__name__))
-        return "<"+self.__class__.__name__ \
-               +" identities={%s}" % ', '.join(identities) \
-               +" fallback="+repr(self.fallback) \
-               +" inherit="+repr(self.inherit_context) \
-               +">"
+            identities.append(f"0x{tag:02x}: {class_.__name__}")
+
+        return (
+            "<"
+            + self.__class__.__name__
+            + " identities={%s}" % ", ".join(identities)
+            + " fallback="
+            + repr(self.fallback)
+            + " inherit="
+            + repr(self.inherit_context)
+            + ">"
+        )
+
 
 def berDecodeObject(context, m):
     """berDecodeObject(context, bytes) -> (berobject, bytesUsed)
@@ -379,15 +370,13 @@ def berDecodeObject(context, m):
 
         length, lenlen = berDecodeLength(m, offset=1)
         need(m, 1 + lenlen + length)
-        m2 = m[1 + lenlen:1 + lenlen + length]
+        m2 = m[1 + lenlen : 1 + lenlen + length]
 
         berclass = context.lookup_id(i)
         if berclass:
             inh = context.inherit()
             assert inh
-            r = berclass.fromBER(tag=i,
-                                 content=m2,
-                                 berdecoder=inh)
+            r = berclass.fromBER(tag=i, content=m2, berdecoder=inh)
             return (r, 1 + lenlen + length)
         else:
             print(str(UnknownBERTag(i, context)))  # TODO
@@ -412,6 +401,7 @@ def berDecodeMultiple(content, berdecoder):
         assert bytes <= len(content)
         content = content[bytes:]
     return l
+
 
 # TODO unimplemented classes are below:
 

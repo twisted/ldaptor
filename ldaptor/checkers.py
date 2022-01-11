@@ -8,16 +8,16 @@ from ldaptor.protocols.ldap import ldapconnector, ldapclient, ldapsyntax, ldaper
 
 
 def makeFilter(name, template=None):
-    filter=None
+    filter = None
     try:
-        filter=ldapfilter.parseFilter(name)
+        filter = ldapfilter.parseFilter(name)
     except ldapfilter.InvalidLDAPFilter:
         try:
-            filter=ldapfilter.parseFilter('('+name+')')
+            filter = ldapfilter.parseFilter("(" + name + ")")
         except ldapfilter.InvalidLDAPFilter:
             if template is not None:
                 try:
-                    filter=ldapfilter.parseFilter(template % {'name':name})
+                    filter = ldapfilter.parseFilter(template % {"name": name})
                 except ldapfilter.InvalidLDAPFilter:
                     pass
     return filter
@@ -30,6 +30,7 @@ class LDAPBindingChecker:
     The avatarID returned is an LDAPEntry.
 
     """
+
     credentialInterfaces = (credentials.IUsernamePassword,)
 
     def __init__(self, cfg):
@@ -41,8 +42,8 @@ class LDAPBindingChecker:
 
     def _found(self, results, credentials):
         if not results:
-            return failure.Failure(error.UnauthorizedLogin('TODO 1'))
-        assert len(results)==1
+            return failure.Failure(error.UnauthorizedLogin("TODO 1"))
+        assert len(results) == 1
         entry = results[0]
         d = entry.client.bind(str(entry.dn), credentials.password)
         d.addCallback(self._valid, entry)
@@ -50,10 +51,11 @@ class LDAPBindingChecker:
 
     def _connected(self, client, filt, credentials):
         base = ldapsyntax.LDAPEntry(client, self.config.getIdentityBaseDN())
-        d = base.search(filterObject=filt,
-                        sizeLimit=1,
-                        attributes=[''], # TODO no attributes
-                        )
+        d = base.search(
+            filterObject=filt,
+            sizeLimit=1,
+            attributes=[""],  # TODO no attributes
+        )
         d.addCallback(self._found, credentials)
         return d
 
@@ -61,7 +63,9 @@ class LDAPBindingChecker:
         try:
             baseDN = self.config.getIdentityBaseDN()
         except config.MissingBaseDNError as e:
-            return failure.Failure(error.UnauthorizedLogin("Disabled due configuration error: %s." % e))
+            return failure.Failure(
+                error.UnauthorizedLogin("Disabled due configuration error: %s." % e)
+            )
         if not credentials.username:
             return failure.Failure(error.UnauthorizedLogin("I don't support anonymous"))
         filtText = self.config.getIdentitySearch(credentials.username)
@@ -73,12 +77,15 @@ class LDAPBindingChecker:
         c = ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
         d = c.connect(baseDN, self.config.getServiceLocationOverrides())
         d.addCallback(self._connected, filt, credentials)
-        def _err(reason):
-            reason.trap(ldaperrors.LDAPInvalidCredentials,
 
-                        # this happens with slapd 2.1.30 when binding
-                        # with DN but no password
-                        ldaperrors.LDAPUnwillingToPerform)
+        def _err(reason):
+            reason.trap(
+                ldaperrors.LDAPInvalidCredentials,
+                # this happens with slapd 2.1.30 when binding
+                # with DN but no password
+                ldaperrors.LDAPUnwillingToPerform,
+            )
             return failure.Failure(error.UnauthorizedLogin())
+
         d.addErrback(_err)
         return d
