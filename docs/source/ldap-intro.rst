@@ -117,7 +117,7 @@ A simple LDAP file with two entries::
     telephonenumber: +1 408 555 1212
 
 
-A file containing an entry with a folded attribute value, from `RFC 2849 <https://www.ietf.org/rfc/rfc2849.txt>`_::
+A file containing an entry with a folded ``description`` attribute value, from `RFC 2849 <https://www.ietf.org/rfc/rfc2849.html#page-8>`_::
 
     version: 1
     dn:cn=Barbara Jensen, ou=Product Development, dc=airius, dc=com
@@ -130,7 +130,8 @@ A file containing an entry with a folded attribute value, from `RFC 2849 <https:
     sn:Jensen
     uid:bjensen
     telephonenumber:+1 408 555 1212
-    description:Babs is a big sailing fan, and travels extensively in search of perfect sailing conditions.
+    description:Babs is a big sailing fan, and travels extensively in sea
+     rch of perfect sailing conditions.
     title:Product Manager, Rod and Reel Division
 
 Searches and Search Filters

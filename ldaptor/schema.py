@@ -253,7 +253,7 @@ class ObjectClassDescription(ASN1ParserThingie, WireStrAlias):
         for k, v in self.__dict__.items():
             nice[k] = repr(v)
         return (
-            "<{} instance at 0x{:x}".format(self.__class__.__name__, id(self))
+            f"<{self.__class__.__name__} instance at 0x{id(self):x}"
             + (
                 " oid=%(oid)s name=%(name)s desc=%(desc)s"
                 + " obsolete=%(obsolete)s sup=%(sup)s type=%(type)s"
@@ -536,7 +536,7 @@ class AttributeTypeDescription(ASN1ParserThingie, WireStrAlias):
         for k, v in self.__dict__.items():
             nice[k] = repr(v)
         return (
-            "<{} instance at 0x{:x}".format(self.__class__.__name__, id(self))
+            f"<{self.__class__.__name__} instance at 0x{id(self):x}"
             + (
                 " oid=%(oid)s name=%(name)s desc=%(desc)s"
                 + " obsolete=%(obsolete)s sup=%(sup)s"
@@ -669,7 +669,7 @@ class SyntaxDescription(ASN1ParserThingie, WireStrAlias):
         for k, v in self.__dict__.items():
             nice[k] = repr(v)
         return (
-            "<{} instance at 0x{:x}".format(self.__class__.__name__, id(self))
+            f"<{self.__class__.__name__} instance at 0x{id(self):x}"
             + (" oid=%(oid)s desc=%(desc)s>") % nice
         )
 
@@ -779,6 +779,6 @@ class MatchingRuleDescription(ASN1ParserThingie, WireStrAlias):
         for k, v in self.__dict__.items():
             nice[k] = repr(v)
         return (
-            "<{} instance at 0x{:x}".format(self.__class__.__name__, id(self))
+            f"<{self.__class__.__name__} instance at 0x{id(self):x}"
             + (" oid=%(oid)s desc=%(desc)s>") % nice
         )

@@ -1014,7 +1014,7 @@ class TestSchema(unittest.TestCase):
         d = fetchschema.fetch(self.client, "dc=example,dc=com")
         (attributeTypes, objectClasses) = util.pumpingDeferredResult(d)
 
-        self.failUnlessEqual(
+        self.assertEqual(
             [to_bytes(x) for x in attributeTypes],
             [
                 to_bytes(schema.AttributeTypeDescription(x))
@@ -1022,7 +1022,7 @@ class TestSchema(unittest.TestCase):
             ],
         )
 
-        self.failUnlessEqual(
+        self.assertEqual(
             [to_bytes(x) for x in objectClasses],
             [
                 to_bytes(schema.ObjectClassDescription(x))

@@ -72,21 +72,21 @@ class TestLDIFParsing(unittest.TestCase):
         ):
             proto.lineReceived(line.encode("ascii"))
 
-        self.failUnlessEqual(len(proto.listOfCompleted), 2)
+        self.assertEqual(len(proto.listOfCompleted), 2)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), "cn=foo,dc=example,dc=com")
-        self.failUnlessEqual(o[b"objectClass"], [b"a", b"b"])
-        self.failUnlessEqual(o[b"aValue"], [b"a", b"b"])
-        self.failUnlessEqual(o[b"bValue"], [b"c"])
+        self.assertEqual(o.dn.getText(), "cn=foo,dc=example,dc=com")
+        self.assertEqual(o[b"objectClass"], [b"a", b"b"])
+        self.assertEqual(o[b"aValue"], [b"a", b"b"])
+        self.assertEqual(o[b"bValue"], [b"c"])
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), "cn=bar,dc=example,dc=com")
-        self.failUnlessEqual(o[b"objectClass"], [b"c"])
-        self.failUnlessEqual(o[b"aValue"], [b" FOO!", b"b"])
-        self.failUnlessEqual(o[b"bValue"], [b"C"])
+        self.assertEqual(o.dn.getText(), "cn=bar,dc=example,dc=com")
+        self.assertEqual(o[b"objectClass"], [b"c"])
+        self.assertEqual(o[b"aValue"], [b" FOO!", b"b"])
+        self.assertEqual(o[b"bValue"], [b"C"])
 
-        self.failUnlessEqual(proto.listOfCompleted, [])
+        self.assertEqual(proto.listOfCompleted, [])
 
     def testSplitLines(self):
         """
@@ -104,12 +104,12 @@ class TestLDIFParsing(unittest.TestCase):
         ):
             proto.lineReceived(line.encode("ascii"))
 
-        self.failUnlessEqual(len(proto.listOfCompleted), 1)
+        self.assertEqual(len(proto.listOfCompleted), 1)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), "cn=foo,dc=example,dc=com")
-        self.failUnlessEqual(o[b"objectClass"], [b"a", b"b"])
-        self.failUnlessEqual(proto.listOfCompleted, [])
+        self.assertEqual(o.dn.getText(), "cn=foo,dc=example,dc=com")
+        self.assertEqual(o[b"objectClass"], [b"a", b"b"])
+        self.assertEqual(proto.listOfCompleted, [])
 
     def testCaseInsensitiveDN(self):
         """
@@ -127,17 +127,17 @@ cn: bar
 """
         )
 
-        self.failUnlessEqual(len(proto.listOfCompleted), 2)
+        self.assertEqual(len(proto.listOfCompleted), 2)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), "cn=foo,dc=example,dc=com")
-        self.failUnlessEqual(o[b"CN"], [b"foo"])
+        self.assertEqual(o.dn.getText(), "cn=foo,dc=example,dc=com")
+        self.assertEqual(o[b"CN"], [b"foo"])
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), "cn=bar,dc=example,dc=com")
-        self.failUnlessEqual(o[b"CN"], [b"bar"])
+        self.assertEqual(o.dn.getText(), "cn=bar,dc=example,dc=com")
+        self.assertEqual(o[b"CN"], [b"bar"])
 
-        self.failUnlessEqual(proto.listOfCompleted, [])
+        self.assertEqual(proto.listOfCompleted, [])
 
     def testCaseInsensitiveAttributeTypes(self):
         """
@@ -157,15 +157,15 @@ aValUe: B
 """
         )
 
-        self.failUnlessEqual(len(proto.listOfCompleted), 1)
+        self.assertEqual(len(proto.listOfCompleted), 1)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), "cn=foo,dc=example,dc=com")
-        self.failUnlessEqual(o[b"objectClass"], [b"a", b"b"])
-        self.failUnlessEqual(o[b"CN"], [b"foo"])
-        self.failUnlessEqual(o[b"aValue"], [b"a", b"B"])
+        self.assertEqual(o.dn.getText(), "cn=foo,dc=example,dc=com")
+        self.assertEqual(o[b"objectClass"], [b"a", b"b"])
+        self.assertEqual(o[b"CN"], [b"foo"])
+        self.assertEqual(o[b"aValue"], [b"a", b"B"])
 
-        self.failUnlessEqual(proto.listOfCompleted, [])
+        self.assertEqual(proto.listOfCompleted, [])
 
     def testVersion1(self):
         proto = LDIFDriver()
@@ -182,13 +182,13 @@ bValue: c
 """
         )
 
-        self.failUnlessEqual(len(proto.listOfCompleted), 1)
+        self.assertEqual(len(proto.listOfCompleted), 1)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), "cn=foo,dc=example,dc=com")
-        self.failUnlessEqual(o[b"objectClass"], [b"a", b"b"])
-        self.failUnlessEqual(o[b"aValue"], [b"a", b"b"])
-        self.failUnlessEqual(o[b"bValue"], [b"c"])
+        self.assertEqual(o.dn.getText(), "cn=foo,dc=example,dc=com")
+        self.assertEqual(o[b"objectClass"], [b"a", b"b"])
+        self.assertEqual(o[b"aValue"], [b"a", b"b"])
+        self.assertEqual(o[b"bValue"], [b"c"])
 
     def testVersionInvalid(self):
         proto = LDIFDriver()
@@ -238,15 +238,15 @@ aValUe:b
 """
         )
 
-        self.failUnlessEqual(len(proto.listOfCompleted), 1)
+        self.assertEqual(len(proto.listOfCompleted), 1)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), "cn=foo,dc=example,dc=com")
-        self.failUnlessEqual(o[b"objectClass"], [b"a", b"b"])
-        self.failUnlessEqual(o[b"CN"], [b"foo"])
-        self.failUnlessEqual(o[b"aValue"], [b"a", b"b"])
+        self.assertEqual(o.dn.getText(), "cn=foo,dc=example,dc=com")
+        self.assertEqual(o[b"objectClass"], [b"a", b"b"])
+        self.assertEqual(o[b"CN"], [b"foo"])
+        self.assertEqual(o[b"aValue"], [b"a", b"b"])
 
-        self.failUnlessEqual(proto.listOfCompleted, [])
+        self.assertEqual(proto.listOfCompleted, [])
 
     def testTruncatedFailure(self):
         proto = LDIFDriver()
@@ -262,7 +262,7 @@ bValue: c
 """
         )
 
-        self.failUnlessEqual(len(proto.listOfCompleted), 0)
+        self.assertEqual(len(proto.listOfCompleted), 0)
 
         self.assertRaises(ldifprotocol.LDIFTruncatedError, proto.connectionLost)
 
@@ -286,17 +286,17 @@ cn: bar
 """
         )
 
-        self.failUnlessEqual(len(proto.listOfCompleted), 2)
+        self.assertEqual(len(proto.listOfCompleted), 2)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), "cn=foo,dc=example,dc=com")
-        self.failUnlessEqual(o[b"CN"], [b"foo"])
+        self.assertEqual(o.dn.getText(), "cn=foo,dc=example,dc=com")
+        self.assertEqual(o[b"CN"], [b"foo"])
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), "cn=bar,dc=example,dc=com")
-        self.failUnlessEqual(o[b"CN"], [b"bar"])
+        self.assertEqual(o.dn.getText(), "cn=bar,dc=example,dc=com")
+        self.assertEqual(o[b"CN"], [b"bar"])
 
-        self.failUnlessEqual(proto.listOfCompleted, [])
+        self.assertEqual(proto.listOfCompleted, [])
 
     def testMoreEmptyLinesBetweenEntries(self):
         """
@@ -316,17 +316,17 @@ cn: bar
 """
         )
 
-        self.failUnlessEqual(len(proto.listOfCompleted), 2)
+        self.assertEqual(len(proto.listOfCompleted), 2)
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), "cn=foo,dc=example,dc=com")
-        self.failUnlessEqual(o[b"CN"], [b"foo"])
+        self.assertEqual(o.dn.getText(), "cn=foo,dc=example,dc=com")
+        self.assertEqual(o[b"CN"], [b"foo"])
 
         o = proto.listOfCompleted.pop(0)
-        self.failUnlessEqual(o.dn.getText(), "cn=bar,dc=example,dc=com")
-        self.failUnlessEqual(o[b"CN"], [b"bar"])
+        self.assertEqual(o.dn.getText(), "cn=bar,dc=example,dc=com")
+        self.assertEqual(o[b"CN"], [b"bar"])
 
-        self.failUnlessEqual(proto.listOfCompleted, [])
+        self.assertEqual(proto.listOfCompleted, [])
 
     def testStartWithSpace(self):
         """
@@ -500,20 +500,20 @@ description:: V2hhdCBhIGNhcmVmdWwgcmVhZGVyIHlvdSBhcmUhICBUaGlzIHZhbHVlIGlzIGJhc2
             proto = LDIFDriver()
             proto.dataReceived(data)
 
-            self.failUnlessEqual(len(proto.listOfCompleted), len(expected))
+            self.assertEqual(len(proto.listOfCompleted), len(expected))
 
             for dn, attr in expected:
                 o = proto.listOfCompleted.pop(0)
-                self.failUnlessEqual(o.dn, distinguishedname.DistinguishedName(dn))
+                self.assertEqual(o.dn, distinguishedname.DistinguishedName(dn))
 
                 got = {x.lower() for x in o.keys()}
                 want = {x.lower() for x in attr.keys()}
-                self.failUnlessEqual(got, want)
+                self.assertEqual(got, want)
 
                 for k, v in attr.items():
-                    self.failUnlessEqual(o[k], v)
+                    self.assertEqual(o[k], v)
 
-            self.failUnlessEqual(proto.listOfCompleted, [])
+            self.assertEqual(proto.listOfCompleted, [])
 
 
 """

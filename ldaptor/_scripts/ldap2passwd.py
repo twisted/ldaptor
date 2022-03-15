@@ -58,7 +58,7 @@ def main(cfg, filter_text):
     try:
         baseDN = cfg.getBaseDN()
     except config.MissingBaseDNError as e:
-        print("{}: {}.".format(sys.argv[0], e), file=sys.stderr)
+        print(f"{sys.argv[0]}: {e}.", file=sys.stderr)
         sys.exit(1)
 
     filt = ldapfilter.parseFilter("(objectClass=posixAccount)")
@@ -89,7 +89,7 @@ def console_script():
         opts = MyOptions()
         opts.parseOptions()
     except usage.usage.UsageError as ue:
-        sys.stderr.write("{}: {}\n".format(sys.argv[0], ue))
+        sys.stderr.write(f"{sys.argv[0]}: {ue}\n")
         sys.exit(1)
 
     cfg = config.LDAPConfig(

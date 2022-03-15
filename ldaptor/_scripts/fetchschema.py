@@ -32,7 +32,7 @@ def main(cfg):
     try:
         baseDN = cfg.getBaseDN()
     except config.MissingBaseDNError as e:
-        print("{}: {}.".format(sys.argv[0], e), file=sys.stderr)
+        print(f"{sys.argv[0]}: {e}.", file=sys.stderr)
         sys.exit(1)
 
     c = ldapconnector.LDAPClientCreator(reactor, ldapclient.LDAPClient)
@@ -66,7 +66,7 @@ def console_script():
         opts = MyOptions()
         opts.parseOptions()
     except usage.UsageError as ue:
-        sys.stderr.write("{}: {}\n".format(sys.argv[0], ue))
+        sys.stderr.write(f"{sys.argv[0]}: {ue}\n")
         sys.exit(1)
 
     cfg = config.LDAPConfig(

@@ -55,7 +55,7 @@ def console_script():
         config = MyOptions()
         config.parseOptions()
     except usage.UsageError as ue:
-        sys.stderr.write("{}: {}\n".format(sys.argv[0], ue))
+        sys.stderr.write(f"{sys.argv[0]}: {ue}\n")
         sys.exit(1)
 
     data = open(config["data"])

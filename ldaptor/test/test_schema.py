@@ -270,7 +270,7 @@ class AttributeType_KnownValues(unittest.TestCase):
         }
         for text, expected in self.knownValues:
             a = schema.AttributeTypeDescription(text)
-            self.failIfEqual(a.oid, None)
+            self.assertNotEqual(a.oid, None)
             for key, want in expected.items():
                 if key in defaults:
                     del defaults[key]
@@ -454,7 +454,7 @@ class ObjectClass_KnownValues(unittest.TestCase):
         }
         for text, expected in self.knownValues:
             a = schema.ObjectClassDescription(text)
-            self.failIfEqual(a.oid, None)
+            self.assertNotEqual(a.oid, None)
             for key, want in expected.items():
                 if key in defaults:
                     del defaults[key]
@@ -520,7 +520,7 @@ class SyntaxDescription_KnownValues(unittest.TestCase):
     def testParse(self):
         for text, expected in self.knownValues:
             a = schema.SyntaxDescription(text)
-            self.failIfEqual(a.oid, None)
+            self.assertNotEqual(a.oid, None)
             for key, want in expected.items():
                 got = getattr(a, key)
                 self.assertEqual(got, want)
@@ -594,7 +594,7 @@ class MatchingRuleDescription_KnownValues(unittest.TestCase):
     def testParse(self):
         for text, expected in self.knownValues:
             a = schema.MatchingRuleDescription(text)
-            self.failIfEqual(a.oid, None)
+            self.assertNotEqual(a.oid, None)
             for key, want in expected.items():
                 got = getattr(a, key)
                 self.assertEqual(got, want)
@@ -628,9 +628,9 @@ class TestComparison(unittest.TestCase):
         for k1 in self.data:
             for k2 in self.data:
                 if k1 == k2:
-                    self.failUnless(self.data[k1] == self.data[k2])
+                    self.assertTrue(self.data[k1] == self.data[k2])
                 else:
-                    self.failIf(self.data[k1] == self.data[k2])
+                    self.assertFalse(self.data[k1] == self.data[k2])
 
     def test_invalid_eq(self):
         """Object class object can be compared only to the same class object"""
@@ -642,26 +642,26 @@ class TestComparison(unittest.TestCase):
         for k1 in self.data:
             for k2 in self.data:
                 if k1 == k2:
-                    self.failIf(self.data[k1] != self.data[k2])
+                    self.assertFalse(self.data[k1] != self.data[k2])
                 else:
-                    self.failUnless(self.data[k1] != self.data[k2])
+                    self.assertTrue(self.data[k1] != self.data[k2])
 
     def test_order(self):
         for i, base in enumerate(self.ORDER):
-            self.failUnless(self.data[base] <= self.data[base])
-            self.failUnless(self.data[base] >= self.data[base])
-            self.failIf(self.data[base] < self.data[base])
-            self.failIf(self.data[base] > self.data[base])
+            self.assertTrue(self.data[base] <= self.data[base])
+            self.assertTrue(self.data[base] >= self.data[base])
+            self.assertFalse(self.data[base] < self.data[base])
+            self.assertFalse(self.data[base] > self.data[base])
             for lower in self.ORDER[:i]:
-                self.failUnless(self.data[lower] < self.data[base])
-                self.failUnless(self.data[lower] <= self.data[base])
-                self.failIf(self.data[base] < self.data[lower])
-                self.failIf(self.data[base] <= self.data[lower])
+                self.assertTrue(self.data[lower] < self.data[base])
+                self.assertTrue(self.data[lower] <= self.data[base])
+                self.assertFalse(self.data[base] < self.data[lower])
+                self.assertFalse(self.data[base] <= self.data[lower])
             for higher in self.ORDER[i + 1 :]:
-                self.failUnless(self.data[higher] > self.data[base])
-                self.failUnless(self.data[higher] >= self.data[base])
-                self.failIf(self.data[base] > self.data[higher])
-                self.failIf(self.data[base] >= self.data[higher])
+                self.assertTrue(self.data[higher] > self.data[base])
+                self.assertTrue(self.data[higher] >= self.data[base])
+                self.assertFalse(self.data[base] > self.data[higher])
+                self.assertFalse(self.data[base] >= self.data[higher])
 
 
 class TestDefaultObjectClass(unittest.TestCase):
