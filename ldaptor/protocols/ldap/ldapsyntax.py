@@ -247,7 +247,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         lst = list(self.items())
         lst.sort()
         for key, values in lst:
-            if key != "objectClass":
+            if key not in self._object_class_keys:
                 a.append((key, values))
         return ldif.asLDIF(self.dn.getText(), a)
 
