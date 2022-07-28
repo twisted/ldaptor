@@ -192,7 +192,7 @@ class SendTests(unittest.TestCase):
                 return True
             return False
 
-        client.send_multiResponse(op, collect_result_)
+        d = client.send_multiResponse(op, collect_result_)
         expected_value = pureldap.LDAPMessage(op)
         expected_value.id -= 1
         expected_bytestring = expected_value.toWire()
@@ -203,12 +203,16 @@ class SendTests(unittest.TestCase):
         )
         resp_bytestring = response.toWire()
         client.dataReceived(resp_bytestring)
+        self.assertEqual(response.value, results[0])
+        self.assertFalse(d.called)
+
         response = pureldap.LDAPMessage(
             pureldap.LDAPSearchResultDone(0), id=expected_value.id
         )
         resp_bytestring = response.toWire()
         client.dataReceived(resp_bytestring)
         self.assertEqual(response.value, results[1])
+        self.assertIsNone(self.successResultOf(d))
 
     def test_send_multiResponse_ex(self):
         client, transport = self.create_test_client()
@@ -228,6 +232,45 @@ class SendTests(unittest.TestCase):
         resp_bytestring = response.toWire()
         client.dataReceived(resp_bytestring)
         self.assertEqual((response.value, response.controls), self.successResultOf(d))
+
+    def test_send_multiResponse_ex_with_handler(self):
+        client, transport = self.create_test_client()
+        op = self.create_test_search_req()
+        results = []
+
+        def collect_result_(result, controls):
+            results.append((result, controls))
+            if isinstance(result, pureldap.LDAPSearchResultDone):
+                return True
+            return False
+
+        controls = self.create_paged_search_controls()
+        d = client.send_multiResponse_ex(op, controls, handler=collect_result_)
+        expected_value = pureldap.LDAPMessage(op, controls)
+        expected_value.id -= 1
+        expected_bytestring = expected_value.toWire()
+        self.assertEqual(transport.value(), expected_bytestring)
+        resp_controls = self.create_paged_search_controls(0, "magic1")
+        response = pureldap.LDAPMessage(
+            pureldap.LDAPSearchResultEntry("cn=foo,ou=baz,dc=example,dc=net", {}),
+            id=expected_value.id,
+            controls=resp_controls,
+        )
+        resp_bytestring = response.toWire()
+        client.dataReceived(resp_bytestring)
+        self.assertEqual(results[0], (response.value, resp_controls))
+        self.assertFalse(d.called)
+
+        resp_controls = self.create_paged_search_controls(0, "magic2")
+        response = pureldap.LDAPMessage(
+            pureldap.LDAPSearchResultDone(0),
+            id=expected_value.id,
+            controls=resp_controls,
+        )
+        resp_bytestring = response.toWire()
+        client.dataReceived(resp_bytestring)
+        self.assertEqual(results[1], (response.value, resp_controls))
+        self.assertIsNone(self.successResultOf(d))
 
     def test_send_noResponse(self):
         client, transport = self.create_test_client()
