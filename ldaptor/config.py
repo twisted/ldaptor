@@ -136,7 +136,7 @@ def loadConfig(configFiles=None, reload=False):
     """
     global __config
     if __config is None or reload:
-        x = configparser.SafeConfigParser()
+        x = configparser.ConfigParser()
 
         for section, options in DEFAULTS.items():
             x.add_section(section)
