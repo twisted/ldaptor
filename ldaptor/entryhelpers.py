@@ -173,7 +173,7 @@ class MatchMixin:
                 possibleMatches = [
                     x[len(filter.substrings[0].value) :]
                     for x in possibleMatches
-                    if x.lower().startswith(filter.substrings[0].value.lower())
+                    if x.lower().startswith(filter.substrings[0].value.decode().lower())
                 ]
                 del substrings[0]
 
@@ -183,7 +183,7 @@ class MatchMixin:
                 possibleMatches = [
                     x[: -len(filter.substrings[0].value)]
                     for x in possibleMatches
-                    if x.lower().endswith(filter.substrings[-1].value.lower())
+                    if x.lower().endswith(filter.substrings[-1].value.decode().lower())
                 ]
                 del substrings[-1]
 
@@ -191,7 +191,7 @@ class MatchMixin:
                 assert isinstance(substrings[0], pureldap.LDAPFilter_substrings_any)
                 r = []
                 for possible in possibleMatches:
-                    i = possible.lower().find(substrings[0].value.lower())
+                    i = possible.lower().find(substrings[0].value.decode().lower())
                     if i >= 0:
                         r.append(possible[i:])
                 possibleMatches = r
