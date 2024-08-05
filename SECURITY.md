@@ -1,7 +1,10 @@
 # Security Policy
 
-twisted/ldaptor project uses the same security policy as [twisted/twisted](https://github.com/twisted/twisted).
+twisted/ldaptor project uses the same security policy as
+[twisted/twisted](https://github.com/twisted/twisted).
 
-For more details please check the [Twisted security process](https://github.com/twisted/twisted?tab=security-ov-file#readme)
+For more details please check the
+[Twisted security process](https://github.com/twisted/twisted?tab=security-ov-file#readme)
 
-You can send a security report via [GitHub Security Advisories](https://github.com/twisted/ldaptor/security/advisories/new)
+You can send a security report via
+[GitHub Security Advisories](https://github.com/twisted/ldaptor/security/advisories/new)

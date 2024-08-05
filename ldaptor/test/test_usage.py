@@ -1,6 +1,7 @@
 """
 Test cases for ldaptor.usage
 """
+
 import re
 
 from twisted.python.usage import UsageError

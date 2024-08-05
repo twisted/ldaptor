@@ -30,7 +30,7 @@ def my_aton_numbits(num):
     n = 0
     while num > 0:
         n >>= 1
-        n |= 2 ** 31
+        n |= 2**31
         num -= 1
     return n
 

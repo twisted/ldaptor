@@ -1,6 +1,7 @@
 """
 Test cases for ldaptor.inmemory module.
 """
+
 from io import BytesIO
 
 from twisted.trial import unittest
