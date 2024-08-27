@@ -571,9 +571,9 @@ class LDAPFilter_equalityMatch(LDAPAttributeValueAssertion):
     def asText(self):
         return (
             "("
-            + self.attributeDesc.value
+            + self.attributeDesc.value.decode()
             + "="
-            + self.escaper(self.assertionValue.value)
+            + self.escaper(self.assertionValue.value.decode())
             + ")"
         )
 
@@ -582,21 +582,21 @@ class LDAPFilter_substrings_initial(LDAPString):
     tag = CLASS_CONTEXT | 0x00
 
     def asText(self):
-        return self.escaper(self.value)
+        return self.escaper(self.value.decode())
 
 
 class LDAPFilter_substrings_any(LDAPString):
     tag = CLASS_CONTEXT | 0x01
 
     def asText(self):
-        return self.escaper(self.value)
+        return self.escaper(self.value.decode())
 
 
 class LDAPFilter_substrings_final(LDAPString):
     tag = CLASS_CONTEXT | 0x02
 
     def asText(self):
-        return self.escaper(self.value)
+        return self.escaper(self.value.decode())
 
 
 class LDAPBERDecoderContext_Filter_substrings(BERDecoderContext):
@@ -673,7 +673,7 @@ class LDAPFilter_substrings(BERSequence):
         if final is None:
             final = ""
 
-        return "(" + self.type + "=" + "*".join([initial] + any + [final]) + ")"
+        return "(" + self.type.decode() + "=" + "*".join([initial] + any + [final]) + ")"
 
 
 class LDAPFilter_greaterOrEqual(LDAPAttributeValueAssertion):
@@ -682,9 +682,9 @@ class LDAPFilter_greaterOrEqual(LDAPAttributeValueAssertion):
     def asText(self):
         return (
             "("
-            + self.attributeDesc.value
+            + self.attributeDesc.value.decode()
             + ">="
-            + self.escaper(self.assertionValue.value)
+            + self.escaper(self.assertionValue.value.decode())
             + ")"
         )
 
@@ -695,9 +695,9 @@ class LDAPFilter_lessOrEqual(LDAPAttributeValueAssertion):
     def asText(self):
         return (
             "("
-            + self.attributeDesc.value
+            + self.attributeDesc.value.decode()
             + "<="
-            + self.escaper(self.assertionValue.value)
+            + self.escaper(self.assertionValue.value.decode())
             + ")"
         )
 
@@ -706,7 +706,7 @@ class LDAPFilter_present(LDAPAttributeDescription):
     tag = CLASS_CONTEXT | 0x07
 
     def asText(self):
-        return "(%s=*)" % self.value
+        return "(" + self.value.decode() + "=*)"
 
 
 class LDAPFilter_approxMatch(LDAPAttributeValueAssertion):
@@ -715,9 +715,9 @@ class LDAPFilter_approxMatch(LDAPAttributeValueAssertion):
     def asText(self):
         return (
             "("
-            + self.attributeDesc.value
+            + self.attributeDesc.value.decode()
             + "~="
-            + self.escaper(self.assertionValue.value)
+            + self.escaper(self.assertionValue.value.decode())
             + ")"
         )
 
@@ -854,15 +854,13 @@ class LDAPFilter_extensibleMatch(LDAPMatchingRuleAssertion):
     tag = CLASS_CONTEXT | 0x09
 
     def asText(self):
-        return (
-            "("
-            + (self.type.value if self.type else "")
-            + (":dn" if self.dnAttributes and self.dnAttributes.value else "")
-            + ((":" + self.matchingRule.value) if self.matchingRule else "")
-            + ":="
-            + self.escaper(self.matchValue.value)
-            + ")"
-        )
+        return '(' + \
+               (self.type.value.decode() if self.type else '') + \
+               (':dn' if self.dnAttributes and self.dnAttributes.value else '') + \
+               ((':' + self.matchingRule.value.decode()) if self.matchingRule else '') + \
+               ':=' + \
+               self.escaper(self.matchValue.value.decode()) + \
+               ')'
 
 
 class LDAPBERDecoderContext_Filter(BERDecoderContext):
