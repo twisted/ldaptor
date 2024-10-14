@@ -82,7 +82,7 @@ class MergedLDAPServer(ldapserver.BaseLDAPServer):
 
     def connectionMade(self):
         clientCreator = ldapconnector.LDAPClientCreator(reactor, self.protocol)
-        for (c, tls) in zip(self.configs, self.use_tls):
+        for c, tls in zip(self.configs, self.use_tls):
             d = clientCreator.connect(dn="", overrides=c.getServiceLocationOverrides())
             if tls:
                 d.addCallback(lambda x: x.startTLS())

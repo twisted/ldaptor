@@ -13,7 +13,7 @@ def aton_numbits(num):
     n = 0
     while num > 0:
         n >>= 1
-        n |= 2 ** 31
+        n |= 2**31
         num -= 1
     return n
 
@@ -35,7 +35,7 @@ def ntoa(n):
 
 def netmaskToNumbits(netmask):
     bits = aton(netmask)
-    i = 2 ** 31
+    i = 2**31
     n = 0
     while bits and i > 0:
         if (bits & i) == 0:

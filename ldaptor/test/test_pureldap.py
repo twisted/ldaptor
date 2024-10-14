@@ -1,6 +1,7 @@
 """
 Test cases for ldaptor.protocols.pureldap module.
 """
+
 from twisted.trial import unittest
 
 from ldaptor.protocols import pureldap, pureber

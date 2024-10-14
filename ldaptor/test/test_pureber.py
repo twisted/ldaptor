@@ -1,6 +1,7 @@
 """
 Test cases for ldaptor.protocols.pureber module.
 """
+
 from twisted.trial import unittest
 
 from ldaptor.protocols import pureber
@@ -34,7 +35,7 @@ class BerLengths(unittest.TestCase):
         (257, [0x80 | 2, 1, 1]),
         (65535, [0x80 | 2, 0xFF, 0xFF]),
         (65536, [0x80 | 3, 0x01, 0x00, 0x00]),
-        (256 ** 127 - 1, [0x80 | 127] + 127 * [0xFF]),
+        (256**127 - 1, [0x80 | 127] + 127 * [0xFF]),
     )
 
     def testToBER(self):
@@ -61,7 +62,7 @@ class BerLengths(unittest.TestCase):
             pureber.BERExceptionInsufficientData, pureber.berDecodeLength, m[:1]
         )
 
-        m = bytes(pureber.int2berlen(256 ** 100 - 1))
+        m = bytes(pureber.int2berlen(256**100 - 1))
         self.assertEqual(101, len(m))
         self.assertRaises(
             pureber.BERExceptionInsufficientData, pureber.berDecodeLength, m[:100]

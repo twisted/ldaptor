@@ -1,6 +1,7 @@
 """
 Test cases for ldaptor.protocols.ldap.proxybase module.
 """
+
 from functools import partial
 import itertools
 
