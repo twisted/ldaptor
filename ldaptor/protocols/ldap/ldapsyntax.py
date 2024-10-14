@@ -1,4 +1,5 @@
 """Pythonic API for LDAP operations."""
+
 import functools
 
 from twisted.internet import defer

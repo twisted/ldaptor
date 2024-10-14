@@ -1,6 +1,7 @@
 """
 Test cases for ldaptor.protocols.ldap.ldapserver module.
 """
+
 import re
 
 import attr
