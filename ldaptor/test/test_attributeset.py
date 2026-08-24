@@ -1,6 +1,7 @@
 """
 Test cases for ldaptor.attributeset
 """
+
 from functools import total_ordering
 
 from twisted.trial import unittest

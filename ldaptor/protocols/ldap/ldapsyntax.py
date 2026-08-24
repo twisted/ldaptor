@@ -1,4 +1,5 @@
 """Pythonic API for LDAP operations."""
+
 import functools
 
 from twisted.internet import defer
@@ -561,7 +562,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
             d.addCallbacks(self._cbSetPassword_one, self._ebSetPassword_one)
 
             def cb(result):
-                (success, info) = result
+                success, info = result
                 return results + [(success, info)]
 
             d.addCallback(cb)

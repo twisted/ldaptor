@@ -4,7 +4,6 @@
 from ldaptor.protocols import pureldap
 from ldaptor._encoder import to_unicode
 
-
 """
 
 RFC2254:
