@@ -39,6 +39,7 @@ class LDAPClient(protocol.Protocol):
         self.onwire = {}
         self.buffer = b""
         self.connected = None
+        self._disconnect_deferreds = []
 
     berdecoder = pureldap.LDAPBERDecoderContext_TopLevel(
         inherit=pureldap.LDAPBERDecoderContext_LDAPMessage(
@@ -75,6 +76,21 @@ class LDAPClient(protocol.Protocol):
             k, v = self.onwire.popitem()
             d, _, _, _, _ = v
             d.errback(reason)
+        # fire any notifyOnDisconnect / unbind Deferreds
+        pending = self._disconnect_deferreds
+        self._disconnect_deferreds = []
+        for d in pending:
+            d.callback(reason)
+
+    def notifyOnDisconnect(self):
+        """
+        Return a Deferred that fires with the disconnect reason once the
+        transport has actually been closed. Useful for waiting on a clean
+        TLS shutdown after unbind() (#225).
+        """
+        d = defer.Deferred()
+        self._disconnect_deferreds.append(d)
+        return d
 
     def _send(self, op, controls=None):
         if not self.connected:
@@ -235,11 +251,21 @@ class LDAPClient(protocol.Protocol):
         return (msg.matchedDN, msg.serverSaslCreds)
 
     def unbind(self):
+        """
+        Send an LDAP unbind and close the connection.
+
+        Returns a Deferred that fires with the connection-lost reason
+        once the transport has actually closed. Callers that don't need
+        to wait can ignore the return value; callers that do (e.g.
+        cleanup after a TLS shutdown) can chain on it.
+        """
         if not self.connected:
             raise Exception("Not connected (TODO)")  # TODO make this a real object
         r = pureldap.LDAPUnbindRequest()
         self.send_noResponse(r)
+        d = self.notifyOnDisconnect()
         self.transport.loseConnection()
+        return d
 
     def _cbStartTLS(self, msg, ctx):
         assert isinstance(msg, pureldap.LDAPExtendedResponse)
