@@ -1,5 +1,6 @@
 *.pyc
 *.pyo
+uv.lock
 _trial_temp/
 ldaptor.test.*/
 ldaptor/test/ldif/webtests.tmp

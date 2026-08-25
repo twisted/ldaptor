@@ -1,6 +1,7 @@
 """
 Test cases for ldaptor.protocols.ldap.autofill.sambaAccount module.
 """
+
 from twisted.trial import unittest
 
 from ldaptor.protocols.ldap import ldapsyntax

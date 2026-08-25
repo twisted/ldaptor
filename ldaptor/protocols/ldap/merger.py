@@ -1,7 +1,7 @@
 """LDAP protocol server, which acts as a proxy which
-   forwards the requests to multiple LDAP servers and
-   merges the results.
-   Only Bind and Search requests are supported.
+forwards the requests to multiple LDAP servers and
+merges the results.
+Only Bind and Search requests are supported.
 """
 
 from twisted.internet import reactor, defer
@@ -82,7 +82,7 @@ class MergedLDAPServer(ldapserver.BaseLDAPServer):
 
     def connectionMade(self):
         clientCreator = ldapconnector.LDAPClientCreator(reactor, self.protocol)
-        for (c, tls) in zip(self.configs, self.use_tls):
+        for c, tls in zip(self.configs, self.use_tls):
             d = clientCreator.connect(dn="", overrides=c.getServiceLocationOverrides())
             if tls:
                 d.addCallback(lambda x: x.startTLS())
