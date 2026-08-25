@@ -173,7 +173,9 @@ class MatchMixin:
                 possibleMatches = [
                     x[len(filter.substrings[0].value) :]
                     for x in possibleMatches
-                    if x.lower().startswith(to_unicode(filter.substrings[0].value).lower())
+                    if x.lower().startswith(
+                        to_unicode(filter.substrings[0].value).lower()
+                    )
                 ]
                 del substrings[0]
 
@@ -183,7 +185,9 @@ class MatchMixin:
                 possibleMatches = [
                     x[: -len(filter.substrings[0].value)]
                     for x in possibleMatches
-                    if x.lower().endswith(to_unicode(filter.substrings[-1].value).lower())
+                    if x.lower().endswith(
+                        to_unicode(filter.substrings[-1].value).lower()
+                    )
                 ]
                 del substrings[-1]
 
