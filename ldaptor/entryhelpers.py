@@ -1,6 +1,6 @@
 from twisted.internet import defer
 from ldaptor import delta, ldapfilter
-from ldaptor._encoder import get_strings
+from ldaptor._encoder import get_strings, to_unicode
 from ldaptor.protocols import pureldap
 from ldaptor.protocols.ldap import ldapsyntax, ldaperrors
 
@@ -173,7 +173,7 @@ class MatchMixin:
                 possibleMatches = [
                     x[len(filter.substrings[0].value) :]
                     for x in possibleMatches
-                    if x.lower().startswith(filter.substrings[0].value.decode().lower())
+                    if x.lower().startswith(to_unicode(filter.substrings[0].value).lower())
                 ]
                 del substrings[0]
 
@@ -183,7 +183,7 @@ class MatchMixin:
                 possibleMatches = [
                     x[: -len(filter.substrings[0].value)]
                     for x in possibleMatches
-                    if x.lower().endswith(filter.substrings[-1].value.decode().lower())
+                    if x.lower().endswith(to_unicode(filter.substrings[-1].value).lower())
                 ]
                 del substrings[-1]
 
@@ -191,7 +191,7 @@ class MatchMixin:
                 assert isinstance(substrings[0], pureldap.LDAPFilter_substrings_any)
                 r = []
                 for possible in possibleMatches:
-                    i = possible.lower().find(substrings[0].value.decode().lower())
+                    i = possible.lower().find(to_unicode(substrings[0].value).lower())
                     if i >= 0:
                         r.append(possible[i:])
                 possibleMatches = r
