@@ -43,6 +43,12 @@ Fixes
 - Fixed ``LDAPEntry.toWire`` including the ``objectClass`` attribute
   twice when the attribute key was stored as ``bytes`` rather than
   ``str`` (#220).
+- ``pureber.berDecodeObject`` now raises ``UnknownBERTag`` for
+  unregistered top-level tags instead of writing to stdout and returning
+  ``None``. Twisted then tears down the transport, so a plaintext LDAP
+  server accessed over TLS (or any other framing mismatch) fails fast
+  rather than hanging the client. Also removes a stray ``print`` from
+  production code (#170, #240, #243).
 
 
 21.2.0 (2021-02-28)

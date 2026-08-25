@@ -562,3 +562,21 @@ class TestBERSequence(unittest.TestCase):
         self.assertEqual(
             (None, 0), pureber.berDecodeObject(pureber.BERDecoderContext(), "")
         )
+
+
+class BERUnknownTag(unittest.TestCase):
+    def test_unknownTagRaises(self):
+        """
+        Decoding a BER stream whose top-level tag is not registered raises
+        UnknownBERTag instead of silently returning ``None``. This lets the
+        transport tear down the connection (e.g. when a plaintext LDAP
+        server is spoken to over TLS) rather than hang.
+        """
+        # Tag 0x16 (BERIA5String) is not in the default LDAP decoder context.
+        m = s(0x16, 0x03, 0x66, 0x6F, 0x6F)
+        self.assertRaises(
+            pureber.UnknownBERTag,
+            pureber.berDecodeObject,
+            pureber.BERDecoderContext(),
+            m,
+        )
