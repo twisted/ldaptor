@@ -827,3 +827,47 @@ class TestDiff(unittest.TestCase):
             ],
         )
         return d
+
+
+class AsyncChildrenEntry(inmemory.ReadOnlyInMemoryLDAPEntry):
+    """
+    An entry whose ``children`` returns a Deferred that fires later, so the
+    surrounding subtree walk is genuinely asynchronous (issue #62).
+    """
+
+    def children(self, callback=None):
+        from twisted.internet import defer as _defer
+
+        self.pending = _defer.Deferred()
+        base = inmemory.ReadOnlyInMemoryLDAPEntry
+        self.pending.addCallback(lambda _: base.children(self, callback=callback))
+        return self.pending
+
+
+class TestSearchAsync(unittest.TestCase):
+    def test_search_waitsForAsyncIterator(self):
+        """
+        SearchByTreeWalkingMixin.search must return a Deferred that fires
+        only after the underlying subtree iterator's Deferred has fired.
+        Previously the iterator's Deferred was discarded, so asynchronous
+        back ends silently returned an empty result set.
+        """
+        root = AsyncChildrenEntry(
+            dn=distinguishedname.DistinguishedName("dc=example,dc=com"),
+            attributes={"objectClass": ["a"], "dc": ["example"]},
+        )
+        root.addChild(
+            rdn="cn=foo",
+            attributes={"objectClass": ["a"], "cn": ["foo"]},
+        )
+
+        d = root.search()
+        fired = []
+        d.addCallback(fired.append)
+
+        self.assertEqual(fired, [], "search Deferred fired before children")
+        root.pending.callback(None)
+        self.assertEqual(len(fired), 1)
+        dns = [str(e.dn) for e in fired[0]]
+        self.assertIn("dc=example,dc=com", dns)
+        self.assertIn("cn=foo,dc=example,dc=com", dns)
