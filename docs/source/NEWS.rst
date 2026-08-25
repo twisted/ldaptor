@@ -5,6 +5,8 @@ Changelog
 -------------------
 
 - Dropped support for Python 3.5
+- The Deferred returned from send_multiResponse and send_multiResponse_ex is
+  now fired after the final response is handled.
 
 
 21.2.0 (2021-02-28)
