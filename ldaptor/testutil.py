@@ -62,6 +62,12 @@ class LDAPClientTestDriver:
         self.responses = list(responses)
         self.connected = None
         self.transport = FakeTransport(self)
+        self._disconnect_deferreds = []
+
+    def notifyOnDisconnect(self):
+        d = defer.Deferred()
+        self._disconnect_deferreds.append(d)
+        return d
 
     def send(self, op):
         self.sent.append(op)
@@ -153,6 +159,10 @@ class LDAPClientTestDriver:
         )
         assert not self.responses, msg
         self.connected = 0
+        pending = self._disconnect_deferreds
+        self._disconnect_deferreds = []
+        for d in pending:
+            d.callback(reason)
 
     def unbind(self):
         assert self.connected

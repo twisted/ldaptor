@@ -243,6 +243,58 @@ class MergedLDAPServerTest(unittest.TestCase):
 
         return d
 
+    def test_search_backend_disconnected_before_response(self):
+        """
+        If one backend disconnects before it can send its search-done, the
+        merger must still complete the search using the surviving
+        backend's response. Previously the merger sized its response queue
+        to len(self.clients) and hung waiting for the dead backend (#231).
+        """
+        d = self.createMergedServer(
+            [
+                [
+                    LDAPSearchResultEntry(
+                        "cn=foo,dc=example,dc=com", [("a", ["b"])]
+                    ),
+                    LDAPSearchResultDone(ldaperrors.Success.resultCode),
+                ]
+            ],
+            [
+                [
+                    LDAPSearchResultDone(ldaperrors.Success.resultCode),
+                ]
+            ],
+        )
+
+        def test_f(server):
+            # Kill the first backend before dispatching the search; the
+            # other one will do all the work.
+            server.clients[0].responses = []
+            server.clients[0].connectionLost(error.ConnectionDone)
+
+            server.dataReceived(
+                LDAPMessage(
+                    LDAPSearchRequest(baseObject="dc=example,dc=com"),
+                    id=3,
+                ).toWire()
+            )
+
+            self.assertEqual(
+                server.transport.value(),
+                LDAPMessage(
+                    LDAPSearchResultEntry(
+                        "cn=foo,dc=example,dc=com", [("a", ["b"])]
+                    ),
+                    id=3,
+                ).toWire()
+                + LDAPMessage(
+                    LDAPSearchResultDone(ldaperrors.Success.resultCode), id=3
+                ).toWire(),
+            )
+
+        d.addCallback(test_f)
+        return d
+
     def test_unwilling_to_perform(self):
         d = self.createMergedServer([[]], [[]])
 
