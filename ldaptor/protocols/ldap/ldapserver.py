@@ -370,10 +370,6 @@ class LDAPServer(BaseLDAPServer):
         dn = distinguishedname.DistinguishedName(request.entry)
         newrdn = distinguishedname.RelativeDistinguishedName(request.newrdn)
         deleteoldrdn = bool(request.deleteoldrdn)
-        if not deleteoldrdn:
-            raise ldaperrors.LDAPUnwillingToPerform(
-                "Cannot handle preserving old RDN yet."
-            )
         newSuperior = request.newSuperior
         if newSuperior is None:
             newSuperior = dn.up()
@@ -386,8 +382,7 @@ class LDAPServer(BaseLDAPServer):
         d = root.lookup(dn)
 
         def _gotEntry(entry):
-            d = entry.move(newdn)
-            return d
+            return entry.move(newdn, deleteOldRDN=deleteoldrdn)
 
         def _report(entry):
             return pureldap.LDAPModifyDNResponse(resultCode=0)

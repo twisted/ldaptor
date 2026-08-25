@@ -268,7 +268,7 @@ class EditableLDAPEntry(BaseLDAPEntry):
     def commit(self):
         raise NotImplementedError()
 
-    def move(self, newDN):
+    def move(self, newDN, deleteOldRDN=True):
         raise NotImplementedError()
 
     def delete(self):

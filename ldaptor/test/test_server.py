@@ -717,6 +717,42 @@ class LDAPServerTest(unittest.TestCase):
         )
         return d
 
+    def test_modifyDN_rdnOnly_preserveOldRDN_success(self):
+        """
+        LDAPModifyDNRequest with deleteoldrdn=False must succeed and
+        retain the old RDN attribute value alongside the new one (#89).
+        """
+        newrdn = "cn=thingamagic"
+        self.server.dataReceived(
+            pureldap.LDAPMessage(
+                pureldap.LDAPModifyDNRequest(
+                    entry=self.thingie.dn.getText(),
+                    newrdn=newrdn,
+                    deleteoldrdn=False,
+                ),
+                id=2,
+            ).toWire()
+        )
+        self.assertEqual(
+            self.server.transport.value(),
+            pureldap.LDAPMessage(
+                pureldap.LDAPModifyDNResponse(resultCode=ldaperrors.Success.resultCode),
+                id=2,
+            ).toWire(),
+        )
+        d = self.stuff.children()
+
+        def _check(actual):
+            got = {str(e.dn): sorted(e.get("cn", [])) for e in actual}
+            expected = {
+                "cn=thingamagic,ou=stuff,dc=example,dc=com": ["thingamagic", "thingie"],
+                "cn=another,ou=stuff,dc=example,dc=com": ["another"],
+            }
+            self.assertEqual(got, expected)
+
+        d.addCallback(_check)
+        return d
+
     def test_modify(self):
         self.server.dataReceived(
             pureldap.LDAPMessage(
