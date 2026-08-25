@@ -379,8 +379,7 @@ def berDecodeObject(context, m):
             r = berclass.fromBER(tag=i, content=m2, berdecoder=inh)
             return (r, 1 + lenlen + length)
         else:
-            print(str(UnknownBERTag(i, context)))  # TODO
-            return (None, 1 + lenlen + length)
+            raise UnknownBERTag(i, context)
     return (None, 0)
 
 
