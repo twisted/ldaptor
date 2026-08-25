@@ -93,6 +93,13 @@ Fixes
   All ten remaining ``.value.decode()`` sites in ``pureldap.py`` now go
   through ``to_unicode`` so both str-constructed and wire-decoded
   filters render (#248, follow-up to #226).
+- ``MergedLDAPServer`` no longer hangs or crashes when a backend
+  disconnects. It hooks each backend's ``notifyOnDisconnect`` (see
+  #225), prunes dead backends from ``self.clients``, skips them when
+  dispatching a request, and drops the expected-response count on
+  every outstanding merge so a lost backend can never block completion.
+  ``LDAPClientTestDriver`` in ``ldaptor.testutil`` grew a matching
+  ``notifyOnDisconnect`` so tests can exercise this path (#231).
 
 
 21.2.0 (2021-02-28)

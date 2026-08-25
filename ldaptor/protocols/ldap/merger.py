@@ -5,7 +5,6 @@ Only Bind and Search requests are supported.
 """
 
 from twisted.internet import reactor, defer
-from queue import Queue
 
 from ldaptor.protocols.ldap import ldapclient, ldapconnector
 from ldaptor.protocols.ldap import ldapserver
@@ -23,6 +22,10 @@ class MergedLDAPServer(ldapserver.BaseLDAPServer):
         self.configs = configs
         self.use_tls = use_tls
         self.all_connected = False
+        # merge_map[id] = {"expected": N, "responses": [...]}
+        # expected is the number of backends still owed a response for this
+        # request; it is decremented on each response AND on each backend
+        # disconnect, so a dead backend can no longer hang the search (#231).
         self.merge_map = {}
         self.waitingConnect = []
         self.unbound = False
@@ -41,6 +44,7 @@ class MergedLDAPServer(ldapserver.BaseLDAPServer):
 
     def _cbConnectionMade(self, proto):
         self.clients.append(proto)
+        proto.notifyOnDisconnect().addBoth(self._cbClientLost, proto)
 
         if len(self.clients) == len(self.configs):
             self.all_connected = True
@@ -52,31 +56,61 @@ class MergedLDAPServer(ldapserver.BaseLDAPServer):
                 d2 = defer.maybeDeferred(fn, *a, **kw)
                 d2.chainDeferred(d)
 
+    def _cbClientLost(self, reason, proto):
+        """A backend went away; stop expecting responses from it."""
+        if proto in self.clients:
+            self.clients.remove(proto)
+        for id_ in list(self.merge_map.keys()):
+            self.merge_map[id_]["expected"] -= 1
+            self._checkComplete(id_)
+
     def _clientQueue(self, request, controls, reply):
         # Controls are ignored.
-        for c in self.clients:
-            if request.needs_answer:
-                d = c.send_multiResponse(request, self._gotResponse, reply)
-                d.addErrback(defer.logError)
-            else:
-                c.send_noResponse(request)
+        for c in list(self.clients):
+            if not c.connected:
+                continue
+            try:
+                if request.needs_answer:
+                    d = c.send_multiResponse(request, self._gotResponse, reply)
+                    d.addErrback(defer.logError)
+                else:
+                    c.send_noResponse(request)
+            except ldapclient.LDAPClientConnectionLostException:
+                # Client died between the .connected check and the send;
+                # the notifyOnDisconnect callback will prune it.
+                continue
+
+    def _checkComplete(self, id):
+        entry = self.merge_map.get(id)
+        if entry is None:
+            return
+        if len(entry["responses"]) < entry["expected"]:
+            return
+        del self.merge_map[id]
+        if entry["responses"]:
+            # Send success, if at least one success; otherwise the last.
+            op = entry["responses"][-1]
+            for r in entry["responses"]:
+                if r.resultCode == ldaperrors.Success.resultCode:
+                    op = r
+                    break
+        else:
+            # All backends disconnected before any response arrived.
+            op = pureldap.LDAPSearchResultDone(
+                resultCode=ldaperrors.LDAPOther.resultCode,
+                errorMessage=b"All backend LDAP connections lost",
+            )
+        ldapserver.BaseLDAPServer.queue(self, id, op)
 
     def queue(self, id, op):
         if isinstance(op, (pureldap.LDAPSearchResultDone, pureldap.LDAPBindResponse)):
             if id not in self.merge_map:
-                self.merge_map[id] = Queue(len(self.clients))
-                self.merge_map[id].put(op)
-            else:
-                self.merge_map[id].put(op)
-
-            if self.merge_map[id].full():
-                # Send success, if at least one success.
-                for i in range(len(self.clients)):
-                    r = self.merge_map[id].get()
-                    if r.resultCode == ldaperrors.Success.resultCode:
-                        op = r
-                del self.merge_map[id]
-                ldapserver.BaseLDAPServer.queue(self, id, op)
+                # Size to the currently live backend count so a dead
+                # backend never blocks completion.
+                live = sum(1 for c in self.clients if c.connected)
+                self.merge_map[id] = {"expected": live, "responses": []}
+            self.merge_map[id]["responses"].append(op)
+            self._checkComplete(id)
         else:
             ldapserver.BaseLDAPServer.queue(self, id, op)
 
@@ -92,7 +126,8 @@ class MergedLDAPServer(ldapserver.BaseLDAPServer):
         ldapserver.BaseLDAPServer.connectionMade(self)
 
     def connectionLost(self, reason):
-        for c in self.clients:
+        # Iterate a snapshot: _cbClientLost mutates self.clients.
+        for c in list(self.clients):
             assert c is not None
             if c.connected:
                 if not self.unbound:
@@ -101,6 +136,7 @@ class MergedLDAPServer(ldapserver.BaseLDAPServer):
                     c.transport.loseConnection()
 
         self.clients = []
+        self.merge_map = {}
         self.unbound = True
         ldapserver.BaseLDAPServer.connectionLost(self, reason)
 
