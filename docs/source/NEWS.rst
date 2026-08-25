@@ -87,6 +87,12 @@ Fixes
   which matters for TLS teardown. A new
   ``LDAPClient.notifyOnDisconnect()`` helper lets callers register
   additional disconnect Deferreds without initiating an unbind (#225).
+- ``asText`` on filters produced by ``parseFilter`` (whose ``.value``
+  fields are ``str`` rather than the wire-decoded ``bytes``) no longer
+  raises ``AttributeError: 'str' object has no attribute 'decode'``.
+  All ten remaining ``.value.decode()`` sites in ``pureldap.py`` now go
+  through ``to_unicode`` so both str-constructed and wire-decoded
+  filters render (#248, follow-up to #226).
 
 
 21.2.0 (2021-02-28)

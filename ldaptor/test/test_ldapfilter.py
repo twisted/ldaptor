@@ -646,3 +646,34 @@ class TestWhitespace(unittest.TestCase):
         self.assertRaises(
             ldapfilter.InvalidLDAPFilter, ldapfilter.parseFilter, r"(cn=\ 61)"
         )
+
+
+class TestParseFilterAsTextRoundtrip(unittest.TestCase):
+    """
+    ``asText`` must work on filters produced by ``parseFilter`` (whose
+    ``value`` fields are ``str``) as well as on wire-decoded filters
+    (whose ``value`` fields are ``bytes``). Previously several
+    ``asText`` implementations called ``.decode()`` unconditionally and
+    raised ``AttributeError: 'str' object has no attribute 'decode'``
+    when handed a parsed filter (#248).
+    """
+
+    cases = [
+        "(cn=foo)",
+        "(cn=*)",
+        "(cn=foo*)",
+        "(cn=*foo)",
+        "(cn=foo*bar*baz)",
+        "(cn~=foo)",
+        "(cn>=1)",
+        "(cn<=9)",
+        "(cn:caseIgnoreMatch:=foo)",
+    ]
+
+    def test_asText_survives_parseFilter(self):
+        for text in self.cases:
+            filt = ldapfilter.parseFilter(text)
+            # asText must not raise, and must return a str.
+            self.assertIsInstance(
+                filt.asText(), str, f"asText on {text!r} did not return str"
+            )
