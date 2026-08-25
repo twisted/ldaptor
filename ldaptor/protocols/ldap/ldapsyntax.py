@@ -358,7 +358,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         self.dn = newDN
         return self
 
-    def move(self, newDN):
+    def move(self, newDN, deleteOldRDN=True):
         self._checkState()
         newDN = distinguishedname.DistinguishedName(newDN)
 
@@ -368,7 +368,7 @@ class LDAPEntryWithClient(entry.EditableLDAPEntry):
         op = pureldap.LDAPModifyDNRequest(
             entry=self.dn.getText(),
             newrdn=newrdn.getText(),
-            deleteoldrdn=1,
+            deleteoldrdn=1 if deleteOldRDN else 0,
             newSuperior=newSuperior.getText(),
         )
         d = self.client.send(op)

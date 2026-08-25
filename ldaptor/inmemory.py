@@ -90,7 +90,7 @@ class ReadOnlyInMemoryLDAPEntry(
     def deleteChild(self, rdn):
         return defer.maybeDeferred(self._deleteChild, rdn)
 
-    def _move(self, newDN):
+    def _move(self, newDN, deleteOldRDN=True):
         if not isinstance(newDN, distinguishedname.DistinguishedName):
             newDN = distinguishedname.DistinguishedName(stringValue=newDN)
         if newDN.up() != self.dn.up():
@@ -101,25 +101,28 @@ class ReadOnlyInMemoryLDAPEntry(
             d = defer.maybeDeferred(root.lookup, newDN.up())
         else:
             d = defer.succeed(None)
-        d.addCallback(self._move2, newDN)
+        d.addCallback(self._move2, newDN, deleteOldRDN)
         return d
 
-    def _move2(self, newParent, newDN):
+    def _move2(self, newParent, newDN, deleteOldRDN=True):
         if newParent is not None:
             newParent._children[newDN.split()[0].getText()] = self
             del self._parent._children[self.dn.split()[0].getText()]
-        # remove old RDN attributes
-        for attr in self.dn.split()[0].split():
-            self[attr.attributeType].remove(attr.value)
-        # add new RDN attributes
+        if deleteOldRDN:
+            # remove old RDN attributes
+            for attr in self.dn.split()[0].split():
+                self[attr.attributeType].remove(attr.value)
+        # add new RDN attributes (idempotent when the value is already
+        # present, e.g. when deleteOldRDN is False and old and new RDN
+        # overlap)
         for attr in newDN.split()[0].split():
             # TODO what if the key does not exist?
             self[attr.attributeType].add(attr.value)
         self.dn = newDN
         return self
 
-    def move(self, newDN):
-        return defer.maybeDeferred(self._move, newDN)
+    def move(self, newDN, deleteOldRDN=True):
+        return defer.maybeDeferred(self._move, newDN, deleteOldRDN)
 
     def commit(self):
         return defer.succeed(True)

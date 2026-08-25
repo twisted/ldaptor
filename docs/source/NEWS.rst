@@ -76,6 +76,12 @@ Fixes
   document and expect. This fixes ``ValueError: too many values to
   unpack (expected 2)`` when round-tripping
   ``ModifyOp -> asLDAP -> fromLDAP`` (#223).
+- ``LDAPModifyDNRequest`` with ``deleteoldrdn=False`` is now honored by
+  the server: the old RDN's attribute value is retained on the moved
+  entry alongside the new RDN value, per RFC 4511 section 4.9. The
+  in-memory back end grew a ``deleteOldRDN`` kwarg on ``move`` and the
+  client-side ``ldapsyntax.LDAPEntry.move`` grew the same flag so
+  callers can request either behaviour (#89).
 
 
 21.2.0 (2021-02-28)
