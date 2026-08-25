@@ -24,6 +24,16 @@ Tooling
   for Python 3.13.
 - Fixed ``check-manifest`` by including ``SECURITY.md`` and untracking
   ``uv.lock``.
+- Raised the ``Twisted[tls]`` runtime floor from ``17.9.0`` (2017) to
+  ``24.7.0``, aligning with modern Twisted's Python-version matrix and
+  shortening the distance users have to travel to pick up any future
+  security release (e.g. the pending DNS name-decompression DoS in
+  ``twisted.names.dns.Name.decode``, which is still upstream — bump
+  again once Twisted publishes the fix).
+- Raised the sdist/wheel build floors to ``setuptools>=68.0.0`` and
+  ``wheel>=0.42.0``. ldaptor's ``MANIFEST.in`` is entirely ASCII so it
+  is not affected by the setuptools NFC/NFD-normalization advisory,
+  but keeping the build toolchain modern is cheap.
 
 Fixes
 ~~~~~
