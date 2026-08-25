@@ -674,7 +674,11 @@ class LDAPFilter_substrings(BERSequence):
             final = ""
 
         return (
-            "(" + to_unicode(self.type) + "=" + "*".join([initial] + any + [final]) + ")"
+            "("
+            + to_unicode(self.type)
+            + "="
+            + "*".join([initial] + any + [final])
+            + ")"
         )
 
 
