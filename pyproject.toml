@@ -89,11 +89,15 @@ commands =
     {envpython} -m build --sdist --wheel --outdir {toxinidir}/dist {toxinidir}
 
 [testenv:publishcov]
+; ponytail: codecov PyPI package is unmaintained and its v2 uploader now 429s
+; heavily; ignore_outcome keeps coverage best-effort. Upgrade path: replace
+; this env with codecov/codecov-action@v5 in the workflow.
+ignore_outcome = True
 passenv = GITHUB_*
 deps =
   codecov
   coverage[toml]>=5.3
 commands =
-    codecov --required
+    codecov
 depends = py{,310,311,312,313,314,py3}-test-{twlatest,twtrunk,dev}
 """
