@@ -49,6 +49,11 @@ Fixes
   server accessed over TLS (or any other framing mismatch) fails fast
   rather than hanging the client. Also removes a stray ``print`` from
   production code (#170, #240, #243).
+- ``SearchByTreeWalkingMixin.search`` now waits for the underlying
+  subtree iterator's Deferred before firing its own. Previously the
+  iterator's Deferred was silently discarded, so back ends whose
+  ``children`` / ``subtree`` methods actually behaved asynchronously
+  returned an empty result set (#62).
 
 
 21.2.0 (2021-02-28)
