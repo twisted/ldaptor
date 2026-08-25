@@ -130,6 +130,34 @@ class SendTests(unittest.TestCase):
         client = ldapclient.LDAPClient()
         self.assertRaises(Exception, client.unbind)
 
+    def test_unbind_returnsDeferredFiringOnDisconnect(self):
+        """
+        unbind() returns a Deferred that fires once the transport is
+        actually closed. Previously the caller had no way to await the
+        (potentially slow, e.g. TLS) shutdown (#225).
+        """
+        client, transport = self.create_test_client()
+        d = client.unbind()
+        fired = []
+        d.addBoth(fired.append)
+        self.assertEqual(fired, [], "unbind Deferred fired before disconnect")
+        client.connectionLost(SillyError("boom"))
+        self.assertEqual(len(fired), 1)
+
+    def test_notifyOnDisconnect_firesEachTime(self):
+        """
+        Multiple notifyOnDisconnect() Deferreds all fire on the same
+        connectionLost event.
+        """
+        client, transport = self.create_test_client()
+        d1 = client.notifyOnDisconnect()
+        d2 = client.notifyOnDisconnect()
+        seen = []
+        d1.addBoth(lambda r: seen.append(("d1", r)))
+        d2.addBoth(lambda r: seen.append(("d2", r)))
+        client.connectionLost(SillyError("bye"))
+        self.assertEqual(len(seen), 2)
+
     def test_TLS_failure(self):
         clock = Clock()
         ldapclient.reactor = clock

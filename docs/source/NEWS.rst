@@ -82,6 +82,11 @@ Fixes
   in-memory back end grew a ``deleteOldRDN`` kwarg on ``move`` and the
   client-side ``ldapsyntax.LDAPEntry.move`` grew the same flag so
   callers can request either behaviour (#89).
+- ``LDAPClient.unbind`` now returns a ``Deferred`` that fires with the
+  connection-lost reason once the transport has actually been closed,
+  which matters for TLS teardown. A new
+  ``LDAPClient.notifyOnDisconnect()`` helper lets callers register
+  additional disconnect Deferreds without initiating an unbind (#225).
 
 
 21.2.0 (2021-02-28)
