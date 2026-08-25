@@ -23,8 +23,8 @@ def reloadFromContent(testCase, content):
     config_path = os.path.join(base_path, "test.cfg")
     writeFile(config_path, content)
 
-    # Reload with empty content to reduce the side effects.
-    testCase.addCleanup(reloadFromContent, testCase, b"")
+    # Reset the module-level cache after the test so side effects don't leak.
+    testCase.addCleanup(config.loadConfig, configFiles=[], reload=True)
 
     return config.loadConfig(
         configFiles=[config_path],

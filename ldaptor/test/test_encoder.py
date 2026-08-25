@@ -1,5 +1,5 @@
 """
-    Test cases for ldaptor.encoder module
+Test cases for ldaptor.encoder module
 """
 
 from twisted.trial import unittest

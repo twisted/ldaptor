@@ -62,14 +62,12 @@ deleteoldrdn: 0 #OR 1
 class TestLDIFDeltaParsing(unittest.TestCase):
     def testModification_empty(self):
         proto = LDIFDeltaDriver()
-        proto.dataReceived(
-            b"""\
+        proto.dataReceived(b"""\
 version: 1
 dn: cn=foo,dc=example,dc=com
 changetype: modify
 
-"""
-        )
+""")
         proto.connectionLost()
         self.assertEqual(
             proto.listOfCompleted,
@@ -80,8 +78,7 @@ changetype: modify
 
     def testModification_oneAdd(self):
         proto = LDIFDeltaDriver()
-        proto.dataReceived(
-            b"""\
+        proto.dataReceived(b"""\
 version: 1
 dn: cn=foo,dc=example,dc=com
 changetype: modify
@@ -89,8 +86,7 @@ add: foo
 foo: bar
 -
 
-"""
-        )
+""")
         proto.connectionLost()
         self.assertEqual(
             proto.listOfCompleted,
@@ -106,8 +102,7 @@ foo: bar
 
     def testModification_twoAdds(self):
         proto = LDIFDeltaDriver()
-        proto.dataReceived(
-            b"""\
+        proto.dataReceived(b"""\
 version: 1
 dn: cn=foo,dc=example,dc=com
 changetype: modify
@@ -119,8 +114,7 @@ thud: quux
 thud: baz
 -
 
-"""
-        )
+""")
         proto.connectionLost()
         self.assertEqual(
             proto.listOfCompleted,
@@ -137,8 +131,7 @@ thud: baz
 
     def testModification_complex(self):
         proto = LDIFDeltaDriver()
-        proto.dataReceived(
-            b"""\
+        proto.dataReceived(b"""\
 version: 1
 dn: cn=foo,dc=example,dc=com
 changetype: modify
@@ -162,8 +155,7 @@ thud: xyzzy
 add: silly
 -
 
-"""
-        )
+""")
         proto.connectionLost()
         self.assertEqual(
             proto.listOfCompleted,
@@ -282,8 +274,7 @@ dn: cn=foo,dc=example,dc=com
 
     def testAdd(self):
         proto = LDIFDeltaDriver()
-        proto.dataReceived(
-            b"""\
+        proto.dataReceived(b"""\
 version: 1
 dn: cn=foo,dc=example,dc=com
 changetype: add
@@ -291,8 +282,7 @@ foo: bar
 thud: quux
 thud: baz
 
-"""
-        )
+""")
         proto.connectionLost()
         self.assertEqual(
             proto.listOfCompleted,
@@ -327,14 +317,12 @@ changetype: add
         Triggers a DeleteOp when the diff action is `delete`.
         """
         proto = LDIFDeltaDriver()
-        proto.dataReceived(
-            b"""\
+        proto.dataReceived(b"""\
 version: 1
 dn: cn=foo,dc=example,dc=com
 changetype: delete
 
-"""
-        )
+""")
         proto.connectionLost()
         self.assertEqual(
             proto.listOfCompleted, [delta.DeleteOp(dn=b"cn=foo,dc=example,dc=com")]
@@ -347,14 +335,12 @@ changetype: delete
         proto = LDIFDeltaDriver()
 
         with self.assertRaises(ldifdelta.LDIFDeltaDeleteHasJunkAfterChangeTypeError):
-            proto.dataReceived(
-                b"""version: 1
+            proto.dataReceived(b"""version: 1
 dn: cn=foo,dc=example,dc=com
 changetype: delete
 foo: bar
 
-"""
-            )
+""")
 
     def testMODRDN(self):
         """
@@ -363,13 +349,11 @@ foo: bar
         proto = LDIFDeltaDriver()
 
         with self.assertRaises(NotImplementedError):
-            proto.dataReceived(
-                b"""version: 1
+            proto.dataReceived(b"""version: 1
 dn: cn=foo,dc=example,dc=com
 changetype: modrdn
 
-"""
-            )
+""")
 
     def testMODDN(self):
         """
@@ -378,13 +362,11 @@ changetype: modrdn
         proto = LDIFDeltaDriver()
 
         with self.assertRaises(NotImplementedError):
-            proto.dataReceived(
-                b"""version: 1
+            proto.dataReceived(b"""version: 1
 dn: cn=foo,dc=example,dc=com
 changetype: moddn
 
-"""
-            )
+""")
 
     def testUnknownChnagetType(self):
         """
@@ -393,10 +375,8 @@ changetype: moddn
         proto = LDIFDeltaDriver()
 
         with self.assertRaises(ldifdelta.LDIFDeltaUnknownChangeTypeError):
-            proto.dataReceived(
-                b"""version: 1
+            proto.dataReceived(b"""version: 1
 dn: cn=foo,dc=example,dc=com
 changetype: some-random-type
 
-"""
-            )
+""")

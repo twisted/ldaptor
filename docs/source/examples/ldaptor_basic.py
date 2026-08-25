@@ -1,9 +1,9 @@
 #! /usr/bin/env python
 
 """
-    Testing a simple ldaptor ldap server
-    Base on an example by Gaston TJEBBES aka "tonthon":
-    http://tonthon.blogspot.com/2011/02/ldaptor-ldap-with-twisted-server-side.html
+Testing a simple ldaptor ldap server
+Base on an example by Gaston TJEBBES aka "tonthon":
+http://tonthon.blogspot.com/2011/02/ldaptor-ldap-with-twisted-server-side.html
 """
 
 import tempfile, sys

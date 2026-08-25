@@ -1,6 +1,7 @@
 """
 Test cases for ldaptor.inmemory module.
 """
+
 from io import BytesIO
 
 from twisted.trial import unittest
@@ -516,8 +517,7 @@ class TestInMemoryDatabase(unittest.TestCase):
 
 class FromLDIF(unittest.TestCase):
     def test_single(self):
-        ldif = BytesIO(
-            b"""\
+        ldif = BytesIO(b"""\
 dn: cn=foo,dc=example,dc=com
 objectClass: a
 objectClass: b
@@ -525,8 +525,7 @@ aValue: a
 aValue: b
 bValue: c
 
-"""
-        )
+""")
         d = inmemory.fromLDIFFile(ldif)
 
         def cb1(db):
@@ -540,8 +539,7 @@ bValue: c
         return d
 
     def test_two(self):
-        ldif = BytesIO(
-            b"""\
+        ldif = BytesIO(b"""\
 dn: dc=example,dc=com
 objectClass: dcObject
 dc: example
@@ -550,8 +548,7 @@ dn: cn=foo,dc=example,dc=com
 objectClass: a
 cn: foo
 
-"""
-        )
+""")
         d = inmemory.fromLDIFFile(ldif)
 
         def cb1(db):
@@ -575,8 +572,7 @@ cn: foo
         return d
 
     def test_missingNode(self):
-        ldif = BytesIO(
-            b"""\
+        ldif = BytesIO(b"""\
 dn: dc=example,dc=com
 objectClass: dcObject
 dc: example
@@ -585,8 +581,7 @@ dn: cn=foo,ou=nonexisting,dc=example,dc=com
 objectClass: a
 cn: foo
 
-"""
-        )
+""")
         d = inmemory.fromLDIFFile(ldif)
 
         def eb(fail):

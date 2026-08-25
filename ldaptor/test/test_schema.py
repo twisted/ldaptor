@@ -6,7 +6,6 @@ from twisted.trial import unittest
 from ldaptor import schema
 from ldaptor._encoder import to_bytes
 
-
 OBJECTCLASSES = {
     "top": b"""( 2.5.6.0 NAME 'top'
     DESC 'top of the superclass chain'

@@ -1,6 +1,7 @@
 """
 Test cases for ldaptor.protocols.ldap.ldapserver module.
 """
+
 import base64
 import types
 
@@ -1012,7 +1013,7 @@ class TestSchema(unittest.TestCase):
 
     def testSimple(self):
         d = fetchschema.fetch(self.client, "dc=example,dc=com")
-        (attributeTypes, objectClasses) = util.pumpingDeferredResult(d)
+        attributeTypes, objectClasses = util.pumpingDeferredResult(d)
 
         self.assertEqual(
             [to_bytes(x) for x in attributeTypes],
