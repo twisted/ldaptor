@@ -5,8 +5,21 @@ Changelog
 -------------------
 
 - Dropped support for Python 3.5
-- The Deferred returned from send_multiResponse and send_multiResponse_ex is
-  now fired after the final response is handled.
+- The Deferred returned from ``send_multiResponse`` and
+  ``send_multiResponse_ex`` is now fired after the final response is
+  handled (#239).
+- Fixed ``TypeError`` in ``MatchMixin`` substring / wildcard searches
+  when comparing ``str`` attribute values against ``bytes`` filter
+  values; substring, initial and final match values are now accepted as
+  either ``str`` or ``bytes`` (#244).
+- Fixed ``asText`` on LDAP filters producing ``bytes`` (and raising
+  ``TypeError: can only concatenate str (not "bytes") to str`` when
+  formatting a filter for display); ``asText`` now consistently returns
+  ``str`` for all filter types, including ``LDAPFilter_extensibleMatch``
+  (#226).
+- Fixed ``LDAPEntry.toWire`` including the ``objectClass`` attribute
+  twice when the attribute key was stored as ``bytes`` rather than
+  ``str`` (#220).
 
 
 21.2.0 (2021-02-28)
