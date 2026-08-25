@@ -64,6 +64,18 @@ Fixes
   iterator's Deferred was silently discarded, so back ends whose
   ``children`` / ``subtree`` methods actually behaved asynchronously
   returned an empty result set (#62).
+- ``SearchByTreeWalkingMixin.search`` now honors ``sizeLimit``,
+  truncating the result set to the requested number of matches.
+  Early termination of the tree walk itself would require an
+  interruptible iterator, which the current mixin does not expose, so
+  the whole tree is still walked -- but the network/client cost is
+  bounded (#234).
+- ``delta.Modification.asLDAP`` no longer returns wire-encoded bytes;
+  it returns the ``BERSequence`` object that
+  ``LDAPModifyRequest.modification`` and ``ModifyOp.fromLDAP`` already
+  document and expect. This fixes ``ValueError: too many values to
+  unpack (expected 2)`` when round-tripping
+  ``ModifyOp -> asLDAP -> fromLDAP`` (#223).
 
 
 21.2.0 (2021-02-28)

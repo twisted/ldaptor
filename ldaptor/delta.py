@@ -41,7 +41,7 @@ class Modification(attributeset.LDAPAttributeSet):
                     ]
                 ),
             ]
-        ).toWire()
+        )
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
