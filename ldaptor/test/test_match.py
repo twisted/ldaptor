@@ -215,6 +215,24 @@ class TestEntryMatch(unittest.TestCase):
         )
         self.assertEqual(result, True)
 
+    def test_substrings_match_bytes_value(self):
+        """Substring values from wire-decoded filters are bytes; match must handle both."""
+        o = inmemory.ReadOnlyInMemoryLDAPEntry(
+            dn="cn=foo,dc=example,dc=com",
+            attributes={"objectClass": ["a"], "aValue": ["abcde"]},
+        )
+        result = o.match(
+            pureldap.LDAPFilter_substrings(
+                type="aValue",
+                substrings=[
+                    pureldap.LDAPFilter_substrings_initial(b"a"),
+                    pureldap.LDAPFilter_substrings_any(b"c"),
+                    pureldap.LDAPFilter_substrings_final(b"e"),
+                ],
+            )
+        )
+        self.assertEqual(result, True)
+
     def test_substrings_match2(self):
         o = inmemory.ReadOnlyInMemoryLDAPEntry(
             dn="cn=foo,dc=example,dc=com",
