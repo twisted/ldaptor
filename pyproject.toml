@@ -35,8 +35,8 @@ requires=
 ; * test - run trial tests
 ; * dev - run things in local dev mode
 envlist =
-    py{36,37,38,39,py3}-test-{twlatest,twtrunk,dev}
-    py39-linters,
+    py{310,311,312,313,314,py3}-test-{twlatest,twtrunk,dev}
+    py313-linters,
     documentation,
 
 
@@ -81,7 +81,7 @@ commands =
 
 [testenv:documentation]
 deps = sphinx
-basepython=python3.9
+basepython=python3.13
 changedir = {envtmpdir}
 whitelist_externals = cp
 commands =
@@ -106,5 +106,5 @@ deps =
   coverage[toml]>=5.3
 commands =
     codecov --required
-depends = py{,35,36,37,38,39,py3}-test-{twlatest,twtrunk,dev}
+depends = py{,310,311,312,313,314,py3}-test-{twlatest,twtrunk,dev}
 """
