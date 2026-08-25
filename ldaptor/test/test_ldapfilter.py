@@ -152,7 +152,7 @@ class RFC2254Examples(unittest.TestCase):
         text = r"(filename=C:\5cMyFile)"
         filt = pureldap.LDAPFilter_equalityMatch(
             attributeDesc=pureldap.LDAPAttributeDescription(value=b"filename"),
-            assertionValue=pureldap.LDAPAssertionValue(value=br"C:\MyFile"),
+            assertionValue=pureldap.LDAPAssertionValue(value=rb"C:\MyFile"),
         )
         self.assertEqual(ldapfilter.parseFilter(text), filt)
         self.assertEqual(filt.asText(), text)
