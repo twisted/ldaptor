@@ -24,12 +24,10 @@ legacy_tox_ini = """
 ; we have separate reported (ex codecov.io)
 
 [tox]
-minversion=3.20.0
+minversion=4.0
 isolated_build=true
 requires=
     virtualenv >= 20.1.0
-    tox-wheel >= 0.6.0
-    tox-gh-actions >= 2.1.0
 ;
 ; Tags explanation:
 ; * test - run trial tests
@@ -41,10 +39,8 @@ envlist =
 
 
 [testenv]
-wheel = True
-wheel_build_env = build
 parallel_show_output = True
-deps = 
+deps =
     coverage[toml] >= 5.3
     pyparsing
     passlib
@@ -75,29 +71,22 @@ commands =
     dev: pre-commit run --all-files --show-diff-on-failure
     linters: pre-commit {posargs:run --all-files --show-diff-on-failure}
 
-[testenv:build]
-# empty environment to build universal wheel once per tox invocation
-# https://github.com/ionelmc/tox-wheel#build-configuration
-
 [testenv:documentation]
 deps = sphinx
 basepython=python3.13
 changedir = {envtmpdir}
-whitelist_externals = cp
+allowlist_externals = cp
 commands =
     sphinx-build -b html -Ean -j 2 -w sphinx-errors \
         {toxinidir}/docs/source ./docs/
     cp -r . {toxinidir}/build
 
 [testenv:release]
-deps = pep517
-whitelist_externals =
-    cp
-    rm
+deps = build
+allowlist_externals = rm
 commands =
     rm -rf {toxinidir}/dist
-    cp -r {distdir} {toxinidir}/dist # copy the wheel built by tox-wheel
-    {envpython} -m pep517.build --source --out-dir={toxinidir}/dist {toxinidir}
+    {envpython} -m build --sdist --wheel --outdir {toxinidir}/dist {toxinidir}
 
 [testenv:publishcov]
 passenv = GITHUB_*
