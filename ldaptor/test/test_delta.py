@@ -643,3 +643,31 @@ class TestModificationComparison(unittest.TestCase):
         a = delta.Add("k", ["b", "c", "d"])
         b = ["b", "c", "d"]
         self.assertNotEqual(a, b)
+
+
+class TestModifyOpRoundtrip(unittest.TestCase):
+    """
+    ``ModifyOp.asLDAP`` must produce an ``LDAPModifyRequest`` that
+    ``ModifyOp.fromLDAP`` can parse back into an equal ``ModifyOp``.
+
+    Previously ``Modification.asLDAP`` called ``.toWire()``, which left
+    ``LDAPModifyRequest.modification`` as a list of raw bytes rather than
+    the list of ``BERSequence`` objects that both ``fromLDAP`` and the
+    ``LDAPModifyRequest`` docstring assume, so the round-trip raised
+    ``ValueError: too many values to unpack (expected 2)`` (#223).
+    """
+
+    def test_add_delete_replace_roundtrip(self):
+        # Use bytes values so equality matches after the wire trip;
+        # LDAP attribute values are bytes at rest and fromLDAP does not
+        # re-decode them to str (that ambiguity is a separate concern).
+        original = delta.ModifyOp(
+            "cn=xander,dc=example,dc=com",
+            [
+                delta.Add("mail", [b"a@example.com", b"b@example.com"]),
+                delta.Delete("description"),
+                delta.Replace("cn", [b"Xander"]),
+            ],
+        )
+        parsed = delta.ModifyOp.fromLDAP(original.asLDAP())
+        self.assertEqual(parsed, original)

@@ -297,10 +297,17 @@ class SearchByTreeWalkingMixin:
         else:
             matchCallback = callback
 
-        # gather results, send them
+        # ponytail: sizeLimit truncates results but still walks the whole tree;
+        # early-stop needs an iterator that supports cancellation, which the
+        # current subtree/children mixin doesn't.
+        matched = [0]
+
         def _tryMatch(entry):
+            if sizeLimit and matched[0] >= sizeLimit:
+                return
             if entry.match(filterObject):
                 matchCallback(entry)
+                matched[0] += 1
 
         d = defer.maybeDeferred(iterator, callback=_tryMatch)
         if callback is None:

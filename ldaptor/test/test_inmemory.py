@@ -382,6 +382,21 @@ class TestInMemoryDatabase(unittest.TestCase):
         )
         return d
 
+    def testSearch_sizeLimit_truncatesResults(self):
+        """
+        A search with sizeLimit=N returns at most N entries. Previously
+        sizeLimit was silently ignored (#234).
+        """
+        d = self.root.search(filterText="(|(cn=foo)(cn=bar))", sizeLimit=1)
+        d.addCallback(lambda actual: self.assertEqual(len(actual), 1))
+        return d
+
+    def testSearch_sizeLimitZero_returnsAll(self):
+        """sizeLimit=0 means no limit (LDAP convention)."""
+        d = self.root.search(filterText="(|(cn=foo)(cn=bar))", sizeLimit=0)
+        d.addCallback(lambda actual: self.assertEqual(len(actual), 2))
+        return d
+
     def test_move_noChildren_sameSuperior(self):
         d = self.empty.move("ou=moved,dc=example,dc=com")
 
