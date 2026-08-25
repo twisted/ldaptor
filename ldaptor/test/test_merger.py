@@ -253,9 +253,7 @@ class MergedLDAPServerTest(unittest.TestCase):
         d = self.createMergedServer(
             [
                 [
-                    LDAPSearchResultEntry(
-                        "cn=foo,dc=example,dc=com", [("a", ["b"])]
-                    ),
+                    LDAPSearchResultEntry("cn=foo,dc=example,dc=com", [("a", ["b"])]),
                     LDAPSearchResultDone(ldaperrors.Success.resultCode),
                 ]
             ],
@@ -282,9 +280,7 @@ class MergedLDAPServerTest(unittest.TestCase):
             self.assertEqual(
                 server.transport.value(),
                 LDAPMessage(
-                    LDAPSearchResultEntry(
-                        "cn=foo,dc=example,dc=com", [("a", ["b"])]
-                    ),
+                    LDAPSearchResultEntry("cn=foo,dc=example,dc=com", [("a", ["b"])]),
                     id=3,
                 ).toWire()
                 + LDAPMessage(
