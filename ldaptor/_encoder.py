@@ -1,5 +1,5 @@
 """
-    Encoding / decoding utilities
+Encoding / decoding utilities
 """
 
 import warnings

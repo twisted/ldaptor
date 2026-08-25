@@ -1,6 +1,7 @@
 """
 Manage LDAP data as a tree of LDIF files.
 """
+
 import errno
 import os
 import uuid

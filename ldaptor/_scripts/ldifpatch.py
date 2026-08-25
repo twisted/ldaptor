@@ -3,7 +3,6 @@ from ldaptor.protocols.ldap import ldif, ldifdelta
 from ldaptor import usage, inmemory
 from twisted.internet import reactor
 
-
 exitStatus = 0
 
 

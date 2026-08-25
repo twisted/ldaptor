@@ -1,5 +1,5 @@
 """
-    Test cases for ldaptor.protocols.ldap.ldif module
+Test cases for ldaptor.protocols.ldap.ldif module
 """
 
 import base64
@@ -85,8 +85,8 @@ class AttributeAsLDIFTests(unittest.TestCase):
         Value is a string containing nonprintable characters.
         Returned value is base64 encoded.
         """
-        result = attributeAsLDIF(b"key", b"val\xFFue")
-        self.assertEqual(result, b"key:: %s\n" % encode(b"val\xFFue"))
+        result = attributeAsLDIF(b"key", b"val\xffue")
+        self.assertEqual(result, b"key:: %s\n" % encode(b"val\xffue"))
 
 
 class AsLDIFTests(unittest.TestCase):

@@ -1,6 +1,7 @@
 """
 Tests for the code from docs/source/example.
 """
+
 import os
 import sys
 

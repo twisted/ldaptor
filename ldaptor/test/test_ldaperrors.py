@@ -1,5 +1,5 @@
 """
-    Test cases for ldaptor.protocols.ldap.ldaperrors module.
+Test cases for ldaptor.protocols.ldap.ldaperrors module.
 """
 
 from twisted.trial import unittest

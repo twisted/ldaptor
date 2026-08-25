@@ -116,16 +116,14 @@ class TestLDIFParsing(unittest.TestCase):
         DN is case insensitive.
         """
         proto = LDIFDriver()
-        proto.dataReceived(
-            b"""version: 1
+        proto.dataReceived(b"""version: 1
 dN: cn=foo, dc=example, dc=com
 cn: foo
 
 DN: cn=bar, dc=example, dc=com
 cn: bar
 
-"""
-        )
+""")
 
         self.assertEqual(len(proto.listOfCompleted), 2)
 
@@ -145,8 +143,7 @@ cn: bar
         values are case sensitives.
         """
         proto = LDIFDriver()
-        proto.dataReceived(
-            b"""\
+        proto.dataReceived(b"""\
 dn: cn=foo,dc=example,dc=com
 objectClass: a
 obJeCtClass: b
@@ -154,8 +151,7 @@ cn: foo
 avalue: a
 aValUe: B
 
-"""
-        )
+""")
 
         self.assertEqual(len(proto.listOfCompleted), 1)
 
@@ -169,8 +165,7 @@ aValUe: B
 
     def testVersion1(self):
         proto = LDIFDriver()
-        proto.dataReceived(
-            b"""\
+        proto.dataReceived(b"""\
 version: 1
 dn: cn=foo,dc=example,dc=com
 objectClass: a
@@ -179,8 +174,7 @@ aValue: a
 aValue: b
 bValue: c
 
-"""
-        )
+""")
 
         self.assertEqual(len(proto.listOfCompleted), 1)
 
@@ -226,8 +220,7 @@ bValue: c
 
     def testNoSpaces(self):
         proto = LDIFDriver()
-        proto.dataReceived(
-            b"""\
+        proto.dataReceived(b"""\
 dn:cn=foo,dc=example,dc=com
 objectClass:a
 obJeCtClass:b
@@ -235,8 +228,7 @@ cn:foo
 avalue:a
 aValUe:b
 
-"""
-        )
+""")
 
         self.assertEqual(len(proto.listOfCompleted), 1)
 
@@ -250,8 +242,7 @@ aValUe:b
 
     def testTruncatedFailure(self):
         proto = LDIFDriver()
-        proto.dataReceived(
-            b"""\
+        proto.dataReceived(b"""\
 version: 1
 dn: cn=foo,dc=example,dc=com
 objectClass: a
@@ -259,8 +250,7 @@ objectClass: b
 aValue: a
 aValue: b
 bValue: c
-"""
-        )
+""")
 
         self.assertEqual(len(proto.listOfCompleted), 0)
 
@@ -271,8 +261,7 @@ bValue: c
         Comments can be placed anywhere.
         """
         proto = LDIFDriver()
-        proto.dataReceived(
-            b"""# One comment here.
+        proto.dataReceived(b"""# One comment here.
 version: 1
 # After comment.
 dn: cn=foo, dc=example, dc=com
@@ -283,8 +272,7 @@ cn: foo
 dn: cn=bar, dc=example, dc=com
 cn: bar
 
-"""
-        )
+""")
 
         self.assertEqual(len(proto.listOfCompleted), 2)
 
@@ -303,8 +291,7 @@ cn: bar
         It accept multiple lines between entries.
         """
         proto = LDIFDriver()
-        proto.dataReceived(
-            b"""version: 1
+        proto.dataReceived(b"""version: 1
 dn: cn=foo, dc=example, dc=com
 cn: foo
 
@@ -313,8 +300,7 @@ cn: foo
 dn: cn=bar, dc=example, dc=com
 cn: bar
 
-"""
-        )
+""")
 
         self.assertEqual(len(proto.listOfCompleted), 2)
 
@@ -335,16 +321,14 @@ cn: bar
         """
         proto = LDIFDriver()
         with self.assertRaises(ldifprotocol.LDIFEntryStartsWithSpaceError):
-            proto.dataReceived(
-                b"""version: 1
+            proto.dataReceived(b"""version: 1
 dn: cn=foo, dc=example, dc=com
 cn: foo
 
  dn: cn=bar, dc=example, dc=com
 cn: bar
 
-"""
-            )
+""")
 
     def testEntryStartWithoutDN(self):
         """
@@ -352,13 +336,11 @@ cn: bar
         """
         proto = LDIFDriver()
         with self.assertRaises(ldifprotocol.LDIFEntryStartsWithNonDNError):
-            proto.dataReceived(
-                b"""version: 1
+            proto.dataReceived(b"""version: 1
 cn: cn=foo, dc=example, dc=com
 other: foo
 
-"""
-            )
+""")
 
     def testAttributeValueFromURL(self):
         """
@@ -366,13 +348,11 @@ other: foo
         """
         proto = LDIFDriver()
         with self.assertRaises(NotImplementedError):
-            proto.dataReceived(
-                b"""version: 1
+            proto.dataReceived(b"""version: 1
 dn: cn=foo, dc=example, dc=com
 cn:< file:///path/to/data 
 
-"""
-            )
+""")
 
 
 class RFC2849_Examples(unittest.TestCase):

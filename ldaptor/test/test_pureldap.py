@@ -1,6 +1,7 @@
 """
 Test cases for ldaptor.protocols.pureldap module.
 """
+
 from twisted.trial import unittest
 
 from ldaptor.protocols import pureldap, pureber
@@ -419,8 +420,8 @@ class KnownValues(unittest.TestCase):
                 "controls": [
                     ("1.2.3.4", None, None),
                     ("2.3.4.5", False),
-                    ("3.4.5.6", True, b"\x00\x01\x02\xFF"),
-                    ("4.5.6.7", None, b"\x00\x01\x02\xFF"),
+                    ("3.4.5.6", True, b"\x00\x01\x02\xff"),
+                    ("4.5.6.7", None, b"\x00\x01\x02\xff"),
                 ],
             },
             pureldap.LDAPBERDecoderContext_TopLevel(
@@ -447,12 +448,12 @@ class KnownValues(unittest.TestCase):
                         pureldap.LDAPControl(
                             controlType="3.4.5.6",
                             criticality=True,
-                            controlValue=b"\x00\x01\x02\xFF",
+                            controlValue=b"\x00\x01\x02\xff",
                         ),
                         pureldap.LDAPControl(
                             controlType="4.5.6.7",
                             criticality=None,
-                            controlValue=b"\x00\x01\x02\xFF",
+                            controlValue=b"\x00\x01\x02\xff",
                         ),
                     ]
                 ).toWire()
