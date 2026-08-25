@@ -1,10 +1,33 @@
 Changelog
 =========
 
-21.2.1 (unreleased)
+26.0.0 (unreleased)
 -------------------
 
-- Dropped support for Python 3.5
+Python support
+~~~~~~~~~~~~~~
+
+- Dropped support for end-of-life Python 3.6, 3.7, 3.8 and 3.9. (Python
+  3.5 was already flagged as removed in the 21.2.0 notes.)
+- Added support for Python 3.10, 3.11, 3.12, 3.13 and 3.14.
+- Fixed Python 3.12+ compatibility: replaced the removed
+  ``configparser.SafeConfigParser`` with ``configparser.ConfigParser``
+  in ``ldaptor.config``, and stopped a recursive ``addCleanup`` call in
+  ``test_config`` that failed under 3.12's stricter cleanup semantics.
+
+Tooling
+~~~~~~~
+
+- Modernized CI for tox 4; dropped ``tox-wheel`` / ``tox-gh-actions``;
+  switched the ``release`` env from ``pep517`` to ``build``.
+- Modernized the Read the Docs config and slimmed the ``docs`` extras
+  for Python 3.13.
+- Fixed ``check-manifest`` by including ``SECURITY.md`` and untracking
+  ``uv.lock``.
+
+Fixes
+~~~~~
+
 - The Deferred returned from ``send_multiResponse`` and
   ``send_multiResponse_ex`` is now fired after the final response is
   handled (#239).
