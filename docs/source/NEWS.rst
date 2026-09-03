@@ -101,6 +101,15 @@ Fixes
   ``LDAPClientTestDriver`` in ``ldaptor.testutil`` grew a matching
   ``notifyOnDisconnect`` so tests can exercise this path (#231).
 
+Docs
+~~~~
+
+- Rewrote the ``ldaptor_with_upn_bind`` example: the custom
+  ``handle_LDAPBindRequest`` now delegates to the stock
+  ``LDAPServer.handle_LDAPBindRequest`` after resolving a UPN-style
+  BIND DN, instead of copy-pasting the base-class logic. Docstrings
+  explain the UPN shape and the fall-through cases (#161).
+
 
 21.2.0 (2021-02-28)
 -------------------
