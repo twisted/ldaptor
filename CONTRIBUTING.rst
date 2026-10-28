@@ -11,8 +11,11 @@ We'll review it, and push back if necessary.
 Check docs/PULL_REQUEST_TEMPLATE.md for more info about how to pull request
 process.
 
-Ldaptor generally follows the coding and documentation standards of the Twisted
-project.
+Ldaptor generally follows the coding and documentation standards of
+the Twisted project, including the `AI Policy
+<https://docs.twisted.org/en/latest/development/ai-policy.html>`_. This
+means this project does not allow the inclusion of the outputs of
+generative AI tools.
 
 
 Development environment
