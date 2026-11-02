@@ -265,7 +265,7 @@ class LDAPSearchResultReference(LDAPProtocolResponse, BERSequence):
     def __repr__(self):
         return "{}(uris={}{})".format(
             self.__class__.__name__,
-            repr([uri for uri in self.uris]),
+            repr([*self.uris]),
             f", tag={self.tag}" if self.tag != self.__class__.tag else "",
         )
 
@@ -1062,7 +1062,7 @@ class LDAPSearchResultEntry(LDAPProtocolResponse, BERSequence):
 
     def __repr__(self):
         name = self.objectName
-        attributes = [(key, [v for v in value]) for (key, value) in self.attributes]
+        attributes = [(key, [*value]) for (key, value) in self.attributes]
         return "{}(objectName={}, attributes={}{})".format(
             self.__class__.__name__,
             repr(name),
